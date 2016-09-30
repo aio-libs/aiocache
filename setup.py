@@ -1,0 +1,23 @@
+from setuptools import setup
+
+install_requires = []
+tests_require = install_requires + ['pytest']
+
+setup(
+    name="async_redis_cache",
+    version="0.0.1",
+    author="Manuel Miranda",
+    author_email="manu.mirandad@gmail.com",
+    description="Asynchronous redis cache",
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+    ],
+    packages=['async_redis_cache'],
+    install_requires=install_requires,
+    setup_requires=['pytest-runner'],
+    tests_require=tests_require,
+)
