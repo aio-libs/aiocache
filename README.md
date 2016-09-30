@@ -1,5 +1,9 @@
 # aiocache
 
+[![Build Status](https://travis-ci.org/argaen/aiocache.svg?branch=master)](https://travis-ci.org/argaen/aiocache)
+[![codecov.io](https://codecov.io/gh/argaen/aiocache/branch/master/graph/badge.svg)](https://codecov.io/gh/argaen/aiocache)
+[![pypi](https://badge.fury.io/py/aiocache.svg)](https://pypi.python.org/pypi/aiocache)
+
 A cache implementation in multiple backends for asyncio. Used
  [django-redis-cache](https://github.com/sebleier/django-redis-cache) and
  [redis-simple-cache](https://github.com/vivekn/redis-simple-cache)
