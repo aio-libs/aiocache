@@ -1,0 +1,18 @@
+language: python
+
+python:
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+install:
+  - pip install -r requirements-ci.txt
+
+script:
+  - flake8 --exclude=examples/
+  - python setup.py develop
+  - pytest
+  - pytest --cov=aiocache tests/
+
+services:
+  - redis-server

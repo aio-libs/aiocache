@@ -4,7 +4,7 @@ install_requires = []
 tests_require = install_requires + ['pytest']
 
 setup(
-    name="async_redis_cache",
+    name="aiocache",
     version="0.0.1",
     author="Manuel Miranda",
     author_email="manu.mirandad@gmail.com",
@@ -16,7 +16,7 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
     ],
-    packages=['async_redis_cache'],
+    packages=['aiocache'],
     install_requires=install_requires,
     setup_requires=['pytest-runner'],
     tests_require=tests_require,
