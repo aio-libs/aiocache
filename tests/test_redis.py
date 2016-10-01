@@ -126,9 +126,15 @@ class TestRedisCache:
 
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer(self, redis_cache):
-
         await redis_cache.set("key", "value", serialize_fn=TestSerializer().serialize)
         assert await redis_cache.get("key") == "v4lu3"
         assert await redis_cache.get("key", deserialize_fn=TestSerializer().deserialize) == "value"
+
+        await redis_cache.delete("key")
+
+    @pytest.mark.asyncio
+    async def test_ttl(self, redis_cache):
+        await redis_cache.set("key", "value", timeout=10)
+        assert await redis_cache.ttl("key") > 0
 
         await redis_cache.delete("key")

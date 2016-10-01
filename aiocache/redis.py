@@ -11,6 +11,7 @@ class RedisCache(BaseCache):
         self.port = port or 6379
         self.serializer = serializer or self.get_serializer()
         self.namespace = namespace or ""
+        self.encoding = "utf-8"
         self._pool = None
 
     def get_serializer(self):
@@ -28,7 +29,7 @@ class RedisCache(BaseCache):
         """
 
         deserialize = deserialize_fn or self.serializer.deserialize
-        encoding = encoding or self.serializer.encoding
+        encoding = encoding or getattr(self.serializer, "encoding", self.encoding)
 
         with await self._connect() as client:
             return deserialize(
@@ -57,6 +58,10 @@ class RedisCache(BaseCache):
     async def incr(self, key, count=1):
         with await self._connect() as redis:
             return await redis.incrby(self._build_key(key), count)
+
+    async def ttl(self, key):
+        with await self._connect() as redis:
+            return await redis.ttl(self._build_key(key))
 
     def _build_key(self, key):
         if self.namespace:
