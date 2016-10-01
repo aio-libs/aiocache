@@ -17,11 +17,9 @@ except ImportError:
     import pickle
 
 
-def force_bytes(s, errors="strict"):
-    return s.decode("utf-8", errors).encode("utf-8", errors)
-
-
 class BaseSerializer(metaclass=abc.ABCMeta):
+
+    encoding = "utf-8"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,8 +38,6 @@ class DefaultSerializer(BaseSerializer):
     Dummy serializer that returns the same value passed both in serialize and
     deserialize methods.
     """
-
-    encoding = "utf-8"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -65,8 +61,6 @@ class PickleSerializer(BaseSerializer):
 
 
 class JsonSerializer(BaseSerializer):
-
-    encoding = "utf-8"
 
     def serialize(self, value):
         # Serialize with bytes

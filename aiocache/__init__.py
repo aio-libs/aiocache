@@ -1,6 +1,7 @@
-from .redis import RedisCache
+from .backends import RedisCache, SimpleMemoryCache
 
 
 __all__ = (
     'RedisCache',
+    'SimpleMemoryCache',
 )

@@ -9,7 +9,6 @@ install:
 script:
   - flake8
   - python setup.py develop
-  - pytest
   - pytest --cov=aiocache tests/
 
 services:

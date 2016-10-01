@@ -14,7 +14,7 @@ class BaseCache(metaclass=abc.ABCMeta):
         :param value: obj
         :raises: ValueError
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def get(self, key, default=None):
@@ -65,7 +65,7 @@ class BaseCache(metaclass=abc.ABCMeta):
         :param key: str
         :param timeout: int the expiration time in seconds
         """
-        pass
+        raise NotImplementedError
 
     async def ttl(self, key):
         """
@@ -74,7 +74,7 @@ class BaseCache(metaclass=abc.ABCMeta):
         :param key: str
         :returns: time to live in seconds
         """
-        pass
+        raise NotImplementedError
 
     async def persist(self, key):
         """
@@ -82,7 +82,7 @@ class BaseCache(metaclass=abc.ABCMeta):
 
         :param key: str
         """
-        pass
+        raise NotImplementedError
 
     async def get_or_set(self, key, value, timeout=None, serializer=None):
         """
@@ -95,4 +95,9 @@ class BaseCache(metaclass=abc.ABCMeta):
         :param serializer: Optional serializer object to use. Must have the serialize function
         :returns: obj deserialized, True|False if created
         """
-        pass
+        raise NotImplementedError
+
+    def _build_key(self, key):
+        if self.namespace:
+            return "{}:{}".format(self.namespace, key)
+        return key

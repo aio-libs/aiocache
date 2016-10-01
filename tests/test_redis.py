@@ -46,6 +46,7 @@ class TestRedisCache:
     def test_setup(self, redis_cache):
         assert redis_cache.endpoint == "127.0.0.1"
         assert redis_cache.port == 6379
+        assert redis_cache.namespace == "test"
         assert isinstance(redis_cache.serializer, DefaultSerializer)
 
     def test_setup_override(self):
@@ -57,6 +58,7 @@ class TestRedisCache:
     @pytest.mark.asyncio
     async def test_get_missing(self, redis_cache):
         assert await redis_cache.get("key") is None
+        assert await redis_cache.get("key", default=1) == 1
 
         await redis_cache.delete("key")
 

@@ -1,7 +1,7 @@
 import aioredis
 
+from aiocache.serializers import DefaultSerializer
 from .base import BaseCache
-from .serializers import DefaultSerializer
 
 
 class RedisCache(BaseCache):
@@ -17,12 +17,12 @@ class RedisCache(BaseCache):
     def get_serializer(self):
         return DefaultSerializer()
 
-    async def get(self, key, deserialize_fn=None, encoding=None):
+    async def get(self, key, default=None, deserialize_fn=None, encoding=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
-        :param default: obj
+        :param default: obj to return when key is not found
         :param deserializer_fn: callable alternative to use as deserialize function
         :param encoding: alternative encoding to use. Default is to use the self.serializer.encoding
         :returns: obj deserialized
@@ -33,7 +33,7 @@ class RedisCache(BaseCache):
 
         with await self._connect() as client:
             return deserialize(
-                await client.get(self._build_key(key), encoding=encoding))
+                await client.get(self._build_key(key), encoding=encoding)) or default
 
     async def set(self, key, value, timeout=None, serialize_fn=None):
         """
@@ -62,11 +62,6 @@ class RedisCache(BaseCache):
     async def ttl(self, key):
         with await self._connect() as redis:
             return await redis.ttl(self._build_key(key))
-
-    def _build_key(self, key):
-        if self.namespace:
-            return "{}:{}".format(self.namespace, key)
-        return key
 
     async def _connect(self):
         if self._pool is None:
