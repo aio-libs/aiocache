@@ -6,3 +6,6 @@ test:
 
 cov:
 	pytest --cov-report term-missing --cov=aiocache -sv tests
+
+doc:
+	make -C docs/ html

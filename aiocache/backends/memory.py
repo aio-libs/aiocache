@@ -1,6 +1,5 @@
 import asyncio
 
-from aiocache.serializers import DefaultSerializer
 from .base import BaseCache
 
 
@@ -15,9 +14,6 @@ class SimpleMemoryCache(BaseCache):
     def __init__(self, namespace=None, serializer=None):
         self.serializer = serializer or self.get_serializer()
         self.namespace = namespace or ""
-
-    def get_serializer(self):
-        return DefaultSerializer()
 
     async def get(self, key, default=None, deserialize_fn=None, encoding=None):
         """

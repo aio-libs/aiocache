@@ -1,6 +1,5 @@
 import aioredis
 
-from aiocache.serializers import DefaultSerializer
 from .base import BaseCache
 
 
@@ -13,9 +12,6 @@ class RedisCache(BaseCache):
         self.namespace = namespace or ""
         self.encoding = "utf-8"
         self._pool = None
-
-    def get_serializer(self):
-        return DefaultSerializer()
 
     async def get(self, key, default=None, deserialize_fn=None, encoding=None):
         """

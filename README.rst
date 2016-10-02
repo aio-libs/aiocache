@@ -12,6 +12,22 @@ aiocache
 
 An asynchronous cache implementation with multiple backends for asyncio. Used `django-redis-cache <https://github.com/sebleier/django-redis-cache>`_ and `redis-simple-cache <https://github.com/vivekn/redis-simple-cache>`_ as inspiration for the initial structure.
 
+Current implementations are:
+
+- SimpleMemoryCache
+- RedisCache using aioredis_
+- MemCache using aiomcache_ IN PROGRESS
+
+The ``.get`` and ``.set`` functions provided by any of the implementations work with simple Redis ``GET/SET`` commands. This package is not meant for fine grained control over the objects you store in the cache (like updating/incrementing specific fields from your object). On the other hand, you are able to store any type of object and retrieve it back as it is.
+
+Features
+--------
+
+- SimpleMemoryCache: A simple cache implementation in memory. Note that functions are async there to keep compatibility with other backend implementations.
+- RedisCache: Cache implementation using aioredis_.
+- MemCache: Cache implementation using aiomcache_. IN PROGRESS
+- cached decorator for async functions. IN PROGRESS
+
 Usage
 -----
 
@@ -122,17 +138,12 @@ Note that the method `serialize` must return data types supported by Redis `get`
   async def main():
       cache = RedisCache(namespace="main")
       await cache.set("key", MyType(1, 2), serialize_fn=serialize)
-      await cache.get("key", deserialize_fn=deserialize)
-      print(await cache.get("key"))  # Will use deserialize method
+      print(await cache.get("key", deserialize_fn=deserialize))
 
 
   if __name__ == "__main__":
       loop = asyncio.get_event_loop()
       loop.run_until_complete(main())
 
-
-Supported backends
-~~~~~~~~~~~~~~~~~~
-
-- Redis: `aioredis <https://github.com/aio-libs/aioredis>`_
-- Memcached: `aiomcache <https://github.com/aio-libs/aiomcache>`_ IN PROGRESS
+.. _aioredis: https://github.com/aio-libs/aioredis
+.. _aiomcache: https://github.com/aio-libs/aiomcache

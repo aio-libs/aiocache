@@ -1,10 +1,15 @@
 import abc
 
+from aiocache.serializers import DefaultSerializer
+
 
 class BaseCache(metaclass=abc.ABCMeta):
     """
     Base class that agregates the common logic for the different caches that may exist
     """
+
+    def get_serializer(self):
+        return DefaultSerializer()
 
     async def add(self, key, value):
         """
