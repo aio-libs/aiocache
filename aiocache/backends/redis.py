@@ -1,3 +1,4 @@
+import asyncio
 import aioredis
 
 from .base import BaseCache
@@ -5,13 +6,14 @@ from .base import BaseCache
 
 class RedisCache(BaseCache):
 
-    def __init__(self, endpoint=None, port=None, namespace=None, serializer=None):
+    def __init__(self, endpoint=None, port=None, namespace=None, serializer=None, loop=None):
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
         self.serializer = serializer or self.get_serializer()
         self.namespace = namespace or ""
         self.encoding = "utf-8"
         self._pool = None
+        self._loop = loop or asyncio.get_event_loop()
 
     async def get(self, key, default=None, deserialize_fn=None, encoding=None):
         """
@@ -62,6 +64,6 @@ class RedisCache(BaseCache):
     async def _connect(self):
         if self._pool is None:
             self._pool = await aioredis.create_pool(
-                (self.endpoint, self.port))
+                (self.endpoint, self.port), loop=self._loop)
 
         return await self._pool

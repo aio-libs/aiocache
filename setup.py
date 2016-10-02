@@ -7,6 +7,7 @@ setup(
     name="aiocache",
     version="0.0.1",
     author="Manuel Miranda",
+    url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
     description="Asynchronous redis cache",
     classifiers=[
