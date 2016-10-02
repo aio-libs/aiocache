@@ -28,21 +28,21 @@ class SimpleMemoryCache(BaseCache):
         deserialize = deserialize_fn or self.serializer.deserialize
         return deserialize(SimpleMemoryCache._cache.get(self._build_key(key), default))
 
-    async def set(self, key, value, timeout=None, serialize_fn=None):
+    async def set(self, key, value, ttl=None, serialize_fn=None):
         """
-        Stores the value in the given key with timeout if specified
+        Stores the value in the given key with ttl if specified
 
         :param key: str
         :param value: obj
-        :param timeout: int the expiration time in seconds
+        :param ttl: int the expiration time in seconds
         :param serialize_fn: callable alternative to use as serialize function
         :returns:
         """
         serialize = serialize_fn or self.serializer.serialize
         SimpleMemoryCache._cache[self._build_key(key)] = serialize(value)
-        if timeout:
+        if ttl:
             loop = asyncio.get_event_loop()
-            loop.call_later(timeout, self._delete, key)
+            loop.call_later(ttl, self._delete, key)
 
     async def delete(self, key):
         return self._delete(key)

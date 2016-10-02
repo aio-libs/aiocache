@@ -43,7 +43,7 @@ First, you need to install the package with ``pip install aiocache``. Once insta
   async def main():
       cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
       await cache.set("key", "value")
-      await cache.set("expire_me", "value", timeout=10)  # Key will expire after 10 secs
+      await cache.set("expire_me", "value", ttl=10)  # Key will expire after 10 secs
       print(await cache.get("key"))
       print(await cache.get("expire_me"))
       print(await cache.ttl("expire_me"))
@@ -144,6 +144,37 @@ Note that the method `serialize` must return data types supported by Redis `get`
   if __name__ == "__main__":
       loop = asyncio.get_event_loop()
       loop.run_until_complete(main())
+
+
+You can also decorate any asynchronous function with the ``cached`` decorator:
+
+.. code-block:: python
+
+  import asyncio
+
+  from collections import namedtuple
+
+  from aiocache import cached
+  from aiocache.serializers import PickleSerializer
+
+  Result = namedtuple('Result', "content, status")
+
+
+  @cached(ttl=10, serializer=PickleSerializer)
+  async def async_main():
+      print("First ASYNC non cached call...")
+      await asyncio.sleep(1)
+      return Result("content", 200)
+
+
+  if __name__ == "__main__":
+      loop = asyncio.get_event_loop()
+      print(loop.run_until_complete(async_main()))
+      print(loop.run_until_complete(async_main()))
+      print(loop.run_until_complete(async_main()))
+      print(loop.run_until_complete(async_main()))
+
+Note that in previous example we are using the ``PickleSerializer`` because the function is returning a python object.
 
 .. _aioredis: https://github.com/aio-libs/aioredis
 .. _aiomcache: https://github.com/aio-libs/aiomcache

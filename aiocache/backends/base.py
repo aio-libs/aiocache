@@ -33,13 +33,13 @@ class BaseCache(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    async def set(self, key, value, timeout=None):
+    async def set(self, key, value, ttl=None):
         """
-        Stores the value in the given key with timeout if specified
+        Stores the value in the given key with ttl if specified
 
         :param key: str
         :param value: obj
-        :param timeout: int the expiration time in seconds
+        :param ttl: int the expiration time in seconds
         :returns:
         """
         pass
@@ -63,12 +63,12 @@ class BaseCache(metaclass=abc.ABCMeta):
         """
         pass
 
-    async def expire(self, key, timeout):
+    async def expire(self, key, ttl):
         """
-        Sets timeout to the given key
+        Sets ttl to the given key
 
         :param key: str
-        :param timeout: int the expiration time in seconds
+        :param ttl: int the expiration time in seconds
         """
         raise NotImplementedError
 
@@ -83,20 +83,20 @@ class BaseCache(metaclass=abc.ABCMeta):
 
     async def persist(self, key):
         """
-        Remove the timeout for a key.
+        Remove the ttl for a key.
 
         :param key: str
         """
         raise NotImplementedError
 
-    async def get_or_set(self, key, value, timeout=None, serializer=None):
+    async def get_or_set(self, key, value, ttl=None, serializer=None):
         """
         Tries to retrieve a key. If not existing it creates setting the specified value.
-        Applies timeout and uses the given serializer if they are passed.
+        Applies ttl and uses the given serializer if they are passed.
 
         :param key: str
         :param value: obj
-        :param timeout: int the expiration time in seconds
+        :param ttl: int the expiration time in seconds
         :param serializer: Optional serializer object to use. Must have the serialize function
         :returns: obj deserialized, True|False if created
         """

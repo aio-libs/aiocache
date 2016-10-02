@@ -82,8 +82,8 @@ class TestRedisCache:
         assert await redis_cache.set("key", "value") is True
 
     @pytest.mark.asyncio
-    async def test_set_with_timeout(self, redis_cache):
-        await redis_cache.set("key", "value", timeout=1)
+    async def test_set_with_ttl(self, redis_cache):
+        await redis_cache.set("key", "value", ttl=1)
         await asyncio.sleep(2)
 
         assert await redis_cache.get("key") is None
@@ -123,5 +123,5 @@ class TestRedisCache:
 
     @pytest.mark.asyncio
     async def test_ttl(self, redis_cache):
-        await redis_cache.set("key", "value", timeout=10)
+        await redis_cache.set("key", "value", ttl=10)
         assert await redis_cache.ttl("key") > 0
