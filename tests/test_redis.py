@@ -89,12 +89,6 @@ class TestRedisCache:
         assert await redis_cache.get("key") is None
 
     @pytest.mark.asyncio
-    async def test_incr(self, redis_cache):
-        assert await redis_cache.incr("key") == 1
-        assert await redis_cache.incr("key", 1) == 2
-        assert await redis_cache.incr("key", 5) == 7
-
-    @pytest.mark.asyncio
     @pytest.mark.parametrize("obj, serializer", [
         (MyType().str, DefaultSerializer),
         (MyType(), PickleSerializer),

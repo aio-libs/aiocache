@@ -49,8 +49,3 @@ class SimpleMemoryCache(BaseCache):
 
     def _delete(self, key):
         return SimpleMemoryCache._cache.pop(self._build_key(key), None)
-
-    async def incr(self, key, count=1):
-        SimpleMemoryCache._cache[self._build_key(key)] = \
-            SimpleMemoryCache._cache.get(self._build_key(key), 0) + count
-        return SimpleMemoryCache._cache.get(self._build_key(key))

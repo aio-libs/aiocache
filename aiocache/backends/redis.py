@@ -29,9 +29,9 @@ class RedisCache(BaseCache):
         deserialize = deserialize_fn or self.serializer.deserialize
         encoding = encoding or getattr(self.serializer, "encoding", self.encoding)
 
-        with await self._connect() as client:
+        with await self._connect() as redis:
             return deserialize(
-                await client.get(self._build_key(key), encoding=encoding)) or default
+                await redis.get(self._build_key(key), encoding=encoding)) or default
 
     async def set(self, key, value, ttl=None, serialize_fn=None):
         """

@@ -45,9 +45,3 @@ class TestSimpleMemoryCache:
         assert await memory_cache.delete(KEY) is None
         await memory_cache.set(KEY, "value")
         assert await memory_cache.delete(KEY) is "value"
-
-    @pytest.mark.asyncio
-    async def test_incr(self, memory_cache):
-        assert await memory_cache.incr(KEY) == 1
-        assert await memory_cache.incr(KEY, 1) == 2
-        assert await memory_cache.incr(KEY, 5) == 7

@@ -53,16 +53,6 @@ class BaseCache(metaclass=abc.ABCMeta):
         """
         pass
 
-    @abc.abstractmethod
-    async def incr(self, key, count=1):
-        """
-        Add count to the given key. If key does not exist it creates it and sets it to count
-
-        :param key: str
-        :param count: int
-        """
-        pass
-
     async def expire(self, key, ttl):
         """
         Sets ttl to the given key
