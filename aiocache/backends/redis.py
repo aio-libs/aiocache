@@ -53,10 +53,6 @@ class RedisCache(BaseCache):
         with await self._connect() as redis:
             return await redis.delete(self._build_key(key))
 
-    async def incr(self, key, count=1):
-        with await self._connect() as redis:
-            return await redis.incrby(self._build_key(key), count)
-
     async def ttl(self, key):
         with await self._connect() as redis:
             return await redis.ttl(self._build_key(key))

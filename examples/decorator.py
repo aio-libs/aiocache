@@ -2,13 +2,13 @@ import asyncio
 
 from collections import namedtuple
 
-from aiocache import cached
+from aiocache import cached, RedisCache
 from aiocache.serializers import PickleSerializer
 
 Result = namedtuple('Result', "content, status")
 
 
-@cached(ttl=10, serializer=PickleSerializer)
+@cached(ttl=10, backend=RedisCache, serializer=PickleSerializer(), port=6379)
 async def async_main():
     print("First ASYNC non cached call...")
     await asyncio.sleep(1)
