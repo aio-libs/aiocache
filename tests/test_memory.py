@@ -12,6 +12,7 @@ def memory_cache():
     cache = SimpleMemoryCache(namespace="test")
     yield cache
     cache._cache.pop("test:" + KEY, None)
+    cache._cache.pop("test:" + "random", None)
 
 
 class TestSimpleMemoryCache:
