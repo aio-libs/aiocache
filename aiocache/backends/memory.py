@@ -28,6 +28,17 @@ class SimpleMemoryCache(BaseCache):
         deserialize = deserialize_fn or self.serializer.deserialize
         return deserialize(SimpleMemoryCache._cache.get(self._build_key(key), default))
 
+    async def multi_get(self, keys, deserialize_fn=None):
+        """
+        Get a value from the cache. Returns default if not found.
+
+        :param key: str
+        :param deserializer_fn: callable alternative to use as deserialize function
+        :returns: obj deserialized
+        """
+        deserialize = deserialize_fn or self.serializer.deserialize
+        return [deserialize(SimpleMemoryCache._cache.get(self._build_key(key))) for key in keys]
+
     async def set(self, key, value, ttl=None, serialize_fn=None):
         """
         Stores the value in the given key with ttl if specified
@@ -43,6 +54,21 @@ class SimpleMemoryCache(BaseCache):
         if ttl:
             loop = asyncio.get_event_loop()
             loop.call_later(ttl, self._delete, key)
+        return True
+
+    async def multi_set(self, pairs, serialize_fn=None):
+        """
+        Stores multiple values in the given keys.
+
+        :param pairs: list of two element iterables. First is key and second is value
+        :param serialize_fn: callable alternative to use as serialize function
+        :returns:
+        """
+        serialize = serialize_fn or self.serializer.serialize
+
+        for key, value in pairs:
+            SimpleMemoryCache._cache[self._build_key(key)] = serialize(value)
+        return True
 
     async def delete(self, key):
         return self._delete(key)

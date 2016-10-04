@@ -31,6 +31,11 @@ class TestSimpleMemoryCache:
         assert await memory_cache.get(KEY) == "value"
 
     @pytest.mark.asyncio
+    async def test_multi_get(self, memory_cache):
+        await memory_cache.set(KEY, "value")
+        assert await memory_cache.multi_get([KEY, "random"]) == ["value", None]
+
+    @pytest.mark.asyncio
     async def test_set_with_ttl(self, memory_cache, mocker):
         loop = asyncio.get_event_loop()
         mocker.spy(loop, 'call_later')
@@ -39,6 +44,12 @@ class TestSimpleMemoryCache:
 
         await asyncio.sleep(2)
         assert await memory_cache.get(KEY) is None
+
+    @pytest.mark.asyncio
+    async def test_multi_set(self, memory_cache):
+        pairs = [(KEY, "value"), {"random", "random_value"}]
+        await memory_cache.multi_set(pairs) is True
+        assert await memory_cache.multi_get([KEY, "random"]) == ["value", "random_value"]
 
     @pytest.mark.asyncio
     async def test_delete(self, memory_cache):

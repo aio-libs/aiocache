@@ -1,6 +1,8 @@
 import asyncio
 import aioredis
 
+from itertools import chain
+
 from .base import BaseCache
 
 
@@ -33,6 +35,22 @@ class RedisCache(BaseCache):
             return deserialize(
                 await redis.get(self._build_key(key), encoding=encoding)) or default
 
+    async def multi_get(self, keys, deserialize_fn=None, encoding=None):
+        """
+        Get a value from the cache. Returns default if not found.
+
+        :param key: str
+        :param deserializer_fn: callable alternative to use as deserialize function
+        :param encoding: alternative encoding to use. Default is to use the self.serializer.encoding
+        :returns: obj deserialized
+        """
+        deserialize = deserialize_fn or self.serializer.deserialize
+        encoding = encoding or getattr(self.serializer, "encoding", self.encoding)
+
+        with await self._connect() as redis:
+            keys = [self._build_key(key) for key in keys]
+            return [deserialize(obj) for obj in (await redis.mget(*keys, encoding=encoding))]
+
     async def set(self, key, value, ttl=None, serialize_fn=None):
         """
         Stores the value in the given key with ttl if specified
@@ -48,6 +66,22 @@ class RedisCache(BaseCache):
 
         with await self._connect() as redis:
             return await redis.set(self._build_key(key), serialize(value), expire=ttl)
+
+    async def multi_set(self, pairs, serialize_fn=None):
+        """
+        Stores multiple values in the given keys.
+
+        :param pairs: list of two element iterables. First is key and second is value
+        :param serialize_fn: callable alternative to use as serialize function
+        :returns:
+        """
+        serialize = serialize_fn or self.serializer.serialize
+
+        with await self._connect() as redis:
+            serialized_pairs = list(
+                chain.from_iterable(
+                    (self._build_key(key), serialize(value)) for key, value in pairs))
+            return await redis.mset(*serialized_pairs)
 
     async def delete(self, key):
         with await self._connect() as redis:
