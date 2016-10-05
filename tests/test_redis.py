@@ -42,6 +42,7 @@ def redis_cache(event_loop, mocker):
     event_loop.run_until_complete(cache.delete(KEY))
     event_loop.run_until_complete(cache.delete("random"))
     cache._pool.close()
+    event_loop.run_until_complete(cache._pool.wait_closed())
 
 
 KEY = "key"
@@ -93,7 +94,7 @@ class TestRedisCache:
 
     @pytest.mark.asyncio
     async def test_multi_set(self, redis_cache):
-        pairs = [(KEY, "value"), {"random": "random_value"}]
+        pairs = [(KEY, "value"), ["random", "random_value"]]
         assert await redis_cache.multi_set(pairs) is True
         assert await redis_cache.multi_get([KEY, "random"]) == ["value", "random_value"]
 
