@@ -42,6 +42,7 @@ def redis_cache(event_loop, mocker):
     event_loop.run_until_complete(cache.delete(KEY))
     event_loop.run_until_complete(cache.delete("random"))
     cache._pool.close()
+    event_loop.run_until_complete(cache._pool.wait_closed())
 
 
 KEY = "key"
