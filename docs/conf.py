@@ -17,9 +17,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
 # -- General configuration ------------------------------------------------
 
@@ -130,6 +131,15 @@ html_theme = 'default'
 # documentation.
 #
 # html_theme_options = {}
+html_theme_options = {
+    'github_user': 'argaen',
+    'github_repo': 'aiocache',
+    'github_button': True,
+    'github_type': 'star',
+    'github_banner': True,
+    'travis_button': True,
+    'codecov_button': True,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
