@@ -50,23 +50,52 @@ class DefaultSerializer(BaseSerializer):
 
 
 class PickleSerializer(BaseSerializer):
+    """
+    Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
+    """
 
     encoding = None
 
     def serialize(self, value):
+        """
+        Serialize the received value using ``pickle.dumps``.
+
+        :param value: obj
+        :returns: bytes
+        """
         return pickle.dumps(value)
 
     def deserialize(self, value):
+        """
+        Deserialize value using ``pickle.loads``.
+
+        :param value: bytes
+        :returns: obj
+        """
         if value is None:
             return None
         return pickle.loads(value)
 
 
 class JsonSerializer(BaseSerializer):
+    """
+    Transform data to json string with json.dumps and json.loads to retrieve it back.
+    """
 
     def serialize(self, value):
-        # Serialize with bytes
+        """
+        Serialize the received value using ``json.dumps``.
+
+        :param value: dict
+        :returns: str
+        """
         return json.dumps(value)
 
     def deserialize(self, value):
+        """
+        Deserialize value using ``json.loads``.
+
+        :param value: str
+        :returns: dict
+        """
         return json.loads(value)

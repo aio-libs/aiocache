@@ -9,6 +9,19 @@ logger = logging.getLogger(__name__)
 
 
 def cached(ttl=0, backend=None, serializer=None, *args, **kwargs):
+    """
+    Caches the functions return value into a key generated with module_name, function_name and args.
+
+    In some cases you will need to send more args than just the ttl, backend and serializer.
+    An example would be endpoint and port for the RedisBackend. This extra args will be propagated
+    to the backend class when instantiating.
+
+    :param ttl: int seconds to store the function call. Default is 0
+    :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
+        :class:`aiocache.backends.SimpleMemoryCache`
+    :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
+        Default is :class:`aiocache.serializers.DefaultSerializer`
+    """
     cache = get_default_cache(backend=backend, serializer=serializer, *args, **kwargs)
 
     def cached_decorator(fn):

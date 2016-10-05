@@ -8,10 +8,13 @@ Welcome to aiocache's documentation!
 
 .. include:: ../README.rst
 
+Contents
+
 .. toctree::
-   :maxdepth: 2
 
-
+  backends
+  serializers
+  decorators
 
 Indices and tables
 ==================
