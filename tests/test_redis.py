@@ -93,7 +93,7 @@ class TestRedisCache:
 
     @pytest.mark.asyncio
     async def test_multi_set(self, redis_cache):
-        pairs = [(KEY, "value"), {"random", "random_value"}]
+        pairs = [(KEY, "value"), {"random": "random_value"}]
         assert await redis_cache.multi_set(pairs) is True
         assert await redis_cache.multi_get([KEY, "random"]) == ["value", "random_value"]
 

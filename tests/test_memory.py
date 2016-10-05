@@ -48,8 +48,8 @@ class TestSimpleMemoryCache:
 
     @pytest.mark.asyncio
     async def test_multi_set(self, memory_cache):
-        pairs = [(KEY, "value"), {"random", "random_value"}]
-        await memory_cache.multi_set(pairs) is True
+        pairs = [(KEY, "value"), {"random": "random_value"}]
+        assert await memory_cache.multi_set(pairs) is True
         assert await memory_cache.multi_get([KEY, "random"]) == ["value", "random_value"]
 
     @pytest.mark.asyncio
