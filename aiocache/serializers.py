@@ -19,11 +19,6 @@ except ImportError:
 
 class BaseSerializer(metaclass=abc.ABCMeta):
 
-    encoding = "utf-8"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @abc.abstractmethod
     def serialize(self, value):
         pass

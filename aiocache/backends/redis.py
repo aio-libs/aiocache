@@ -13,7 +13,6 @@ class RedisCache(BaseCache):
         self.port = port or 6379
         self.serializer = serializer or self.get_serializer()
         self.namespace = namespace or ""
-        self.encoding = "utf-8"
         self._pool = None
         self._loop = loop or asyncio.get_event_loop()
 
@@ -29,7 +28,7 @@ class RedisCache(BaseCache):
         """
 
         deserialize = deserialize_fn or self.serializer.deserialize
-        encoding = encoding or getattr(self.serializer, "encoding", self.encoding)
+        encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
 
         with await self._connect() as redis:
             return deserialize(
@@ -45,7 +44,7 @@ class RedisCache(BaseCache):
         :returns: obj deserialized
         """
         deserialize = deserialize_fn or self.serializer.deserialize
-        encoding = encoding or getattr(self.serializer, "encoding", self.encoding)
+        encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
 
         with await self._connect() as redis:
             keys = [self._build_key(key) for key in keys]
