@@ -15,59 +15,59 @@ class SimpleMemoryCache(BaseCache):
         self.serializer = serializer or self.get_serializer()
         self.namespace = namespace or ""
 
-    async def get(self, key, default=None, deserialize_fn=None):
+    async def get(self, key, default=None, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
         :param default: obj to return when key is not found
-        :param deserializer_fn: callable alternative to use as deserialize function
-        :returns: obj deserialized
+        :param loads_fn: callable alternative to use as loads function
+        :returns: obj loadsd
         """
 
-        deserialize = deserialize_fn or self.serializer.deserialize
-        return deserialize(SimpleMemoryCache._cache.get(self._build_key(key), default))
+        loads = loads_fn or self.serializer.loads
+        return loads(SimpleMemoryCache._cache.get(self._build_key(key), default))
 
-    async def multi_get(self, keys, deserialize_fn=None):
+    async def multi_get(self, keys, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
-        :param deserializer_fn: callable alternative to use as deserialize function
-        :returns: obj deserialized
+        :param loads_fn: callable alternative to use as loads function
+        :returns: obj loadsd
         """
-        deserialize = deserialize_fn or self.serializer.deserialize
-        return [deserialize(SimpleMemoryCache._cache.get(self._build_key(key))) for key in keys]
+        loads = loads_fn or self.serializer.loads
+        return [loads(SimpleMemoryCache._cache.get(self._build_key(key))) for key in keys]
 
-    async def set(self, key, value, ttl=None, serialize_fn=None):
+    async def set(self, key, value, ttl=None, dumps_fn=None):
         """
         Stores the value in the given key with ttl if specified
 
         :param key: str
         :param value: obj
         :param ttl: int the expiration time in seconds
-        :param serialize_fn: callable alternative to use as serialize function
+        :param dumps_fn: callable alternative to use as dumps function
         :returns:
         """
-        serialize = serialize_fn or self.serializer.serialize
-        SimpleMemoryCache._cache[self._build_key(key)] = serialize(value)
+        dumps = dumps_fn or self.serializer.dumps
+        SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
         if ttl:
             loop = asyncio.get_event_loop()
             loop.call_later(ttl, self._delete, key)
         return True
 
-    async def multi_set(self, pairs, serialize_fn=None):
+    async def multi_set(self, pairs, dumps_fn=None):
         """
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
-        :param serialize_fn: callable alternative to use as serialize function
+        :param dumps_fn: callable alternative to use as dumps function
         :returns:
         """
-        serialize = serialize_fn or self.serializer.serialize
+        dumps = dumps_fn or self.serializer.dumps
 
         for key, value in pairs:
-            SimpleMemoryCache._cache[self._build_key(key)] = serialize(value)
+            SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
         return True
 
     async def delete(self, key):

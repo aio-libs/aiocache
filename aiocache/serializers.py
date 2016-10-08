@@ -20,11 +20,11 @@ except ImportError:
 class BaseSerializer(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def serialize(self, value):
+    def dumps(self, value):
         pass
 
     @abc.abstractmethod
-    def deserialize(self, value):
+    def loads(self, value):
         pass
 
 
@@ -37,10 +37,10 @@ class DefaultSerializer(BaseSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def serialize(self, value):
+    def dumps(self, value):
         return value
 
-    def deserialize(self, value):
+    def loads(self, value):
         return value
 
 
@@ -51,7 +51,7 @@ class PickleSerializer(BaseSerializer):
 
     encoding = None
 
-    def serialize(self, value):
+    def dumps(self, value):
         """
         Serialize the received value using ``pickle.dumps``.
 
@@ -60,7 +60,7 @@ class PickleSerializer(BaseSerializer):
         """
         return pickle.dumps(value)
 
-    def deserialize(self, value):
+    def loads(self, value):
         """
         Deserialize value using ``pickle.loads``.
 
@@ -77,7 +77,7 @@ class JsonSerializer(BaseSerializer):
     Transform data to json string with json.dumps and json.loads to retrieve it back.
     """
 
-    def serialize(self, value):
+    def dumps(self, value):
         """
         Serialize the received value using ``json.dumps``.
 
@@ -86,7 +86,7 @@ class JsonSerializer(BaseSerializer):
         """
         return json.dumps(value)
 
-    def deserialize(self, value):
+    def loads(self, value):
         """
         Deserialize value using ``json.loads``.
 
