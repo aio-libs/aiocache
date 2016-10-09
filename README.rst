@@ -10,36 +10,36 @@ aiocache
 .. image:: https://badge.fury.io/py/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
-Disclaimer: The code is still in **alpha** version so new versions may introduce breaking changes. Once version 1.0 is reached, deprecation policy will be introduced.
-
 An asynchronous cache implementation with multiple backends for asyncio. Used `django-redis-cache <https://github.com/sebleier/django-redis-cache>`_ and `redis-simple-cache <https://github.com/vivekn/redis-simple-cache>`_ as inspiration for the initial structure.
 
-Current implementations are:
+Disclaimer: The code is still in **alpha** version so new versions may introduce breaking changes. Once version 1.0 is reached, deprecation policy will be introduced.
+
+Current supported backends are:
 
 - SimpleMemoryCache
 - RedisCache using aioredis_
 - MemCache using aiomcache_ IN PROGRESS
 
 
-All the interfaces implement at least ``get``, ``set`` and ``delete`` operations. Some of them may implement extra logic like ``ttl`` in RedisCache. However, this package is not meant for fine grained control over the objects you store in the cache (like updating/incrementing specific fields from your object) as it aims for simplicity. By doing that, it's possible to store any python object into any of the backends.
+This libraries aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
 
-Features
---------
+- `add`
+- `get`
+- `set`
+- `multi_get`
+- `multi_set`
+- `delete`
 
-- SimpleMemoryCache: A simple cache implementation in memory. Note that functions are async there to keep compatibility with other backend implementations.
-- RedisCache: Cache implementation using aioredis_.
-- MemCache: Cache implementation using aiomcache_. IN PROGRESS
-- cached decorator for async functions. IN PROGRESS
 
 Usage
 -----
 
-First, you need to install the package with ``pip install aiocache``.
+Install the package with ``pip install aiocache``.
 
 cached decorator
 ~~~~~~~~~~~~~~~~
 
-The typical use is to decorate function calls that interact with some external resource. You can do this easily with the ``cached`` decorator:
+The typical use case is to decorate function calls that interact with some external resource. You can do this easily with the ``cached`` decorator:
 
 .. code-block:: python
 
@@ -113,9 +113,9 @@ So, the decorator resolves the cache to use as follows:
 Also in some cases, some backends like the RedisCache, may need extra arguments like ``endpoint`` or ``port``. You can also pass them in the ``aiocache.config_default_cache`` or in the ``cached`` decorator.
 
 Backends and serializers
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sometimes you need to explicitly instantiate a cache class and interact with it. You can do it as follows:
+You can instantiate a cache class and interact with it as follows:
 
 
 .. code-block:: python
@@ -163,63 +163,8 @@ In some cases, you may want to cache complex objects and depending on the backen
       loop = asyncio.get_event_loop()
       loop.run_until_complete(main())
 
-In other cases, your serialization logic will be more advanced and you won't have enough with the default ones.  No worries, you can still pass a serializer to the constructor and also to the `get`/`set` calls. The serializer must contain the `.serialize` and `.deserialize` functions in case of using the constructor:
 
-.. code-block:: python
-
-  import asyncio
-
-  from aiocache import RedisCache
-
-
-  class MySerializer:
-      def dumps(self, value):
-          return 1
-
-      def loads(self, value):
-          return 2
-
-
-  async def main():
-      cache = RedisCache(serializer=MySerializer(), namespace="main")
-      await cache.set("key", "value")  # Will use MySerializer.dumps method
-      print(await cache.get("key"))  # Will use MySerializer.loads method
-
-
-  if __name__ == "__main__":
-      loop = asyncio.get_event_loop()
-      loop.run_until_complete(main())
-
-Note that the method `serialize` must return data types supported by Redis `get` operation. You can also override when using the `get` and `set` methods:
-
-.. code-block:: python
-
-  import asyncio
-
-  from marshmallow import Schema, fields
-  from aiocache import RedisCache
-
-
-  class MyType:
-      def __init__(self, x, y):
-          self.x = x
-          self.y = y
-
-
-  class MyTypeSchema(Schema):
-      x = fields.Number()
-      y = fields.Number()
-
-
-  async def main():
-      cache = RedisCache(namespace="main", serializer=MyTypeSchema)
-      await cache.set("key", MyType(1, 2))
-      print(await cache.get("key"))
-
-
-  if __name__ == "__main__":
-      loop = asyncio.get_event_loop()
-      loop.run_until_complete(main())
+For more examples, visit the examples folder of the project.
 
 .. _aioredis: https://github.com/aio-libs/aioredis
 .. _aiomcache: https://github.com/aio-libs/aiomcache
