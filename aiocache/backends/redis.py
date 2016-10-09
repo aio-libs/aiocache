@@ -83,6 +83,12 @@ class RedisCache(BaseCache):
             return await redis.mset(*serialized_pairs)
 
     async def delete(self, key):
+        """
+        Deletes the given key.
+
+        :param key: Key to be deleted
+        :returns: int number of deleted keys
+        """
         with await self._connect() as redis:
             return await redis.delete(self._build_key(key))
 

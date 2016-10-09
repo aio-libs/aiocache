@@ -15,19 +15,19 @@ class MyTypeSchema(Schema):
     y = fields.Number()
 
 
-def serialize(value):
+def dumps(value):
     # Current implementation can't deal directly with dicts so we must cast to string
     return str(MyTypeSchema().dump(value).data)
 
 
-def deserialize(value):
+def loads(value):
     return dict(MyTypeSchema().load(value).data)
 
 
 async def main():
     cache = RedisCache(namespace="main")
-    await cache.set("key", MyType(1, 2), dumps_fn=serialize)
-    print(await cache.get("key", loads_fn=deserialize))
+    await cache.set("key", MyType(1, 2), dumps_fn=dumps)
+    print(await cache.get("key", loads_fn=loads))
 
 
 if __name__ == "__main__":

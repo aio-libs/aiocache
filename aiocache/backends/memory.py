@@ -71,7 +71,13 @@ class SimpleMemoryCache(BaseCache):
         return True
 
     async def delete(self, key):
+        """
+        Deletes the given key.
+
+        :param key: Key to be deleted
+        :returns: int number of deleted keys
+        """
         return self._delete(key)
 
     def _delete(self, key):
-        return SimpleMemoryCache._cache.pop(self._build_key(key), None)
+        return SimpleMemoryCache._cache.pop(self._build_key(key), 0)
