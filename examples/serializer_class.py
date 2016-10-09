@@ -4,17 +4,17 @@ from aiocache import RedisCache
 
 
 class MySerializer:
-    def serialize(self, value):
+    def dumps(self, value):
         return 1
 
-    def deserialize(self, value):
+    def loads(self, value):
         return 2
 
 
 async def main():
     cache = RedisCache(serializer=MySerializer(), namespace="main")
-    await cache.set("key", "value")  # Will use MySerializer.serialize method
-    print(await cache.get("key"))  # Will use MySerializer.deserialize method
+    await cache.set("key", "value")  # Will use MySerializer.dumps method
+    print(await cache.get("key"))  # Will use MySerializer.loads method
 
 
 if __name__ == "__main__":

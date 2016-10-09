@@ -26,8 +26,8 @@ def deserialize(value):
 
 async def main():
     cache = RedisCache(namespace="main")
-    await cache.set("key", MyType(1, 2), serialize_fn=serialize)
-    print(await cache.get("key", deserialize_fn=deserialize))
+    await cache.set("key", MyType(1, 2), dumps_fn=serialize)
+    print(await cache.get("key", loads_fn=deserialize))
 
 
 if __name__ == "__main__":

@@ -173,17 +173,17 @@ In other cases, your serialization logic will be more advanced and you won't hav
 
 
   class MySerializer:
-      def serialize(self, value):
+      def dumps(self, value):
           return 1
 
-      def deserialize(self, value):
+      def loads(self, value):
           return 2
 
 
   async def main():
       cache = RedisCache(serializer=MySerializer(), namespace="main")
-      await cache.set("key", "value")  # Will use MySerializer.serialize method
-      print(await cache.get("key"))  # Will use MySerializer.deserialize method
+      await cache.set("key", "value")  # Will use MySerializer.dumps method
+      print(await cache.get("key"))  # Will use MySerializer.loads method
 
 
   if __name__ == "__main__":
@@ -211,19 +211,10 @@ Note that the method `serialize` must return data types supported by Redis `get`
       y = fields.Number()
 
 
-  def serialize(value):
-      # Current implementation can't deal directly with dicts so we must cast to string
-      return str(MyTypeSchema().dump(value).data)
-
-
-  def deserialize(value):
-      return dict(MyTypeSchema().load(value).data)
-
-
   async def main():
-      cache = RedisCache(namespace="main")
-      await cache.set("key", MyType(1, 2), serialize_fn=serialize)
-      print(await cache.get("key", deserialize_fn=deserialize))
+      cache = RedisCache(namespace="main", serializer=MyTypeSchema)
+      await cache.set("key", MyType(1, 2))
+      print(await cache.get("key"))
 
 
   if __name__ == "__main__":
