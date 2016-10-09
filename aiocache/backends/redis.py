@@ -58,7 +58,7 @@ class RedisCache(BaseCache):
         :param value: obj
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
-        :returns:
+        :returns: True
         """
         dumps = dumps_fn or self.serializer.dumps
         ttl = ttl or 0
@@ -72,7 +72,7 @@ class RedisCache(BaseCache):
 
         :param pairs: list of two element iterables. First is key and second is value
         :param dumps: callable alternative to use as dumps function
-        :returns:
+        :returns: True
         """
         dumps = dumps_fn or self.serializer.dumps
 
@@ -81,6 +81,28 @@ class RedisCache(BaseCache):
                 chain.from_iterable(
                     (self._build_key(key), dumps(value)) for key, value in pairs))
             return await redis.mset(*serialized_pairs)
+
+    async def add(self, key, value, ttl=None, dumps_fn=None):
+        """
+        Stores the value in the given key with ttl if specified. Raises an error if the
+        key already exists.
+
+        :param key: str
+        :param value: obj
+        :param ttl: int the expiration time in seconds
+        :param dumps_fn: callable alternative to use as dumps function
+        :returns: True if key is inserted
+        :raises: Value error if key already exists
+        """
+        dumps = dumps_fn or self.serializer.dumps
+        ttl = ttl or 0
+
+        key = self._build_key(key)
+        with await self._connect() as redis:
+            if await redis.exists(key):
+                raise ValueError(
+                    "Key {} already exists, use .set to update the value".format(key))
+            return await redis.set(key, dumps(value), expire=ttl)
 
     async def delete(self, key):
         """

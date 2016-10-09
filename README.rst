@@ -23,12 +23,12 @@ Current supported backends are:
 
 This libraries aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
 
-- `add`
-- `get`
-- `set`
-- `multi_get`
-- `multi_set`
-- `delete`
+- ``add``
+- ``get``
+- ``set``
+- ``multi_get``
+- ``multi_set``
+- ``delete``
 
 
 Usage

@@ -148,3 +148,13 @@ class TestBackend:
         cache.serializer = my_serializer
         await cache.set(pytest.KEY, my_obj)
         assert await cache.get(pytest.KEY) == my_serializer.loads(my_serializer.dumps(my_obj))
+
+    @pytest.mark.asyncio
+    async def test_add_missing(self, cache):
+        assert await cache.add(pytest.KEY, "value") is True
+
+    @pytest.mark.asyncio
+    async def test_add_existing(self, cache):
+        await cache.set(pytest.KEY, "value") is True
+        with pytest.raises(ValueError):
+            await cache.add(pytest.KEY, "value")

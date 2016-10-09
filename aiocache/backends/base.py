@@ -11,8 +11,9 @@ class BaseCache(metaclass=abc.ABCMeta):
     def get_serializer(self):
         return DefaultSerializer()
 
-    async def add(self, key, value):
-        raise NotImplementedError
+    @abc.abstractmethod
+    async def add(self, key, value, ttl=None):
+        pass
 
     @abc.abstractmethod
     async def get(self, key, default=None):

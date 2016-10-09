@@ -47,7 +47,7 @@ class SimpleMemoryCache(BaseCache):
         :param value: obj
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
-        :returns:
+        :returns: True
         """
         dumps = dumps_fn or self.serializer.dumps
         SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
@@ -62,12 +62,37 @@ class SimpleMemoryCache(BaseCache):
 
         :param pairs: list of two element iterables. First is key and second is value
         :param dumps_fn: callable alternative to use as dumps function
-        :returns:
+        :returns: True
         """
         dumps = dumps_fn or self.serializer.dumps
 
         for key, value in pairs:
             SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
+        return True
+
+    async def add(self, key, value, ttl=None, dumps_fn=None):
+        """
+        Stores the value in the given key with ttl if specified. Raises an error if the
+        key already exists.
+
+        :param key: str
+        :param value: obj
+        :param ttl: int the expiration time in seconds
+        :param dumps_fn: callable alternative to use as dumps function
+        :returns: True if key is inserted
+        :raises: Value error if key already exists
+        """
+        dumps = dumps_fn or self.serializer.dumps
+
+        key = self._build_key(key)
+        if key in SimpleMemoryCache._cache:
+            raise ValueError(
+                "Key {} already exists, use .set to update the value".format(key))
+
+        SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
+        if ttl:
+            loop = asyncio.get_event_loop()
+            loop.call_later(ttl, self._delete, key)
         return True
 
     async def delete(self, key):
