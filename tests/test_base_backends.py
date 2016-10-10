@@ -158,3 +158,12 @@ class TestBackend:
         await cache.set(pytest.KEY, "value") is True
         with pytest.raises(ValueError):
             await cache.add(pytest.KEY, "value")
+
+    @pytest.mark.asyncio
+    async def test_exists_missing(self, cache):
+        assert await cache.exists(pytest.KEY) is False
+
+    @pytest.mark.asyncio
+    async def test_exists_existing(self, cache):
+        await cache.set(pytest.KEY, "value")
+        assert await cache.exists(pytest.KEY) is True

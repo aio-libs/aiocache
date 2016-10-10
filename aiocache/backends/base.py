@@ -12,36 +12,40 @@ class BaseCache(metaclass=abc.ABCMeta):
         return DefaultSerializer()
 
     @abc.abstractmethod
-    async def add(self, key, value, ttl=None):
+    async def add(self, key, value, ttl=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def get(self, key, default=None):
+    async def get(self, key, default=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def multi_get(self, keys):
+    async def multi_get(self, keys):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def set(self, key, value, ttl=None):
+    async def set(self, key, value, ttl=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def multi_set(self, pairs):
+    async def multi_set(self, pairs):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def delete(self, key):
+    async def delete(self, key):  # pragma: no cover
         pass
 
-    async def expire(self, key, ttl):
+    @abc.abstractmethod
+    async def exists(self, key):  # pragma: no cover
+        pass
+
+    async def expire(self, key, ttl):  # pragma: no cover
         raise NotImplementedError
 
-    async def ttl(self, key):
+    async def ttl(self, key):  # pragma: no cover
         raise NotImplementedError
 
-    async def persist(self, key):
+    async def persist(self, key):  # pragma: no cover
         raise NotImplementedError
 
     def _build_key(self, key):

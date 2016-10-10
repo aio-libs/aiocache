@@ -26,10 +26,9 @@ def cached(ttl=0, backend=None, serializer=None, *args, **kwargs):
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
-            key = fn.__module__ + fn.__name__ + str(args) + str(kwargs)
-            value = await cache.get(key)
-            if value:
-                return value
+            key = (fn.__module__ or "stub") + fn.__name__ + str(args) + str(kwargs)
+            if await cache.exists(key):
+                return await cache.get(key)
             else:
                 res = await fn(*args, **kwargs)
                 await cache.set(key, res, ttl=ttl)

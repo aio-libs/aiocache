@@ -104,6 +104,16 @@ class RedisCache(BaseCache):
                     "Key {} already exists, use .set to update the value".format(key))
             return await redis.set(key, dumps(value), expire=ttl)
 
+    async def exists(self, key):
+        """
+        Check key exists in the cache.
+
+        :param key: str key to check
+        :returns: True if key exists otherwise False
+        """
+        with await self._connect() as redis:
+            return await redis.exists(self._build_key(key))
+
     async def delete(self, key):
         """
         Deletes the given key.

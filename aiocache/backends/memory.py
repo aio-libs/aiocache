@@ -95,6 +95,15 @@ class SimpleMemoryCache(BaseCache):
             loop.call_later(ttl, self._delete, key)
         return True
 
+    async def exists(self, key):
+        """
+        Check key exists in the cache.
+
+        :param key: str key to check
+        :returns: True if key exists otherwise False
+        """
+        return self._build_key(key) in SimpleMemoryCache._cache
+
     async def delete(self, key):
         """
         Deletes the given key.
