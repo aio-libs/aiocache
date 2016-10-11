@@ -8,11 +8,10 @@ from .base import BaseCache
 
 class RedisCache(BaseCache):
 
-    def __init__(self, endpoint=None, port=None, namespace=None, serializer=None, loop=None):
+    def __init__(self, endpoint=None, port=None, loop=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
-        self.serializer = serializer or self.get_serializer()
-        self.namespace = namespace or ""
         self._pool = None
         self._loop = loop or asyncio.get_event_loop()
 

@@ -25,7 +25,7 @@ def loads(value):
 
 
 async def main():
-    cache = RedisCache(namespace="main")
+    cache = RedisCache(namespace="main:")
     await cache.set("key", MyType(1, 2), dumps_fn=dumps)
     print(await cache.get("key", loads_fn=loads))
 

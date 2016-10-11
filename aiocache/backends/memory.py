@@ -11,10 +11,6 @@ class SimpleMemoryCache(BaseCache):
 
     _cache = {}
 
-    def __init__(self, namespace=None, serializer=None):
-        self.serializer = serializer or self.get_serializer()
-        self.namespace = namespace or ""
-
     async def get(self, key, default=None, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.

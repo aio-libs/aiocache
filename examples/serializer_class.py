@@ -12,7 +12,7 @@ class MySerializer:
 
 
 async def main():
-    cache = RedisCache(serializer=MySerializer(), namespace="main")
+    cache = RedisCache(serializer=MySerializer(), namespace="main:")
     await cache.set("key", "value")  # Will use MySerializer.dumps method
     print(await cache.get("key"))  # Will use MySerializer.loads method
 

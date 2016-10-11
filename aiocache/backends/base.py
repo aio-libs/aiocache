@@ -5,8 +5,21 @@ from aiocache.serializers import DefaultSerializer
 
 class BaseCache(metaclass=abc.ABCMeta):
     """
-    Base class that agregates the common logic for the different caches that may exist
+    Base class that agregates the common logic for the different caches that may exist. Available
+    options are:
+
+    :param serializer: obj with :class:`aiocache.serializers.BaseSerializer` interface.
+        Must implement ``loads`` and ``dumps`` methods.
+    :param namespace: string to use as prefix for the key used in all operations of the backend.
+    :param max_keys: int indicating the max number of keys to store in the backend. If not
+        specified or 0, it's unlimited.
     """
+
+    def __init__(self, serializer=None, namespace=None, max_keys=None):
+
+        self.serializer = serializer or self.get_serializer()
+        self.namespace = namespace or ""
+        self.max_keys = max_keys or None
 
     def get_serializer(self):
         return DefaultSerializer()
@@ -50,5 +63,5 @@ class BaseCache(metaclass=abc.ABCMeta):
 
     def _build_key(self, key):
         if self.namespace:
-            return "{}:{}".format(self.namespace, key)
+            return "{}{}".format(self.namespace, key)
         return key

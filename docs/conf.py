@@ -131,15 +131,6 @@ html_theme = 'default'
 # documentation.
 #
 # html_theme_options = {}
-html_theme_options = {
-    'github_user': 'argaen',
-    'github_repo': 'aiocache',
-    'github_button': True,
-    'github_type': 'star',
-    'github_banner': True,
-    'travis_button': True,
-    'codecov_button': True,
-}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []

@@ -9,7 +9,7 @@ MyObject = namedtuple("MyObject", ["x", "y"])
 
 
 async def main():
-    cache = RedisCache(serializer=PickleSerializer(), namespace="default")
+    cache = RedisCache(serializer=PickleSerializer(), namespace="default:")
     # This will serialize to pickle and store in redis with bytes format
     await cache.set("key", MyObject(x=1, y=2))
     # This will retrieve the object and deserialize back to MyObject

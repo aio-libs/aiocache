@@ -13,6 +13,11 @@ Now let's go with a more specific case. Let's pick Redis as the backend with nam
 #. "key" will become "test:key" when applying the ``build_key``
 #. "value" will become an array of bytes when calling ``serializer.serialize``
 
+BaseCache
+---------
+
+.. autoclass:: aiocache.backends.base.BaseCache
+  :members:
 
 RedisCache
 ----------
