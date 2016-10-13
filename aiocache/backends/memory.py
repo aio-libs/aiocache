@@ -22,10 +22,10 @@ class SimpleMemoryCache(BaseCache):
         """
 
         loads = loads_fn or self.serializer.loads
-        key = self._build_key(key)
+        ns_key = self._build_key(key)
 
         await self.policy.pre_get(key)
-        value = loads(SimpleMemoryCache._cache.get(key))
+        value = loads(SimpleMemoryCache._cache.get(ns_key))
 
         if value:
             await self.policy.post_get(key)
@@ -54,13 +54,13 @@ class SimpleMemoryCache(BaseCache):
         :returns: True
         """
         dumps = dumps_fn or self.serializer.dumps
-        key = self._build_key(key)
+        ns_key = self._build_key(key)
 
         await self.policy.pre_set(key, value)
-        SimpleMemoryCache._cache[key] = dumps(value)
+        SimpleMemoryCache._cache[ns_key] = dumps(value)
         if ttl:
             loop = asyncio.get_event_loop()
-            loop.call_later(ttl, self._delete, key)
+            loop.call_later(ttl, self._delete, ns_key)
 
         await self.policy.post_set(key, value)
         return True
@@ -92,17 +92,17 @@ class SimpleMemoryCache(BaseCache):
         :raises: Value error if key already exists
         """
         dumps = dumps_fn or self.serializer.dumps
-        key = self._build_key(key)
+        ns_key = self._build_key(key)
 
-        if key in SimpleMemoryCache._cache:
+        if ns_key in SimpleMemoryCache._cache:
             raise ValueError(
-                "Key {} already exists, use .set to update the value".format(key))
+                "Key {} already exists, use .set to update the value".format(ns_key))
 
         await self.policy.pre_set(key, value)
-        SimpleMemoryCache._cache[key] = dumps(value)
+        SimpleMemoryCache._cache[ns_key] = dumps(value)
         if ttl:
             loop = asyncio.get_event_loop()
-            loop.call_later(ttl, self._delete, key)
+            loop.call_later(ttl, self._delete, ns_key)
         await self.policy.post_set(key, value)
         return True
 

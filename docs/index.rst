@@ -14,6 +14,7 @@ Contents
 
   backends
   serializers
+  policies
   decorators
 
 Indices and tables
