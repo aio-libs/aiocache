@@ -41,7 +41,16 @@ class SimpleMemoryCache(BaseCache):
         :returns: obj loadsd
         """
         loads = loads_fn or self.serializer.loads
-        return [loads(SimpleMemoryCache._cache.get(self._build_key(key))) for key in keys]
+
+        for key in keys:
+            await self.policy.pre_get(key)
+
+        values = [loads(SimpleMemoryCache._cache.get(self._build_key(key))) for key in keys]
+
+        for key in keys:
+            await self.policy.post_get(key)
+
+        return values
 
     async def set(self, key, value, ttl=None, dumps_fn=None):
         """
@@ -76,7 +85,9 @@ class SimpleMemoryCache(BaseCache):
         dumps = dumps_fn or self.serializer.dumps
 
         for key, value in pairs:
+            await self.policy.pre_set(key, value)
             SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
+            await self.policy.post_set(key, value)
         return True
 
     async def add(self, key, value, ttl=None, dumps_fn=None):

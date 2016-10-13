@@ -52,9 +52,17 @@ class RedisCache(BaseCache):
         loads = loads_fn or self.serializer.loads
         encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
 
+        for key in keys:
+            await self.policy.pre_get(key)
+
         with await self._connect() as redis:
-            keys = [self._build_key(key) for key in keys]
-            return [loads(obj) for obj in (await redis.mget(*keys, encoding=encoding))]
+            ns_keys = [self._build_key(key) for key in keys]
+            values = [loads(obj) for obj in (await redis.mget(*ns_keys, encoding=encoding))]
+
+        for key in keys:
+            await self.policy.post_get(key)
+
+        return values
 
     async def set(self, key, value, ttl=None, dumps_fn=None):
         """
@@ -73,10 +81,10 @@ class RedisCache(BaseCache):
         await self.policy.pre_set(key, value)
 
         with await self._connect() as redis:
-            value = await redis.set(ns_key, dumps(value), expire=ttl)
+            ret = await redis.set(ns_key, dumps(value), expire=ttl)
 
         await self.policy.post_set(key, value)
-        return value
+        return ret
 
     async def multi_set(self, pairs, dumps_fn=None):
         """
@@ -88,11 +96,19 @@ class RedisCache(BaseCache):
         """
         dumps = dumps_fn or self.serializer.dumps
 
+        for key, value in pairs:
+            await self.policy.pre_set(key, value)
+
         with await self._connect() as redis:
             serialized_pairs = list(
                 chain.from_iterable(
                     (self._build_key(key), dumps(value)) for key, value in pairs))
-            return await redis.mset(*serialized_pairs)
+            ret = await redis.mset(*serialized_pairs)
+
+        for key, value in pairs:
+            await self.policy.post_set(key, value)
+
+        return ret
 
     async def add(self, key, value, ttl=None, dumps_fn=None):
         """
@@ -116,9 +132,10 @@ class RedisCache(BaseCache):
             if await redis.exists(ns_key):
                 raise ValueError(
                     "Key {} already exists, use .set to update the value".format(ns_key))
-            value = await redis.set(ns_key, dumps(value), expire=ttl)
-            await self.policy.post_set(key, value)
-            return value
+            ret = await redis.set(ns_key, dumps(value), expire=ttl)
+
+        await self.policy.post_set(key, value)
+        return ret
 
     async def exists(self, key):
         """

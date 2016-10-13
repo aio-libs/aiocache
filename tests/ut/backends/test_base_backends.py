@@ -42,6 +42,8 @@ class TestMockBackend:
 
         assert mock_cache.serializer.loads.call_count == 2
         assert mock_cache._build_key.call_count == 2
+        assert mock_cache.policy.pre_get.call_count == 2
+        assert mock_cache.policy.post_get.call_count == 2
 
     @pytest.mark.asyncio
     async def test_mset(self, mock_cache):
@@ -49,6 +51,8 @@ class TestMockBackend:
 
         assert mock_cache.serializer.dumps.call_count == 2
         assert mock_cache._build_key.call_count == 2
+        assert mock_cache.policy.pre_set.call_count == 2
+        assert mock_cache.policy.post_set.call_count == 2
 
     @pytest.mark.asyncio
     async def test_exists(self, mock_cache):
