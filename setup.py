@@ -5,16 +5,13 @@ tests_require = install_requires + ['pytest']
 
 setup(
     name="aiocache",
-    version="0.0.2",
+    version="0.0.3",
     author="Manuel Miranda",
     url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
     description="Asynchronous redis cache",
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
     ],
     packages=['aiocache'],
