@@ -3,8 +3,8 @@ import pytest
 
 class TestMockBackend:
     """
-    This class ensures that all backends behave the same way at logic level. It tries to ensure the calls
-    to the necessary methods like serialization and strategies are performed when needed.
+    This class ensures that all backends behave the same way at logic level. It tries to ensure
+    the calls to the necessary methods like serialization and strategies are performed when needed.
     To add a new backend just create the fixture for the new backend and add id as a param for the
     cache fixture
     """
@@ -15,6 +15,8 @@ class TestMockBackend:
 
         assert mock_cache.serializer.loads.call_count == 1
         assert mock_cache._build_key.call_count == 1
+        assert mock_cache.policy.pre_get.call_count == 1
+        assert mock_cache.policy.post_get.call_count == 1
 
     @pytest.mark.asyncio
     async def test_set(self, mock_cache):
@@ -22,6 +24,8 @@ class TestMockBackend:
 
         assert mock_cache.serializer.dumps.call_count == 1
         assert mock_cache._build_key.call_count == 1
+        assert mock_cache.policy.pre_set.call_count == 1
+        assert mock_cache.policy.post_set.call_count == 1
 
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
@@ -29,6 +33,8 @@ class TestMockBackend:
 
         assert mock_cache.serializer.dumps.call_count == 1
         assert mock_cache._build_key.call_count == 1
+        assert mock_cache.policy.pre_set.call_count == 1
+        assert mock_cache.policy.post_set.call_count == 1
 
     @pytest.mark.asyncio
     async def test_mget(self, mock_cache):

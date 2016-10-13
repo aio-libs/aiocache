@@ -8,3 +8,4 @@ pytest-mock==1.2
 codecov==2.0.5
 sphinx==1.4.6
 marshmallow==2.10.2
+asynctest==0.9.0

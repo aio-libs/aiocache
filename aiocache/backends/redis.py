@@ -28,10 +28,17 @@ class RedisCache(BaseCache):
 
         loads = loads_fn or self.serializer.loads
         encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
+        key = self._build_key(key)
+
+        await self.policy.pre_get(key)
 
         with await self._connect() as redis:
-            return loads(
-                await redis.get(self._build_key(key), encoding=encoding)) or default
+            value = loads(await redis.get(key, encoding=encoding))
+
+        if value:
+            await self.policy.post_get(key)
+
+        return value or default
 
     async def multi_get(self, keys, loads_fn=None, encoding=None):
         """
@@ -61,9 +68,15 @@ class RedisCache(BaseCache):
         """
         dumps = dumps_fn or self.serializer.dumps
         ttl = ttl or 0
+        key = self._build_key(key)
+
+        await self.policy.pre_set(key, value)
 
         with await self._connect() as redis:
-            return await redis.set(self._build_key(key), dumps(value), expire=ttl)
+            value = await redis.set(key, dumps(value), expire=ttl)
+
+        await self.policy.post_set(key, value)
+        return value
 
     async def multi_set(self, pairs, dumps_fn=None):
         """
@@ -95,13 +108,17 @@ class RedisCache(BaseCache):
         """
         dumps = dumps_fn or self.serializer.dumps
         ttl = ttl or 0
-
         key = self._build_key(key)
+
+        await self.policy.pre_set(key, value)
+
         with await self._connect() as redis:
             if await redis.exists(key):
                 raise ValueError(
                     "Key {} already exists, use .set to update the value".format(key))
-            return await redis.set(key, dumps(value), expire=ttl)
+            value = await redis.set(key, dumps(value), expire=ttl)
+            await self.policy.post_set(key, value)
+            return value
 
     async def exists(self, key):
         """

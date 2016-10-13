@@ -1,6 +1,7 @@
 import abc
 
 from aiocache.serializers import DefaultSerializer
+from aiocache.policies import DefaultPolicy
 
 
 class BaseCache(metaclass=abc.ABCMeta):
@@ -10,19 +11,24 @@ class BaseCache(metaclass=abc.ABCMeta):
 
     :param serializer: obj with :class:`aiocache.serializers.BaseSerializer` interface.
         Must implement ``loads`` and ``dumps`` methods.
+    :param policy: obj with :class:`aiocache.policies.DefaultPolicy` interface.
     :param namespace: string to use as prefix for the key used in all operations of the backend.
     :param max_keys: int indicating the max number of keys to store in the backend. If not
         specified or 0, it's unlimited.
     """
 
-    def __init__(self, serializer=None, namespace=None, max_keys=None):
+    def __init__(self, serializer=None, policy=None, namespace=None, max_keys=None):
 
         self.serializer = serializer or self.get_serializer()
+        self.policy = policy or self.get_policy()
         self.namespace = namespace or ""
         self.max_keys = max_keys or None
 
     def get_serializer(self):
         return DefaultSerializer()
+
+    def get_policy(self):
+        return DefaultPolicy(self)
 
     @abc.abstractmethod
     async def add(self, key, value, ttl=None):  # pragma: no cover

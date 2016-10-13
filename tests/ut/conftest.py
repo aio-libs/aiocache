@@ -29,11 +29,14 @@ async def dummy_pool(*args, **kwargs):
 @pytest.fixture
 def redis_mock_cache(event_loop, mocker):
     mocker.patch("aiocache.backends.redis.aioredis", asynctest.CoroutineMock(spec=aioredis))
-    mocker.patch("aiocache.backends.redis.RedisCache._connect", asynctest.CoroutineMock(side_effect=dummy_pool))
+    mocker.patch(
+        "aiocache.backends.redis.RedisCache._connect",
+        asynctest.CoroutineMock(side_effect=dummy_pool))
 
     cache = RedisCache(namespace="test:", loop=event_loop)
     cache.serializer = asynctest.MagicMock()
     cache._build_key = asynctest.MagicMock()
+    cache.policy = asynctest.CoroutineMock()
     yield cache
 
 
@@ -43,6 +46,7 @@ def memory_mock_cache(event_loop):
 
     cache.serializer = asynctest.MagicMock()
     cache._build_key = asynctest.MagicMock()
+    cache.policy = asynctest.CoroutineMock()
     yield cache
 
 
