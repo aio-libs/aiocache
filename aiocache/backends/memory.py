@@ -85,7 +85,7 @@ class SimpleMemoryCache(BaseCache):
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
 
-        SimpleMemoryCache._cache[self._build_key(key)] = dumps(value)
+        SimpleMemoryCache._cache[key] = dumps(value)
         if ttl:
             loop = asyncio.get_event_loop()
             loop.call_later(ttl, self._delete, key)

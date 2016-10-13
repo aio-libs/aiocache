@@ -91,7 +91,7 @@ Sometimes, you will want to use this decorator with specific backend and seriali
       return await aiocache.default_cache.get("key")
 
 
-  @cached(ttl=10, namespace="test")
+  @cached(ttl=10, namespace="test:")
   async def decorator_example():
       print("First ASYNC non cached call...")
       await asyncio.sleep(1)
@@ -127,7 +127,7 @@ You can instantiate a cache class and interact with it as follows:
 
 
   async def main():
-      cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
+      cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main:")
       await cache.set("key", "value")
       await cache.set("expire_me", "value", ttl=10)  # Key will expire after 10 secs
       print(await cache.get("key"))
@@ -154,7 +154,7 @@ In some cases, you may want to cache complex objects and depending on the backen
 
 
   async def main():
-      cache = RedisCache(serializer=PickleSerializer(), namespace="default")
+      cache = RedisCache(serializer=PickleSerializer(), namespace="default:")
       await cache.set("key", MyObject(x=1, y=2))  # This will serialize to pickle and store in redis with bytes format
       my_object = await cache.get("key")  # This will retrieve the object and deserialize back to MyObject
       print("MyObject x={}, y={}".format(my_object.x, my_object.y))
