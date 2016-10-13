@@ -1,6 +1,7 @@
 import abc
 
 from aiocache.serializers import DefaultSerializer
+from aiocache.policies import DefaultPolicy
 
 
 class BaseCache(metaclass=abc.ABCMeta):
@@ -18,11 +19,18 @@ class BaseCache(metaclass=abc.ABCMeta):
     def __init__(self, serializer=None, namespace=None, max_keys=None):
 
         self.serializer = serializer or self.get_serializer()
+        self.policy = self.get_policy()
         self.namespace = namespace or ""
         self.max_keys = max_keys or None
 
     def get_serializer(self):
         return DefaultSerializer()
+
+    def get_policy(self):
+        return DefaultPolicy(self)
+
+    def set_policy(self, class_, *args, **kwargs):
+        self.policy = class_(self, *args, **kwargs)
 
     @abc.abstractmethod
     async def add(self, key, value, ttl=None):  # pragma: no cover

@@ -8,7 +8,7 @@ from .base import BaseCache
 
 class RedisCache(BaseCache):
 
-    def __init__(self, endpoint=None, port=None, loop=None, *args, **kwargs):
+    def __init__(self, *args, endpoint=None, port=None, loop=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
@@ -28,10 +28,17 @@ class RedisCache(BaseCache):
 
         loads = loads_fn or self.serializer.loads
         encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
+        ns_key = self._build_key(key)
+
+        await self.policy.pre_get(key)
 
         with await self._connect() as redis:
-            return loads(
-                await redis.get(self._build_key(key), encoding=encoding)) or default
+            value = loads(await redis.get(ns_key, encoding=encoding))
+
+        if value:
+            await self.policy.post_get(key)
+
+        return value or default
 
     async def multi_get(self, keys, loads_fn=None, encoding=None):
         """
@@ -45,9 +52,17 @@ class RedisCache(BaseCache):
         loads = loads_fn or self.serializer.loads
         encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
 
+        for key in keys:
+            await self.policy.pre_get(key)
+
         with await self._connect() as redis:
-            keys = [self._build_key(key) for key in keys]
-            return [loads(obj) for obj in (await redis.mget(*keys, encoding=encoding))]
+            ns_keys = [self._build_key(key) for key in keys]
+            values = [loads(obj) for obj in (await redis.mget(*ns_keys, encoding=encoding))]
+
+        for key in keys:
+            await self.policy.post_get(key)
+
+        return values
 
     async def set(self, key, value, ttl=None, dumps_fn=None):
         """
@@ -61,9 +76,15 @@ class RedisCache(BaseCache):
         """
         dumps = dumps_fn or self.serializer.dumps
         ttl = ttl or 0
+        ns_key = self._build_key(key)
+
+        await self.policy.pre_set(key, value)
 
         with await self._connect() as redis:
-            return await redis.set(self._build_key(key), dumps(value), expire=ttl)
+            ret = await redis.set(ns_key, dumps(value), expire=ttl)
+
+        await self.policy.post_set(key, value)
+        return ret
 
     async def multi_set(self, pairs, dumps_fn=None):
         """
@@ -75,11 +96,19 @@ class RedisCache(BaseCache):
         """
         dumps = dumps_fn or self.serializer.dumps
 
+        for key, value in pairs:
+            await self.policy.pre_set(key, value)
+
         with await self._connect() as redis:
             serialized_pairs = list(
                 chain.from_iterable(
                     (self._build_key(key), dumps(value)) for key, value in pairs))
-            return await redis.mset(*serialized_pairs)
+            ret = await redis.mset(*serialized_pairs)
+
+        for key, value in pairs:
+            await self.policy.post_set(key, value)
+
+        return ret
 
     async def add(self, key, value, ttl=None, dumps_fn=None):
         """
@@ -95,13 +124,18 @@ class RedisCache(BaseCache):
         """
         dumps = dumps_fn or self.serializer.dumps
         ttl = ttl or 0
+        ns_key = self._build_key(key)
 
-        key = self._build_key(key)
+        await self.policy.pre_set(key, value)
+
         with await self._connect() as redis:
-            if await redis.exists(key):
+            if await redis.exists(ns_key):
                 raise ValueError(
-                    "Key {} already exists, use .set to update the value".format(key))
-            return await redis.set(key, dumps(value), expire=ttl)
+                    "Key {} already exists, use .set to update the value".format(ns_key))
+            ret = await redis.set(ns_key, dumps(value), expire=ttl)
+
+        await self.policy.post_set(key, value)
+        return ret
 
     async def exists(self, key):
         """

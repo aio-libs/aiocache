@@ -11,7 +11,7 @@ def pytest_namespace():
 
 
 @pytest.fixture
-def redis_cache(event_loop, mocker):
+def redis_cache(event_loop):
     cache = RedisCache(namespace="test", loop=event_loop)
     yield cache
 

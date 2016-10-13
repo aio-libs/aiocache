@@ -8,7 +8,7 @@ from aiocache.serializers import DefaultSerializer
 logger = logging.getLogger(__name__)
 
 
-def cached(ttl=0, backend=None, serializer=None, *args, **kwargs):
+def cached(*args, ttl=0, backend=None, serializer=None, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -37,7 +37,7 @@ def cached(ttl=0, backend=None, serializer=None, *args, **kwargs):
     return cached_decorator
 
 
-def get_default_cache(backend=None, serializer=None, *args, **kwargs):
+def get_default_cache(*args, backend=None, serializer=None, **kwargs):
     serializer = serializer if serializer else DefaultSerializer()
     if backend:
         return backend(serializer=serializer, *args, **kwargs)
