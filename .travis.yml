@@ -13,6 +13,7 @@ script:
 
 services:
   - redis-server
+  - memcached
 
 after_success:
   - codecov

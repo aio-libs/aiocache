@@ -18,7 +18,7 @@ Current supported backends are:
 
 - SimpleMemoryCache
 - RedisCache using aioredis_
-- MemCache using aiomcache_ IN PROGRESS
+- MemCache using aiomcache_
 
 
 This libraries aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
