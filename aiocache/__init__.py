@@ -1,10 +1,11 @@
-from .backends import RedisCache, SimpleMemoryCache
+from .backends import RedisCache, SimpleMemoryCache, MemcachedCache
 from .utils import cached, multi_cached
 
 
 __all__ = (
     'RedisCache',
     'SimpleMemoryCache',
+    'MemcachedCache',
     'cached',
     'multi_cached',
 )

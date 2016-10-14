@@ -56,6 +56,7 @@ def loads(x):
 @pytest.fixture(params=[
     'redis_cache',
     'memory_cache',
+    'memcached_cache',
 ])
 def cache(request):
     return request.getfuncargvalue(request.param)

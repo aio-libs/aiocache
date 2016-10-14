@@ -33,3 +33,10 @@ SimpleMemoryCache
 .. autoclass:: aiocache.SimpleMemoryCache
   :members:
   :undoc-members:
+
+MemcachedCache
+--------------
+
+.. autoclass:: aiocache.MemcachedCache
+  :members:
+  :undoc-members:

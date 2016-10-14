@@ -1,6 +1,6 @@
 import pytest
 
-from aiocache import RedisCache, SimpleMemoryCache
+from aiocache import RedisCache, SimpleMemoryCache, MemcachedCache
 
 
 def pytest_namespace():
@@ -25,6 +25,15 @@ def redis_cache(event_loop):
 @pytest.fixture
 def memory_cache(event_loop):
     cache = SimpleMemoryCache(namespace="test")
+    yield cache
+
+    event_loop.run_until_complete(cache.delete(pytest.KEY))
+    event_loop.run_until_complete(cache.delete(pytest.KEY_1))
+
+
+@pytest.fixture
+def memcached_cache(event_loop):
+    cache = MemcachedCache(namespace="test", loop=event_loop)
     yield cache
 
     event_loop.run_until_complete(cache.delete(pytest.KEY))
