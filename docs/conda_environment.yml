@@ -12,3 +12,4 @@ dependencies:
 - zlib=1.2.8=0
 - pip:
   - aioredis==0.2.8
+  - aiomcache==0.4.0
