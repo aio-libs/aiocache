@@ -8,7 +8,7 @@ from aiocache.serializers import DefaultSerializer
 logger = logging.getLogger(__name__)
 
 
-def cached(*args, ttl=0, backend=None, serializer=None, **kwargs):
+def cached(*args, ttl=0, key_attribute=None, backend=None, serializer=None, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -17,6 +17,8 @@ def cached(*args, ttl=0, backend=None, serializer=None, **kwargs):
     to the backend class when instantiating.
 
     :param ttl: int seconds to store the function call. Default is 0
+    :param key_attribute: keyword attribute from the function to use as a key. If not passed,
+        it will use module_name + function_name + args + kwargs
     :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
         :class:`aiocache.backends.SimpleMemoryCache`
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
@@ -26,7 +28,8 @@ def cached(*args, ttl=0, backend=None, serializer=None, **kwargs):
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
-            key = (fn.__module__ or "stub") + fn.__name__ + str(args) + str(kwargs)
+            key = kwargs.get(
+                key_attribute, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
             if await cache.exists(key):
                 return await cache.get(key)
             else:
@@ -37,7 +40,7 @@ def cached(*args, ttl=0, backend=None, serializer=None, **kwargs):
     return cached_decorator
 
 
-def multi_cached(*args, backend=None, serializer=None, **kwargs):
+def multi_cached(*args, key_attribute=None, backend=None, serializer=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -47,6 +50,9 @@ def multi_cached(*args, backend=None, serializer=None, **kwargs):
             returned in the response. If its not the case, the call to the function will always
             be done (although the returned values will all be cached).
 
+    :param key_attribute: keyword attribute from the function containing an iterable to use
+        as a keys. If not passed, it will try with 'keys' attribute and if none of them exists,
+        it won't try to reuse keys from the cache
     :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
         :class:`aiocache.backends.SimpleMemoryCache`
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
@@ -58,7 +64,7 @@ def multi_cached(*args, backend=None, serializer=None, **kwargs):
         async def wrapper(*args, **kwargs):
             partial_dict = {}
             missing_keys = []
-            keys = (kwargs.pop("keys", []))
+            keys = kwargs.get(key_attribute, [])
             if keys:
                 values = await cache.multi_get(keys)
                 for key, value in zip(keys, values):
