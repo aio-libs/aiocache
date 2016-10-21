@@ -14,7 +14,7 @@ An asynchronous cache implementation with multiple backends for asyncio. Used `d
 
 Disclaimer: The code is still in **alpha** version so new versions may introduce breaking changes. Once version 1.0 is reached, deprecation policy will be introduced.
 
-Current supported backends are:
+Supported backends:
 
 - SimpleMemoryCache
 - RedisCache using aioredis_

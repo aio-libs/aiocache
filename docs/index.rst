@@ -6,12 +6,11 @@
 Welcome to aiocache's documentation!
 ====================================
 
-.. include:: ../README.rst
-
 Contents
 
 .. toctree::
 
+  usage
   backends
   serializers
   policies
