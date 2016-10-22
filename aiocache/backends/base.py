@@ -60,15 +60,6 @@ class BaseCache(metaclass=abc.ABCMeta):
     async def exists(self, key):  # pragma: no cover
         pass
 
-    async def expire(self, key, ttl):  # pragma: no cover
-        raise NotImplementedError
-
-    async def ttl(self, key):  # pragma: no cover
-        raise NotImplementedError
-
-    async def persist(self, key):  # pragma: no cover
-        raise NotImplementedError
-
     def _build_key(self, key):
         if self.namespace:
             return "{}{}".format(self.namespace, key)

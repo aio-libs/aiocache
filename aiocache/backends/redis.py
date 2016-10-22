@@ -1,7 +1,6 @@
 import asyncio
+import itertools
 import aioredis
-
-from itertools import chain
 
 from .base import BaseCache
 
@@ -57,7 +56,7 @@ class RedisCache(BaseCache):
 
         with await self._connect() as redis:
             ns_keys = [self._build_key(key) for key in keys]
-            values = [loads(obj) for obj in (await redis.mget(*ns_keys, encoding=encoding))]
+            values = [loads(obj) for obj in await redis.mget(*ns_keys, encoding=encoding)]
 
         for key in keys:
             await self.policy.post_get(key)
@@ -101,7 +100,7 @@ class RedisCache(BaseCache):
 
         with await self._connect() as redis:
             serialized_pairs = list(
-                chain.from_iterable(
+                itertools.chain.from_iterable(
                     (self._build_key(key), dumps(value)) for key, value in pairs))
             ret = await redis.mset(*serialized_pairs)
 
@@ -156,10 +155,6 @@ class RedisCache(BaseCache):
         """
         with await self._connect() as redis:
             return await redis.delete(self._build_key(key))
-
-    async def ttl(self, key):
-        with await self._connect() as redis:
-            return await redis.ttl(self._build_key(key))
 
     async def _connect(self):
         if self._pool is None:

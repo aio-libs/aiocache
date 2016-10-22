@@ -152,7 +152,7 @@ class TestBackend:
 
     @pytest.mark.asyncio
     async def test_add_missing(self, cache):
-        assert await cache.add(pytest.KEY, "value") is True
+        assert await cache.add(pytest.KEY, "value", ttl=1) is True
 
     @pytest.mark.asyncio
     async def test_add_existing(self, cache):

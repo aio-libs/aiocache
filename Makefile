@@ -1,6 +1,9 @@
 syntax:
 	flake8
 
+pylint:
+	pylint --disable=C0111 aiocache
+
 ut:
 	pytest -sv tests/ut
 

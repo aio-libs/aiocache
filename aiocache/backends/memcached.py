@@ -51,7 +51,7 @@ class MemcachedCache(BaseCache):
             await self.policy.pre_get(key)
 
         ns_keys = [self._build_key(key) for key in keys]
-        values = [obj for obj in (await self.client.multi_get(*ns_keys))]
+        values = [obj for obj in await self.client.multi_get(*ns_keys)]
 
         decoded_values = []
         for value in values:
@@ -140,7 +140,7 @@ class MemcachedCache(BaseCache):
         :param key: Key to be deleted
         :returns: int number of deleted keys
         """
-        return (1 if await self.client.delete(self._build_key(key)) else 0)
+        return 1 if await self.client.delete(self._build_key(key)) else 0
 
     async def exists(self, key):
         """
