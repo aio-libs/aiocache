@@ -40,7 +40,7 @@ def cached(*args, ttl=0, key_attribute=None, backend=None, serializer=None, **kw
     return cached_decorator
 
 
-def multi_cached(*args, key_attribute=None, backend=None, serializer=None, **kwargs):
+def multi_cached(*args, keys_attribute=None, backend=None, serializer=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -50,7 +50,7 @@ def multi_cached(*args, key_attribute=None, backend=None, serializer=None, **kwa
             returned in the response. If its not the case, the call to the function will always
             be done (although the returned values will all be cached).
 
-    :param key_attribute: keyword attribute from the function containing an iterable to use
+    :param keys_attribute: keyword attribute from the function containing an iterable to use
         as a keys. If not passed, it will try with 'keys' attribute and if none of them exists,
         it won't try to reuse keys from the cache
     :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
@@ -64,7 +64,7 @@ def multi_cached(*args, key_attribute=None, backend=None, serializer=None, **kwa
         async def wrapper(*args, **kwargs):
             partial_dict = {}
             missing_keys = []
-            keys = kwargs.get(key_attribute, [])
+            keys = kwargs.get(keys_attribute, [])
             if keys:
                 values = await cache.multi_get(keys)
                 for key, value in zip(keys, values):
