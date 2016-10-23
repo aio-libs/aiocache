@@ -29,7 +29,8 @@ def mock_cache(mocker):
     mocker.spy(cache, 'get')
     mocker.spy(cache, 'exists')
     mocker.spy(cache, 'set')
-    return cache
+    yield cache
+    del aiocache.default_cache
 
 
 class TestCachedDecorator:
@@ -109,6 +110,11 @@ class TestMultiCachedDecorator:
 
 
 class TestDefaultCache:
+
+    @pytest.fixture(autouse=True)
+    def clean_default_cache(self):
+        if hasattr(aiocache, 'default_cache'):
+            del aiocache.default_cache
 
     @pytest.mark.asyncio
     async def test_default_cache_with_backend(self):

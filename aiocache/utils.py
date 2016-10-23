@@ -84,7 +84,7 @@ def get_default_cache(*args, backend=None, serializer=None, **kwargs):
     serializer = serializer if serializer else DefaultSerializer()
     if backend:
         return backend(serializer=serializer, *args, **kwargs)
-    elif aiocache.default_cache:
+    elif hasattr(aiocache, 'default_cache'):
         return aiocache.default_cache
     else:
         return SimpleMemoryCache(serializer=serializer, *args, **kwargs)
