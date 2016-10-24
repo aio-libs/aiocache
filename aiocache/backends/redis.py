@@ -156,6 +156,16 @@ class RedisCache(BaseCache):
         with await self._connect() as redis:
             return await redis.delete(self._build_key(key))
 
+    async def raw(self, command, *args, **kwargs):
+        """
+        Executes a raw command using the underlying client of aioredis. It's under
+        the developer responsibility to send the needed args and kwargs.
+
+        :param command: str command to execute
+        """
+        with await self._connect() as redis:
+            return await getattr(redis, command)(*args, **kwargs)
+
     async def _connect(self):
         if self._pool is None:
             self._pool = await aioredis.create_pool(

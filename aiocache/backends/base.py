@@ -60,6 +60,10 @@ class BaseCache(metaclass=abc.ABCMeta):
     async def exists(self, key):  # pragma: no cover
         pass
 
+    @abc.abstractmethod
+    async def raw(self, command, *args, **kwargs):
+        pass
+
     def _build_key(self, key):
         if self.namespace:
             return "{}{}".format(self.namespace, key)

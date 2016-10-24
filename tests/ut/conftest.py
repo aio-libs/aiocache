@@ -2,7 +2,6 @@ import pytest
 import asynctest
 
 from aiocache import RedisCache, SimpleMemoryCache, MemcachedCache
-from aiocache.serializers import DefaultSerializer
 
 
 def pytest_namespace():
