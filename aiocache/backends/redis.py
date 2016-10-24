@@ -14,49 +14,49 @@ class RedisCache(BaseCache):
         self._pool = None
         self._loop = loop or asyncio.get_event_loop()
 
-    async def get(self, key, default=None, loads_fn=None, encoding=None):
+    @property
+    def _encoding(self):
+        return getattr(self.serializer, "encoding", "utf-8")
+
+    async def get(self, key, default=None, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
         :param default: obj to return when key is not found
         :param loads_fn: callable alternative to use as loads function
-        :param encoding: alternative encoding to use. Default is to use the self.serializer.encoding
         :returns: obj deserialized
         """
 
         loads = loads_fn or self.serializer.loads
-        encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
         ns_key = self._build_key(key)
 
         await self.policy.pre_get(key)
 
         with await self._connect() as redis:
-            value = loads(await redis.get(ns_key, encoding=encoding))
+            value = loads(await redis.get(ns_key, encoding=self._encoding))
 
         if value:
             await self.policy.post_get(key)
 
         return value or default
 
-    async def multi_get(self, keys, loads_fn=None, encoding=None):
+    async def multi_get(self, keys, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
         :param loads_fn: callable alternative to use as loads function
-        :param encoding: alternative encoding to use. Default is to use the self.serializer.encoding
         :returns: obj deserialized
         """
         loads = loads_fn or self.serializer.loads
-        encoding = encoding or getattr(self.serializer, "encoding", 'utf-8')
 
         for key in keys:
             await self.policy.pre_get(key)
 
         with await self._connect() as redis:
             ns_keys = [self._build_key(key) for key in keys]
-            values = [loads(obj) for obj in await redis.mget(*ns_keys, encoding=encoding)]
+            values = [loads(obj) for obj in await redis.mget(*ns_keys, encoding=self._encoding)]
 
         for key in keys:
             await self.policy.post_get(key)

@@ -33,23 +33,23 @@ class BaseCache(metaclass=abc.ABCMeta):
         self.policy = class_(self, *args, **kwargs)
 
     @abc.abstractmethod
-    async def add(self, key, value, ttl=None):  # pragma: no cover
+    async def add(self, key, value, ttl=None, dumps_fn=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def get(self, key, default=None):  # pragma: no cover
+    async def get(self, key, default=None, loads_fn=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def multi_get(self, keys):  # pragma: no cover
+    async def multi_get(self, keys, loads_fn=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def set(self, key, value, ttl=None):  # pragma: no cover
+    async def set(self, key, value, ttl=None, dumps_fn=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    async def multi_set(self, pairs):  # pragma: no cover
+    async def multi_set(self, pairs, dumps_fn=None):  # pragma: no cover
         pass
 
     @abc.abstractmethod

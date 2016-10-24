@@ -13,6 +13,10 @@ class MemcachedCache(BaseCache):
         self._loop = loop or asyncio.get_event_loop()
         self.client = aiomcache.Client(self.endpoint, self.port, loop=self._loop)
 
+    @property
+    def _encoding(self):
+        return getattr(self.serializer, "encoding", "utf-8")
+
     async def get(self, key, default=None, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.
@@ -31,7 +35,7 @@ class MemcachedCache(BaseCache):
         value = await self.client.get(ns_key)
 
         if value:
-            if isinstance(value, bytes):
+            if isinstance(value, bytes) and self._encoding:
                 value = bytes.decode(value)
             await self.policy.post_get(key)
 
@@ -55,7 +59,7 @@ class MemcachedCache(BaseCache):
 
         decoded_values = []
         for value in values:
-            if value is not None and isinstance(value, bytes):
+            if value is not None and isinstance(value, bytes) and self._encoding:
                 decoded_values.append(loads(bytes.decode(value)))
             else:
                 decoded_values.append(loads(value))

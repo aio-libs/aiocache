@@ -1,4 +1,3 @@
-import abc
 import logging
 
 
@@ -17,18 +16,7 @@ except ImportError:
     import pickle
 
 
-class BaseSerializer(metaclass=abc.ABCMeta):
-
-    @abc.abstractmethod
-    def dumps(self, value):
-        pass
-
-    @abc.abstractmethod
-    def loads(self, value):
-        pass
-
-
-class DefaultSerializer(BaseSerializer):
+class DefaultSerializer:
     """
     Dummy serializer that returns the same value passed both in serialize and
     deserialize methods.
@@ -44,7 +32,7 @@ class DefaultSerializer(BaseSerializer):
         return value
 
 
-class PickleSerializer(BaseSerializer):
+class PickleSerializer(DefaultSerializer):
     """
     Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
     """
@@ -72,7 +60,7 @@ class PickleSerializer(BaseSerializer):
         return pickle.loads(value)
 
 
-class JsonSerializer(BaseSerializer):
+class JsonSerializer(DefaultSerializer):
     """
     Transform data to json string with json.dumps and json.loads to retrieve it back.
     """

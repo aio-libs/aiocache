@@ -131,10 +131,10 @@ class TestBackend:
         (MyType(), serializers.PickleSerializer),
         (MyType().__dict__, serializers.JsonSerializer),
     ])
-    async def test_get_complex_type(self, redis_cache, obj, serializer):
-        redis_cache.serializer = serializer()
-        await redis_cache.set(pytest.KEY, obj)
-        assert await redis_cache.get(pytest.KEY) == obj
+    async def test_get_complex_type(self, cache, obj, serializer):
+        cache.serializer = serializer()
+        await cache.set(pytest.KEY, obj)
+        assert await cache.get(pytest.KEY) == obj
 
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer_functions(self, cache):
