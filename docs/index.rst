@@ -15,6 +15,7 @@ Contents
   serializers
   policies
   decorators
+  testing
 
 Indices and tables
 ==================

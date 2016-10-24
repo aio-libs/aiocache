@@ -77,6 +77,7 @@ Documentation
 - `Serializers <http://aiocache.readthedocs.io/en/latest/serializers.html>`_
 - `Policies <http://aiocache.readthedocs.io/en/latest/policies.html>`_
 - `Decorators <http://aiocache.readthedocs.io/en/latest/decorators.html>`_
+- `Testing <http://aiocache.readthedocs.io/en/latest/testing.html>`_
 - `Examples <https://github.com/argaen/aiocache/tree/master/examples>`_
 
 
