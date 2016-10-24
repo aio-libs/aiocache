@@ -9,7 +9,6 @@ async def main():
     await cache.set("expire_me", "value", ttl=10)  # Key will expire after 10 secs
     print(await cache.get("key"))
     print(await cache.get("expire_me"))
-    print(await cache.ttl("expire_me"))
 
 
 if __name__ == "__main__":
