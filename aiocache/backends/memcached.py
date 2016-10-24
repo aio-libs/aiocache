@@ -155,6 +155,15 @@ class MemcachedCache(BaseCache):
         """
         return await self.client.append(self._build_key(key), b'')
 
+    async def raw(self, command, *args, **kwargs):
+        """
+        Executes a raw command using the underlying client of memcached. It's under
+        the developer responsibility to send the needed args and kwargs.
+
+        :param command: str command to execute
+        """
+        return await getattr(self.client, command)(*args, **kwargs)
+
     def _build_key(self, key):
         ns_key = super()._build_key(key)
         return str.encode(ns_key)

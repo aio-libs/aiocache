@@ -136,5 +136,14 @@ class SimpleMemoryCache(BaseCache):
         key = self._build_key(key)
         return self._delete(key)
 
+    async def raw(self, command, *args, **kwargs):
+        """
+        Executes a raw command using the underlying dict structure. It's under
+        the developer responsibility to send the needed args and kwargs.
+
+        :param command: str command to execute
+        """
+        return getattr(SimpleMemoryCache._cache, command)(*args, **kwargs)
+
     def _delete(self, key):
         return SimpleMemoryCache._cache.pop(key, 0)
