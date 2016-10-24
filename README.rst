@@ -30,6 +30,7 @@ This libraries aims for simplicity over specialization. It provides a common int
 - ``multi_get``
 - ``multi_set``
 - ``delete``
+- ``raw``: Sends raw command to the underlying client
 
 
 Usage
