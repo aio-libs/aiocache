@@ -144,7 +144,8 @@ class RedisCache(BaseCache):
         :returns: True if key exists otherwise False
         """
         with await self._connect() as redis:
-            return await redis.exists(self._build_key(key))
+            exists = await redis.exists(self._build_key(key))
+            return True if exists > 0 else False
 
     async def delete(self, key):
         """
