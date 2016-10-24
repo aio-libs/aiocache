@@ -10,7 +10,7 @@ async def main():
     await cache.set("key", "value")
     await cache.set("key_1", "value")
     await cache.set("key_2", "value")
-    print(cache.policy.dq)
+    print(cache.policy.deque)
     print(await cache.exists("key"))
 
 

@@ -37,12 +37,14 @@ class LRUPolicy(DefaultPolicy):
         - When a key is added (set, mset or add), keys are added to the beginning of the queue. If
             the queue is full, it will remove as many keys as needed to make space for the new
             ones.
+
+    The queue is implemented using a Python deque so it is NOT persistent!
     """
     def __init__(self, *args, max_keys=None, **kwargs):
         super().__init__(*args, **kwargs)
         if max_keys is not None:
             assert max_keys >= 1, "Number of keys must be 1 or bigger"
-        self.dq = deque(maxlen=max_keys)
+        self.deque = deque(maxlen=max_keys)
 
     async def post_get(self, key):
         """
@@ -50,8 +52,8 @@ class LRUPolicy(DefaultPolicy):
 
         :param key: string key used in the get operation
         """
-        self.dq.remove(key)
-        self.dq.appendleft(key)
+        self.deque.remove(key)
+        self.deque.appendleft(key)
 
     async def post_set(self, key, value):
         """
@@ -61,6 +63,6 @@ class LRUPolicy(DefaultPolicy):
         :param key: string key used in the set operation
         :param value: obj used in the set operation
         """
-        if len(self.dq) == self.dq.maxlen:
-            await self.client.delete(self.dq.pop())
-        self.dq.appendleft(key)
+        if len(self.deque) == self.deque.maxlen:
+            await self.client.delete(self.deque.pop())
+        self.deque.appendleft(key)
