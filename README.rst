@@ -10,18 +10,9 @@ aiocache
 .. image:: https://badge.fury.io/py/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
-An asynchronous cache implementation with multiple backends for asyncio. Used `django-redis-cache <https://github.com/sebleier/django-redis-cache>`_ and `redis-simple-cache <https://github.com/vivekn/redis-simple-cache>`_ as inspiration for the initial structure.
+The asyncio cache that implements multiple backends.
 
-Disclaimer: The code is still in **alpha** version so new versions may introduce breaking changes. Once version 1.0 is reached, deprecation policy will be introduced.
-
-Supported backends:
-
-- SimpleMemoryCache
-- RedisCache using aioredis_
-- MemCache using aiomcache_
-
-
-This libraries aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
+This library aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
 
 - ``add``
 - ``exists``
@@ -31,6 +22,21 @@ This libraries aims for simplicity over specialization. It provides a common int
 - ``multi_set``
 - ``delete``
 - ``raw``: Sends raw command to the underlying client
+
+
+How does it work
+----------------
+
+Aiocache provides 3 main entities:
+
+- **backends**: Allow you specify which backend you want to use for your cache. Currently supporting: SimpleMemoryCache, RedisCache using aioredis_ and MemCache using aiomcache_.
+- **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: DefaultSerializer, PickleSerializer, JsonSerializer.
+- **policies**: Allows the cache to use a policy. Currently supporting: DefaultPolicy, LRUPolicy.
+
+Those 3 entities combine during some of the cache operations to apply the desired command (backend), data transformation (serializer) and pre/post hooks (policies). To have a better vision of what happens, here you can check how ``set`` function works in ``aiocache``:
+
+.. image:: docs/images/set_operation_flow.png
+  :align: center
 
 
 Usage
