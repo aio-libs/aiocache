@@ -30,6 +30,7 @@ def mock_cache(mocker):
     mocker.spy(cache, 'exists')
     mocker.spy(cache, 'set')
     yield cache
+    SimpleMemoryCache._cache = {}
     del aiocache.default_cache
 
 
@@ -59,11 +60,28 @@ class TestCachedDecorator:
         mocker.spy(module, 'stub')
         cached_decorator = cached(key_attribute="key")
 
-        await cached_decorator(stub)(key='key')
-        await cached_decorator(stub)(key='key')
+        resp1 = await cached_decorator(stub)(key='key')
+        resp2 = await cached_decorator(stub)(key='key')
+
+        assert stub.call_count == 1
+        assert resp1 is resp2
 
         mock_cache.get.assert_called_with('key')
         mock_cache.set.assert_called_with('key', mock.ANY, ttl=0)
+
+    @pytest.mark.asyncio
+    async def test_cached_key(self, mocker, mock_cache):
+        module = sys.modules[globals()['__name__']]
+        mocker.spy(module, 'stub')
+        cached_decorator = cached(key="key")
+
+        resp1 = await cached_decorator(stub)()
+        resp2 = await cached_decorator(stub)()
+
+        assert stub.call_count == 1
+        assert resp1 is resp2
+
+        assert await mock_cache.get("key") is not None
 
 
 class TestMultiCachedDecorator:

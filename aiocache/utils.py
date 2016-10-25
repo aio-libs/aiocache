@@ -8,7 +8,7 @@ from aiocache.serializers import DefaultSerializer
 logger = logging.getLogger(__name__)
 
 
-def cached(*args, ttl=0, key_attribute=None, backend=None, serializer=None, **kwargs):
+def cached(*args, ttl=0, key=None, key_attribute=None, backend=None, serializer=None, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -17,6 +17,8 @@ def cached(*args, ttl=0, key_attribute=None, backend=None, serializer=None, **kw
     to the backend class when instantiating.
 
     :param ttl: int seconds to store the function call. Default is 0
+    :param key: str value to set as key for the function return. Takes precedence over
+        key_attribute param.
     :param key_attribute: keyword attribute from the function to use as a key. If not passed,
         it will use module_name + function_name + args + kwargs
     :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
@@ -28,13 +30,13 @@ def cached(*args, ttl=0, key_attribute=None, backend=None, serializer=None, **kw
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
-            key = kwargs.get(
+            cache_key = key or kwargs.get(
                 key_attribute, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
-            if await cache.exists(key):
-                return await cache.get(key)
+            if await cache.exists(cache_key):
+                return await cache.get(cache_key)
             else:
                 res = await fn(*args, **kwargs)
-                await cache.set(key, res, ttl=ttl)
+                await cache.set(cache_key, res, ttl=ttl)
                 return res
         return wrapper
     return cached_decorator
