@@ -66,7 +66,7 @@ def multi_cached(*args, keys_attribute=None, backend=None, serializer=None, **kw
         async def wrapper(*args, **kwargs):
             partial_dict = {}
             missing_keys = []
-            keys = kwargs.get(keys_attribute, [])
+            keys = kwargs.get(keys_attribute or "keys", [])
             if keys:
                 values = await cache.multi_get(keys)
                 for key, value in zip(keys, values):
@@ -74,9 +74,10 @@ def multi_cached(*args, keys_attribute=None, backend=None, serializer=None, **kw
                         partial_dict[key] = value
                     else:
                         missing_keys.append(key)
-                kwargs['keys'] = missing_keys
-            partial_dict.update(await fn(*args, **kwargs))
-            await cache.multi_set([(key, value) for key, value in partial_dict.items()])
+                kwargs[keys_attribute or "keys"] = missing_keys
+            if missing_keys:
+                partial_dict.update(await fn(*args, **kwargs))
+                await cache.multi_set([(key, value) for key, value in partial_dict.items()])
             return partial_dict
         return wrapper
     return multi_cached_decorator

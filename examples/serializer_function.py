@@ -17,11 +17,11 @@ class MyTypeSchema(Schema):
 
 def dumps(value):
     # Current implementation can't deal directly with dicts so we must cast to string
-    return str(MyTypeSchema().dump(value).data)
+    return MyTypeSchema().dumps(value).data
 
 
 def loads(value):
-    return dict(MyTypeSchema().load(value).data)
+    return MyTypeSchema().loads(value).data
 
 
 async def main():

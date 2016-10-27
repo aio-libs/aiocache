@@ -92,8 +92,8 @@ class TestMultiCachedDecorator:
         cached_decorator = multi_cached(keys_attribute='keys')
 
         default_keys = {'a', 'd', 'z', 'y'}
-        resp_default = await cached_decorator(return_dict)()
-        return_dict.assert_called_with()
+        resp_default = await cached_decorator(return_dict)(keys=default_keys)
+        return_dict.assert_called_with(keys=list(default_keys))
         assert default_keys == set(resp_default.keys())
 
         keys1 = {'a', 'b', 'c'}

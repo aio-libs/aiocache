@@ -10,7 +10,7 @@ Result = namedtuple('Result', "content, status")
 
 @cached(ttl=10, backend=RedisCache, serializer=PickleSerializer(), port=6379)
 async def async_main():
-    print("First ASYNC non cached call...")
+    print("ASYNC non cached call...")
     await asyncio.sleep(1)
     return Result("content", 200)
 
