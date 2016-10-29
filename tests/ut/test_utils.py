@@ -21,7 +21,7 @@ async def stub(*args, **kwargs):
 
 
 @pytest.fixture
-def mock_cache(mocker):
+def memory_mock_cache(mocker):
     config_default_cache()
     cache = get_default_cache()
     mocker.spy(cache, 'multi_set')
@@ -36,8 +36,12 @@ def mock_cache(mocker):
 
 class TestCachedDecorator:
 
+    @pytest.fixture(autouse=True)
+    def default_cache(self, mocker, memory_mock_cache):
+        mocker.patch("aiocache.utils.get_default_cache", return_value=memory_mock_cache)
+
     @pytest.mark.asyncio
-    async def test_cached_ttl(self, mocker, mock_cache):
+    async def test_cached_ttl(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'stub')
         cached_decorator = cached(ttl=10)
@@ -48,14 +52,14 @@ class TestCachedDecorator:
         assert stub.call_count == 1
         assert resp1 is resp2
 
-        mock_cache.get.assert_called_with('stubstub(1,){}')
-        assert mock_cache.get.call_count == 1
-        assert mock_cache.exists.call_count == 2
-        mock_cache.set.assert_called_with('stubstub(1,){}', mock.ANY, ttl=10)
-        assert mock_cache.set.call_count == 1
+        memory_mock_cache.get.assert_called_with('stubstub(1,){}')
+        assert memory_mock_cache.get.call_count == 1
+        assert memory_mock_cache.exists.call_count == 2
+        memory_mock_cache.set.assert_called_with('stubstub(1,){}', mock.ANY, ttl=10)
+        assert memory_mock_cache.set.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_cached_key_attribute(self, mocker, mock_cache):
+    async def test_cached_key_attribute(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'stub')
         cached_decorator = cached(key_attribute="key")
@@ -66,11 +70,11 @@ class TestCachedDecorator:
         assert stub.call_count == 1
         assert resp1 is resp2
 
-        mock_cache.get.assert_called_with('key')
-        mock_cache.set.assert_called_with('key', mock.ANY, ttl=0)
+        memory_mock_cache.get.assert_called_with('key')
+        memory_mock_cache.set.assert_called_with('key', mock.ANY, ttl=0)
 
     @pytest.mark.asyncio
-    async def test_cached_key(self, mocker, mock_cache):
+    async def test_cached_key(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'stub')
         cached_decorator = cached(key="key")
@@ -81,15 +85,20 @@ class TestCachedDecorator:
         assert stub.call_count == 1
         assert resp1 is resp2
 
-        assert await mock_cache.get("key") is not None
+        assert await memory_mock_cache.get("key") is not None
 
 
 class TestMultiCachedDecorator:
+
+    @pytest.fixture(autouse=True)
+    def default_cache(self, mocker, memory_mock_cache):
+        mocker.patch("aiocache.utils.get_default_cache", return_value=memory_mock_cache)
+
     @pytest.mark.asyncio
     async def test_multi_cached(self, mocker):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'return_dict')
-        cached_decorator = multi_cached(keys_attribute='keys')
+        cached_decorator = multi_cached('keys')
 
         default_keys = {'a', 'd', 'z', 'y'}
         resp_default = await cached_decorator(return_dict)(keys=default_keys)
@@ -107,24 +116,29 @@ class TestMultiCachedDecorator:
         assert keys2 == set(resp2.keys())
 
     @pytest.mark.asyncio
-    async def test_multi_cached_keys_attribute(self, mocker, mock_cache):
+    async def test_multi_cached_keys_attribute(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'return_dict')
-        cached_decorator = multi_cached(keys_attribute='keys')
         keys1 = {'a', 'b'}
 
+        cached_decorator = multi_cached(keys_attribute='keys')
         await cached_decorator(return_dict)(keys=keys1)
-        mock_cache.multi_get.assert_called_once_with(keys1)
-        mock_cache.multi_set.call_count = 1
+
+        cached_decorator = multi_cached(keys_attribute='ids')
+        await cached_decorator(return_dict)(ids=keys1)
+
+        memory_mock_cache.multi_get.assert_called_with(keys1)
+        assert memory_mock_cache.multi_get.call_count == 2
+        assert memory_mock_cache.multi_set.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_multi_cached_no_keys_attribute(self, mocker, mock_cache):
+    async def test_multi_cached_no_keys_attribute(self, mocker):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'return_dict')
-        cached_decorator = multi_cached()
+        cached_decorator = multi_cached("keys")
 
-        await cached_decorator(return_dict)()
-        mock_cache.multi_set.call_count = 1
+        with pytest.raises(KeyError):
+            await cached_decorator(return_dict)()
 
 
 class TestDefaultCache:

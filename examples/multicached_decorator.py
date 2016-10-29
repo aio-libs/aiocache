@@ -3,20 +3,20 @@ import asyncio
 from aiocache import multi_cached, RedisCache
 
 DICT = {
-    'a': "C",
-    'b': "R",
-    'c': "7",
-    'd': "!"
+    'a': "Z",
+    'b': "Y",
+    'c': "X",
+    'd': "W"
 }
 
 
-@multi_cached(backend=RedisCache, keys_attribute='ids', namespace="main:")
+@multi_cached("ids", backend=RedisCache, namespace="main:")
 async def async_main(ids=None):
     print("ASYNC non cached call...")
     return {id_: DICT[id_] for id_ in ids}
 
 
-@multi_cached(backend=RedisCache, namespace="main:")
+@multi_cached("keys", backend=RedisCache, namespace="main:")
 async def async_second_main(keys=None):
     print("ASYNC non cached call...")
     return {id_: DICT[id_] for id_ in keys}

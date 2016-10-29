@@ -42,7 +42,7 @@ def cached(*args, ttl=0, key=None, key_attribute=None, backend=None, serializer=
     return cached_decorator
 
 
-def multi_cached(*args, keys_attribute=None, backend=None, serializer=None, **kwargs):
+def multi_cached(keys_attribute, backend=None, serializer=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -52,29 +52,27 @@ def multi_cached(*args, keys_attribute=None, backend=None, serializer=None, **kw
             returned in the response. If its not the case, the call to the function will always
             be done (although the returned values will all be cached).
 
-    :param keys_attribute: keyword attribute from the function containing an iterable to use
-        as a keys. If not passed, it will try with 'keys' attribute and if none of them exists,
-        it won't try to reuse keys from the cache
+    :param keys_attribute: str attribute from the function containing an iterable to use
+        as keys.
     :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
         :class:`aiocache.backends.SimpleMemoryCache`
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
         Default is :class:`aiocache.serializers.DefaultSerializer`
     """
-    cache = get_default_cache(backend=backend, serializer=serializer, *args, **kwargs)
+    cache = get_default_cache(backend=backend, serializer=serializer, **kwargs)
 
     def multi_cached_decorator(fn):
         async def wrapper(*args, **kwargs):
             partial_dict = {}
             missing_keys = []
-            keys = kwargs.get(keys_attribute or "keys", [])
-            if keys:
-                values = await cache.multi_get(keys)
-                for key, value in zip(keys, values):
-                    if value is not None:
-                        partial_dict[key] = value
-                    else:
-                        missing_keys.append(key)
-                kwargs[keys_attribute or "keys"] = missing_keys
+            keys = kwargs[keys_attribute]
+            values = await cache.multi_get(keys)
+            for key, value in zip(keys, values):
+                if value is not None:
+                    partial_dict[key] = value
+                else:
+                    missing_keys.append(key)
+            kwargs[keys_attribute] = missing_keys
             if missing_keys:
                 partial_dict.update(await fn(*args, **kwargs))
                 await cache.multi_set([(key, value) for key, value in partial_dict.items()])
