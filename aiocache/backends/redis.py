@@ -2,139 +2,79 @@ import asyncio
 import itertools
 import aioredis
 
-from .base import BaseCache
 
+class RedisBackend:
 
-class RedisCache(BaseCache):
-
-    def __init__(self, *args, endpoint=None, port=None, loop=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, endpoint=None, port=None, loop=None):
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
         self._pool = None
         self._loop = loop or asyncio.get_event_loop()
+        self.encoding = "utf-8"
 
-    @property
-    def _encoding(self):
-        return getattr(self.serializer, "encoding", "utf-8")
-
-    async def get(self, key, default=None, loads_fn=None):
+    async def get(self, key):
         """
-        Get a value from the cache. Returns default if not found.
+        Get a value from the cache
 
         :param key: str
-        :param default: obj to return when key is not found
-        :param loads_fn: callable alternative to use as loads function
-        :returns: obj deserialized
+        :returns: obj in key if found else None
         """
-
-        loads = loads_fn or self.serializer.loads
-        ns_key = self._build_key(key)
-
-        await self.policy.pre_get(key)
 
         with await self._connect() as redis:
-            value = loads(await redis.get(ns_key, encoding=self._encoding))
+            return await redis.get(key, encoding=self.encoding)
 
-        if value:
-            await self.policy.post_get(key)
-
-        return value or default
-
-    async def multi_get(self, keys, loads_fn=None):
+    async def multi_get(self, keys):
         """
-        Get a value from the cache. Returns default if not found.
+        Get multi values from the cache. For each key not found it returns a None
 
         :param key: str
-        :param loads_fn: callable alternative to use as loads function
-        :returns: obj deserialized
+        :returns: list of obj for each key found, else if not found
         """
-        loads = loads_fn or self.serializer.loads
-
-        for key in keys:
-            await self.policy.pre_get(key)
-
         with await self._connect() as redis:
-            ns_keys = [self._build_key(key) for key in keys]
-            values = [loads(obj) for obj in await redis.mget(*ns_keys, encoding=self._encoding)]
+            return await redis.mget(*keys, encoding=self.encoding)
 
-        for key in keys:
-            await self.policy.post_get(key)
-
-        return values
-
-    async def set(self, key, value, ttl=None, dumps_fn=None):
+    async def set(self, key, value, ttl=None):
         """
-        Stores the value in the given key with ttl if specified
+        Stores the value in the given key.
 
         :param key: str
         :param value: obj
-        :param ttl: int the expiration time in seconds
-        :param dumps_fn: callable alternative to use as dumps function
+        :param ttl: int
         :returns: True
         """
-        dumps = dumps_fn or self.serializer.dumps
-        ttl = ttl or 0
-        ns_key = self._build_key(key)
-
-        await self.policy.pre_set(key, value)
-
         with await self._connect() as redis:
-            ret = await redis.set(ns_key, dumps(value), expire=ttl)
+            return await redis.set(key, value, expire=ttl)
 
-        await self.policy.post_set(key, value)
-        return ret
-
-    async def multi_set(self, pairs, dumps_fn=None):
+    async def multi_set(self, pairs):
         """
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
-        :param dumps: callable alternative to use as dumps function
         :returns: True
         """
-        dumps = dumps_fn or self.serializer.dumps
-
-        for key, value in pairs:
-            await self.policy.pre_set(key, value)
 
         with await self._connect() as redis:
-            serialized_pairs = list(
-                itertools.chain.from_iterable(
-                    (self._build_key(key), dumps(value)) for key, value in pairs))
-            ret = await redis.mset(*serialized_pairs)
+            flattened = list(itertools.chain.from_iterable(
+                (key, value) for key, value in pairs))
+            return await redis.mset(*flattened)
 
-        for key, value in pairs:
-            await self.policy.post_set(key, value)
-
-        return ret
-
-    async def add(self, key, value, ttl=None, dumps_fn=None):
+    async def add(self, key, value, ttl=None):
         """
-        Stores the value in the given key with ttl if specified. Raises an error if the
+        Stores the value in the given key. Raises an error if the
         key already exists.
 
         :param key: str
         :param value: obj
-        :param ttl: int the expiration time in seconds
-        :param dumps_fn: callable alternative to use as dumps function
+        :param ttl: int
         :returns: True if key is inserted
         :raises: Value error if key already exists
         """
-        dumps = dumps_fn or self.serializer.dumps
-        ttl = ttl or 0
-        ns_key = self._build_key(key)
-
-        await self.policy.pre_set(key, value)
 
         with await self._connect() as redis:
-            if await redis.exists(ns_key):
+            if await redis.exists(key):
                 raise ValueError(
-                    "Key {} already exists, use .set to update the value".format(ns_key))
-            ret = await redis.set(ns_key, dumps(value), expire=ttl)
-
-        await self.policy.post_set(key, value)
-        return ret
+                    "Key {} already exists, use .set to update the value".format(key))
+            return await redis.set(key, value, expire=ttl)
 
     async def exists(self, key):
         """
@@ -144,7 +84,7 @@ class RedisCache(BaseCache):
         :returns: True if key exists otherwise False
         """
         with await self._connect() as redis:
-            exists = await redis.exists(self._build_key(key))
+            exists = await redis.exists(key)
             return True if exists > 0 else False
 
     async def delete(self, key):
@@ -155,7 +95,7 @@ class RedisCache(BaseCache):
         :returns: int number of deleted keys
         """
         with await self._connect() as redis:
-            return await redis.delete(self._build_key(key))
+            return await redis.delete(key)
 
     async def raw(self, command, *args, **kwargs):
         """

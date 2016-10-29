@@ -3,53 +3,30 @@
 Backends
 ========
 
-You can use different backends according to your needs. All the backends implement the same interface which includes the methods: ``add``, ``get``, ``set``, ``multi_get``, ``multi_set``, ``delete``, ``exists``, ``raw``. If you feel a method is really missing here do not hesitate to open an issue in github.
+Backends are the components that talk with the clients that connect to the needed backend. For example, :ref:`RedisBackend` talks with aioredis. Backends are not meant to be used by themselves unless you **only** want to interact directly with the backend.
 
-Backends are always working through a serializer. The serializer allows to transform the data when storing and retrieving the data from the storage. This for example, allows to store python classes in Redis which by default, it only supports storing strings, int, bytes. As you may have guessed, this has a con: in some cases the data won't be raw accessible in the storage as the serializer may apply some weird transformations on it before storing it. To give an idea, the set operation on any backend works as follows:
+..  _redisbackend:
 
-.. image:: images/set_operation_flow.png
-  :align: center
+RedisBackend
+------------
 
-Now let's go with a more specific case. Let's pick Redis as the backend with namespace "test", PickleSerializer as the backend serializer:
-
-#. We receive a set("key", "value")
-#. "key" will become "test:key" when applying the ``build_key``
-#. "value" will become an array of bytes when calling ``serializer.serialize``
-
-..  _basecache:
-
-BaseCache
----------
-
-.. autoclass:: aiocache.backends.base.BaseCache
+.. autoclass:: aiocache.backends.redis.RedisCache
   :members:
 
 
-..  _rediscache:
+..  _simplememorybackend:
 
-RedisCache
-----------
+SimpleMemoryBackend
+-------------------
 
-.. autoclass:: aiocache.RedisCache
+.. autoclass:: aiocache.backends.memory.SimpleMemoryCache
   :members:
-  :undoc-members:
 
 
-..  _simplememorycache:
+..  _memcachedbackend:
 
-SimpleMemoryCache
------------------
+MemcachedBackend
+----------------
 
-.. autoclass:: aiocache.SimpleMemoryCache
+.. autoclass:: aiocache.backends.memcached.MemcachedCache
   :members:
-  :undoc-members:
-
-
-..  _memcachedcache:
-
-MemcachedCache
---------------
-
-.. autoclass:: aiocache.MemcachedCache
-  :members:
-  :undoc-members:

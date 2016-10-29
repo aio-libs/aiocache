@@ -1,10 +1,10 @@
-from .redis import RedisCache
-from .memory import SimpleMemoryCache
-from .memcached import MemcachedCache
+from .memory import SimpleMemoryBackend
+from .redis import RedisBackend
+from .memcached import MemcachedBackend
 
 
 __all__ = (
-    'RedisCache',
-    'SimpleMemoryCache',
-    'MemcachedCache',
+    'SimpleMemoryBackend',
+    'RedisBackend',
+    'MemcachedBackend',
 )

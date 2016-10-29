@@ -26,7 +26,7 @@ def cached(*args, ttl=0, key=None, key_attribute=None, backend=None, serializer=
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
         Default is :class:`aiocache.serializers.DefaultSerializer`
     """
-    cache = get_default_cache(backend=backend, serializer=serializer, *args, **kwargs)
+    cache = get_default_cache(cache=backend, serializer=serializer, *args, **kwargs)
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
@@ -59,7 +59,7 @@ def multi_cached(keys_attribute, backend=None, serializer=None, **kwargs):
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
         Default is :class:`aiocache.serializers.DefaultSerializer`
     """
-    cache = get_default_cache(backend=backend, serializer=serializer, **kwargs)
+    cache = get_default_cache(cache=backend, serializer=serializer, **kwargs)
 
     def multi_cached_decorator(fn):
         async def wrapper(*args, **kwargs):
@@ -81,10 +81,10 @@ def multi_cached(keys_attribute, backend=None, serializer=None, **kwargs):
     return multi_cached_decorator
 
 
-def get_default_cache(*args, backend=None, serializer=None, **kwargs):
+def get_default_cache(*args, cache=None, serializer=None, **kwargs):
     serializer = serializer if serializer else DefaultSerializer()
-    if backend:
-        return backend(serializer=serializer, *args, **kwargs)
+    if cache:
+        return cache(serializer=serializer, *args, **kwargs)
     elif hasattr(aiocache, 'default_cache'):
         return aiocache.default_cache
     else:
