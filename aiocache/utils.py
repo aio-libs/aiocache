@@ -8,25 +8,25 @@ from aiocache.serializers import DefaultSerializer
 logger = logging.getLogger(__name__)
 
 
-def cached(*args, ttl=0, key=None, key_attribute=None, backend=None, serializer=None, **kwargs):
+def cached(*args, ttl=0, key=None, key_attribute=None, cache=None, serializer=None, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
-    In some cases you will need to send more args than just the ttl, backend and serializer.
-    An example would be endpoint and port for the RedisBackend. This extra args will be propagated
-    to the backend class when instantiating.
+    In some cases you will need to send more args than just the ttl, cache and serializer.
+    An example would be endpoint and port for the RedisCache. This extra args will be propagated
+    to the cache class when instantiating.
 
     :param ttl: int seconds to store the function call. Default is 0
     :param key: str value to set as key for the function return. Takes precedence over
         key_attribute param.
     :param key_attribute: keyword attribute from the function to use as a key. If not passed,
         it will use module_name + function_name + args + kwargs
-    :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
-        :class:`aiocache.backends.SimpleMemoryCache`
+    :param cache: cache class to use when calling the ``set``/``get`` operations. Default is
+        :class:``aiocache.SimpleMemoryCache``
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
-        Default is :class:`aiocache.serializers.DefaultSerializer`
+        Default is :class:``aiocache.serializers.DefaultSerializer``
     """
-    cache = get_default_cache(cache=backend, serializer=serializer, *args, **kwargs)
+    cache = get_default_cache(cache=cache, serializer=serializer, *args, **kwargs)
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
@@ -42,7 +42,7 @@ def cached(*args, ttl=0, key=None, key_attribute=None, backend=None, serializer=
     return cached_decorator
 
 
-def multi_cached(keys_attribute, backend=None, serializer=None, **kwargs):
+def multi_cached(keys_attribute, cache=None, serializer=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -54,12 +54,12 @@ def multi_cached(keys_attribute, backend=None, serializer=None, **kwargs):
 
     :param keys_attribute: str attribute from the function containing an iterable to use
         as keys.
-    :param backend: backend class to use when calling the ``set``/``get`` operations. Default is
-        :class:`aiocache.backends.SimpleMemoryCache`
+    :param cache: cache class to use when calling the ``set``/``get`` operations. Default is
+        :class:`aiocache.SimpleMemoryCache`
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
         Default is :class:`aiocache.serializers.DefaultSerializer`
     """
-    cache = get_default_cache(cache=backend, serializer=serializer, **kwargs)
+    cache = get_default_cache(cache=cache, serializer=serializer, **kwargs)
 
     def multi_cached_decorator(fn):
         async def wrapper(*args, **kwargs):

@@ -47,7 +47,7 @@ class MemcachedBackend:
         :param ttl: int
         :returns: True
         """
-        value = value if isinstance(value, bytes) else str.encode(value)
+        value = str.encode(value) if isinstance(value, str) else value
         return await self.client.set(key, value, exptime=ttl or 0)
 
     async def multi_set(self, pairs, dumps_fn=None):
@@ -58,7 +58,7 @@ class MemcachedBackend:
         :returns: True
         """
         for key, value in pairs:
-            value = value if isinstance(value, bytes) else str.encode(value)
+            value = str.encode(value) if isinstance(value, str) else value
             await self.client.set(key, value)
 
         return True

@@ -8,6 +8,15 @@ from marshmallow import fields, Schema, post_load
 from aiocache import serializers
 
 
+@pytest.fixture(params=[
+    'redis_cache',
+    'memory_cache',
+    'memcached_cache',
+])
+def cache(request):
+    return request.getfuncargvalue(request.param)
+
+
 class MyType:
     MY_CONSTANT = "CONSTANT"
 
@@ -51,15 +60,6 @@ def loads(x):
     if x == "v4lu3":
         return "value"
     return 200
-
-
-@pytest.fixture(params=[
-    'redis_cache',
-    'memory_cache',
-    'memcached_cache',
-])
-def cache(request):
-    return request.getfuncargvalue(request.param)
 
 
 class TestBackend:

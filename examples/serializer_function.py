@@ -1,6 +1,7 @@
 import asyncio
+import json
 
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, post_load
 from aiocache import RedisCache
 
 
@@ -14,9 +15,12 @@ class MyTypeSchema(Schema):
     x = fields.Number()
     y = fields.Number()
 
+    @post_load
+    def build_object(self, data):
+        return MyType(data['x'], data['y'])
+
 
 def dumps(value):
-    # Current implementation can't deal directly with dicts so we must cast to string
     return MyTypeSchema().dumps(value).data
 
 
@@ -24,12 +28,25 @@ def loads(value):
     return MyTypeSchema().loads(value).data
 
 
-async def main():
-    cache = RedisCache(namespace="main:")
+cache = RedisCache(namespace="main")
+
+
+async def serializer_function():
     await cache.set("key", MyType(1, 2), dumps_fn=dumps)
-    print(await cache.get("key", loads_fn=loads))
+
+    obj = await cache.get("key", loads_fn=loads)
+
+    assert obj.x == 1
+    assert obj.y == 2
+    assert json.loads((await cache.get("key"))) == json.loads(('{"y": 2.0, "x": 1.0}'))
+    assert json.loads(bytes.decode(await cache.raw("get", "main:key"))) == {"y": 2.0, "x": 1.0}
+
+
+def test_serializer_function():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(serializer_function())
+    loop.run_until_complete(cache.delete("key"))
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    test_serializer_function()

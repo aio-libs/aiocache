@@ -15,6 +15,7 @@ integration:
 test:
 	docker-compose -f docker-compose.yml up -d
 	pytest -sv tests
+	pytest -sv examples
 	docker-compose -f docker-compose.yml stop
 
 cov:

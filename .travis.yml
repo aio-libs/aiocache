@@ -11,6 +11,7 @@ script:
   - python setup.py develop
   - bash examples/run_all.sh
   - pytest --cov=aiocache tests/
+  - pytest examples/
 
 services:
   - redis-server

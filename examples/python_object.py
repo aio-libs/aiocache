@@ -6,17 +6,23 @@ from aiocache.serializers import PickleSerializer
 
 
 MyObject = namedtuple("MyObject", ["x", "y"])
+cache = RedisCache(serializer=PickleSerializer(), namespace="main")
 
 
-async def main():
-    cache = RedisCache(serializer=PickleSerializer(), namespace="main:")
-    # This will serialize to pickle and store in redis with bytes format
-    await cache.set("key", MyObject(x=1, y=2))
-    # This will retrieve the object and deserialize back to MyObject
+async def complex_object():
+    obj = MyObject(x=1, y=2)
+    await cache.set("key", obj)
     my_object = await cache.get("key")
-    print("MyObject x={}, y={}".format(my_object.x, my_object.y))
+
+    assert my_object.x == 1
+    assert my_object.y == 2
+
+
+def test_python_object():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(complex_object())
+    loop.run_until_complete(cache.delete("key"))
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    test_python_object()

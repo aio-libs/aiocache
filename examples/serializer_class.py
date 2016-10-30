@@ -11,12 +11,21 @@ class MySerializer:
         return 2
 
 
-async def main():
-    cache = RedisCache(serializer=MySerializer(), namespace="main:")
-    await cache.set("key", "value")  # Will use MySerializer.dumps method
-    print(await cache.get("key"))  # Will use MySerializer.loads method
+cache = RedisCache(serializer=MySerializer(), namespace="main")
+
+
+async def serializer():
+    await cache.set("key", "value")
+
+    assert await cache.raw("get", "main:key") == b'1'
+    assert await cache.get("key") == 2
+
+
+def test_serializer():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(serializer())
+    loop.run_until_complete(cache.delete("key"))
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    test_serializer()
