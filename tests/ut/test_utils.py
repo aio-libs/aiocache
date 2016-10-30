@@ -5,9 +5,10 @@ import random
 
 from unittest import mock
 
-from aiocache import RedisCache, SimpleMemoryCache, cached, multi_cached, config_default_cache
+from aiocache import SimpleMemoryCache, RedisCache, cached, multi_cached, config_default_cache
 from aiocache.utils import get_default_cache
 from aiocache.serializers import PickleSerializer, DefaultSerializer
+from aiocache.backends import SimpleMemoryBackend
 
 
 async def return_dict(*args, keys=None):
@@ -30,7 +31,7 @@ def memory_mock_cache(mocker):
     mocker.spy(cache, 'exists')
     mocker.spy(cache, 'set')
     yield cache
-    SimpleMemoryCache._cache = {}
+    SimpleMemoryBackend._cache = {}
     del aiocache.default_cache
 
 
@@ -152,26 +153,26 @@ class TestDefaultCache:
     async def test_default_cache_with_backend(self):
 
         cache = get_default_cache(
-            backend=RedisCache, namespace="test", endpoint="http://...",
+            cache=RedisCache, namespace="test", endpoint="http://...",
             port=6379, serializer=PickleSerializer())
 
         assert isinstance(cache, RedisCache)
         assert cache.namespace == "test"
-        assert cache.endpoint == "http://..."
-        assert cache.port == 6379
+        assert cache._backend.endpoint == "http://..."
+        assert cache._backend.port == 6379
         assert isinstance(cache.serializer, PickleSerializer)
 
     @pytest.mark.asyncio
     async def test_default_cache_with_global(self):
         aiocache.config_default_cache(
-            backend=RedisCache, namespace="test", endpoint="http://...",
+            cache=RedisCache, namespace="test", endpoint="http://...",
             port=6379, serializer=PickleSerializer())
         cache = get_default_cache()
 
         assert isinstance(cache, RedisCache)
         assert cache.namespace == "test"
-        assert cache.endpoint == "http://..."
-        assert cache.port == 6379
+        assert cache._backend.endpoint == "http://..."
+        assert cache._backend.port == 6379
         assert isinstance(cache.serializer, PickleSerializer)
 
         aiocache.default_cache = None

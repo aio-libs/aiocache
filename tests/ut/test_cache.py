@@ -1,7 +1,7 @@
 import pytest
 
 
-class TestMockBackend:
+class TestMockCache:
     """
     This class ensures that all backends behave the same way at logic level. It tries to ensure
     the calls to the necessary methods like serialization and strategies are performed when needed.
@@ -29,6 +29,7 @@ class TestMockBackend:
 
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
+        mock_cache._backend.exists.return_value = False
         await mock_cache.add(pytest.KEY, "value")
 
         assert mock_cache.serializer.dumps.call_count == 1

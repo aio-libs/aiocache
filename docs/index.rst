@@ -11,6 +11,7 @@ Contents
 .. toctree::
 
   usage
+  caches
   backends
   serializers
   policies

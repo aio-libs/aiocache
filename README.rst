@@ -59,7 +59,7 @@ cached decorator
   Result = namedtuple('Result', "content, status")
 
 
-  @cached(ttl=10)
+  @cached(ttl=10, cache=RedisCache, serializer=PickleSerializer())
   async def async_main():
       print("First ASYNC non cached call...")
       await asyncio.sleep(1)

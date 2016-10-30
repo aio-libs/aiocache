@@ -13,7 +13,7 @@ cached
 .. automodule:: aiocache
   :members: cached
 
-.. literalinclude:: ../examples/decorator.py
+.. literalinclude:: ../examples/cached_decorator.py
   :language: python
   :linenos:
 
