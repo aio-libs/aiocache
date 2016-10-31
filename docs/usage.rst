@@ -38,6 +38,10 @@ Each cache instance has three main components:
   - **policy**: It ensures the chosen cache policy is followed. By default it uses :ref:`defaultpolicy` but you can set any other calling ``cache.set_policy($policy)``. Check :ref:`policies` for a list of available policies. If the functionality you need is not covered, you can write your custom policy.
 
 
+.. image:: docs/images/architecture.png
+  :align: center
+
+
 Configuring a project cache
 ---------------------------
 

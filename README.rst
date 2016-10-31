@@ -33,6 +33,9 @@ Aiocache provides 3 main entities:
 - **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: DefaultSerializer, PickleSerializer, JsonSerializer.
 - **policies**: Allows the cache to use a policy. Currently supporting: DefaultPolicy, LRUPolicy.
 
+.. image:: docs/images/architecture.png
+  :align: center
+
 Those 3 entities combine during some of the cache operations to apply the desired command (backend), data transformation (serializer) and pre/post hooks (policies). To have a better vision of what happens, here you can check how ``set`` function works in ``aiocache``:
 
 .. image:: docs/images/set_operation_flow.png
