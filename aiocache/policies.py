@@ -1,9 +1,4 @@
-import logging
-
 from collections import deque
-
-
-logger = logging.getLogger(__name__)
 
 
 class DefaultPolicy:

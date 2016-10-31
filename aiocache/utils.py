@@ -1,11 +1,7 @@
-import logging
 import aiocache
 
 from aiocache import SimpleMemoryCache
 from aiocache.serializers import DefaultSerializer
-
-
-logger = logging.getLogger(__name__)
 
 
 def cached(*args, ttl=0, key=None, key_attribute=None, cache=None, serializer=None, **kwargs):

@@ -5,7 +5,7 @@ tests_require = install_requires + ['pytest']
 
 setup(
     name="aiocache",
-    version="0.1.4",
+    version="0.1.5",
     author="Manuel Miranda",
     url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
