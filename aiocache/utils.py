@@ -4,6 +4,11 @@ from aiocache import SimpleMemoryCache
 from aiocache.serializers import DefaultSerializer
 
 
+def _get_args_dict(fn, args, kwargs):
+    args_names = fn.__code__.co_varnames[:fn.__code__.co_argcount]
+    return {**dict(zip(args_names, args)), **kwargs}
+
+
 def cached(*args, ttl=0, key=None, key_attribute=None, cache=None, serializer=None, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
@@ -15,7 +20,7 @@ def cached(*args, ttl=0, key=None, key_attribute=None, cache=None, serializer=No
     :param ttl: int seconds to store the function call. Default is 0
     :param key: str value to set as key for the function return. Takes precedence over
         key_attribute param.
-    :param key_attribute: keyword attribute from the function to use as a key. If not passed,
+    :param key_attribute: arg or kwarg name from the function to use as a key. If not passed,
         it will use module_name + function_name + args + kwargs
     :param cache: cache class to use when calling the ``set``/``get`` operations. Default is
         :class:``aiocache.SimpleMemoryCache``
@@ -26,7 +31,8 @@ def cached(*args, ttl=0, key=None, key_attribute=None, cache=None, serializer=No
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
-            cache_key = key or kwargs.get(
+            args_dict = _get_args_dict(fn, args, kwargs)
+            cache_key = key or args_dict.get(
                 key_attribute, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
             if await cache.exists(cache_key):
                 return await cache.get(cache_key)
@@ -48,7 +54,7 @@ def multi_cached(keys_attribute, cache=None, serializer=None, **kwargs):
             returned in the response. If its not the case, the call to the function will always
             be done (although the returned values will all be cached).
 
-    :param keys_attribute: str attribute from the function containing an iterable to use
+    :param keys_attribute: arg or kwarg name from the function containing an iterable to use
         as keys.
     :param cache: cache class to use when calling the ``set``/``get`` operations. Default is
         :class:`aiocache.SimpleMemoryCache`
@@ -59,18 +65,19 @@ def multi_cached(keys_attribute, cache=None, serializer=None, **kwargs):
 
     def multi_cached_decorator(fn):
         async def wrapper(*args, **kwargs):
+            args_dict = _get_args_dict(fn, args, kwargs)
+            keys = args_dict[keys_attribute]
             partial_dict = {}
             missing_keys = []
-            keys = kwargs[keys_attribute]
             values = await cache.multi_get(keys)
             for key, value in zip(keys, values):
                 if value is not None:
                     partial_dict[key] = value
                 else:
                     missing_keys.append(key)
-            kwargs[keys_attribute] = missing_keys
+            args_dict[keys_attribute] = missing_keys
             if missing_keys:
-                partial_dict.update(await fn(*args, **kwargs))
+                partial_dict.update(await fn(**args_dict))
                 await cache.multi_set([(key, value) for key, value in partial_dict.items()])
             return partial_dict
         return wrapper

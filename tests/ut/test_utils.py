@@ -11,7 +11,13 @@ from aiocache.serializers import PickleSerializer, DefaultSerializer
 from aiocache.backends import SimpleMemoryBackend
 
 
-async def return_dict(*args, keys=None):
+async def return_dict(keys=None):
+    ret = {}
+    for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
+        ret[key] = value
+    return ret
+
+async def arg_return_dict(keys, dummy=None):
     ret = {}
     for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
         ret[key] = value
@@ -75,6 +81,17 @@ class TestCachedDecorator:
         memory_mock_cache.set.assert_called_with('key', mock.ANY, ttl=0)
 
     @pytest.mark.asyncio
+    async def test_cached_arg_key_attribute(self, mocker, memory_mock_cache):
+        cached_decorator = cached(key_attribute="keys")
+
+        resp1 = await cached_decorator(arg_return_dict)("asd")
+        resp2 = await cached_decorator(arg_return_dict)("asd")
+
+        assert resp1 is resp2
+
+        memory_mock_cache.set.assert_called_with("asd", mock.ANY, ttl=0)
+
+    @pytest.mark.asyncio
     async def test_cached_key(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'stub')
@@ -118,8 +135,6 @@ class TestMultiCachedDecorator:
 
     @pytest.mark.asyncio
     async def test_multi_cached_keys_attribute(self, mocker, memory_mock_cache):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'return_dict')
         keys1 = {'a', 'b'}
 
         cached_decorator = multi_cached(keys_attribute='keys')
@@ -130,6 +145,17 @@ class TestMultiCachedDecorator:
 
         memory_mock_cache.multi_get.assert_called_with(keys1)
         assert memory_mock_cache.multi_get.call_count == 2
+        assert memory_mock_cache.multi_set.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_arg_keys_attribute(self, mocker, memory_mock_cache):
+        keys1 = {'a', 'b'}
+
+        cached_decorator = multi_cached(keys_attribute='keys')
+        await cached_decorator(arg_return_dict)(keys1)
+
+        memory_mock_cache.multi_get.assert_called_with(keys1)
+        assert memory_mock_cache.multi_get.call_count == 1
         assert memory_mock_cache.multi_set.call_count == 1
 
     @pytest.mark.asyncio
