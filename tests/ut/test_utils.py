@@ -6,7 +6,7 @@ import random
 from unittest import mock
 
 from aiocache import SimpleMemoryCache, RedisCache, cached, multi_cached, config_default_cache
-from aiocache.utils import get_default_cache
+from aiocache.utils import get_default_cache, get_args_dict
 from aiocache.serializers import PickleSerializer, DefaultSerializer
 from aiocache.backends import SimpleMemoryBackend
 
@@ -231,3 +231,14 @@ class TestDefaultCache:
         assert isinstance(cache, SimpleMemoryCache)
         assert cache.namespace == "test"
         assert isinstance(cache.serializer, DefaultSerializer)
+
+
+def test_get_args_dict():
+    args = ({'b', 'a'},)
+
+    assert get_args_dict(arg_return_dict, args, {}) == {'dummy': None, 'keys': {'a', 'b'}}
+
+    assert get_args_dict(arg_return_dict, args, {'dummy': 'dummy'}) == \
+        {'dummy': 'dummy', 'keys': {'a', 'b'}}
+
+    assert get_args_dict(arg_return_dict, [], {'dummy': 'dummy'}) == {'dummy': 'dummy'}

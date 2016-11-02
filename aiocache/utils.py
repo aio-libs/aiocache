@@ -1,12 +1,18 @@
+import inspect
+
 import aiocache
 
 from aiocache import SimpleMemoryCache
 from aiocache.serializers import DefaultSerializer
 
 
-def _get_args_dict(fn, args, kwargs):
+def get_args_dict(fn, args, kwargs):
+    defaults = {
+        arg_name: arg.default for arg_name, arg in inspect.signature(fn).parameters.items()
+        if arg.default is not inspect._empty
+    }
     args_names = fn.__code__.co_varnames[:fn.__code__.co_argcount]
-    return {**dict(zip(args_names, args)), **kwargs}
+    return {**defaults, **dict(zip(args_names, args)), **kwargs}
 
 
 def cached(ttl=0, key=None, key_attribute=None, cache=None, serializer=None, **kwargs):
@@ -31,7 +37,7 @@ def cached(ttl=0, key=None, key_attribute=None, cache=None, serializer=None, **k
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
-            args_dict = _get_args_dict(fn, args, kwargs)
+            args_dict = get_args_dict(fn, args, kwargs)
             cache_key = key or args_dict.get(
                 key_attribute, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
             if await cache.exists(cache_key):
@@ -72,7 +78,7 @@ def multi_cached(keys_attribute, key_builder=None, ttl=0, cache=None, serializer
     def multi_cached_decorator(fn):
         async def wrapper(*args, **kwargs):
             partial_result = {}
-            args_dict = _get_args_dict(fn, args, kwargs)
+            args_dict = get_args_dict(fn, args, kwargs)
             keys = args_dict[keys_attribute]
             cache_keys = [key_builder(key, args_dict) for key in keys]
 
