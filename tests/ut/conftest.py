@@ -1,6 +1,11 @@
 import pytest
 import asynctest
 
+import aiocache
+
+from aiocache import SimpleMemoryCache
+from aiocache.serializers import DefaultSerializer
+from aiocache.policies import DefaultPolicy
 from aiocache.cache import BaseCache
 
 
@@ -9,6 +14,16 @@ def pytest_namespace():
         'KEY': "key",
         'KEY_1': "random"
     }
+
+
+@pytest.fixture(autouse=True)
+def reset_defaults():
+    aiocache.set_defaults(
+        cache=SimpleMemoryCache,
+        serializer=DefaultSerializer,
+        policy=DefaultPolicy,
+        namespace="",
+    )
 
 
 @pytest.fixture

@@ -54,14 +54,13 @@ Sometimes you just want to use the same cache over all your project or at least,
   from aiocache.serializers import PickleSerializer
   from aiocache.policies import LRUPolicy
 
-  aiocache.config_default_cache(
+  aiocache.set_defaults(
     backend=aiocache.RedisCache,
-    serializer=PickleSerializer(),
-    policy=LRUPolicy(max_keys=1000),
+    serializer=PickleSerializer,
     endpoint=127.0.0.1,
     port=6379)
 
-Once done, everytime you use any of the :ref:`decorators`, if an explicit backend isn't passed, they will use the default one. Also, if you want the explicit cache, you can do a ``from aiocache import default_cache as cache`` and start using it (after configuring it).
+Once done, everytime you use any of the :ref:`decorators`, if the values aren't passed explicitly, they will use the default ones. The same happens when explicitly instantiating a cache, if you don't pass the extra args like ``serializer``, ``policy``, etc. it will use the default ones.
 
 
 Decorators

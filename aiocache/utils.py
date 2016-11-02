@@ -2,9 +2,6 @@ import inspect
 
 import aiocache
 
-from aiocache import SimpleMemoryCache
-from aiocache.serializers import DefaultSerializer
-
 
 def get_args_dict(fn, args, kwargs):
     defaults = {
@@ -33,7 +30,7 @@ def cached(ttl=0, key=None, key_attribute=None, cache=None, serializer=None, **k
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
         Default is :class:``aiocache.serializers.DefaultSerializer``
     """
-    cache = get_default_cache(cache=cache, serializer=serializer, **kwargs)
+    cache = get_cache(cache=cache, serializer=serializer, **kwargs)
 
     def cached_decorator(fn):
         async def wrapper(*args, **kwargs):
@@ -72,7 +69,7 @@ def multi_cached(keys_attribute, key_builder=None, ttl=0, cache=None, serializer
     :param serializer: serializer instance to use when calling the ``serialize``/``deserialize``.
         Default is :class:`aiocache.serializers.DefaultSerializer`
     """
-    cache = get_default_cache(cache=cache, serializer=serializer, **kwargs)
+    cache = get_cache(cache=cache, serializer=serializer, **kwargs)
     key_builder = key_builder or (lambda x, args_dict: x)
 
     def multi_cached_decorator(fn):
@@ -108,11 +105,12 @@ def multi_cached(keys_attribute, key_builder=None, ttl=0, cache=None, serializer
     return multi_cached_decorator
 
 
-def get_default_cache(*args, cache=None, serializer=None, **kwargs):
-    serializer = serializer if serializer else DefaultSerializer()
-    if cache:
-        return cache(serializer=serializer, *args, **kwargs)
-    elif hasattr(aiocache, 'default_cache'):
-        return aiocache.default_cache
-    else:
-        return SimpleMemoryCache(serializer=serializer, *args, **kwargs)
+def get_cache(cache=None, serializer=None, policy=None, namespace=None, **kwargs):
+    cache = cache or aiocache.DEFAULT_CACHE
+    serializer = serializer or aiocache.DEFAULT_SERIALIZER()
+    policy = policy or aiocache.DEFAULT_POLICY
+    namespace = namespace or aiocache.DEFAULT_NAMESPACE
+
+    c = cache(namespace=namespace, serializer=serializer, **{**aiocache.DEFAULT_KWARGS, **kwargs})
+    c.set_policy(policy)
+    return c

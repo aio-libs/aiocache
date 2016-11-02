@@ -5,9 +5,10 @@ import random
 
 from unittest import mock
 
-from aiocache import SimpleMemoryCache, RedisCache, cached, multi_cached, config_default_cache
-from aiocache.utils import get_default_cache, get_args_dict
-from aiocache.serializers import PickleSerializer, DefaultSerializer
+from aiocache import SimpleMemoryCache, RedisCache, cached, multi_cached
+from aiocache.utils import get_cache, get_args_dict
+from aiocache.serializers import PickleSerializer
+from aiocache.policies import DefaultPolicy
 from aiocache.backends import SimpleMemoryBackend
 
 
@@ -32,8 +33,7 @@ async def stub(*args, **kwargs):
 
 @pytest.fixture
 def memory_mock_cache(mocker):
-    config_default_cache()
-    cache = get_default_cache()
+    cache = SimpleMemoryCache()
     mocker.spy(cache, 'multi_set')
     mocker.spy(cache, 'multi_get')
     mocker.spy(cache, 'get')
@@ -41,14 +41,13 @@ def memory_mock_cache(mocker):
     mocker.spy(cache, 'set')
     yield cache
     SimpleMemoryBackend._cache = {}
-    del aiocache.default_cache
 
 
 class TestCachedDecorator:
 
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, memory_mock_cache):
-        mocker.patch("aiocache.utils.get_default_cache", return_value=memory_mock_cache)
+        mocker.patch("aiocache.utils.get_cache", return_value=memory_mock_cache)
 
     @pytest.mark.asyncio
     async def test_cached_ttl(self, mocker, memory_mock_cache):
@@ -113,7 +112,7 @@ class TestMultiCachedDecorator:
 
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, memory_mock_cache):
-        mocker.patch("aiocache.utils.get_default_cache", return_value=memory_mock_cache)
+        mocker.patch("aiocache.utils.get_cache", return_value=memory_mock_cache)
 
     @pytest.mark.asyncio
     async def test_multi_cached(self, mocker):
@@ -189,48 +188,37 @@ class TestMultiCachedDecorator:
             await cached_decorator(return_dict)()
 
 
-class TestDefaultCache:
+class TestCacheFactory:
 
-    @pytest.fixture(autouse=True)
-    def clean_default_cache(self):
-        if hasattr(aiocache, 'default_cache'):
-            del aiocache.default_cache
-
-    @pytest.mark.asyncio
-    async def test_default_cache_with_backend(self):
-
-        cache = get_default_cache(
-            cache=RedisCache, namespace="test", endpoint="http://...",
-            port=6379, serializer=PickleSerializer())
+    def test_get_cache(self):
+        cache = get_cache(cache=RedisCache)
 
         assert isinstance(cache, RedisCache)
-        assert cache.namespace == "test"
-        assert cache._backend.endpoint == "http://..."
-        assert cache._backend.port == 6379
-        assert isinstance(cache.serializer, PickleSerializer)
 
-    @pytest.mark.asyncio
-    async def test_default_cache_with_global(self):
-        aiocache.config_default_cache(
-            cache=RedisCache, namespace="test", endpoint="http://...",
-            port=6379, serializer=PickleSerializer())
-        cache = get_default_cache()
+    def test_get_cache_with_default_config(self):
+        aiocache.set_defaults(cache=RedisCache, endpoint="http://...", port=6379)
+        cache = get_cache(
+            namespace="default", serializer=PickleSerializer(),
+            policy=DefaultPolicy, port=123)
 
         assert isinstance(cache, RedisCache)
-        assert cache.namespace == "test"
         assert cache._backend.endpoint == "http://..."
-        assert cache._backend.port == 6379
+        assert cache._backend.port == 123
+        assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
+        assert isinstance(cache.policy, DefaultPolicy)
 
-        aiocache.default_cache = None
+    def test_get_cache_overrides(self):
+        cache = get_cache(
+            cache=RedisCache, namespace="default", serializer=PickleSerializer(),
+            policy=DefaultPolicy, endpoint="http://...", port=123)
 
-    @pytest.mark.asyncio
-    async def test_default_cache_with_default(self):
-        cache = get_default_cache(namespace="test")
-
-        assert isinstance(cache, SimpleMemoryCache)
-        assert cache.namespace == "test"
-        assert isinstance(cache.serializer, DefaultSerializer)
+        assert isinstance(cache, RedisCache)
+        assert cache._backend.endpoint == "http://..."
+        assert cache._backend.port == 123
+        assert cache.namespace == "default"
+        assert isinstance(cache.serializer, PickleSerializer)
+        assert isinstance(cache.policy, DefaultPolicy)
 
 
 def test_get_args_dict():

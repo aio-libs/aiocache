@@ -1,5 +1,5 @@
-from aiocache.serializers import DefaultSerializer
-from aiocache.policies import DefaultPolicy
+import aiocache
+
 from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBackend
 
 
@@ -17,20 +17,20 @@ class BaseCache:
 
     def __init__(self, serializer=None, namespace=None, *args, **kwargs):
 
-        self._backend = self.get_backend(*args, **kwargs)
+        self._backend = self.get_backend(*args, **{**aiocache.DEFAULT_KWARGS, **kwargs})
         self._serializer = None
         self.serializer = serializer or self.get_default_serializer()
         self._policy = self.get_default_policy()
-        self.namespace = namespace or ""
+        self.namespace = namespace or aiocache.DEFAULT_NAMESPACE
 
     def get_backend(self, *args, **kwargs):
         raise NotImplementedError()
 
     def get_default_serializer(self):
-        return DefaultSerializer()
+        return aiocache.DEFAULT_SERIALIZER()
 
     def get_default_policy(self):
-        return DefaultPolicy(self)
+        return aiocache.DEFAULT_POLICY(self)
 
     @property
     def serializer(self):
