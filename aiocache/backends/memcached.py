@@ -50,16 +50,17 @@ class MemcachedBackend:
         value = str.encode(value) if isinstance(value, str) else value
         return await self.client.set(key, value, exptime=ttl or 0)
 
-    async def multi_set(self, pairs):
+    async def multi_set(self, pairs, ttl=0):
         """
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
+        :param ttl: int
         :returns: True
         """
         for key, value in pairs:
             value = str.encode(value) if isinstance(value, str) else value
-            await self.client.set(key, value)
+            await self.client.set(key, value, exptime=ttl or 0)
 
         return True
 

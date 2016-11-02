@@ -81,4 +81,6 @@ class JsonSerializer(DefaultSerializer):
         :param value: str
         :returns: dict
         """
+        if value is None:
+            return None
         return json.loads(value)

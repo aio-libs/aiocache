@@ -109,6 +109,14 @@ class TestBackend:
         assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == ["value", "random_value"]
 
     @pytest.mark.asyncio
+    async def test_multi_set_with_ttl(self, cache):
+        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
+        assert await cache.multi_set(pairs, ttl=1) is True
+        await asyncio.sleep(2)
+
+        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == [None, None]
+
+    @pytest.mark.asyncio
     async def test_set_with_ttl(self, cache):
         await cache.set(pytest.KEY, "value", ttl=1)
         await asyncio.sleep(2)

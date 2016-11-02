@@ -131,10 +131,11 @@ class BaseCache:
         await self._policy.post_set(key, value)
         return True
 
-    async def multi_set(self, pairs, dumps_fn=None):
+    async def multi_set(self, pairs, ttl=None, dumps_fn=None):
         """
         Stores multiple values in the given keys.
         :param pairs: list of two element iterables. First is key and second is value
+        :param ttl: int the expiration time of the keys in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
         """
@@ -145,7 +146,7 @@ class BaseCache:
             await self._policy.pre_set(key, value)
             tmp_pairs.append((self._build_key(key), dumps(value)))
 
-        await self._backend.multi_set(tmp_pairs)
+        await self._backend.multi_set(tmp_pairs, ttl=ttl)
 
         for key, value in pairs:
             await self._policy.post_set(key, value)
