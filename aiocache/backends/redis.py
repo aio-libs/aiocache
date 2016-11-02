@@ -45,18 +45,28 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.set(key, value, expire=ttl)
 
-    async def multi_set(self, pairs):
+    async def multi_set(self, pairs, ttl=None):
         """
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
+        :param ttl: int
         :returns: True
         """
+        ttl = ttl or 0
 
         with await self._connect() as redis:
+            transaction = redis.multi_exec()
             flattened = list(itertools.chain.from_iterable(
                 (key, value) for key, value in pairs))
-            return await redis.mset(*flattened)
+            transaction.mset(*flattened)
+            if ttl > 0:
+                for key in flattened[::2]:
+                    transaction.expire(key, timeout=ttl)
+
+            await transaction.execute()
+
+        return True
 
     async def add(self, key, value, ttl=None):
         """

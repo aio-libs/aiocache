@@ -41,15 +41,19 @@ class SimpleMemoryBackend:
             loop.call_later(ttl, self._delete, key)
         return True
 
-    async def multi_set(self, pairs):
+    async def multi_set(self, pairs, ttl=None):
         """
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
+        :param ttl: int
         :returns: True
         """
         for key, value in pairs:
             SimpleMemoryBackend._cache[key] = value
+            if ttl:
+                loop = asyncio.get_event_loop()
+                loop.call_later(ttl, self._delete, key)
         return True
 
     async def add(self, key, value, ttl=None):
