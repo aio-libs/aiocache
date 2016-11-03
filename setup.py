@@ -1,11 +1,8 @@
-from setuptools import setup
-
-install_requires = []
-tests_require = install_requires + ['pytest']
+from setuptools import setup, find_packages
 
 setup(
     name="aiocache",
-    version="0.1.7",
+    version="0.1.8",
     author="Manuel Miranda",
     url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
@@ -14,8 +11,6 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.5",
     ],
-    packages=['aiocache'],
-    install_requires=install_requires,
-    setup_requires=['pytest-runner'],
-    tests_require=tests_require,
+    packages=find_packages(),
+    install_requires=['aioredis', 'aiomcache']
 )
