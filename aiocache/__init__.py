@@ -17,7 +17,7 @@ __all__ = (
 DEFAULT_CACHE = SimpleMemoryCache
 DEFAULT_SERIALIZER = DefaultSerializer
 DEFAULT_POLICY = DefaultPolicy
-DEFAULT_NAMESPACE = ""
+DEFAULT_NAMESPACE = None
 DEFAULT_KWARGS = {}
 
 
