@@ -34,7 +34,10 @@ def test_multi_cached():
     assert loop.run_until_complete(cache.exists('c'))
     assert loop.run_until_complete(cache.exists('d'))
 
-    loop.run_until_complete(cache.delete("key"))
+    loop.run_until_complete(cache.delete("a"))
+    loop.run_until_complete(cache.delete("b"))
+    loop.run_until_complete(cache.delete("c"))
+    loop.run_until_complete(cache.delete("d"))
 
 if __name__ == "__main__":
     test_multi_cached()
