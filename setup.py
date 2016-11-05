@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aiocache",
-    version="0.1.8",
+    version="0.1.10",
     author="Manuel Miranda",
     url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
@@ -12,5 +12,8 @@ setup(
         "Programming Language :: Python :: 3.5",
     ],
     packages=find_packages(),
-    install_requires=['aioredis', 'aiomcache']
+    install_requires=[
+        'aioredis',
+        'aiomcache'
+    ]
 )
