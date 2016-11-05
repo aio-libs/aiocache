@@ -94,7 +94,7 @@ class TestBackend:
     @pytest.mark.asyncio
     async def test_delete_existing(self, cache):
         await cache.set(pytest.KEY, "value")
-        await cache.delete(pytest.KEY)
+        assert await cache.delete(pytest.KEY) == 1
 
         assert await cache.get(pytest.KEY) is None
 

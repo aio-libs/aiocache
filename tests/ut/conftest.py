@@ -17,6 +17,11 @@ def pytest_namespace():
 
 
 @pytest.fixture(autouse=True)
+def disable_logs(mocker):
+    mocker.patch("aiocache.cache.logger")
+
+
+@pytest.fixture(autouse=True)
 def reset_defaults():
     aiocache.set_defaults(
         cache=SimpleMemoryCache,

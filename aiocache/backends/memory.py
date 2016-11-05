@@ -105,4 +105,4 @@ class SimpleMemoryBackend:
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
     def _delete(self, key):
-        return SimpleMemoryBackend._cache.pop(key, 0)
+        return 1 if SimpleMemoryBackend._cache.pop(key, None) else 0

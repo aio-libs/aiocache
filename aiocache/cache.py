@@ -1,5 +1,6 @@
 import aiocache
 
+from aiocache.log import logger
 from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBackend
 
 
@@ -86,6 +87,7 @@ class BaseCache:
 
         await self._policy.pre_get(key)
         value = loads(await self._backend.get(ns_key))
+        logger.info("GET %s %s", ns_key, value is not None)
 
         if value:
             await self._policy.post_get(key)
@@ -105,7 +107,10 @@ class BaseCache:
         for key in keys:
             await self._policy.pre_get(key)
 
-        values = await self._backend.multi_get([self._build_key(key) for key in keys])
+        ns_keys = [self._build_key(key) for key in keys]
+        values = await self._backend.multi_get(ns_keys)
+        logger.info(
+            "MULTI_GET %s %d", ns_keys, len([value for value in values if value is not None]))
         values = [loads(value) for value in values]
 
         for key in keys:
@@ -127,6 +132,7 @@ class BaseCache:
 
         await self._policy.pre_set(key, value)
         await self._backend.set(ns_key, dumps(value), ttl)
+        logger.info("SET %s %d", ns_key, True)
 
         await self._policy.post_set(key, value)
         return True
@@ -147,6 +153,7 @@ class BaseCache:
             tmp_pairs.append((self._build_key(key), dumps(value)))
 
         await self._backend.multi_set(tmp_pairs, ttl=ttl)
+        logger.info("MULTI_SET %s %d", [key for key, value in tmp_pairs], len(pairs))
 
         for key, value in pairs:
             await self._policy.post_set(key, value)
@@ -158,7 +165,10 @@ class BaseCache:
         :param key: Key to be deleted
         :returns: int number of deleted keys
         """
-        return await self._backend.delete(self._build_key(key))
+        ns_key = self._build_key(key)
+        ret = await self._backend.delete(ns_key)
+        logger.info("DELETE %s %d", ns_key, ret)
+        return ret
 
     async def exists(self, key):
         """
@@ -166,7 +176,10 @@ class BaseCache:
         :param key: str key to check
         :returns: True if key exists otherwise False
         """
-        return await self._backend.exists(self._build_key(key))
+        ns_key = self._build_key(key)
+        ret = await self._backend.exists(ns_key)
+        logger.info("EXISTS %s %d", ns_key, ret)
+        return ret
 
     async def raw(self, command, *args, **kwargs):
         """
@@ -175,6 +188,7 @@ class BaseCache:
         :param command: str with the command.
         :returns: whatever the underlying client returns
         """
+        logger.info("%s", command)
         return await self._backend.raw(command, *args, **kwargs)
 
     def _build_key(self, key):
