@@ -225,6 +225,9 @@ class RedisCache(BaseCache):
             return "{}:{}".format(self.namespace, key)
         return key
 
+    def __repr__(self):  # pragma: no cover
+        return "RedisCache ({}:{})".format(self._backend.endpoint, self._backend.port)
+
 
 class MemcachedCache(BaseCache):
     """
@@ -240,3 +243,6 @@ class MemcachedCache(BaseCache):
     def _build_key(self, key):
         ns_key = super()._build_key(key)
         return str.encode(ns_key)
+
+    def __repr__(self):  # pragma: no cover
+        return "MemcachedCache ({}:{})".format(self._backend.endpoint, self._backend.port)

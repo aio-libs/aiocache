@@ -2,6 +2,8 @@ import inspect
 
 import aiocache
 
+from aiocache.log import logger
+
 
 def get_args_dict(fn, args, kwargs):
     defaults = {
@@ -37,12 +39,21 @@ def cached(ttl=0, key=None, key_from_attr=None, cache=None, serializer=None, **k
             args_dict = get_args_dict(fn, args, kwargs)
             cache_key = key or args_dict.get(
                 key_from_attr, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
-            if await cache.exists(cache_key):
-                return await cache.get(cache_key)
-            else:
-                res = await fn(*args, **kwargs)
-                await cache.set(cache_key, res, ttl=ttl)
-                return res
+
+            result = None
+            try:
+                if await cache.exists(cache_key):
+                    return await cache.get(cache_key)
+                else:
+                    result = await fn(*args, **kwargs)
+                    await cache.set(cache_key, result, ttl=ttl)
+                    return result
+            except ConnectionRefusedError:
+                logger.error("Cache %s is unreachable", cache)
+                if result is None:
+                    result = await fn(*args, **kwargs)
+                return result
+
         return wrapper
     return cached_decorator
 
@@ -78,25 +89,35 @@ def multi_cached(keys_from_attr, key_builder=None, ttl=0, cache=None, serializer
             keys = args_dict[keys_from_attr]
             cache_keys = [key_builder(key, args_dict) for key in keys]
 
-            if len(keys) > 0:
-                missing_keys = []
-                values = await cache.multi_get(cache_keys)
-                for key, value in zip(keys, values):
-                    if value is not None:
-                        partial_result[key] = value
-                    else:
-                        missing_keys.append(key)
-                args_dict[keys_from_attr] = missing_keys
-            else:
-                missing_keys = "all"
+            result = None
+            try:
+                if len(keys) > 0:
+                    missing_keys = []
+                    values = await cache.multi_get(cache_keys)
+                    for key, value in zip(keys, values):
+                        if value is not None:
+                            partial_result[key] = value
+                        else:
+                            missing_keys.append(key)
+                    args_dict[keys_from_attr] = missing_keys
+                else:
+                    missing_keys = "all"
 
-            if missing_keys:
-                partial_result.update(await fn(**args_dict))
-                if partial_result:
-                    await cache.multi_set(
-                        [(key_builder(
-                            key, args_dict), value) for key, value in partial_result.items()],
-                        ttl=ttl)
+                if missing_keys:
+                    result = await fn(**args_dict)
+                    partial_result.update(result)
+                    if partial_result:
+                        await cache.multi_set(
+                            [(key_builder(
+                                key, args_dict), value) for key, value in partial_result.items()],
+                            ttl=ttl)
+
+            except ConnectionRefusedError:
+                logger.error("Cache %s is unreachable", cache)
+                if result is None:
+                    result = await fn(*args, **kwargs)
+                    partial_result.update(result)
+                return partial_result
 
             return partial_result
 

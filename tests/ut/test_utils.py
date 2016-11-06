@@ -2,6 +2,7 @@ import sys
 import pytest
 import aiocache
 import random
+import asynctest
 
 from unittest import mock
 
@@ -107,6 +108,28 @@ class TestCachedDecorator:
 
         assert await memory_mock_cache.get("key") is not None
 
+    @pytest.mark.asyncio
+    async def test_cached_with_cache_exception_exists(self, mocker, memory_mock_cache):
+        module = sys.modules[globals()['__name__']]
+        mocker.spy(module, 'stub')
+        cached_decorator = cached(key="key")
+
+        memory_mock_cache.exists = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
+
+        await cached_decorator(stub)()
+        assert stub.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_cached_with_cache_exception_set(self, mocker, memory_mock_cache):
+        module = sys.modules[globals()['__name__']]
+        mocker.spy(module, 'stub')
+        cached_decorator = cached(key="key")
+
+        memory_mock_cache.set = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
+
+        await cached_decorator(stub)()
+        assert stub.call_count == 1
+
 
 class TestMultiCachedDecorator:
 
@@ -118,20 +141,20 @@ class TestMultiCachedDecorator:
     async def test_multi_cached(self, mocker):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'return_dict')
-        cached_decorator = multi_cached('keys')
+        multi_cached_decorator = multi_cached('keys')
 
         default_keys = {'a', 'd', 'z', 'y'}
-        resp_default = await cached_decorator(return_dict)(keys=default_keys)
+        resp_default = await multi_cached_decorator(return_dict)(keys=default_keys)
         return_dict.assert_called_with(keys=list(default_keys))
         assert default_keys == set(resp_default.keys())
 
         keys1 = {'a', 'b', 'c'}
-        resp1 = await cached_decorator(return_dict)(keys=keys1)
+        resp1 = await multi_cached_decorator(return_dict)(keys=keys1)
         return_dict.assert_called_with(keys=list(keys1 - default_keys))
         assert keys1 == set(resp1.keys())
 
         keys2 = {'a', 'b', 'd', 'e', 'f'}
-        resp2 = await cached_decorator(return_dict)(keys=keys2)
+        resp2 = await multi_cached_decorator(return_dict)(keys=keys2)
         return_dict.assert_called_with(keys=list(keys2 - keys1 - default_keys))
         assert keys2 == set(resp2.keys())
 
@@ -139,11 +162,11 @@ class TestMultiCachedDecorator:
     async def test_multi_cached_keys_from_attr(self, memory_mock_cache):
         keys1 = {'a', 'b'}
 
-        cached_decorator = multi_cached(keys_from_attr='keys')
-        await cached_decorator(return_dict)(keys=keys1)
+        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+        await multi_cached_decorator(return_dict)(keys=keys1)
 
-        cached_decorator = multi_cached(keys_from_attr='ids')
-        await cached_decorator(return_dict)(ids=keys1)
+        multi_cached_decorator = multi_cached(keys_from_attr='ids')
+        await multi_cached_decorator(return_dict)(ids=keys1)
 
         memory_mock_cache.multi_get.assert_called_with(list(keys1))
         assert memory_mock_cache.multi_get.call_count == 2
@@ -153,8 +176,8 @@ class TestMultiCachedDecorator:
     async def test_multi_cached_arg_keys_from_attr(self, memory_mock_cache):
         keys1 = {'a', 'b'}
 
-        cached_decorator = multi_cached(keys_from_attr='keys')
-        await cached_decorator(arg_return_dict)(keys1)
+        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+        await multi_cached_decorator(arg_return_dict)(keys1)
 
         memory_mock_cache.multi_get.assert_called_with(list(keys1))
         assert memory_mock_cache.multi_get.call_count == 1
@@ -162,16 +185,16 @@ class TestMultiCachedDecorator:
 
     @pytest.mark.asyncio
     async def test_multi_cached_empty_keys(self, memory_mock_cache):
-        cached_decorator = multi_cached(keys_from_attr='keys')
-        await cached_decorator(arg_return_dict)([])
+        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+        await multi_cached_decorator(arg_return_dict)([])
 
         assert memory_mock_cache.multi_get.call_count == 0
         assert memory_mock_cache.multi_set.call_count == 1
 
     @pytest.mark.asyncio
     async def test_multi_cached_no_results(self, memory_mock_cache):
-        cached_decorator = multi_cached(keys_from_attr='keys')
-        resp = await cached_decorator(empty_return)([])
+        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+        resp = await multi_cached_decorator(empty_return)([])
 
         assert resp == {}
 
@@ -182,10 +205,32 @@ class TestMultiCachedDecorator:
     async def test_multi_cached_no_keys_from_attr(self, mocker):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'return_dict')
-        cached_decorator = multi_cached("keys")
+        multi_cached_decorator = multi_cached("keys")
 
         with pytest.raises(KeyError):
-            await cached_decorator(return_dict)()
+            await multi_cached_decorator(return_dict)()
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_with_cache_exception_get(self, mocker, memory_mock_cache):
+        module = sys.modules[globals()['__name__']]
+        mocker.spy(module, 'return_dict')
+        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+
+        memory_mock_cache.multi_get = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
+
+        await multi_cached_decorator(return_dict)(keys=['a', 'b'])
+        assert return_dict.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_with_cache_exception_set(self, mocker, memory_mock_cache):
+        module = sys.modules[globals()['__name__']]
+        mocker.spy(module, 'return_dict')
+        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+
+        memory_mock_cache.multi_set = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
+
+        await multi_cached_decorator(return_dict)(keys=[])
+        assert return_dict.call_count == 1
 
 
 class TestCacheFactory:
