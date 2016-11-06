@@ -1,7 +1,5 @@
-import logging
+from aiocache.log import logger
 
-
-logger = logging.getLogger(__name__)
 
 try:
     import ujson as json

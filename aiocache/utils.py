@@ -131,6 +131,7 @@ def get_cache(cache=None, serializer=None, policy=None, namespace=None, **kwargs
     policy = policy or aiocache.DEFAULT_POLICY
     namespace = namespace or aiocache.DEFAULT_NAMESPACE
 
-    c = cache(namespace=namespace, serializer=serializer, **{**aiocache.DEFAULT_KWARGS, **kwargs})
-    c.set_policy(policy)
-    return c
+    instance = cache(
+        namespace=namespace, serializer=serializer, **{**aiocache.DEFAULT_KWARGS, **kwargs})
+    instance.set_policy(policy)
+    return instance
