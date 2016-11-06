@@ -1,3 +1,5 @@
+import time
+
 import aiocache
 
 from aiocache.log import logger
@@ -65,12 +67,15 @@ class BaseCache:
         :returns: True if key is inserted
         :raises: Value error if key already exists
         """
+        start = time.time()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key)
 
         await self._policy.pre_set(key, value)
         await self._backend.add(ns_key, dumps(value), ttl)
         await self._policy.post_set(key, value)
+
+        logger.info("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
         return True
 
     async def get(self, key, default=None, loads_fn=None):
@@ -81,17 +86,16 @@ class BaseCache:
         :param loads_fn: callable alternative to use as loads function
         :returns: obj loaded
         """
-
+        start = time.time()
         loads = loads_fn or self._serializer.loads
         ns_key = self._build_key(key)
 
         await self._policy.pre_get(key)
         value = loads(await self._backend.get(ns_key))
-        logger.info("GET %s %s", ns_key, value is not None)
-
         if value:
             await self._policy.post_get(key)
 
+        logger.info("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
         return value or default
 
     async def multi_get(self, keys, loads_fn=None):
@@ -102,6 +106,7 @@ class BaseCache:
         :param loads_fn: callable alternative to use as loads function
         :returns: list of objs
         """
+        start = time.time()
         loads = loads_fn or self._serializer.loads
 
         for key in keys:
@@ -109,13 +114,16 @@ class BaseCache:
 
         ns_keys = [self._build_key(key) for key in keys]
         values = await self._backend.multi_get(ns_keys)
-        logger.info(
-            "MULTI_GET %s %d", ns_keys, len([value for value in values if value is not None]))
         values = [loads(value) for value in values]
 
         for key in keys:
             await self._policy.post_get(key)
 
+        logger.info(
+            "MULTI_GET %s %d (%.4f)s",
+            ns_keys,
+            len([value for value in values if value is not None]),
+            time.time() - start)
         return values
 
     async def set(self, key, value, ttl=None, dumps_fn=None):
@@ -127,14 +135,15 @@ class BaseCache:
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
         """
+        start = time.time()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key)
 
         await self._policy.pre_set(key, value)
         await self._backend.set(ns_key, dumps(value), ttl)
-        logger.info("SET %s %d", ns_key, True)
-
         await self._policy.post_set(key, value)
+
+        logger.info("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
         return True
 
     async def multi_set(self, pairs, ttl=None, dumps_fn=None):
@@ -145,6 +154,7 @@ class BaseCache:
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
         """
+        start = time.time()
         dumps = dumps_fn or self._serializer.dumps
 
         tmp_pairs = []
@@ -153,10 +163,15 @@ class BaseCache:
             tmp_pairs.append((self._build_key(key), dumps(value)))
 
         await self._backend.multi_set(tmp_pairs, ttl=ttl)
-        logger.info("MULTI_SET %s %d", [key for key, value in tmp_pairs], len(pairs))
 
         for key, value in pairs:
             await self._policy.post_set(key, value)
+
+        logger.info(
+            "MULTI_SET %s %d (%.4f)s",
+            [key for key, value in tmp_pairs],
+            len(pairs),
+            time.time() - start)
         return True
 
     async def delete(self, key):
@@ -165,9 +180,10 @@ class BaseCache:
         :param key: Key to be deleted
         :returns: int number of deleted keys
         """
+        start = time.time()
         ns_key = self._build_key(key)
         ret = await self._backend.delete(ns_key)
-        logger.info("DELETE %s %d", ns_key, ret)
+        logger.info("DELETE %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
 
     async def exists(self, key):
@@ -176,9 +192,10 @@ class BaseCache:
         :param key: str key to check
         :returns: True if key exists otherwise False
         """
+        start = time.time()
         ns_key = self._build_key(key)
         ret = await self._backend.exists(ns_key)
-        logger.info("EXISTS %s %d", ns_key, ret)
+        logger.info("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
 
     async def raw(self, command, *args, **kwargs):
@@ -188,8 +205,10 @@ class BaseCache:
         :param command: str with the command.
         :returns: whatever the underlying client returns
         """
-        logger.info("%s", command)
-        return await self._backend.raw(command, *args, **kwargs)
+        start = time.time()
+        ret = await self._backend.raw(command, *args, **kwargs)
+        logger.info("%s (%.4f)s", command, time.time() - start)
+        return ret
 
     def _build_key(self, key):
         if self.namespace:
