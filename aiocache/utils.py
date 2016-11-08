@@ -40,19 +40,21 @@ def cached(ttl=0, key=None, key_from_attr=None, cache=None, serializer=None, **k
             cache_key = key or args_dict.get(
                 key_from_attr, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
 
-            result = None
             try:
                 if await cache.exists(cache_key):
                     return await cache.get(cache_key)
-                else:
-                    result = await fn(*args, **kwargs)
-                    await cache.set(cache_key, result, ttl=ttl)
-                    return result
-            except ConnectionRefusedError:
-                logger.error("Cache %s is unreachable", cache)
-                if result is None:
-                    result = await fn(*args, **kwargs)
-                return result
+
+            except Exception:
+                logger.exception("Unexpected error with %s", cache)
+
+            result = await fn(*args, **kwargs)
+
+            try:
+                await cache.set(cache_key, result, ttl=ttl)
+            except Exception:
+                logger.exception("Unexpected error with %s", cache)
+
+            return result
 
         return wrapper
     return cached_decorator
@@ -90,9 +92,10 @@ def multi_cached(keys_from_attr, key_builder=None, ttl=0, cache=None, serializer
             cache_keys = [key_builder(key, args_dict) for key in keys]
 
             result = None
-            try:
-                if len(keys) > 0:
-                    missing_keys = []
+            missing_keys = "all"
+            if len(keys) > 0:
+                missing_keys = []
+                try:
                     values = await cache.multi_get(cache_keys)
                     for key, value in zip(keys, values):
                         if value is not None:
@@ -100,24 +103,22 @@ def multi_cached(keys_from_attr, key_builder=None, ttl=0, cache=None, serializer
                         else:
                             missing_keys.append(key)
                     args_dict[keys_from_attr] = missing_keys
-                else:
+
+                except Exception:
+                    logger.exception("Unexpected error with %s", cache)
                     missing_keys = "all"
 
-                if missing_keys:
-                    result = await fn(**args_dict)
-                    partial_result.update(result)
-                    if partial_result:
+            if missing_keys:
+                result = await fn(**args_dict)
+                partial_result.update(result)
+                if partial_result:
+                    try:
                         await cache.multi_set(
                             [(key_builder(
                                 key, args_dict), value) for key, value in partial_result.items()],
                             ttl=ttl)
-
-            except ConnectionRefusedError:
-                logger.error("Cache %s is unreachable", cache)
-                if result is None:
-                    result = await fn(*args, **kwargs)
-                    partial_result.update(result)
-                return partial_result
+                    except Exception:
+                        logger.exception("Unexpected error with %s", cache)
 
             return partial_result
 
