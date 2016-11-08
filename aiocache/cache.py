@@ -62,13 +62,15 @@ class BaseCache:
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
+
         :param key: str
         :param value: obj
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True if key is inserted
-        :raises: Value error if key already exists
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises:
+            - ValueError if key already exists
+            - :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._add(key, value, ttl, dumps_fn), timeout=self._timeout)
 
@@ -87,11 +89,12 @@ class BaseCache:
     async def get(self, key, default=None, loads_fn=None):
         """
         Get a value from the cache. Returns default if not found.
+
         :param key: str
         :param default: obj to return when key is not found
         :param loads_fn: callable alternative to use as loads function
         :returns: obj loaded
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._get(key, default, loads_fn), timeout=self._timeout)
 
@@ -115,7 +118,7 @@ class BaseCache:
         :param keys: list of str
         :param loads_fn: callable alternative to use as loads function
         :returns: list of objs
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._multi_get(keys, loads_fn), timeout=self._timeout)
 
@@ -143,12 +146,13 @@ class BaseCache:
     async def set(self, key, value, ttl=None, dumps_fn=None):
         """
         Stores the value in the given key with ttl if specified
+
         :param key: str
         :param value: obj
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._set(key, value, ttl, dumps_fn), timeout=self._timeout)
 
@@ -167,11 +171,12 @@ class BaseCache:
     async def multi_set(self, pairs, ttl=None, dumps_fn=None):
         """
         Stores multiple values in the given keys.
+
         :param pairs: list of two element iterables. First is key and second is value
         :param ttl: int the expiration time of the keys in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(
             self._multi_set(pairs, ttl, dumps_fn), timeout=self._timeout)
@@ -200,9 +205,10 @@ class BaseCache:
     async def delete(self, key):
         """
         Deletes the given key.
+
         :param key: Key to be deleted
         :returns: int number of deleted keys
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._delete(key), timeout=self._timeout)
 
@@ -216,9 +222,10 @@ class BaseCache:
     async def exists(self, key):
         """
         Check key exists in the cache.
+
         :param key: str key to check
         :returns: True if key exists otherwise False
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._exists(key), timeout=self._timeout)
 
@@ -235,7 +242,7 @@ class BaseCache:
 
         :param command: str with the command.
         :returns: whatever the underlying client returns
-        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(self._raw(command, *args, **kwargs), timeout=self._timeout)
 
