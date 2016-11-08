@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aiocache",
-    version="0.1.12",
+    version="0.1.13",
     author="Manuel Miranda",
     url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
