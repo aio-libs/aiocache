@@ -62,13 +62,14 @@ def loads(x):
     return 200
 
 
-class TestBackend:
+class TestCache:
     """
-    This class ensures that all backends behave the same way and have the minimum functionality.
-    To add a new backend just create the fixture for the new backend and add id as a param for the
+    This class ensures that all caches behave the same way and have the minimum functionality.
+    To add a new cache just create the fixture for the new cache and add id as a param for the
     cache fixture
     """
-    def test_setup(self, cache):
+    @pytest.mark.asyncio
+    async def test_setup(self, cache):
         assert cache.namespace == "test"
         assert isinstance(cache.serializer, serializers.DefaultSerializer)
 

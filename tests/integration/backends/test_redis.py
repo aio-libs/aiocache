@@ -6,11 +6,13 @@ from aiocache import serializers
 
 class TestRedisCache:
 
-    def test_setup(self, redis_cache):
+    @pytest.mark.asyncio
+    async def test_setup(self, redis_cache):
         assert redis_cache._backend.endpoint == "127.0.0.1"
         assert redis_cache._backend.port == 6379
 
-    def test_setup_override(self):
+    @pytest.mark.asyncio
+    async def test_setup_override(self):
         redis_cache = RedisCache(serializer=serializers.JsonSerializer())
         assert redis_cache._backend.endpoint == "127.0.0.1"
         assert redis_cache._backend.port == 6379

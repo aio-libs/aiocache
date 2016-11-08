@@ -35,6 +35,7 @@ def reset_defaults():
 def mock_cache(mocker):
     mocker.patch('aiocache.cache.BaseCache.get_backend', return_value=asynctest.CoroutineMock())
     cache = BaseCache()
+    cache._timeout = 0.002
     mocker.spy(cache, '_build_key')
     mocker.spy(cache, '_serializer')
     cache.policy = asynctest.CoroutineMock()

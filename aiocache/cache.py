@@ -1,4 +1,5 @@
 import time
+import asyncio
 
 import aiocache
 
@@ -14,12 +15,13 @@ class BaseCache:
     :param serializer: obj with :class:`aiocache.serializers.BaseSerializer` interface.
         Must implement ``loads`` and ``dumps`` methods.
     :param namespace: string to use as prefix for the key used in all operations of the backend.
-    :param max_keys: int indicating the max number of keys to store in the backend. If not
-        specified or 0, it's unlimited.
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default its 5.
     """
 
-    def __init__(self, serializer=None, namespace=None, *args, **kwargs):
+    def __init__(self, serializer=None, namespace=None, timeout=5, *args, **kwargs):
 
+        self._timeout = timeout
         self._backend = self.get_backend(*args, **{**aiocache.DEFAULT_KWARGS, **kwargs})
         self._serializer = None
         self.serializer = serializer or self.get_default_serializer()
@@ -56,7 +58,7 @@ class BaseCache:
     def set_policy(self, class_, *args, **kwargs):
         self._policy = class_(self, *args, **kwargs)
 
-    async def add(self, key, value, ttl=None, dumps_fn=None):  # pragma: no cover
+    async def add(self, key, value, ttl=None, dumps_fn=None):
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
@@ -66,7 +68,11 @@ class BaseCache:
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True if key is inserted
         :raises: Value error if key already exists
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._add(key, value, ttl, dumps_fn), timeout=self._timeout)
+
+    async def _add(self, key, value, ttl=None, dumps_fn=None):
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key)
@@ -85,7 +91,11 @@ class BaseCache:
         :param default: obj to return when key is not found
         :param loads_fn: callable alternative to use as loads function
         :returns: obj loaded
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._get(key, default, loads_fn), timeout=self._timeout)
+
+    async def _get(self, key, default=None, loads_fn=None):
         start = time.time()
         loads = loads_fn or self._serializer.loads
         ns_key = self._build_key(key)
@@ -105,7 +115,11 @@ class BaseCache:
         :param keys: list of str
         :param loads_fn: callable alternative to use as loads function
         :returns: list of objs
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._multi_get(keys, loads_fn), timeout=self._timeout)
+
+    async def _multi_get(self, keys, loads_fn=None):
         start = time.time()
         loads = loads_fn or self._serializer.loads
 
@@ -134,7 +148,11 @@ class BaseCache:
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._set(key, value, ttl, dumps_fn), timeout=self._timeout)
+
+    async def _set(self, key, value, ttl=None, dumps_fn=None):
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key)
@@ -153,7 +171,12 @@ class BaseCache:
         :param ttl: int the expiration time of the keys in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :returns: True
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(
+            self._multi_set(pairs, ttl, dumps_fn), timeout=self._timeout)
+
+    async def _multi_set(self, pairs, ttl=None, dumps_fn=None):
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
 
@@ -179,7 +202,11 @@ class BaseCache:
         Deletes the given key.
         :param key: Key to be deleted
         :returns: int number of deleted keys
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._delete(key), timeout=self._timeout)
+
+    async def _delete(self, key):
         start = time.time()
         ns_key = self._build_key(key)
         ret = await self._backend.delete(ns_key)
@@ -191,7 +218,11 @@ class BaseCache:
         Check key exists in the cache.
         :param key: str key to check
         :returns: True if key exists otherwise False
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._exists(key), timeout=self._timeout)
+
+    async def _exists(self, key):
         start = time.time()
         ns_key = self._build_key(key)
         ret = await self._backend.exists(ns_key)
@@ -204,7 +235,11 @@ class BaseCache:
 
         :param command: str with the command.
         :returns: whatever the underlying client returns
+        :raises: :class:``asyncio.TimeoutError`` if it lasts more than self._timeout
         """
+        return await asyncio.wait_for(self._raw(command, *args, **kwargs), timeout=self._timeout)
+
+    async def _raw(self, command, *args, **kwargs):
         start = time.time()
         ret = await self._backend.raw(command, *args, **kwargs)
         logger.info("%s (%.4f)s", command, time.time() - start)
