@@ -5,6 +5,12 @@ import aiocache
 from aiocache.log import logger
 
 
+def class_from_string(class_path):
+    class_name = class_path.split('.')[-1]
+    module_name = class_path.rstrip(class_name).rstrip(".")
+    return getattr(__import__(module_name, fromlist=[class_name]), class_name)
+
+
 def get_args_dict(fn, args, kwargs):
     defaults = {
         arg_name: arg.default for arg_name, arg in inspect.signature(fn).parameters.items()

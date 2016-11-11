@@ -3,7 +3,6 @@ import pytest
 import aiocache
 
 from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
-from aiocache.serializers import DefaultSerializer
 from aiocache.policies import DefaultPolicy
 
 
@@ -17,9 +16,9 @@ def pytest_namespace():
 @pytest.fixture(autouse=True)
 def reset_defaults():
     aiocache.set_defaults(
-        cache=SimpleMemoryCache,
-        serializer=DefaultSerializer,
-        policy=DefaultPolicy,
+        cache="aiocache.SimpleMemoryCache",
+        serializer="aiocache.serializers.DefaultSerializer",
+        policy="aiocache.policies.DefaultPolicy",
         namespace="",
     )
 

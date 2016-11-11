@@ -4,11 +4,10 @@ import aiocache
 from collections import namedtuple
 
 from aiocache import cached, RedisCache
-from aiocache.serializers import PickleSerializer
 
 Result = namedtuple('Result', "content, status")
 
-aiocache.set_defaults(cache=RedisCache, serializer=PickleSerializer)
+aiocache.set_defaults(cache="aiocache.RedisCache", serializer="aiocache.serializers.PickleSerializer")
 
 
 @cached(ttl=10, key="key", namespace="main")

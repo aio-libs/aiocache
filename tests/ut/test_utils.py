@@ -241,7 +241,7 @@ class TestCacheFactory:
         assert isinstance(cache, RedisCache)
 
     def test_get_cache_with_default_config(self):
-        aiocache.set_defaults(cache=RedisCache, endpoint="http://...", port=6379)
+        aiocache.set_defaults(cache="aiocache.RedisCache", endpoint="http://...", port=6379)
         cache = get_cache(
             namespace="default", serializer=PickleSerializer(),
             policy=DefaultPolicy, port=123)

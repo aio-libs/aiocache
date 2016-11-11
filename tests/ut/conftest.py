@@ -3,9 +3,6 @@ import asynctest
 
 import aiocache
 
-from aiocache import SimpleMemoryCache
-from aiocache.serializers import DefaultSerializer
-from aiocache.policies import DefaultPolicy
 from aiocache.cache import BaseCache
 
 
@@ -24,9 +21,9 @@ def disable_logs(mocker):
 @pytest.fixture(autouse=True)
 def reset_defaults():
     aiocache.set_defaults(
-        cache=SimpleMemoryCache,
-        serializer=DefaultSerializer,
-        policy=DefaultPolicy,
+        cache="aiocache.SimpleMemoryCache",
+        serializer="aiocache.serializers.DefaultSerializer",
+        policy="aiocache.policies.DefaultPolicy",
         namespace="",
     )
 
