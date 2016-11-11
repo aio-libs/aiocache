@@ -15,7 +15,7 @@ def pytest_namespace():
 
 @pytest.fixture(autouse=True)
 def reset_defaults():
-    aiocache.set_defaults(
+    aiocache.settings.set_defaults(
         cache="aiocache.SimpleMemoryCache",
         serializer="aiocache.serializers.DefaultSerializer",
         policy="aiocache.policies.DefaultPolicy",

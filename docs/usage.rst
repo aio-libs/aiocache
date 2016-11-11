@@ -54,9 +54,9 @@ Sometimes you just want to use the same cache over all your project or at least,
   from aiocache.serializers import PickleSerializer
   from aiocache.policies import LRUPolicy
 
-  aiocache.set_defaults(
-    backend=aiocache.RedisCache,
-    serializer=PickleSerializer,
+  aiocache.settings.set_defaults(
+    backend="aiocache.RedisCache",
+    serializer="aiocache.serializers.PickleSerializer",
     endpoint=127.0.0.1,
     port=6379)
 

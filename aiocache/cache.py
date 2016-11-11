@@ -23,20 +23,20 @@ class BaseCache:
     def __init__(self, serializer=None, namespace=None, timeout=5, *args, **kwargs):
 
         self._timeout = timeout
-        self._backend = self.get_backend(*args, **{**aiocache.DEFAULT_KWARGS, **kwargs})
+        self._backend = self.get_backend(*args, **{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
         self._serializer = None
         self.serializer = serializer or self.get_default_serializer()
         self._policy = self.get_default_policy()
-        self.namespace = namespace if namespace is not None else aiocache.DEFAULT_NAMESPACE
+        self.namespace = namespace if namespace is not None else aiocache.settings.DEFAULT_NAMESPACE
 
     def get_backend(self, *args, **kwargs):
         raise NotImplementedError()
 
     def get_default_serializer(self):
-        return aiocache.DEFAULT_SERIALIZER()
+        return aiocache.settings.DEFAULT_SERIALIZER()
 
     def get_default_policy(self):
-        return aiocache.DEFAULT_POLICY(self)
+        return aiocache.settings.DEFAULT_POLICY(self)
 
     @property
     def serializer(self):

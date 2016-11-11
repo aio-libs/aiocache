@@ -34,9 +34,9 @@ def cached(ttl=0, key=None, key_from_attr=None, cache=None, serializer=None, **k
         + function_name + args + kwargs
     :param key_from_attr: arg or kwarg name from the function to use as a key.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
-        Default is the one configured in ``aiocache.DEFAULT_CACHE``
+        Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is the one configured in ``aiocache.DEFAULT_SERIALIZER``
+        Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
     """
     cache = get_cache(cache=cache, serializer=serializer, **kwargs)
 
@@ -83,9 +83,9 @@ def multi_cached(keys_from_attr, key_builder=None, ttl=0, cache=None, serializer
         Receives a dict with all the args of the function.
     :param ttl: int seconds to store the keys. Default is 0
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
-        Default is the one configured in ``aiocache.DEFAULT_CACHE``
+        Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is the one configured in ``aiocache.DEFAULT_SERIALIZER``
+        Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
     """
     cache = get_cache(cache=cache, serializer=serializer, **kwargs)
     key_builder = key_builder or (lambda x, args_dict: x)
@@ -133,12 +133,14 @@ def multi_cached(keys_from_attr, key_builder=None, ttl=0, cache=None, serializer
 
 
 def get_cache(cache=None, serializer=None, policy=None, namespace=None, **kwargs):
-    cache = cache or aiocache.DEFAULT_CACHE
-    serializer = serializer or aiocache.DEFAULT_SERIALIZER()
-    policy = policy or aiocache.DEFAULT_POLICY
-    namespace = namespace or aiocache.DEFAULT_NAMESPACE
+    cache = cache or aiocache.settings.DEFAULT_CACHE
+    serializer = serializer or aiocache.settings.DEFAULT_SERIALIZER()
+    policy = policy or aiocache.settings.DEFAULT_POLICY
+    namespace = namespace or aiocache.settings.DEFAULT_NAMESPACE
 
     instance = cache(
-        namespace=namespace, serializer=serializer, **{**aiocache.DEFAULT_KWARGS, **kwargs})
+        namespace=namespace,
+        serializer=serializer,
+        **{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
     instance.set_policy(policy)
     return instance
