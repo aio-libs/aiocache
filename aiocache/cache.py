@@ -14,7 +14,8 @@ class BaseCache:
 
     :param serializer: obj with :class:`aiocache.serializers.BaseSerializer` interface.
         Must implement ``loads`` and ``dumps`` methods.
-    :param namespace: string to use as prefix for the key used in all operations of the backend.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """
@@ -26,7 +27,7 @@ class BaseCache:
         self._serializer = None
         self.serializer = serializer or self.get_default_serializer()
         self._policy = self.get_default_policy()
-        self.namespace = namespace or aiocache.DEFAULT_NAMESPACE
+        self.namespace = namespace if namespace is not None else aiocache.DEFAULT_NAMESPACE
 
     def get_backend(self, *args, **kwargs):
         raise NotImplementedError()
@@ -58,7 +59,7 @@ class BaseCache:
     def set_policy(self, class_, *args, **kwargs):
         self._policy = class_(self, *args, **kwargs)
 
-    async def add(self, key, value, ttl=None, dumps_fn=None):
+    async def add(self, key, value, ttl=None, dumps_fn=None, namespace=None):
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
@@ -67,17 +68,19 @@ class BaseCache:
         :param value: obj
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
+        :param namespace: str alternative namespace to use
         :returns: True if key is inserted
         :raises:
             - ValueError if key already exists
             - :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._add(key, value, ttl, dumps_fn), timeout=self._timeout)
+        return await asyncio.wait_for(
+            self._add(key, value, ttl, dumps_fn, namespace), timeout=self._timeout)
 
-    async def _add(self, key, value, ttl=None, dumps_fn=None):
+    async def _add(self, key, value, ttl, dumps_fn, namespace):
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
-        ns_key = self._build_key(key)
+        ns_key = self._build_key(key, namespace=namespace)
 
         await self._policy.pre_set(key, value)
         await self._backend.add(ns_key, dumps(value), ttl)
@@ -86,22 +89,24 @@ class BaseCache:
         logger.info("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
         return True
 
-    async def get(self, key, default=None, loads_fn=None):
+    async def get(self, key, default=None, loads_fn=None, namespace=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
         :param default: obj to return when key is not found
         :param loads_fn: callable alternative to use as loads function
+        :param namespace: str alternative namespace to use
         :returns: obj loaded
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._get(key, default, loads_fn), timeout=self._timeout)
+        return await asyncio.wait_for(
+            self._get(key, default, loads_fn, namespace), timeout=self._timeout)
 
-    async def _get(self, key, default=None, loads_fn=None):
+    async def _get(self, key, default, loads_fn, namespace):
         start = time.time()
         loads = loads_fn or self._serializer.loads
-        ns_key = self._build_key(key)
+        ns_key = self._build_key(key, namespace=namespace)
 
         await self._policy.pre_get(key)
         value = loads(await self._backend.get(ns_key))
@@ -111,25 +116,27 @@ class BaseCache:
         logger.info("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
         return value or default
 
-    async def multi_get(self, keys, loads_fn=None):
+    async def multi_get(self, keys, loads_fn=None, namespace=None):
         """
         Get multiple values from the cache, values not found are Nones.
 
         :param keys: list of str
         :param loads_fn: callable alternative to use as loads function
+        :param namespace: str alternative namespace to use
         :returns: list of objs
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._multi_get(keys, loads_fn), timeout=self._timeout)
+        return await asyncio.wait_for(
+            self._multi_get(keys, loads_fn, namespace), timeout=self._timeout)
 
-    async def _multi_get(self, keys, loads_fn=None):
+    async def _multi_get(self, keys, loads_fn, namespace):
         start = time.time()
         loads = loads_fn or self._serializer.loads
 
         for key in keys:
             await self._policy.pre_get(key)
 
-        ns_keys = [self._build_key(key) for key in keys]
+        ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
         values = await self._backend.multi_get(ns_keys)
         values = [loads(value) for value in values]
 
@@ -143,7 +150,7 @@ class BaseCache:
             time.time() - start)
         return values
 
-    async def set(self, key, value, ttl=None, dumps_fn=None):
+    async def set(self, key, value, ttl=None, dumps_fn=None, namespace=None):
         """
         Stores the value in the given key with ttl if specified
 
@@ -151,15 +158,17 @@ class BaseCache:
         :param value: obj
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
+        :param namespace: str alternative namespace to use
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._set(key, value, ttl, dumps_fn), timeout=self._timeout)
+        return await asyncio.wait_for(
+            self._set(key, value, ttl, dumps_fn, namespace), timeout=self._timeout)
 
-    async def _set(self, key, value, ttl=None, dumps_fn=None):
+    async def _set(self, key, value, ttl, dumps_fn, namespace):
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
-        ns_key = self._build_key(key)
+        ns_key = self._build_key(key, namespace=namespace)
 
         await self._policy.pre_set(key, value)
         await self._backend.set(ns_key, dumps(value), ttl)
@@ -168,27 +177,28 @@ class BaseCache:
         logger.info("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
         return True
 
-    async def multi_set(self, pairs, ttl=None, dumps_fn=None):
+    async def multi_set(self, pairs, ttl=None, dumps_fn=None, namespace=None):
         """
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
         :param ttl: int the expiration time of the keys in seconds
         :param dumps_fn: callable alternative to use as dumps function
+        :param namespace: str alternative namespace to use
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
         return await asyncio.wait_for(
-            self._multi_set(pairs, ttl, dumps_fn), timeout=self._timeout)
+            self._multi_set(pairs, ttl, dumps_fn, namespace), timeout=self._timeout)
 
-    async def _multi_set(self, pairs, ttl=None, dumps_fn=None):
+    async def _multi_set(self, pairs, ttl, dumps_fn, namespace):
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
 
         tmp_pairs = []
         for key, value in pairs:
             await self._policy.pre_set(key, value)
-            tmp_pairs.append((self._build_key(key), dumps(value)))
+            tmp_pairs.append((self._build_key(key, namespace=namespace), dumps(value)))
 
         await self._backend.multi_set(tmp_pairs, ttl=ttl)
 
@@ -202,36 +212,38 @@ class BaseCache:
             time.time() - start)
         return True
 
-    async def delete(self, key):
+    async def delete(self, key, namespace=None):
         """
         Deletes the given key.
 
         :param key: Key to be deleted
+        :param namespace: str alternative namespace to use
         :returns: int number of deleted keys
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._delete(key), timeout=self._timeout)
+        return await asyncio.wait_for(self._delete(key, namespace), timeout=self._timeout)
 
-    async def _delete(self, key):
+    async def _delete(self, key, namespace):
         start = time.time()
-        ns_key = self._build_key(key)
+        ns_key = self._build_key(key, namespace=namespace)
         ret = await self._backend.delete(ns_key)
         logger.info("DELETE %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
 
-    async def exists(self, key):
+    async def exists(self, key, namespace=None):
         """
         Check key exists in the cache.
 
         :param key: str key to check
+        :param namespace: str alternative namespace to use
         :returns: True if key exists otherwise False
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._exists(key), timeout=self._timeout)
+        return await asyncio.wait_for(self._exists(key, namespace), timeout=self._timeout)
 
-    async def _exists(self, key):
+    async def _exists(self, key, namespace):
         start = time.time()
-        ns_key = self._build_key(key)
+        ns_key = self._build_key(key, namespace=namespace)
         ret = await self._backend.exists(ns_key)
         logger.info("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
@@ -244,7 +256,8 @@ class BaseCache:
         :returns: whatever the underlying client returns
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
         """
-        return await asyncio.wait_for(self._raw(command, *args, **kwargs), timeout=self._timeout)
+        return await asyncio.wait_for(
+            self._raw(command, *args, **kwargs), timeout=self._timeout)
 
     async def _raw(self, command, *args, **kwargs):
         start = time.time()
@@ -252,10 +265,8 @@ class BaseCache:
         logger.info("%s (%.4f)s", command, time.time() - start)
         return ret
 
-    def _build_key(self, key):
-        if self.namespace:
-            return "{}{}".format(self.namespace, key)
-        return key
+    def _build_key(self, key, namespace=None):
+        return "{}{}".format(namespace if namespace is not None else self.namespace, key)
 
 
 class SimpleMemoryCache(BaseCache):
@@ -281,10 +292,8 @@ class RedisCache(BaseCache):
     def get_backend(self, *args, **kwargs):
         return RedisBackend(*args, **kwargs)
 
-    def _build_key(self, key):
-        if self.namespace:
-            return "{}:{}".format(self.namespace, key)
-        return key
+    def _build_key(self, key, namespace=None):
+        return "{}:{}".format(namespace if namespace is not None else self.namespace, key)
 
     def __repr__(self):  # pragma: no cover
         return "RedisCache ({}:{})".format(self._backend.endpoint, self._backend.port)
@@ -301,8 +310,8 @@ class MemcachedCache(BaseCache):
     def get_backend(self, *args, **kwargs):
         return MemcachedBackend(*args, **kwargs)
 
-    def _build_key(self, key):
-        ns_key = super()._build_key(key)
+    def _build_key(self, key, namespace=None):
+        ns_key = super()._build_key(key, namespace=namespace)
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover

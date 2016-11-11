@@ -24,7 +24,7 @@ def reset_defaults():
         cache="aiocache.SimpleMemoryCache",
         serializer="aiocache.serializers.DefaultSerializer",
         policy="aiocache.policies.DefaultPolicy",
-        namespace="",
+        namespace="test",
     )
 
 
