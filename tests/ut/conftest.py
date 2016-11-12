@@ -3,7 +3,7 @@ import asynctest
 
 import aiocache
 
-from aiocache.cache import BaseCache
+from aiocache.cache import BaseCache, RedisCache
 
 
 def pytest_namespace():
@@ -37,4 +37,11 @@ def mock_cache(mocker):
     mocker.spy(cache, '_serializer')
     cache.policy = asynctest.CoroutineMock()
     cache._backend.multi_get.return_value = ['a', 'b']
+    return cache
+
+
+@pytest.fixture
+def redis_cache(mocker, event_loop):
+    mocker.patch('aiocache.cache.RedisCache.get_backend', return_value=asynctest.CoroutineMock())
+    cache = RedisCache(loop=event_loop)
     return cache

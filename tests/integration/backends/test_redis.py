@@ -4,7 +4,7 @@ from aiocache import RedisCache
 from aiocache import serializers
 
 
-class TestRedisCache:
+class TestRedisBackend:
 
     @pytest.mark.asyncio
     async def test_setup(self, redis_cache):

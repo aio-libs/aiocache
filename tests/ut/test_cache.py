@@ -125,3 +125,13 @@ class TestMockCache:
     )
     def test_build_key(self, mock_cache, namespace, expected):
         assert mock_cache._build_key(pytest.KEY, namespace=namespace) == expected
+
+
+class TestRedisCache:
+    @pytest.mark.parametrize("namespace, expected", (
+        [None, "test:" + pytest.KEY],
+        ["", pytest.KEY],
+        ["my_ns", "my_ns:" + pytest.KEY],)
+    )
+    def test_build_key(self, redis_cache, namespace, expected):
+        assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected

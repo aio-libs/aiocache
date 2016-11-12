@@ -137,8 +137,7 @@ class BaseCache:
             await self._policy.pre_get(key)
 
         ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
-        values = await self._backend.multi_get(ns_keys)
-        values = [loads(value) for value in values]
+        values = [loads(value) for value in await self._backend.multi_get(ns_keys)]
 
         for key in keys:
             await self._policy.post_get(key)
@@ -293,7 +292,11 @@ class RedisCache(BaseCache):
         return RedisBackend(*args, **kwargs)
 
     def _build_key(self, key, namespace=None):
-        return "{}:{}".format(namespace if namespace is not None else self.namespace, key)
+        if namespace is not None:
+            return "{}{}{}".format(namespace, ":" if namespace else "", key)
+        if self.namespace is not None:
+            return "{}{}{}".format(self.namespace, ":" if self.namespace else "", key)
+        return key
 
     def __repr__(self):  # pragma: no cover
         return "RedisCache ({}:{})".format(self._backend.endpoint, self._backend.port)
