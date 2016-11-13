@@ -247,6 +247,23 @@ class BaseCache:
         logger.info("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
 
+    async def clear(self, namespace=None):
+        """
+        Clears the cache in the cache namespace. If an alternative namespace is given, it will
+        clear those ones instead.
+
+        :param namespace: str alternative namespace to use
+        :returns: True
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self._timeout
+        """
+        return await asyncio.wait_for(self._clear(namespace), timeout=self._timeout)
+
+    async def _clear(self, namespace):
+        start = time.time()
+        ret = await self._backend.clear(namespace)
+        logger.info("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
+        return ret
+
     async def raw(self, command, *args, **kwargs):
         """
         Send the raw command to the underlying client.

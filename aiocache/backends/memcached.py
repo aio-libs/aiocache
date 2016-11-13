@@ -100,6 +100,19 @@ class MemcachedBackend:
         """
         return 1 if await self.client.delete(key) else 0
 
+    async def clear(self, namespace):
+        """
+        Deletes the given key.
+
+        :param namespace:
+        :returns: True
+        """
+        if namespace:
+            raise ValueError("MemcachedBackend doesnt support flushing by namespace")
+        else:
+            await self.client.flush_all()
+        return True
+
     async def raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying client of memcached. It's under

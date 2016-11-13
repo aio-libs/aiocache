@@ -177,3 +177,33 @@ class TestCache:
     async def test_exists_existing(self, cache):
         await cache.set(pytest.KEY, "value")
         assert await cache.exists(pytest.KEY) is True
+
+    @pytest.mark.asyncio
+    async def test_clear(self, cache):
+        await cache.set(pytest.KEY, "value")
+        await cache.clear()
+
+        assert await cache.exists(pytest.KEY) is False
+
+    @pytest.mark.asyncio
+    async def test_clear_with_namespace_redis(self, redis_cache):
+        await redis_cache.set(pytest.KEY, "value", namespace="test")
+        await redis_cache.clear(namespace="test")
+
+        assert await redis_cache.exists(pytest.KEY, namespace="test") is False
+
+    @pytest.mark.asyncio
+    async def test_clear_with_namespace_memory(self, memory_cache):
+        await memory_cache.set(pytest.KEY, "value", namespace="test")
+        await memory_cache.clear(namespace="test")
+
+        assert await memory_cache.exists(pytest.KEY, namespace="test") is False
+
+    @pytest.mark.asyncio
+    async def test_clear_with_namespace_memcached(self, memcached_cache):
+        await memcached_cache.set(pytest.KEY, "value", namespace="test")
+
+        with pytest.raises(ValueError):
+            await memcached_cache.clear(namespace="test")
+
+        assert await memcached_cache.exists(pytest.KEY, namespace="test") is True
