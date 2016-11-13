@@ -26,6 +26,7 @@ Here we are using the :ref:`simplememorycache` but you can use any other listed 
   - ``multi_set``: Sets multiple key/values.
   - ``exists``: Returns True if key exists False otherwise.
   - ``delete``: Deletes key and returns number of deleted items.
+  - ``clear``: Clears the items stored.
   - ``raw``: Executes the specified command using the underlying client.
 
 

@@ -21,6 +21,7 @@ This library aims for simplicity over specialization. It provides a common inter
 - ``multi_get``
 - ``multi_set``
 - ``delete``
+- ``clear``
 - ``raw``: Sends raw command to the underlying client
 
 
