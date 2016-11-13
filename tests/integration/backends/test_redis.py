@@ -20,7 +20,7 @@ class TestRedisBackend:
 
         assert redis_cache._backend.endpoint == "127.0.0.1"
         assert redis_cache._backend.port == 6379
-        assert redis_cache._backend.db == 2
+        assert redis_cache._backend.database == 2
         assert redis_cache._backend.password == "pass"
         assert isinstance(redis_cache.serializer, serializers.JsonSerializer)
 
