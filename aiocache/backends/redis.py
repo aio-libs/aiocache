@@ -5,12 +5,14 @@ import aioredis
 
 class RedisBackend:
 
-    def __init__(self, endpoint=None, port=None, loop=None):
+    def __init__(self, endpoint=None, port=None, db=0, password=None, loop=None):
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
         self._pool = None
         self._loop = loop or asyncio.get_event_loop()
         self.encoding = "utf-8"
+        self.database = db
+        self.password = password
 
     async def get(self, key):
         """
@@ -21,7 +23,7 @@ class RedisBackend:
         """
 
         with await self._connect() as redis:
-            return await redis.get(key, encoding=self.encoding)
+            return await redis.get(key)
 
     async def multi_get(self, keys):
         """
@@ -31,7 +33,7 @@ class RedisBackend:
         :returns: list of obj for each key found, else if not found
         """
         with await self._connect() as redis:
-            return await redis.mget(*keys, encoding=self.encoding)
+            return await redis.mget(*keys)
 
     async def set(self, key, value, ttl=None):
         """
@@ -135,6 +137,10 @@ class RedisBackend:
     async def _connect(self):
         if self._pool is None:
             self._pool = await aioredis.create_pool(
-                (self.endpoint, self.port), loop=self._loop)
+                (self.endpoint, self.port),
+                encoding=self.encoding,
+                db=self.database,
+                password=self.password,
+                loop=self._loop)
 
         return await self._pool

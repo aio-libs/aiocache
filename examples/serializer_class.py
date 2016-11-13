@@ -17,7 +17,7 @@ cache = RedisCache(serializer=MySerializer(), namespace="main")
 async def serializer():
     await cache.set("key", "value")
 
-    assert await cache.raw("get", "main:key") == b'1'
+    assert await cache.raw("get", "main:key") == '1'
     assert await cache.get("key") == 2
 
 

@@ -6,20 +6,26 @@ from aiocache import serializers
 
 class TestRedisBackend:
 
-    @pytest.mark.asyncio
-    async def test_setup(self, redis_cache):
+    def test_setup(self):
+        redis_cache = RedisCache()
         assert redis_cache._backend.endpoint == "127.0.0.1"
         assert redis_cache._backend.port == 6379
+        assert redis_cache._backend.encoding == "utf-8"
 
-    @pytest.mark.asyncio
-    async def test_setup_override(self):
-        redis_cache = RedisCache(serializer=serializers.JsonSerializer())
+    def test_setup_override(self):
+        redis_cache = RedisCache(
+            serializer=serializers.JsonSerializer(),
+            db=2,
+            password="pass")
+
         assert redis_cache._backend.endpoint == "127.0.0.1"
         assert redis_cache._backend.port == 6379
+        assert redis_cache._backend.db == 2
+        assert redis_cache._backend.password == "pass"
         assert isinstance(redis_cache.serializer, serializers.JsonSerializer)
 
     @pytest.mark.asyncio
     async def test_raw(self, redis_cache):
-        await redis_cache.raw('set', b"key", b"value")
-        assert await redis_cache.raw("get", b"key") == b"value"
-        assert await redis_cache.raw("keys", "k*") == [b"key"]
+        await redis_cache.raw('set', "key", "value")
+        assert await redis_cache.raw("get", "key") == "value"
+        assert await redis_cache.raw("keys", "k*") == ["key"]

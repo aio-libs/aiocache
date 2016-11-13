@@ -103,7 +103,7 @@ class SimpleMemoryBackend:
         :returns: True
         """
         if namespace:
-            for key in list(SimpleMemoryBackend._cache.keys()):
+            for key in list(SimpleMemoryBackend._cache):
                 if key.startswith(namespace):
                     self._delete(key)
         else:
