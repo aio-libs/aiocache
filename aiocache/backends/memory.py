@@ -95,6 +95,21 @@ class SimpleMemoryBackend:
         """
         return self._delete(key)
 
+    async def clear(self, namespace):
+        """
+        Deletes the given key.
+
+        :param namespace:
+        :returns: True
+        """
+        if namespace:
+            for key in list(SimpleMemoryBackend._cache.keys()):
+                if key.startswith(namespace):
+                    self._delete(key)
+        else:
+            SimpleMemoryBackend._cache = {}
+        return True
+
     async def raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying dict structure. It's under

@@ -107,6 +107,21 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.delete(key)
 
+    async def clear(self, namespace):
+        """
+        Deletes the given key.
+
+        :param namespace:
+        :returns: True
+        """
+        with await self._connect() as redis:
+            if namespace:
+                keys = await redis.keys("{}:*".format(namespace))
+                await redis.delete(*keys)
+            else:
+                await redis.flushdb()
+        return True
+
     async def raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying client of aioredis. It's under

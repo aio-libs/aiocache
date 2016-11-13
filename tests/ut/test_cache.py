@@ -118,6 +118,13 @@ class TestMockCache:
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.delete(pytest.KEY)
 
+    @pytest.mark.asyncio
+    async def test_clear_timeouts(self, mock_cache):
+        mock_cache._backend.clear = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_cache.clear(pytest.KEY)
+
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test" + pytest.KEY],
         ["", pytest.KEY],
