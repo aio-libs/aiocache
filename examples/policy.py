@@ -5,7 +5,7 @@ from aiocache.policies import LRUPolicy
 
 
 cache = RedisCache(namespace="main")
-cache.set_policy(LRUPolicy, max_keys=2)
+cache.policy = LRUPolicy(max_keys=2)
 
 
 async def policy():

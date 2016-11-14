@@ -6,14 +6,16 @@ from aiocache.policies import DefaultPolicy, LRUPolicy
 
 @pytest.fixture
 def lru_policy():
-    return LRUPolicy(asynctest.CoroutineMock(), max_keys=10)
+    policy = LRUPolicy(max_keys=10)
+    policy.client = asynctest.CoroutineMock()
+    return policy
 
 
 class TestDefaultPolicy:
 
     def test_setup(self):
-        policy = DefaultPolicy("client")
-        assert policy.client == "client"
+        policy = DefaultPolicy()
+        assert policy.client is None
 
 
 class TestLRUPolicy:
@@ -22,7 +24,7 @@ class TestLRUPolicy:
         assert lru_policy.deque.maxlen == 10
 
         with pytest.raises(AssertionError):
-            LRUPolicy("client", max_keys=0)
+            LRUPolicy(max_keys=0)
 
     @pytest.mark.asyncio
     async def test_post_get(self, lru_policy):

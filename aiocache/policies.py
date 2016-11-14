@@ -1,15 +1,25 @@
+import functools
+
 from collections import deque
+
+
+def check_cache_client(func):
+
+    @functools.wraps(func)
+    async def wrapper(self, *args, **kwargs):
+        assert self.client is not None, "Policy needs to be attached to a Cache instance before being used"
+        return await func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class DefaultPolicy:
     """
     Default and base policy. It's the default used by all backends and it does nothing.
-
-    :param client: Backend class to interact with the storage.
     """
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self):
+        self.client = None
 
     async def pre_get(self, key):
         pass
@@ -35,8 +45,8 @@ class LRUPolicy(DefaultPolicy):
 
     The queue is implemented using a Python deque so it is NOT persistent!
     """
-    def __init__(self, *args, max_keys=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, max_keys=None):
+        super().__init__()
         if max_keys is not None:
             assert max_keys >= 1, "Number of keys must be 1 or bigger"
         self.deque = deque(maxlen=max_keys)
@@ -50,6 +60,7 @@ class LRUPolicy(DefaultPolicy):
         self.deque.remove(key)
         self.deque.appendleft(key)
 
+    @check_cache_client
     async def post_set(self, key, value):
         """
         Set the given key at the beginning of the queue. If the queue is full, remove the last

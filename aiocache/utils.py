@@ -135,12 +135,11 @@ def multi_cached(keys_from_attr, key_builder=None, ttl=0, cache=None, serializer
 def get_cache(cache=None, serializer=None, policy=None, namespace=None, **kwargs):
     cache = cache or aiocache.settings.DEFAULT_CACHE
     serializer = serializer or aiocache.settings.DEFAULT_SERIALIZER()
-    policy = policy or aiocache.settings.DEFAULT_POLICY
+    policy = policy or aiocache.settings.DEFAULT_POLICY()
     namespace = namespace or aiocache.settings.DEFAULT_NAMESPACE
 
     instance = cache(
         namespace=namespace,
         serializer=serializer,
         **{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
-    instance.set_policy(policy)
     return instance
