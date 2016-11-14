@@ -245,7 +245,7 @@ class TestCacheFactory:
             cache="aiocache.RedisCache", endpoint="http://...", port=6379)
         cache = get_cache(
             namespace="default", serializer=PickleSerializer(),
-            policy=DefaultPolicy, port=123)
+            policy=DefaultPolicy(), port=123)
 
         assert isinstance(cache, RedisCache)
         assert cache._backend.endpoint == "http://..."
@@ -257,7 +257,7 @@ class TestCacheFactory:
     def test_get_cache_overrides(self):
         cache = get_cache(
             cache=RedisCache, namespace="default", serializer=PickleSerializer(),
-            policy=DefaultPolicy, endpoint="http://...", port=123)
+            policy=DefaultPolicy(), endpoint="http://...", port=123)
 
         assert isinstance(cache, RedisCache)
         assert cache._backend.endpoint == "http://..."

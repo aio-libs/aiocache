@@ -28,7 +28,10 @@ class LRUPolicy(DefaultPolicy):
             the queue is full, it will remove as many keys as needed to make space for the new
             ones.
 
-    The queue is implemented using a Python deque so it is NOT persistent!
+    IMPORTANT!
+        - The queue is implemented using a Python deque so it is NOT persistent!
+        - Careful when working on distributed systems, you may run into incosistencies if this
+            policy is run from different instances that point to the same endpoint and namespace.
     """
     def __init__(self, max_keys=None):
         super().__init__()
@@ -41,6 +44,8 @@ class LRUPolicy(DefaultPolicy):
         Remove the key from its current position and set it at the beginning of the queue.
 
         :param key: string key used in the get operation
+        :param client: :class:`aiocache.base.BaseCache` or child instance to use to interact with
+            the storage if needed
         """
         self.deque.remove(key)
         self.deque.appendleft(key)
@@ -52,6 +57,8 @@ class LRUPolicy(DefaultPolicy):
 
         :param key: string key used in the set operation
         :param value: obj used in the set operation
+        :param client: :class:`aiocache.base.BaseCache` or child instance to use to interact with
+            the storage if needed
         """
         if len(self.deque) == self.deque.maxlen:
             await client.delete(self.deque.pop())

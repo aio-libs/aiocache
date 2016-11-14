@@ -22,12 +22,12 @@ class BaseCache:
     In case you need to pass extra information to the underlying backend, pass it as extra kwargs.
     """
 
-    def __init__(self, serializer=None, namespace=None, timeout=5, **kwargs):
+    def __init__(self, serializer=None, policy=None, namespace=None, timeout=5, **kwargs):
 
         self._timeout = timeout
         self._backend = self.get_backend(**{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
         self.serializer = serializer or self.get_default_serializer()
-        self.policy = self.get_default_policy()
+        self.policy = policy or self.get_default_policy()
         self.namespace = namespace if namespace is not None else aiocache.settings.DEFAULT_NAMESPACE
 
     def get_backend(self, *args, **kwargs):
@@ -56,7 +56,6 @@ class BaseCache:
     @policy.setter
     def policy(self, value):
         self._policy = value
-        self._policy.client = self
 
     async def add(self, key, value, ttl=None, dumps_fn=None, namespace=None):
         """
