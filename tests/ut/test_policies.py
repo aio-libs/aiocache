@@ -37,9 +37,10 @@ class TestLRUPolicy:
     @pytest.mark.asyncio
     async def test_post_set_full(self, lru_policy):
         lru_policy.deque.extend(range(1, 11))
-        await lru_policy.post_set(Mock(spec=BaseCache), pytest.KEY, "value")
+        mock_cache = Mock(spec=BaseCache)
+        await lru_policy.post_set(mock_cache, pytest.KEY, "value")
 
-        lru_policy.client.delete.assert_called_with(10)
+        mock_cache.delete.assert_called_with(10)
         assert lru_policy.deque.index(pytest.KEY) == 0
         assert lru_policy.deque.index(1) == 1
         assert len(lru_policy.deque) == 10

@@ -6,9 +6,6 @@ class DefaultPolicy:
     Default and base policy. It's the default used by all backends and it does nothing.
     """
 
-    def __init__(self):
-        self.client = None
-
     async def pre_get(self, client, key):
         pass
 

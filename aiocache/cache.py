@@ -9,8 +9,8 @@ from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBacken
 
 class BaseCache:
     """
-    Base class that agregates the common logic for the different caches that may exist. Cache related
-    available options are:
+    Base class that agregates the common logic for the different caches that may exist. Cache
+    related available options are:
 
     :param serializer: obj with :class:`aiocache.serializers.BaseSerializer` interface.
         Must implement ``loads`` and ``dumps`` methods.
