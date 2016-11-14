@@ -1,21 +1,14 @@
 import pytest
-import asynctest
 
-from aiocache.policies import DefaultPolicy, LRUPolicy
+from asynctest import Mock
+
+from aiocache.cache import BaseCache
+from aiocache.policies import LRUPolicy
 
 
 @pytest.fixture
 def lru_policy():
-    policy = LRUPolicy(max_keys=10)
-    policy.client = asynctest.CoroutineMock()
-    return policy
-
-
-class TestDefaultPolicy:
-
-    def test_setup(self):
-        policy = DefaultPolicy()
-        assert policy.client is None
+    return LRUPolicy(max_keys=10)
 
 
 class TestLRUPolicy:
@@ -31,20 +24,20 @@ class TestLRUPolicy:
         lru_policy.deque.appendleft(pytest.KEY)
         lru_policy.deque.appendleft(pytest.KEY_1)
 
-        await lru_policy.post_get(pytest.KEY)
+        await lru_policy.post_get(Mock(spec=BaseCache), pytest.KEY)
 
         assert lru_policy.deque.index(pytest.KEY) == 0
 
     @pytest.mark.asyncio
     async def test_post_set(self, lru_policy):
-        await lru_policy.post_set(pytest.KEY, "value")
+        await lru_policy.post_set(Mock(spec=BaseCache), pytest.KEY, "value")
 
         assert lru_policy.deque.index(pytest.KEY) == 0
 
     @pytest.mark.asyncio
     async def test_post_set_full(self, lru_policy):
         lru_policy.deque.extend(range(1, 11))
-        await lru_policy.post_set(pytest.KEY, "value")
+        await lru_policy.post_set(Mock(spec=BaseCache), pytest.KEY, "value")
 
         lru_policy.client.delete.assert_called_with(10)
         assert lru_policy.deque.index(pytest.KEY) == 0

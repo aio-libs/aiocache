@@ -1,16 +1,4 @@
-import functools
-
 from collections import deque
-
-
-def check_cache_client(func):
-
-    @functools.wraps(func)
-    async def wrapper(self, *args, **kwargs):
-        assert self.client is not None, "Policy needs to be attached to a Cache instance before being used"
-        return await func(self, *args, **kwargs)
-
-    return wrapper
 
 
 class DefaultPolicy:
@@ -21,16 +9,16 @@ class DefaultPolicy:
     def __init__(self):
         self.client = None
 
-    async def pre_get(self, key):
+    async def pre_get(self, client, key):
         pass
 
-    async def post_get(self, key):
+    async def post_get(self, client, key):
         pass
 
-    async def pre_set(self, key, value):
+    async def pre_set(self, client, key, value):
         pass
 
-    async def post_set(self, key, value):
+    async def post_set(self, client, key, value):
         pass
 
 
@@ -51,7 +39,7 @@ class LRUPolicy(DefaultPolicy):
             assert max_keys >= 1, "Number of keys must be 1 or bigger"
         self.deque = deque(maxlen=max_keys)
 
-    async def post_get(self, key):
+    async def post_get(self, client, key):
         """
         Remove the key from its current position and set it at the beginning of the queue.
 
@@ -60,8 +48,7 @@ class LRUPolicy(DefaultPolicy):
         self.deque.remove(key)
         self.deque.appendleft(key)
 
-    @check_cache_client
-    async def post_set(self, key, value):
+    async def post_set(self, client, key, value):
         """
         Set the given key at the beginning of the queue. If the queue is full, remove the last
         item first.
@@ -70,5 +57,5 @@ class LRUPolicy(DefaultPolicy):
         :param value: obj used in the set operation
         """
         if len(self.deque) == self.deque.maxlen:
-            await self.client.delete(self.deque.pop())
+            await client.delete(self.deque.pop())
         self.deque.appendleft(key)
