@@ -5,7 +5,7 @@ import aioredis
 
 class RedisBackend:
 
-    def __init__(self, endpoint=None, port=None, db=0, password=None, loop=None):
+    def __init__(self, endpoint=None, port=None, db=0, password=None, loop=None, **kwargs):
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
         self._pool = None

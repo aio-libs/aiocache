@@ -15,12 +15,17 @@ def pytest_namespace():
 
 @pytest.fixture(autouse=True)
 def reset_defaults():
-    aiocache.settings.set_defaults(
-        cache="aiocache.SimpleMemoryCache",
-        serializer="aiocache.serializers.DefaultSerializer",
-        policy="aiocache.policies.DefaultPolicy",
-        namespace="",
-    )
+    aiocache.settings.set_from_dict({
+        "CACHE": {
+            "class": "aiocache.SimpleMemoryCache",
+        },
+        "SERIALIZER": {
+            "class": "aiocache.serializers.DefaultSerializer",
+        },
+        "POLICY": {
+            "class": "aiocache.policies.DefaultPolicy",
+        }
+    })
 
 
 @pytest.fixture

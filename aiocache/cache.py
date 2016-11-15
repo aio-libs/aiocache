@@ -25,10 +25,11 @@ class BaseCache:
     def __init__(self, serializer=None, policy=None, namespace=None, timeout=5, **kwargs):
 
         self._timeout = timeout
-        self._backend = self.get_backend(**{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
+        self.namespace = namespace if namespace is not None else \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("namespace")
+        self._backend = self.get_backend(**{**aiocache.settings.DEFAULT_CACHE_KWARGS, **kwargs})
         self.serializer = serializer or self.get_default_serializer()
         self.policy = policy or self.get_default_policy()
-        self.namespace = namespace if namespace is not None else aiocache.settings.DEFAULT_NAMESPACE
 
     def get_backend(self, *args, **kwargs):
         raise NotImplementedError()
@@ -280,7 +281,11 @@ class BaseCache:
         return ret
 
     def _build_key(self, key, namespace=None):
-        return "{}{}".format(namespace if namespace is not None else self.namespace, key)
+        if namespace is not None:
+            return "{}{}".format(namespace, key)
+        if self.namespace is not None:
+            return "{}{}".format(self.namespace, key)
+        return key
 
 
 class SimpleMemoryCache(BaseCache):
