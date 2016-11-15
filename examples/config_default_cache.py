@@ -8,7 +8,10 @@ from aiocache import cached, RedisCache
 Result = namedtuple('Result', "content, status")
 
 aiocache.settings.set_defaults(
-    cache="aiocache.RedisCache", serializer="aiocache.serializers.PickleSerializer")
+    class_="aiocache.RedisCache")
+
+aiocache.settings.set_default_serializer(
+    class_="aiocache.serializers.PickleSerializer")
 
 
 @cached(ttl=10, key="key", namespace="main")

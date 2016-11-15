@@ -139,15 +139,13 @@ def multi_cached(
     return multi_cached_decorator
 
 
-def get_cache(cache=None, serializer=None, policy=None, namespace=None, **kwargs):
+def get_cache(cache=None, serializer=None, policy=None, **kwargs):
     cache = cache or aiocache.settings.DEFAULT_CACHE
     serializer = serializer or aiocache.settings.DEFAULT_SERIALIZER()
     policy = policy or aiocache.settings.DEFAULT_POLICY()
-    namespace = namespace or aiocache.settings.DEFAULT_NAMESPACE
 
     instance = cache(
-        namespace=namespace,
         serializer=serializer,
         policy=policy,
-        **{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
+        **{**aiocache.settings.DEFAULT_CACHE_KWARGS, **kwargs})
     return instance

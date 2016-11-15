@@ -4,7 +4,7 @@ import aiomcache
 
 class MemcachedBackend:
 
-    def __init__(self, endpoint=None, port=None, loop=None):
+    def __init__(self, endpoint=None, port=None, loop=None, **kwargs):
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 11211
         self._loop = loop or asyncio.get_event_loop()

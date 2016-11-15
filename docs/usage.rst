@@ -43,25 +43,33 @@ Each cache instance has three main components:
   :align: center
 
 
-Configuring a project cache
----------------------------
+Configuring a project settings
+------------------------------
 
-Sometimes you just want to use the same cache over all your project or at least, have a default one for common usage. You can configure a global one with:
+Sometimes you just want to use the same settings all over your project. To do so, some helpers are provided like ``set_defaults``, ``set_default_serializer``, ``set_default_policy``:
 
+.. automodule:: aiocache.settings
+  :members: set_defaults, set_default_serializer, set_default_policy
+
+If you have many custom settings that you want to configure globally, it can be tedious to pick all of them from config file and forward them to the shown helpers. For these cases, the ``set_from_dict`` can give you a hand:
+
+.. automodule:: aiocache.settings
+  :members: set_from_dict
+
+If you need to know the currently configure defaults for your projects, you can always use the ``get_defaults`` as
 
 .. code-block:: python
 
-  import aiocache
-  from aiocache.serializers import PickleSerializer
-  from aiocache.policies import LRUPolicy
-
-  aiocache.settings.set_defaults(
-    backend="aiocache.RedisCache",
-    serializer="aiocache.serializers.PickleSerializer",
-    endpoint=127.0.0.1,
-    port=6379)
-
-Once done, everytime you use any of the :ref:`decorators`, if the values aren't passed explicitly, they will use the default ones. The same happens when explicitly instantiating a cache, if you don't pass the extra args like ``serializer``, ``policy``, etc. it will use the default ones.
+    >>> import pprint
+    >>> import aiocache
+    >>> aiocache.settings.get_defaults()
+    >>> pprint.pprint(aiocache.settings.get_defaults())
+    {'DEFAULT_CACHE': <class 'aiocache.cache.SimpleMemoryCache'>,
+     'DEFAULT_CACHE_KWARGS': {},
+     'DEFAULT_POLICY': <class 'aiocache.policies.DefaultPolicy'>,
+     'DEFAULT_POLICY_KWARGS': {},
+     'DEFAULT_SERIALIZER': <class 'aiocache.serializers.DefaultSerializer'>,
+     'DEFAULT_SERIALIZER_KWARGS': {}}
 
 
 Decorators

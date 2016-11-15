@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 import asynctest
+import aiocache
 
 
 class TestMockCache:
@@ -125,12 +126,16 @@ class TestMockCache:
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.clear(pytest.KEY)
 
+    @pytest.fixture
+    def set_test_namespace(self):
+        aiocache.settings.DEFAULT_CACHE_KWARGS = {"namespace": "test"}
+
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test" + pytest.KEY],
         ["", pytest.KEY],
         ["my_ns", "my_ns" + pytest.KEY],)
     )
-    def test_build_key(self, mock_cache, namespace, expected):
+    def test_build_key(self, set_test_namespace, mock_cache, namespace, expected):
         assert mock_cache._build_key(pytest.KEY, namespace=namespace) == expected
 
 
@@ -140,5 +145,10 @@ class TestRedisCache:
         ["", pytest.KEY],
         ["my_ns", "my_ns:" + pytest.KEY],)
     )
-    def test_build_key(self, redis_cache, namespace, expected):
+    def test_build_key(self, set_test_namespace, redis_cache, namespace, expected):
         assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
+
+
+@pytest.fixture
+def set_test_namespace():
+    aiocache.settings.DEFAULT_CACHE_KWARGS = {"namespace": "test"}
