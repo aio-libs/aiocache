@@ -21,5 +21,5 @@ def set_defaults(cache=None, namespace=None, serializer=None, policy=None, **kwa
     if policy:
         aiocache.settings.DEFAULT_POLICY = class_from_string(policy)
 
-    aiocache.settings.DEFAULT_NAMESPACE = namespace or ""
+    aiocache.settings.DEFAULT_NAMESPACE = namespace
     aiocache.settings.DEFAULT_KWARGS = kwargs

@@ -8,7 +8,7 @@ Policies can be used to change the behavior of the cache. By default any backend
     >>> from aiocache import SimpleMemoryCache
     >>> from aiocache.policies import LRUPolicy
     cache = SimpleMemoryCache()
-    cache.set_policy(LRUPolicy, max_keys=1000)
+    cache.policy = LRUPolicy(max_keys=1000)
 
 In case the current policies are not covering your needs, you can always define your custom policy by inheriting from `DefaultPolicy`_ and overriding the needed methods.
 

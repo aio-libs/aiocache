@@ -1,12 +1,12 @@
 import asyncio
 
-from asynctest import CoroutineMock
+from asynctest import Mock
 
 from aiocache.cache import BaseCache
 
 
 async def async_main():
-    mocked_cache = CoroutineMock(spec=BaseCache)
+    mocked_cache = Mock(spec=BaseCache)
     mocked_cache.get.return_value = "World"
     print(await mocked_cache.get("hello"))
 

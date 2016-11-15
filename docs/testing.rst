@@ -5,4 +5,4 @@ The library doesn't provide any special feature for testing but using mocks, it'
 
 ..  literalinclude:: ../examples/testing.py
 
-Note that we are passing the :ref:`basecache` as the spec for the CoroutineMock (you need to install ``asynctest``).
+Note that we are passing the :ref:`basecache` as the spec for the Mock (you need to install ``asynctest``).

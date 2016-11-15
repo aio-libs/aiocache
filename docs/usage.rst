@@ -36,7 +36,7 @@ Cache components
 Each cache instance has three main components:
   - **backend**: Is the client that connects the cache with the client that talks with the desired backend (Redis, Memcached, etc...).
   - **serializer**: It transforms the value when saving and retrieving. This allows to save complex Python objects, change format of the data stored, etc. :ref:`defaultserializer` is used by default if not specified during instantiation time. Check :ref:`serializers` for a list of available serializers. If the functionality you need is not covered, you can write your custom serializer.
-  - **policy**: It ensures the chosen cache policy is followed. By default it uses :ref:`defaultpolicy` but you can set any other calling ``cache.set_policy($policy)``. Check :ref:`policies` for a list of available policies. If the functionality you need is not covered, you can write your custom policy.
+  - **policy**: It ensures the chosen cache policy is followed. By default it uses :ref:`defaultpolicy` but you can set any other calling ``cache.policy = MyNewPolicy()``. Check :ref:`policies` for a list of available policies. If the functionality you need is not covered, you can write your custom policy.
 
 
 .. image:: images/architecture.png

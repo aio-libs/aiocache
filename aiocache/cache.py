@@ -9,8 +9,8 @@ from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBacken
 
 class BaseCache:
     """
-    Base class that agregates the common logic for the different caches that may exist. Available
-    options are:
+    Base class that agregates the common logic for the different caches that may exist. Cache
+    related available options are:
 
     :param serializer: obj with :class:`aiocache.serializers.BaseSerializer` interface.
         Must implement ``loads`` and ``dumps`` methods.
@@ -18,15 +18,16 @@ class BaseCache:
         the backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
+
+    In case you need to pass extra information to the underlying backend, pass it as extra kwargs.
     """
 
-    def __init__(self, serializer=None, namespace=None, timeout=5, *args, **kwargs):
+    def __init__(self, serializer=None, policy=None, namespace=None, timeout=5, **kwargs):
 
         self._timeout = timeout
-        self._backend = self.get_backend(*args, **{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
-        self._serializer = None
+        self._backend = self.get_backend(**{**aiocache.settings.DEFAULT_KWARGS, **kwargs})
         self.serializer = serializer or self.get_default_serializer()
-        self._policy = self.get_default_policy()
+        self.policy = policy or self.get_default_policy()
         self.namespace = namespace if namespace is not None else aiocache.settings.DEFAULT_NAMESPACE
 
     def get_backend(self, *args, **kwargs):
@@ -36,7 +37,7 @@ class BaseCache:
         return aiocache.settings.DEFAULT_SERIALIZER()
 
     def get_default_policy(self):
-        return aiocache.settings.DEFAULT_POLICY(self)
+        return aiocache.settings.DEFAULT_POLICY()
 
     @property
     def serializer(self):
@@ -55,9 +56,6 @@ class BaseCache:
     @policy.setter
     def policy(self, value):
         self._policy = value
-
-    def set_policy(self, class_, *args, **kwargs):
-        self._policy = class_(self, *args, **kwargs)
 
     async def add(self, key, value, ttl=None, dumps_fn=None, namespace=None):
         """
@@ -82,9 +80,9 @@ class BaseCache:
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key, namespace=namespace)
 
-        await self._policy.pre_set(key, value)
+        await self._policy.pre_set(self, key, value)
         await self._backend.add(ns_key, dumps(value), ttl)
-        await self._policy.post_set(key, value)
+        await self._policy.post_set(self, key, value)
 
         logger.info("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
         return True
@@ -108,10 +106,10 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
         ns_key = self._build_key(key, namespace=namespace)
 
-        await self._policy.pre_get(key)
+        await self._policy.pre_get(self, key)
         value = loads(await self._backend.get(ns_key))
         if value:
-            await self._policy.post_get(key)
+            await self._policy.post_get(self, key)
 
         logger.info("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
         return value or default
@@ -134,13 +132,13 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
 
         for key in keys:
-            await self._policy.pre_get(key)
+            await self._policy.pre_get(self, key)
 
         ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
         values = [loads(value) for value in await self._backend.multi_get(ns_keys)]
 
         for key in keys:
-            await self._policy.post_get(key)
+            await self._policy.post_get(self, key)
 
         logger.info(
             "MULTI_GET %s %d (%.4f)s",
@@ -169,9 +167,9 @@ class BaseCache:
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key, namespace=namespace)
 
-        await self._policy.pre_set(key, value)
+        await self._policy.pre_set(self, key, value)
         await self._backend.set(ns_key, dumps(value), ttl)
-        await self._policy.post_set(key, value)
+        await self._policy.post_set(self, key, value)
 
         logger.info("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
         return True
@@ -196,13 +194,13 @@ class BaseCache:
 
         tmp_pairs = []
         for key, value in pairs:
-            await self._policy.pre_set(key, value)
+            await self._policy.pre_set(self, key, value)
             tmp_pairs.append((self._build_key(key, namespace=namespace), dumps(value)))
 
         await self._backend.multi_set(tmp_pairs, ttl=ttl)
 
         for key, value in pairs:
-            await self._policy.post_set(key, value)
+            await self._policy.post_set(self, key, value)
 
         logger.info(
             "MULTI_SET %s %d (%.4f)s",
