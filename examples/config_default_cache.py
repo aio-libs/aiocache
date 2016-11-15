@@ -30,5 +30,6 @@ def test_default_cache():
 
     loop.run_until_complete(RedisCache(namespace="main").delete("key"))
 
+
 if __name__ == "__main__":
     test_default_cache()
