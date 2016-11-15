@@ -21,5 +21,6 @@ def test_cached():
     assert loop.run_until_complete(cache.exists("key")) is True
     loop.run_until_complete(cache.delete("key"))
 
+
 if __name__ == "__main__":
     test_cached()

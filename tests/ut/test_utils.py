@@ -19,14 +19,17 @@ async def return_dict(keys=None):
         ret[key] = value
     return ret
 
+
 async def arg_return_dict(keys, dummy=None):
     ret = {}
     for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
         ret[key] = value
     return ret
 
+
 async def empty_return(keys):
     return {}
+
 
 async def stub(*args, **kwargs):
     return random.randint(1, 50)
