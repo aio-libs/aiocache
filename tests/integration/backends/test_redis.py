@@ -8,9 +8,9 @@ class TestRedisBackend:
 
     def test_setup(self):
         redis_cache = RedisCache()
-        assert redis_cache._backend.endpoint == "127.0.0.1"
-        assert redis_cache._backend.port == 6379
-        assert redis_cache._backend.encoding == "utf-8"
+        assert redis_cache.endpoint == "127.0.0.1"
+        assert redis_cache.port == 6379
+        assert redis_cache.encoding == "utf-8"
 
     def test_setup_override(self):
         redis_cache = RedisCache(
@@ -18,10 +18,10 @@ class TestRedisBackend:
             db=2,
             password="pass")
 
-        assert redis_cache._backend.endpoint == "127.0.0.1"
-        assert redis_cache._backend.port == 6379
-        assert redis_cache._backend.database == 2
-        assert redis_cache._backend.password == "pass"
+        assert redis_cache.endpoint == "127.0.0.1"
+        assert redis_cache.port == 6379
+        assert redis_cache.database == 2
+        assert redis_cache.password == "pass"
         assert isinstance(redis_cache.serializer, serializers.JsonSerializer)
 
     @pytest.mark.asyncio

@@ -6,15 +6,15 @@ import aioredis
 class RedisBackend:
 
     def __init__(self, endpoint=None, port=None, db=0, password=None, loop=None, **kwargs):
+        super().__init__(**kwargs)
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
         self._pool = None
         self._loop = loop or asyncio.get_event_loop()
-        self.encoding = "utf-8"
         self.database = db
         self.password = password
 
-    async def get(self, key):
+    async def client_get(self, key):
         """
         Get a value from the cache
 
@@ -25,7 +25,7 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.get(key)
 
-    async def multi_get(self, keys):
+    async def client_multi_get(self, keys):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -35,7 +35,7 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.mget(*keys)
 
-    async def set(self, key, value, ttl=None):
+    async def client_set(self, key, value, ttl=None):
         """
         Stores the value in the given key.
 
@@ -47,7 +47,7 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.set(key, value, expire=ttl)
 
-    async def multi_set(self, pairs, ttl=None):
+    async def client_multi_set(self, pairs, ttl=None):
         """
         Stores multiple values in the given keys.
 
@@ -70,7 +70,7 @@ class RedisBackend:
 
         return True
 
-    async def add(self, key, value, ttl=None):
+    async def client_add(self, key, value, ttl=None):
         """
         Stores the value in the given key. Raises an error if the
         key already exists.
@@ -88,7 +88,7 @@ class RedisBackend:
                     "Key {} already exists, use .set to update the value".format(key))
             return await redis.set(key, value, expire=ttl)
 
-    async def exists(self, key):
+    async def client_exists(self, key):
         """
         Check key exists in the cache.
 
@@ -99,7 +99,7 @@ class RedisBackend:
             exists = await redis.exists(key)
             return True if exists > 0 else False
 
-    async def delete(self, key):
+    async def client_delete(self, key):
         """
         Deletes the given key.
 
@@ -109,7 +109,7 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.delete(key)
 
-    async def clear(self, namespace):
+    async def client_clear(self, namespace):
         """
         Deletes the given key.
 
@@ -124,7 +124,7 @@ class RedisBackend:
                 await redis.flushdb()
         return True
 
-    async def raw(self, command, *args, **kwargs):
+    async def client_raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying client of aioredis. It's under
         the developer responsibility to send the needed args and kwargs.

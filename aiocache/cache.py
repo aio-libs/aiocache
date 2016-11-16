@@ -23,16 +23,11 @@ class BaseCache:
     """
 
     def __init__(self, serializer=None, policy=None, namespace=None, timeout=5, **kwargs):
-
         self._timeout = timeout
         self.namespace = namespace if namespace is not None else \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("namespace")
-        self._backend = self.get_backend(**{**aiocache.settings.DEFAULT_CACHE_KWARGS, **kwargs})
         self.serializer = serializer or self.get_default_serializer()
         self.policy = policy or self.get_default_policy()
-
-    def get_backend(self, *args, **kwargs):
-        raise NotImplementedError()
 
     def get_default_serializer(self):
         return aiocache.settings.DEFAULT_SERIALIZER()
@@ -48,7 +43,7 @@ class BaseCache:
     def serializer(self, value):
         self._serializer = value
         new_encoding = getattr(self._serializer, "encoding", 'utf-8')
-        self._backend.encoding = new_encoding
+        self.encoding = new_encoding
 
     @property
     def policy(self):
@@ -82,7 +77,7 @@ class BaseCache:
         ns_key = self._build_key(key, namespace=namespace)
 
         await self._policy.pre_set(self, key, value)
-        await self._backend.add(ns_key, dumps(value), ttl)
+        await self.client_add(ns_key, dumps(value), ttl)
         await self._policy.post_set(self, key, value)
 
         logger.info("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
@@ -108,7 +103,7 @@ class BaseCache:
         ns_key = self._build_key(key, namespace=namespace)
 
         await self._policy.pre_get(self, key)
-        value = loads(await self._backend.get(ns_key))
+        value = loads(await self.client_get(ns_key))
         if value:
             await self._policy.post_get(self, key)
 
@@ -136,7 +131,7 @@ class BaseCache:
             await self._policy.pre_get(self, key)
 
         ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
-        values = [loads(value) for value in await self._backend.multi_get(ns_keys)]
+        values = [loads(value) for value in await self.client_multi_get(ns_keys)]
 
         for key in keys:
             await self._policy.post_get(self, key)
@@ -169,7 +164,7 @@ class BaseCache:
         ns_key = self._build_key(key, namespace=namespace)
 
         await self._policy.pre_set(self, key, value)
-        await self._backend.set(ns_key, dumps(value), ttl)
+        await self.client_set(ns_key, dumps(value), ttl)
         await self._policy.post_set(self, key, value)
 
         logger.info("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
@@ -198,7 +193,7 @@ class BaseCache:
             await self._policy.pre_set(self, key, value)
             tmp_pairs.append((self._build_key(key, namespace=namespace), dumps(value)))
 
-        await self._backend.multi_set(tmp_pairs, ttl=ttl)
+        await self.client_multi_set(tmp_pairs, ttl=ttl)
 
         for key, value in pairs:
             await self._policy.post_set(self, key, value)
@@ -224,7 +219,7 @@ class BaseCache:
     async def _delete(self, key, namespace):
         start = time.time()
         ns_key = self._build_key(key, namespace=namespace)
-        ret = await self._backend.delete(ns_key)
+        ret = await self.client_delete(ns_key)
         logger.info("DELETE %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
 
@@ -242,7 +237,7 @@ class BaseCache:
     async def _exists(self, key, namespace):
         start = time.time()
         ns_key = self._build_key(key, namespace=namespace)
-        ret = await self._backend.exists(ns_key)
+        ret = await self.client_exists(ns_key)
         logger.info("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
         return ret
 
@@ -259,7 +254,7 @@ class BaseCache:
 
     async def _clear(self, namespace):
         start = time.time()
-        ret = await self._backend.clear(namespace)
+        ret = await self.client_clear(namespace)
         logger.info("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
         return ret
 
@@ -276,7 +271,7 @@ class BaseCache:
 
     async def _raw(self, command, *args, **kwargs):
         start = time.time()
-        ret = await self._backend.raw(command, *args, **kwargs)
+        ret = await self.client_raw(command, *args, **kwargs)
         logger.info("%s (%.4f)s", command, time.time() - start)
         return ret
 
@@ -288,28 +283,26 @@ class BaseCache:
         return key
 
 
-class SimpleMemoryCache(BaseCache):
+class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     """
     Cache implementation with the following components as defaults:
         - backend: :class:`aiocache.backends.SimpleMemoryBackend`
         - serializer: :class:`aiocache.serializers.DefaultSerializer`
         - policy: :class:`aiocache.policies.DefaultPolicy`
     """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-    def get_backend(self, *args, **kwargs):
-        return SimpleMemoryBackend(*args, **kwargs)
 
-
-class RedisCache(BaseCache):
+class RedisCache(RedisBackend, BaseCache):
     """
     Cache implementation with the following components as defaults:
         - backend: :class:`aiocache.backends.RedisBackend`
         - serializer: :class:`aiocache.serializers.DefaultSerializer`
         - policy: :class:`aiocache.policies.DefaultPolicy`
     """
-
-    def get_backend(self, *args, **kwargs):
-        return RedisBackend(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _build_key(self, key, namespace=None):
         if namespace is not None:
@@ -319,23 +312,22 @@ class RedisCache(BaseCache):
         return key
 
     def __repr__(self):  # pragma: no cover
-        return "RedisCache ({}:{})".format(self._backend.endpoint, self._backend.port)
+        return "RedisCache ({}:{})".format(self.endpoint, self.port)
 
 
-class MemcachedCache(BaseCache):
+class MemcachedCache(MemcachedBackend, BaseCache):
     """
     Cache implementation with the following components as defaults:
         - backend: :class:`aiocache.backends.MemcachedBackend`
         - serializer: :class:`aiocache.serializers.DefaultSerializer`
         - policy: :class:`aiocache.policies.DefaultPolicy`
     """
-
-    def get_backend(self, *args, **kwargs):
-        return MemcachedBackend(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _build_key(self, key, namespace=None):
         ns_key = super()._build_key(key, namespace=namespace)
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover
-        return "MemcachedCache ({}:{})".format(self._backend.endpoint, self._backend.port)
+        return "MemcachedCache ({}:{})".format(self.endpoint, self.port)

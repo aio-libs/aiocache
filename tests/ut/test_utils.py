@@ -251,8 +251,8 @@ class TestCacheFactory:
             policy=DefaultPolicy(), port=123)
 
         assert isinstance(cache, RedisCache)
-        assert cache._backend.endpoint == "http://..."
-        assert cache._backend.port == 123
+        assert cache.endpoint == "http://..."
+        assert cache.port == 123
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
         assert isinstance(cache.policy, DefaultPolicy)
@@ -265,8 +265,8 @@ class TestCacheFactory:
             policy=DefaultPolicy(), port=123)
 
         assert isinstance(cache, RedisCache)
-        assert cache._backend.endpoint == "http://..."
-        assert cache._backend.port == 123
+        assert cache.endpoint == "http://..."
+        assert cache.port == 123
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
         assert isinstance(cache.policy, DefaultPolicy)
@@ -277,8 +277,8 @@ class TestCacheFactory:
             policy=DefaultPolicy(), endpoint="http://...", port=123)
 
         assert isinstance(cache, RedisCache)
-        assert cache._backend.endpoint == "http://..."
-        assert cache._backend.port == 123
+        assert cache.endpoint == "http://..."
+        assert cache.port == 123
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
         assert isinstance(cache.policy, DefaultPolicy)
