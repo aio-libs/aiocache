@@ -36,15 +36,15 @@ def reset_defaults():
 
 
 class MockBackend:
-    client_add = asynctest.CoroutineMock()
-    client_get = asynctest.CoroutineMock()
-    client_set = asynctest.CoroutineMock()
-    client_multi_get = asynctest.CoroutineMock(return_value=['a', 'b'])
-    client_multi_set = asynctest.CoroutineMock()
-    client_delete = asynctest.CoroutineMock()
-    client_exists = asynctest.CoroutineMock()
-    client_clear = asynctest.CoroutineMock()
-    client_raw = asynctest.CoroutineMock()
+    _add = asynctest.CoroutineMock()
+    _get = asynctest.CoroutineMock()
+    _set = asynctest.CoroutineMock()
+    _multi_get = asynctest.CoroutineMock(return_value=['a', 'b'])
+    _multi_set = asynctest.CoroutineMock()
+    _delete = asynctest.CoroutineMock()
+    _exists = asynctest.CoroutineMock()
+    _clear = asynctest.CoroutineMock()
+    _raw = asynctest.CoroutineMock()
 
 
 class MockCache(MockBackend, BaseCache):
