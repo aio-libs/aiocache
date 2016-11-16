@@ -11,12 +11,12 @@ def class_from_string(class_path):
     return getattr(__import__(module_name, fromlist=[class_name]), class_name)
 
 
-def get_args_dict(fn, args, kwargs):
+def get_args_dict(func, args, kwargs):
     defaults = {
-        arg_name: arg.default for arg_name, arg in inspect.signature(fn).parameters.items()
+        arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
         if arg.default is not inspect._empty
     }
-    args_names = fn.__code__.co_varnames[:fn.__code__.co_argcount]
+    args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
     return {**defaults, **dict(zip(args_names, args)), **kwargs}
 
 
@@ -43,11 +43,12 @@ def cached(
     """
     cache = get_cache(cache=cache, serializer=serializer, policy=policy, **kwargs)
 
-    def cached_decorator(fn):
+    def cached_decorator(func):
         async def wrapper(*args, **kwargs):
-            args_dict = get_args_dict(fn, args, kwargs)
+            args_dict = get_args_dict(func, args, kwargs)
             cache_key = key or args_dict.get(
-                key_from_attr, (fn.__module__ or 'stub') + fn.__name__ + str(args) + str(kwargs))
+                key_from_attr,
+                (func.__module__ or 'stub') + func.__name__ + str(args) + str(kwargs))
 
             try:
                 if await cache.exists(cache_key):
@@ -56,7 +57,7 @@ def cached(
             except Exception:
                 logger.exception("Unexpected error with %s", cache)
 
-            result = await fn(*args, **kwargs)
+            result = await func(*args, **kwargs)
 
             try:
                 await cache.set(cache_key, result, ttl=ttl)
@@ -97,10 +98,10 @@ def multi_cached(
     cache = get_cache(cache=cache, serializer=serializer, policy=policy, **kwargs)
     key_builder = key_builder or (lambda x, args_dict: x)
 
-    def multi_cached_decorator(fn):
+    def multi_cached_decorator(func):
         async def wrapper(*args, **kwargs):
             partial_result = {}
-            args_dict = get_args_dict(fn, args, kwargs)
+            args_dict = get_args_dict(func, args, kwargs)
             keys = args_dict[keys_from_attr]
             cache_keys = [key_builder(key, args_dict) for key in keys]
 
@@ -122,7 +123,7 @@ def multi_cached(
                     missing_keys = "all"
 
             if missing_keys:
-                result = await fn(**args_dict)
+                result = await func(**args_dict)
                 partial_result.update(result)
                 if partial_result:
                     try:
