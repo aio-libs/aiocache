@@ -9,9 +9,9 @@ class SimpleMemoryBackend:
     _cache = {}
 
     def __init__(self, **kwargs):
-        pass
+        super().__init__(**kwargs)
 
-    async def get(self, key):
+    async def client_get(self, key):
         """
         Get a value from the cache
 
@@ -20,7 +20,7 @@ class SimpleMemoryBackend:
         """
         return SimpleMemoryBackend._cache.get(key)
 
-    async def multi_get(self, keys):
+    async def client_multi_get(self, keys):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -29,7 +29,7 @@ class SimpleMemoryBackend:
         """
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
-    async def set(self, key, value, ttl=None):
+    async def client_set(self, key, value, ttl=None):
         """
         Stores the value in the given key.
 
@@ -41,10 +41,10 @@ class SimpleMemoryBackend:
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()
-            loop.call_later(ttl, self._delete, key)
+            loop.call_later(ttl, self._client_delete, key)
         return True
 
-    async def multi_set(self, pairs, ttl=None):
+    async def client_multi_set(self, pairs, ttl=None):
         """
         Stores multiple values in the given keys.
 
@@ -56,10 +56,10 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._cache[key] = value
             if ttl:
                 loop = asyncio.get_event_loop()
-                loop.call_later(ttl, self._delete, key)
+                loop.call_later(ttl, self._client_delete, key)
         return True
 
-    async def add(self, key, value, ttl=None):
+    async def client_add(self, key, value, ttl=None):
         """
         Stores the value in the given key. Raises an error if the
         key already exists.
@@ -77,10 +77,10 @@ class SimpleMemoryBackend:
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()
-            loop.call_later(ttl, self._delete, key)
+            loop.call_later(ttl, self._client_delete, key)
         return True
 
-    async def exists(self, key):
+    async def client_exists(self, key):
         """
         Check key exists in the cache.
 
@@ -89,16 +89,16 @@ class SimpleMemoryBackend:
         """
         return key in SimpleMemoryBackend._cache
 
-    async def delete(self, key):
+    async def client_delete(self, key):
         """
         Deletes the given key.
 
         :param key: Key to be deleted
         :returns: int number of deleted keys
         """
-        return self._delete(key)
+        return self._client_delete(key)
 
-    async def clear(self, namespace):
+    async def client_clear(self, namespace):
         """
         Deletes the given key.
 
@@ -108,12 +108,12 @@ class SimpleMemoryBackend:
         if namespace:
             for key in list(SimpleMemoryBackend._cache):
                 if key.startswith(namespace):
-                    self._delete(key)
+                    self._client_delete(key)
         else:
             SimpleMemoryBackend._cache = {}
         return True
 
-    async def raw(self, command, *args, **kwargs):
+    async def client_raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying dict structure. It's under
         the developer responsibility to send the needed args and kwargs.
@@ -122,5 +122,5 @@ class SimpleMemoryBackend:
         """
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
-    def _delete(self, key):
+    def _client_delete(self, key):
         return 1 if SimpleMemoryBackend._cache.pop(key, None) else 0

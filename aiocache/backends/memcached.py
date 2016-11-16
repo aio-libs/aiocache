@@ -5,13 +5,14 @@ import aiomcache
 class MemcachedBackend:
 
     def __init__(self, endpoint=None, port=None, loop=None, **kwargs):
+        super().__init__(**kwargs)
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 11211
         self._loop = loop or asyncio.get_event_loop()
         self.client = aiomcache.Client(self.endpoint, self.port, loop=self._loop)
         self.encoding = "utf-8"
 
-    async def get(self, key):
+    async def client_get(self, key):
         """
         Get a value from the cache. Returns default if not found.
 
@@ -23,7 +24,7 @@ class MemcachedBackend:
             return bytes.decode(value)
         return value
 
-    async def multi_get(self, keys):
+    async def client_multi_get(self, keys):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -38,7 +39,7 @@ class MemcachedBackend:
                 values.append(None)
         return values
 
-    async def set(self, key, value, ttl=0):
+    async def client_set(self, key, value, ttl=0):
         """
         Stores the value in the given key.
 
@@ -50,7 +51,7 @@ class MemcachedBackend:
         value = str.encode(value) if isinstance(value, str) else value
         return await self.client.set(key, value, exptime=ttl or 0)
 
-    async def multi_set(self, pairs, ttl=0):
+    async def client_multi_set(self, pairs, ttl=0):
         """
         Stores multiple values in the given keys.
 
@@ -64,7 +65,7 @@ class MemcachedBackend:
 
         return True
 
-    async def add(self, key, value, ttl=0):
+    async def client_add(self, key, value, ttl=0):
         """
         Stores the value in the given key. Raises an error if the
         key already exists.
@@ -82,7 +83,7 @@ class MemcachedBackend:
 
         return ret
 
-    async def exists(self, key):
+    async def client_exists(self, key):
         """
         Check key exists in the cache.
 
@@ -91,7 +92,7 @@ class MemcachedBackend:
         """
         return await self.client.append(key, b'')
 
-    async def delete(self, key):
+    async def client_delete(self, key):
         """
         Deletes the given key.
 
@@ -100,7 +101,7 @@ class MemcachedBackend:
         """
         return 1 if await self.client.delete(key) else 0
 
-    async def clear(self, namespace):
+    async def client_clear(self, namespace):
         """
         Deletes the given key.
 
@@ -113,7 +114,7 @@ class MemcachedBackend:
             await self.client.flush_all()
         return True
 
-    async def raw(self, command, *args, **kwargs):
+    async def client_raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying client of memcached. It's under
         the developer responsibility to send the needed args and kwargs.

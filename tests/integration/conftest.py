@@ -37,8 +37,8 @@ def redis_cache(event_loop):
     event_loop.run_until_complete(cache.delete(pytest.KEY))
     event_loop.run_until_complete(cache.delete(pytest.KEY_1))
 
-    cache._backend._pool.close()
-    event_loop.run_until_complete(cache._backend._pool.wait_closed())
+    cache._pool.close()
+    event_loop.run_until_complete(cache._pool.wait_closed())
 
 
 @pytest.fixture
