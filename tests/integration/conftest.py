@@ -4,6 +4,7 @@ import aiocache
 
 from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
 from aiocache.policies import DefaultPolicy
+from aiocache.backends import RedisBackend
 
 
 def pytest_namespace():
@@ -28,6 +29,11 @@ def reset_defaults():
     })
 
 
+@pytest.fixture(autouse=True)
+def reset_redis_pools(event_loop):
+    RedisBackend.pools = {}
+
+
 @pytest.fixture
 def redis_cache(event_loop):
     cache = RedisCache(namespace="test", loop=event_loop)
@@ -37,8 +43,9 @@ def redis_cache(event_loop):
     event_loop.run_until_complete(cache.delete(pytest.KEY))
     event_loop.run_until_complete(cache.delete(pytest.KEY_1))
 
-    cache._pool.close()
-    event_loop.run_until_complete(cache._pool.wait_closed())
+    for _, pool in RedisBackend.pools.items():
+        pool.close()
+        event_loop.run_until_complete(pool.wait_closed())
 
 
 @pytest.fixture

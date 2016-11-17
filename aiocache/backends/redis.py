@@ -5,12 +5,13 @@ import aioredis
 
 class RedisBackend:
 
+    pools = {}
+
     def __init__(
             self, endpoint="127.0.0.1", port=6379, db=0, password=None, loop=None, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = endpoint or "127.0.0.1"
         self.port = port or 6379
-        self._pool = None
         self._loop = loop or asyncio.get_event_loop()
         self.database = db
         self.password = password
@@ -136,12 +137,17 @@ class RedisBackend:
             return await getattr(redis, command)(*args, **kwargs)
 
     async def _connect(self):
-        if self._pool is None:
-            self._pool = await aioredis.create_pool(
+        pool_key = "{}{}{}{}{}{}".format(
+            self.endpoint, self.port, self.encoding, self.database, self.password, id(self._loop))
+        pool = RedisBackend.pools.get(pool_key)
+
+        if pool is None:
+            pool = await aioredis.create_pool(
                 (self.endpoint, self.port),
                 encoding=self.encoding,
                 db=self.database,
                 password=self.password,
                 loop=self._loop)
+            RedisBackend.pools[pool_key] = pool
 
-        return await self._pool
+        return await pool

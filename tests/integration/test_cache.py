@@ -5,7 +5,7 @@ import string
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache import serializers
+from aiocache import serializers, RedisCache
 
 
 @pytest.fixture(params=[
@@ -207,3 +207,46 @@ class TestCache:
             await memcached_cache.clear(namespace="test")
 
         assert await memcached_cache.exists(pytest.KEY, namespace="test") is True
+
+
+class TestMemoryCache:
+
+    @pytest.mark.asyncio
+    async def test_raw(self, memory_cache):
+        await memory_cache.raw('setdefault', b"key", b"value")
+        assert await memory_cache.raw("get", b"key") == b"value"
+        assert list(await memory_cache.raw("keys")) == [b"key"]
+
+
+class TestMemcachedCache:
+
+    @pytest.mark.asyncio
+    async def test_raw(self, memcached_cache):
+        await memcached_cache.raw('set', b"key", b"value")
+        assert await memcached_cache.raw("get", b"key") == b"value"
+        assert await memcached_cache.raw("prepend", b"key", b"super") is True
+        assert await memcached_cache.raw("get", b"key") == b"supervalue"
+
+
+class TestRedisCache:
+    @pytest.mark.asyncio
+    async def test_raw(self, redis_cache):
+        await redis_cache.raw('set', "key", "value")
+        assert await redis_cache.raw("get", "key") == "value"
+        assert await redis_cache.raw("keys", "k*") == ["key"]
+
+    @pytest.mark.asyncio
+    async def test_pool_reusage(self):
+        cache = RedisCache()
+        await cache._clear(None)
+
+        other_cache = RedisCache()
+        await other_cache._clear(None)
+
+        assert len(RedisCache.pools) == 1
+
+        cache.database = 1
+        await cache._clear(None)
+
+        assert len(RedisCache.pools) == 2
+        assert other_cache.database == 0
