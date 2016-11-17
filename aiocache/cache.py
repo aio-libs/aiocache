@@ -305,16 +305,6 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """
-    instances = {}
-
-    def __new__(cls, **kwargs):
-        if str(kwargs) in SimpleMemoryCache.instances:
-            return SimpleMemoryCache.instances[str(kwargs)]
-
-        new_instance = super().__new__(cls)
-        SimpleMemoryCache.instances[str(kwargs)] = new_instance
-        return new_instance
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -339,16 +329,6 @@ class RedisCache(RedisBackend, BaseCache):
     :param db: int indicating database to use
     :param password: str indicating password to use
     """
-    instances = {}
-
-    def __new__(cls, **kwargs):
-        if str(kwargs) in RedisCache.instances:
-            return RedisCache.instances[str(kwargs)]
-
-        new_instance = super().__new__(cls)
-        RedisCache.instances[str(kwargs)] = new_instance
-        return new_instance
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -381,16 +361,6 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     :param endpoint: str with the endpoint to connect to
     :param port: int with the port to connect to
     """
-    instances = {}
-
-    def __new__(cls, **kwargs):
-        if str(kwargs) in MemcachedCache.instances:
-            return MemcachedCache.instances[str(kwargs)]
-
-        new_instance = super().__new__(cls)
-        MemcachedCache.instances[str(kwargs)] = new_instance
-        return new_instance
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

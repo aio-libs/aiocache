@@ -3,8 +3,6 @@ import asyncio
 import asynctest
 import aiocache
 
-from aiocache import RedisCache, SimpleMemoryCache, MemcachedCache
-
 
 class TestCacheClient:
     """
@@ -193,24 +191,6 @@ class TestCacheLogic:
         assert mock_cache._build_key(pytest.KEY, namespace=namespace) == expected
 
 
-class TestSimpleMemoryCache:
-    def test_class_reusage(self):
-        assert SimpleMemoryCache() is SimpleMemoryCache()
-        assert SimpleMemoryCache(
-            timeout=1, serializer="lol") is SimpleMemoryCache(timeout=1, serializer="lol")
-
-        assert SimpleMemoryCache() is not SimpleMemoryCache(timeout=1)
-        assert SimpleMemoryCache(timeout=1) is not SimpleMemoryCache(timeout=2)
-
-        assert len(SimpleMemoryCache.instances) == 4
-
-    @pytest.mark.xfail(
-        reason="Need to use get_args_dict with __new__ to reuse instances. \
-        The method needs to support inheritance...")
-    def test_class_reusage_defaults(self):
-        assert SimpleMemoryCache(timeout=5) is SimpleMemoryCache()
-
-
 class TestRedisCache:
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test:" + pytest.KEY],
@@ -222,38 +202,6 @@ class TestRedisCache:
 
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
-
-    def test_class_reusage(self):
-        assert RedisCache() is RedisCache()
-        assert RedisCache(
-            endpoint="127.0.0.1", port=6379) is RedisCache(endpoint="127.0.0.1", port=6379)
-
-        assert RedisCache() is not RedisCache(port=1)
-        assert RedisCache(port=1) is not RedisCache(port=2)
-
-        assert len(RedisCache.instances) == 4
-
-    @pytest.mark.xfail(
-        reason="Need to use get_args_dict with __new__ to reuse instances. \
-        The method needs to support inheritance...")
-    def test_class_reusage_defaults(self):
-        assert RedisCache(endpoint="127.0.0.1") is RedisCache()
-
-
-class TestMemcachedCache:
-    def test_class_reusage(self):
-        assert MemcachedCache() is MemcachedCache()
-        assert MemcachedCache(
-            endpoint="127.0.0.1", port=6379) is MemcachedCache(endpoint="127.0.0.1", port=6379)
-
-        assert MemcachedCache() is not MemcachedCache(port=1)
-        assert MemcachedCache(port=1) is not MemcachedCache(port=2)
-
-    @pytest.mark.xfail(
-        reason="Need to use get_args_dict with __new__ to reuse instances. \
-        The method needs to support inheritance...")
-    def test_class_reusage_defaults(self):
-        assert MemcachedCache(endpoint="127.0.0.1") is MemcachedCache()
 
 
 @pytest.fixture
