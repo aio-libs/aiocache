@@ -46,8 +46,7 @@ class BaseCache:
     @serializer.setter
     def serializer(self, value):
         self._serializer = value
-        new_encoding = getattr(self._serializer, "encoding", 'utf-8')
-        self.encoding = new_encoding
+        self.encoding = getattr(self._serializer, "encoding", 'utf-8')
 
     @property
     def policy(self):
@@ -85,7 +84,7 @@ class BaseCache:
             return True
 
     async def _add(self, key, value, ttl):
-        pass
+        raise NotImplementedError()
 
     async def get(self, key, default=None, loads_fn=None, namespace=None):
         """
@@ -111,8 +110,8 @@ class BaseCache:
             logger.info("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
             return value or default
 
-    async def _get(self, key, default):
-        pass
+    async def _get(self, key):
+        raise NotImplementedError()
 
     async def multi_get(self, keys, loads_fn=None, namespace=None):
         """
@@ -144,8 +143,8 @@ class BaseCache:
                 time.time() - start)
             return values
 
-    async def _multi_get(self, keys, loads_fn):
-        pass
+    async def _multi_get(self, keys):
+        raise NotImplementedError()
 
     async def set(self, key, value, ttl=None, dumps_fn=None, namespace=None):
         """
@@ -172,7 +171,7 @@ class BaseCache:
             return True
 
     async def _set(self, key, value, ttl):
-        pass
+        raise NotImplementedError()
 
     async def multi_set(self, pairs, ttl=None, dumps_fn=None, namespace=None):
         """
@@ -207,7 +206,7 @@ class BaseCache:
             return True
 
     async def _multi_set(self, pairs, ttl):
-        pass
+        raise NotImplementedError()
 
     async def delete(self, key, namespace=None):
         """
@@ -226,7 +225,7 @@ class BaseCache:
             return ret
 
     async def _delete(self, key):
-        pass
+        raise NotImplementedError()
 
     async def exists(self, key, namespace=None):
         """
@@ -245,7 +244,7 @@ class BaseCache:
             return ret
 
     async def _exists(self, key):
-        pass
+        raise NotImplementedError()
 
     async def clear(self, namespace=None):
         """
@@ -262,8 +261,8 @@ class BaseCache:
             logger.info("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
             return ret
 
-    async def _clear(self):
-        pass
+    async def _clear(self, namespace):
+        raise NotImplementedError()
 
     async def raw(self, command, *args, **kwargs):
         """
@@ -280,7 +279,7 @@ class BaseCache:
             return ret
 
     async def _raw(self, command, *args, **kwargs):
-        pass
+        raise NotImplementedError()
 
     def _build_key(self, key, namespace=None):
         if namespace is not None:

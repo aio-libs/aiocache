@@ -4,14 +4,66 @@ import asynctest
 import aiocache
 
 
-class TestMockCache:
+class TestCacheClient:
+    """
+    Tests that the client calls do nothing. If a BaseCache is instantiated, it must not interact
+    with the underlying storage.
+    """
+    @pytest.mark.asyncio
+    async def test_add(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.add(pytest.KEY, "value")
+
+    @pytest.mark.asyncio
+    async def test_get(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.get(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_set(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.set(pytest.KEY, "value")
+
+    @pytest.mark.asyncio
+    async def test_multi_get(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.multi_get([pytest.KEY])
+
+    @pytest.mark.asyncio
+    async def test_multi_set(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.multi_set([(pytest.KEY, "value")])
+
+    @pytest.mark.asyncio
+    async def test_delete(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.delete(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_exists(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.exists(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_clear(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.clear("namespace")
+
+    @pytest.mark.asyncio
+    async def test_raw(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.raw("get", pytest.KEY)
+
+
+class TestCacheLogic:
     """
     This class ensures that all backends behave the same way at logic level. It tries to ensure
     the calls to the necessary methods like serialization and strategies are performed when needed.
     To add a new backend just create the fixture for the new backend and add id as a param for the
-    cache fixture
-    """
+    cache fixture.
 
+    The calls to the client are mocked so it doesn't interact with any storage.
+    """
     @pytest.mark.asyncio
     async def test_get(self, mock_cache):
         await mock_cache.get(pytest.KEY)
@@ -147,6 +199,9 @@ class TestRedisCache:
     )
     def test_build_key(self, set_test_namespace, redis_cache, namespace, expected):
         assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
+
+    def test_build_key_no_namespace(self, redis_cache):
+        assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
 
 
 @pytest.fixture

@@ -35,7 +35,7 @@ def reset_defaults():
     })
 
 
-class MockBackend:
+class MockCache(BaseCache):
     _add = asynctest.CoroutineMock()
     _get = asynctest.CoroutineMock()
     _set = asynctest.CoroutineMock()
@@ -47,10 +47,6 @@ class MockBackend:
     _raw = asynctest.CoroutineMock()
 
 
-class MockCache(MockBackend, BaseCache):
-    pass
-
-
 @pytest.fixture
 def mock_cache(mocker):
     cache = MockCache()
@@ -59,6 +55,11 @@ def mock_cache(mocker):
     cache.serializer = asynctest.Mock(spec=DefaultSerializer)
     cache.policy = asynctest.Mock(spec=DefaultPolicy)
     return cache
+
+
+@pytest.fixture
+def base_cache():
+    return BaseCache()
 
 
 @pytest.fixture
