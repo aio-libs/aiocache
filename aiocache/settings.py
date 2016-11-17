@@ -1,4 +1,7 @@
+import inspect
+
 from aiocache import SimpleMemoryCache
+from aiocache.cache import BaseCache
 from aiocache.utils import class_from_string
 from aiocache.serializers import DefaultSerializer
 from aiocache.policies import DefaultPolicy
@@ -23,10 +26,16 @@ def set_defaults(class_=None, **kwargs):
             class_="aiocache.RedisCache", endpoint="127.0.0.1", port=6379, namespace="test")
 
     Once the call is done, all decorators and instances where thos params are not specified, the
-    default ones will be picked.
+    default ones will be picked. The class_ param accepts both str and class types.
     """
     if class_:
-        globals()['DEFAULT_CACHE'] = class_from_string(class_)
+        if isinstance(class_, str) and issubclass(class_from_string(class_), BaseCache):
+            globals()['DEFAULT_CACHE'] = class_from_string(class_)
+        elif inspect.isclass(class_) and issubclass(class_, BaseCache):
+            globals()['DEFAULT_CACHE'] = class_
+        else:
+            raise ValueError(
+                "DEFAULT_CACHE must be a str or class subclassing aiocache.cache.BaseCache")
     globals()['DEFAULT_CACHE_KWARGS'] = kwargs
 
 
@@ -39,13 +48,20 @@ def set_default_serializer(class_=None, **kwargs):
             class_="aiocache.serializers.DefaultSerializer")
 
     Once the call is done, all decorators and instances where serializer params are not specified,
-    the default ones will be picked.
+    the default ones will be picked. The class_ param accepts both str and class types.
 
     If you define your own serializer, you can also set is a default and pass the desired extra
     params through this call.
     """
     if class_:
-        globals()['DEFAULT_SERIALIZER'] = class_from_string(class_)
+        if isinstance(class_, str) and issubclass(class_from_string(class_), DefaultSerializer):
+            globals()['DEFAULT_SERIALIZER'] = class_from_string(class_)
+        elif inspect.isclass(class_) and issubclass(class_, DefaultSerializer):
+            globals()['DEFAULT_SERIALIZER'] = class_
+        else:
+            raise ValueError(
+                "DEFAULT_SERIALIZER must be a str or class \
+                subclassing aiocache.serializers.DefaultSerializer")
     globals()['DEFAULT_SERIALIZER_KWARGS'] = kwargs
 
 
@@ -58,13 +74,19 @@ def set_default_policy(class_=None, **kwargs):
             class_="my_module.MyPolicy")
 
     Once the call is done, all decorators and instances where policiy params are not specified,
-    the default ones will be picked.
+    the default ones will be picked. The class_ param accepts both str and class types.
 
     If you define your own policy, you can also set is a default and pass the desired extra
     params through this call.
     """
     if class_:
-        globals()['DEFAULT_POLICY'] = class_from_string(class_)
+        if isinstance(class_, str) and issubclass(class_from_string(class_), DefaultPolicy):
+            globals()['DEFAULT_POLICY'] = class_from_string(class_)
+        elif inspect.isclass(class_) and issubclass(class_, DefaultPolicy):
+            globals()['DEFAULT_POLICY'] = class_
+        else:
+            raise ValueError(
+                "DEFAULT_POLICY must be a str or class subclassing aiocache.policies.DefaultPolicy")
     globals()['DEFAULT_POLICY_KWARGS'] = kwargs
 
 
@@ -99,7 +121,8 @@ def set_from_dict(config):
         }
 
     Of course you can set your own classes there. Any extra parameter you put in the dict will be
-    used for new instantiations if those are not set explicitly when calling it.
+    used for new instantiations if those are not set explicitly when calling it. The class param
+    accepts both str and class types.
 
     All keys in the config are optional, if they are not passed the previous defaults will be kept.
     """
