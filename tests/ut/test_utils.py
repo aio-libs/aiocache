@@ -31,6 +31,10 @@ async def empty_return(keys):
     return {}
 
 
+async def raise_exception(*args, **kwargs):
+    raise ValueError
+
+
 async def stub(*args, **kwargs):
     return random.randint(1, 50)
 
@@ -133,6 +137,13 @@ class TestCachedDecorator:
         await cached_decorator(stub)()
         assert stub.call_count == 1
 
+    @pytest.mark.asyncio
+    async def test_cached_func_exception(self, mocker, memory_mock_cache):
+        cached_decorator = cached(key="key")
+
+        with pytest.raises(ValueError):
+            await cached_decorator(raise_exception)()
+
 
 class TestMultiCachedDecorator:
 
@@ -234,6 +245,13 @@ class TestMultiCachedDecorator:
 
         await multi_cached_decorator(return_dict)(keys=[])
         assert return_dict.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_func_exception(self, mocker, memory_mock_cache):
+        cached_decorator = multi_cached(keys_from_attr="keys")
+
+        with pytest.raises(ValueError):
+            await cached_decorator(raise_exception)(keys=[])
 
 
 class TestCacheFactory:

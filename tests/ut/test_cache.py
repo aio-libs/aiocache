@@ -4,7 +4,7 @@ import asynctest
 import aiocache
 
 
-class TestCacheClient:
+class TestBaseCache:
     """
     Tests that the client calls do nothing. If a BaseCache is instantiated, it must not interact
     with the underlying storage.
@@ -55,7 +55,7 @@ class TestCacheClient:
             await base_cache.raw("get", pytest.KEY)
 
 
-class TestCacheLogic:
+class TestCache:
     """
     This class ensures that all backends behave the same way at logic level. It tries to ensure
     the calls to the necessary methods like serialization and strategies are performed when needed.
