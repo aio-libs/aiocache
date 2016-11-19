@@ -1,10 +1,11 @@
 import inspect
 
 from aiocache import SimpleMemoryCache
+from aiocache.log import logger
 from aiocache.cache import BaseCache
 from aiocache.utils import class_from_string
 from aiocache.serializers import DefaultSerializer
-from aiocache.policies import DefaultPolicy
+from aiocache.plugins import BasePlugin
 
 
 DEFAULT_CACHE = SimpleMemoryCache
@@ -13,8 +14,7 @@ DEFAULT_CACHE_KWARGS = {}
 DEFAULT_SERIALIZER = DefaultSerializer
 DEFAULT_SERIALIZER_KWARGS = {}
 
-DEFAULT_POLICY = DefaultPolicy
-DEFAULT_POLICY_KWARGS = {}
+DEFAULT_PLUGINS = {}
 
 
 def set_defaults(class_=None, **kwargs):
@@ -65,29 +65,34 @@ def set_default_serializer(class_=None, **kwargs):
     globals()['DEFAULT_SERIALIZER_KWARGS'] = kwargs
 
 
-def set_default_policy(class_=None, **kwargs):
+def set_default_plugins(config):
     """
-    Set the default settings for the policy. If within your project you are working with a
-    custom policy, you may want to call it as::
+    Set the default settings for the plugins. If within your project you are working with a
+    custom plugin, you may want to call it as::
 
-        aiocache.settings.set_default_policy(
-            class_="my_module.MyPolicy")
+        aiocache.settings.set_default_plugins({
+            my_module.MyPlugin: {},
+            my_module.OtherPlugin: {'arg': 1}
+        })
 
     Once the call is done, all decorators and instances where policiy params are not specified,
     the default ones will be picked. The class_ param accepts both str and class types.
 
-    If you define your own policy, you can also set is a default and pass the desired extra
+    If you define your own plugin, you can also set is a default and pass the desired extra
     params through this call.
     """
-    if class_:
-        if isinstance(class_, str) and issubclass(class_from_string(class_), DefaultPolicy):
-            globals()['DEFAULT_POLICY'] = class_from_string(class_)
-        elif inspect.isclass(class_) and issubclass(class_, DefaultPolicy):
-            globals()['DEFAULT_POLICY'] = class_
+    new_plugins = {}
+    for plugin in config:
+        class_ = plugin.pop('class')
+        if isinstance(class_, str) and issubclass(class_from_string(class_), BasePlugin):
+            new_plugins[class_from_string(class_)] = plugin
+        elif inspect.isclass(class_) and issubclass(class_, BasePlugin):
+            new_plugins[class_] = plugin
         else:
-            raise ValueError(
-                "DEFAULT_POLICY must be a str or class subclassing aiocache.policies.DefaultPolicy")
-    globals()['DEFAULT_POLICY_KWARGS'] = kwargs
+            logger.warning(
+                "%s must be a str or class subclassing aiocache.plugins.BasePlugin" % class_)
+
+    globals()['DEFAULT_PLUGINS'] = new_plugins
 
 
 def get_defaults():
@@ -96,8 +101,7 @@ def get_defaults():
         "DEFAULT_CACHE_KWARGS": DEFAULT_CACHE_KWARGS,
         "DEFAULT_SERIALIZER": DEFAULT_SERIALIZER,
         "DEFAULT_SERIALIZER_KWARGS": DEFAULT_SERIALIZER_KWARGS,
-        "DEFAULT_POLICY": DEFAULT_POLICY,
-        "DEFAULT_POLICY_KWARGS": DEFAULT_POLICY_KWARGS,
+        "DEFAULT_PLUGINS": DEFAULT_PLUGINS,
     }
 
 
@@ -115,9 +119,11 @@ def set_from_dict(config):
             "SERIALIZER": {
                 "class": "aiocache.serializers.DefaultSerializer"
             },
-            "POLICY": {
-                "class": "aiocache.policies.DefaultPolicy"
-            }
+            "PLUGINS": [
+                {
+                    "class": "aiocache.plugins.BasePlugin"
+                }
+            ]
         }
 
     Of course you can set your own classes there. Any extra parameter you put in the dict will be
@@ -126,7 +132,6 @@ def set_from_dict(config):
 
     All keys in the config are optional, if they are not passed the previous defaults will be kept.
     """
-
     if "CACHE" in config:
         class_ = config['CACHE'].pop("class", None)
         set_defaults(class_=class_, **config['CACHE'])
@@ -135,6 +140,5 @@ def set_from_dict(config):
         class_ = config['SERIALIZER'].pop("class", None)
         set_default_serializer(class_=class_, **config['SERIALIZER'])
 
-    if "POLICY" in config:
-        class_ = config['POLICY'].pop("class", None)
-        set_default_policy(class_=class_, **config['POLICY'])
+    if "PLUGINS" in config:
+        set_default_plugins(config=config['PLUGINS'])

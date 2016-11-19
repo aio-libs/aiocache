@@ -5,7 +5,7 @@ import aiocache
 
 from aiocache.cache import RedisCache, BaseCache
 from aiocache.backends import RedisBackend, MemcachedBackend, SimpleMemoryBackend
-from aiocache.policies import DefaultPolicy
+from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
 
 
@@ -37,9 +37,7 @@ def reset_defaults():
         "SERIALIZER": {
             "class": "aiocache.serializers.DefaultSerializer",
         },
-        "POLICY": {
-            "class": "aiocache.policies.DefaultPolicy",
-        }
+        "PLUGINS": []
     })
 
 
@@ -61,7 +59,7 @@ def mock_cache(mocker):
     cache._timeout = 0.002
     mocker.spy(cache, '_build_key')
     cache.serializer = asynctest.Mock(spec=DefaultSerializer)
-    cache.policy = asynctest.Mock(spec=DefaultPolicy)
+    cache.plugins = [asynctest.Mock(spec=BasePlugin)]
     return cache
 
 

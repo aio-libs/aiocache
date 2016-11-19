@@ -9,7 +9,7 @@ from unittest import mock
 from aiocache import SimpleMemoryCache, RedisCache, cached, multi_cached
 from aiocache.utils import get_cache, get_args_dict
 from aiocache.serializers import PickleSerializer
-from aiocache.policies import DefaultPolicy
+from aiocache.plugins import BasePlugin
 from aiocache.backends import SimpleMemoryBackend
 
 
@@ -266,40 +266,40 @@ class TestCacheFactory:
             class_="aiocache.RedisCache", endpoint="http://...", port=6379)
         cache = get_cache(
             namespace="default", serializer=PickleSerializer(),
-            policy=DefaultPolicy(), port=123)
+            plugins=BasePlugin(), port=123)
 
         assert isinstance(cache, RedisCache)
         assert cache.endpoint == "http://..."
         assert cache.port == 123
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
-        assert isinstance(cache.policy, DefaultPolicy)
+        assert isinstance(cache.plugins, BasePlugin)
 
-    def test_get_cache_with_default_policy_kwargs(self):
+    def test_get_cache_with_default_plugins_kwargs(self):
         aiocache.settings.set_defaults(
             class_="aiocache.RedisCache", endpoint="http://...", port=6379)
         cache = get_cache(
             namespace="default", serializer=PickleSerializer(),
-            policy=DefaultPolicy(), port=123)
+            plugins=BasePlugin(), port=123)
 
         assert isinstance(cache, RedisCache)
         assert cache.endpoint == "http://..."
         assert cache.port == 123
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
-        assert isinstance(cache.policy, DefaultPolicy)
+        assert isinstance(cache.plugins, BasePlugin)
 
     def test_get_cache_overrides(self):
         cache = get_cache(
             cache=RedisCache, namespace="default", serializer=PickleSerializer(),
-            policy=DefaultPolicy(), endpoint="http://...", port=123)
+            plugins=BasePlugin(), endpoint="http://...", port=123)
 
         assert isinstance(cache, RedisCache)
         assert cache.endpoint == "http://..."
         assert cache.port == 123
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
-        assert isinstance(cache.policy, DefaultPolicy)
+        assert isinstance(cache.plugins, BasePlugin)
 
 
 def test_get_args_dict():
