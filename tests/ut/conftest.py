@@ -3,7 +3,7 @@ import asynctest
 
 import aiocache
 
-from aiocache.cache import RedisCache, BaseCache
+from aiocache.cache import RedisCache, BaseCache, SimpleMemoryCache
 from aiocache.backends import RedisBackend, MemcachedBackend, SimpleMemoryBackend
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
@@ -66,6 +66,12 @@ def mock_cache(mocker):
 @pytest.fixture
 def base_cache():
     return BaseCache()
+
+
+@pytest.fixture
+def memory_cache():
+    SimpleMemoryBackend._cache = {}
+    return SimpleMemoryCache()
 
 
 @pytest.fixture

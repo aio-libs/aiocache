@@ -70,9 +70,14 @@ def set_default_plugins(config):
     Set the default settings for the plugins. If within your project you are working with a
     custom plugin, you may want to call it as::
 
-        aiocache.settings.set_default_plugins({
-            my_module.MyPlugin: {},
-            my_module.OtherPlugin: {'arg': 1}
+        aiocache.settings.set_default_plugins([
+            {
+                'class': my_module.MyPlugin,
+            },
+            {
+                'class': my_module.OtherPlugin,
+                'arg': 1
+            }
         })
 
     Once the call is done, all decorators and instances where policiy params are not specified,
