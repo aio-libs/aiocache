@@ -35,31 +35,69 @@ class BasePlugin:
     ]
 
 
-async def placeholder(self, client, *args, **kwargs):
+async def do_nothing(self, client, *args, **kwargs):
     pass
 
 for method in BasePlugin._HOOKED_METHODS:
-    setattr(BasePlugin, "pre_{}".format(method), classmethod(placeholder))
-    setattr(BasePlugin, "post_{}".format(method), classmethod(placeholder))
+    setattr(BasePlugin, "pre_{}".format(method), classmethod(do_nothing))
+    setattr(BasePlugin, "post_{}".format(method), classmethod(do_nothing))
+
+
+class TimingPlugin(BasePlugin):
+    pass
+
+
+def save_time(method):
+
+    async def do_save_time(self, client, *args, took=0, **kwargs):
+        if not hasattr(client, "profiling"):
+            client.profiling = {}
+
+        previous_max = client.profiling.get("{}_max".format(method), 0)
+        previous_min = client.profiling.get("{}_min".format(method), client._timeout)
+
+        client.profiling["{}_max".format(method)] = max(took, previous_max)
+        client.profiling["{}_min".format(method)] = min(took, previous_min)
+
+    return do_save_time
+
+
+for method in TimingPlugin._HOOKED_METHODS:
+    setattr(TimingPlugin, "post_{}".format(method), classmethod(save_time(method)))
 
 
 class HitMissRatioPlugin(BasePlugin):
     async def post_get(self, client, key, took=0, ret=None):
+        if not hasattr(client, "hit_miss_ratio"):
+            client.hit_miss_ratio = {}
+            client.hit_miss_ratio["total"] = 0
+            client.hit_miss_ratio["hits"] = 0
+
+        client.hit_miss_ratio["total"] += 1
+        if ret is not None:
+            client.hit_miss_ratio["hits"] += 1
+
+        client.hit_miss_ratio['hit_ratio'] = \
+            client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
+
+    async def post_multi_get(self, client, keys, took=0, ret=None):
         if hasattr(client, "hit_miss_ratio"):
-            client.hit_miss_ratio["total"] += 1
-            if ret is not None:
-                client.hit_miss_ratio["hits"] += 1
-            else:
-                client.hit_miss_ratio["miss"] += 1
+            client.hit_miss_ratio["total"] += len(keys)
+            for result in ret:
+                if result is not None:
+                    client.hit_miss_ratio["hits"] += 1
+                else:
+                    client.hit_miss_ratio["miss"] += 1
         else:
             client.hit_miss_ratio = {}
-            client.hit_miss_ratio["total"] = 1
-            if ret is not None:
-                client.hit_miss_ratio["hits"] = 1
-                client.hit_miss_ratio["miss"] = 0
-            else:
-                client.hit_miss_ratio["hits"] = 0
-                client.hit_miss_ratio["miss"] = 1
+            client.hit_miss_ratio["total"] = len(keys)
+            for result in ret:
+                if result is not None:
+                    client.hit_miss_ratio["hits"] = 1
+                    client.hit_miss_ratio["miss"] = 0
+                else:
+                    client.hit_miss_ratio["hits"] = 0
+                    client.hit_miss_ratio["miss"] = 1
 
         client.hit_miss_ratio['hit_ratio'] = \
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]

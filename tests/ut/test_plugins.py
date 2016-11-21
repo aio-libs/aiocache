@@ -61,6 +61,22 @@ class TestHitMissRatioPlugin:
         assert memory_cache.hit_miss_ratio["miss_ratio"] == \
             len(miss)/memory_cache.hit_miss_ratio["total"]
 
-    @pytest.mark.xfail
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("data, ratio", [
+        ({"a": 1, "b": 2, "c": 3}, 0.6),
+        ({"a": 1, "z": 0}, 0.2),
+        ({}, 0),
+        ({"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}, 1)
+    ])
     async def test_multi_get_hit_miss_ratio(self, memory_cache, data, ratio):
-        pass
+        keys = ["a", "b", "c", "d", "e", "f"]
+        memory_cache.plugins = [HitMissRatioPlugin()]
+        SimpleMemoryBackend._cache = data
+
+        for key in keys:
+            await memory_cache.multi_get([key])
+
+        hits = [x for x in keys if x in data]
+        assert memory_cache.hit_miss_ratio["hits"] == len(hits)
+        assert memory_cache.hit_miss_ratio["hit_ratio"] == \
+            len(hits)/memory_cache.hit_miss_ratio["total"]

@@ -2,11 +2,14 @@ import asyncio
 import random
 
 from aiocache import RedisCache
-from aiocache.plugins import HitMissRatioPlugin
+from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
 
 cache = RedisCache(
-    endpoint="127.0.0.1", plugins=[HitMissRatioPlugin()], port=6379, namespace="main")
+    endpoint="127.0.0.1",
+    plugins=[HitMissRatioPlugin(), TimingPlugin()],
+    port=6379,
+    namespace="main")
 
 
 async def redis():
@@ -21,8 +24,15 @@ async def redis():
         await cache.get(random.choice(possible_keys))
 
     assert cache.hit_miss_ratio["hit_ratio"] > 0.5
-    assert cache.hit_miss_ratio["miss_ratio"] < 0.5
     assert cache.hit_miss_ratio["total"] == 30
+
+    assert cache.profiling["get_min"] > 0
+    assert cache.profiling["set_min"] > 0
+    assert cache.profiling["get_max"] > 0
+    assert cache.profiling["set_max"] > 0
+
+    print(cache.hit_miss_ratio)
+    print(cache.profiling)
 
 
 def test_redis():
