@@ -53,11 +53,17 @@ def save_time(method):
         if not hasattr(client, "profiling"):
             client.profiling = {}
 
+        previous_total = client.profiling.get("{}_total".format(method), 0)
+        previous_avg = client.profiling.get("{}_avg".format(method), 0)
         previous_max = client.profiling.get("{}_max".format(method), 0)
-        previous_min = client.profiling.get("{}_min".format(method), client._timeout)
+        previous_min = client.profiling.get("{}_min".format(method))
 
+        client.profiling["{}_total".format(method)] = previous_total + 1
+        client.profiling["{}_avg".format(method)] = \
+            previous_avg + (took - previous_avg) / (previous_total + 1)
         client.profiling["{}_max".format(method)] = max(took, previous_max)
-        client.profiling["{}_min".format(method)] = min(took, previous_min)
+        client.profiling["{}_min".format(method)] = \
+            min(took, previous_min) if previous_min else took
 
     return do_save_time
 

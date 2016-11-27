@@ -3,8 +3,7 @@ import inspect
 import asynctest
 
 from unittest import mock
-from aiocache.plugins import BasePlugin, HitMissRatioPlugin
-from aiocache.backends import SimpleMemoryBackend
+from aiocache.plugins import BasePlugin, save_time
 
 
 class TestPluginDecorator:
@@ -33,3 +32,15 @@ class TestBasePlugin:
                 inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method)))
             assert hasattr(BasePlugin, "post_{}".format(method)) and \
                 inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method)))
+
+
+@pytest.mark.asyncio
+async def test_save_time(mock_cache):
+    do_save_time = save_time('get')
+    await do_save_time('self', mock_cache, took=1)
+    await do_save_time('self', mock_cache, took=2)
+
+    assert mock_cache.profiling["get_total"] == 2
+    assert mock_cache.profiling["get_max"] == 2
+    assert mock_cache.profiling["get_min"] == 1
+    assert mock_cache.profiling["get_avg"] == 1.5
