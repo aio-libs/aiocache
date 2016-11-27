@@ -53,13 +53,9 @@ class TestHitMissRatioPlugin:
             await memory_cache.get(key)
 
         hits = [x for x in keys if x in data]
-        miss = [x for x in keys if x not in data]
         assert memory_cache.hit_miss_ratio["hits"] == len(hits)
-        assert memory_cache.hit_miss_ratio["miss"] == len(miss)
         assert memory_cache.hit_miss_ratio["hit_ratio"] == \
             len(hits)/memory_cache.hit_miss_ratio["total"]
-        assert memory_cache.hit_miss_ratio["miss_ratio"] == \
-            len(miss)/memory_cache.hit_miss_ratio["total"]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("data, ratio", [
