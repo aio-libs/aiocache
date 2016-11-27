@@ -286,8 +286,8 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     """
     :class:`aiocache.backends.SimpleMemoryBackend` cache implementation with
     the following components as defaults:
-        - serializer: :class:`aiocache.serializers.DefaultSerializer`
-        - plugins: None
+      - serializer: :class:`aiocache.serializers.DefaultSerializer`
+      - plugins: None
 
     Config options are:
 
@@ -306,8 +306,8 @@ class RedisCache(RedisBackend, BaseCache):
     """
     :class:`aiocache.backends.RedisBackend` cache implementation with the
     following components as defaults:
-        - serializer: :class:`aiocache.serializers.DefaultSerializer`
-        - plugins: None
+      - serializer: :class:`aiocache.serializers.DefaultSerializer`
+      - plugins: None
 
     Config options are:
 
@@ -340,8 +340,8 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     """
     :class:`aiocache.backends.MemcachedCache` cache implementation with the following
     components as defaults:
-        - serializer: :class:`aiocache.serializers.DefaultSerializer`
-        - plugins: None
+      - serializer: :class:`aiocache.serializers.DefaultSerializer`
+      - plugins: None
 
     Config options are:
 

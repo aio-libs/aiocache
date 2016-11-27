@@ -36,38 +36,36 @@ Cache components
 Each cache instance has three main components:
   - **backend**: Is the client that connects the cache with the client that talks with the desired backend (Redis, Memcached, etc...).
   - **serializer**: It transforms the value when saving and retrieving. This allows to save complex Python objects, change format of the data stored, etc. :ref:`defaultserializer` is used by default if not specified during instantiation time. Check :ref:`serializers` for a list of available serializers. If the functionality you need is not covered, you can write your custom serializer.
-  - **policy**: It ensures the chosen cache policy is followed. By default it uses :ref:`defaultpolicy` but you can set any other calling ``cache.policy = MyNewPolicy()``. Check :ref:`policies` for a list of available policies. If the functionality you need is not covered, you can write your custom policy.
+  - **plugin**: Implements extra behavior before and after executing a command. Check :ref:`plugins` for a list of available plugins. You can create your custom one by inheriting from :ref:`baseplugin` and override the need ``pre`` or ``post`` functions (for example, ``set`` command has the ``pre_set`` and ``post_set`` hooks).
 
 
 .. image:: images/architecture.png
   :align: center
 
 
-Configuring a project settings
-------------------------------
+Configuring project default settings
+------------------------------------
 
-Sometimes you just want to use the same settings all over your project. To do so, some helpers are provided like ``set_defaults``, ``set_default_serializer``, ``set_default_policy``:
+Sometimes you just want to use the same settings all over your project. To do so, some helpers are provided like ``set_defaults``, ``set_default_serializer``, ``set_default_plugins``:
 
 .. automodule:: aiocache.settings
-  :members: set_defaults, set_default_serializer, set_default_policy
+  :members: set_defaults, set_default_serializer, set_default_plugins
 
 If you have many custom settings that you want to configure globally, it can be tedious to pick all of them from config file and forward them to the shown helpers. For these cases, the ``set_from_dict`` can give you a hand:
 
 .. automodule:: aiocache.settings
   :members: set_from_dict
 
-If you need to know the currently configure defaults for your projects, you can always use the ``get_defaults`` as
+If you need to know the current default configuration for your project, you can always use the ``get_defaults`` as
 
 .. code-block:: python
 
     >>> import pprint
     >>> import aiocache
-    >>> aiocache.settings.get_defaults()
     >>> pprint.pprint(aiocache.settings.get_defaults())
     {'DEFAULT_CACHE': <class 'aiocache.cache.SimpleMemoryCache'>,
      'DEFAULT_CACHE_KWARGS': {},
-     'DEFAULT_POLICY': <class 'aiocache.policies.DefaultPolicy'>,
-     'DEFAULT_POLICY_KWARGS': {},
+     'DEFAULT_PLUGINS': {},
      'DEFAULT_SERIALIZER': <class 'aiocache.serializers.DefaultSerializer'>,
      'DEFAULT_SERIALIZER_KWARGS': {}}
 

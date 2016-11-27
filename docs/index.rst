@@ -12,9 +12,8 @@ Contents
 
   usage
   caches
-  backends
   serializers
-  policies
+  plugins
   decorators
   testing
 

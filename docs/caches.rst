@@ -16,6 +16,19 @@ Let's go with a more specific case. Let's pick Redis as the cache with namespace
 #. "key" will become "test:key" when applying the ``build_key``
 #. "value" will become an array of bytes when calling ``serializer.dumps``
 
+The supported operations are:
+
+  - add
+  - get
+  - set
+  - multi_get
+  - multi_set
+  - delete
+  - exists
+  - clear
+  - raw
+
+
 ..  _basecache:
 
 BaseCache

@@ -25,7 +25,7 @@ def set_defaults(class_=None, **kwargs):
         aiocache.settings.set_defaults(
             class_="aiocache.RedisCache", endpoint="127.0.0.1", port=6379, namespace="test")
 
-    Once the call is done, all decorators and instances where thos params are not specified, the
+    Once the call is done, all decorators and instances where those params are not specified, the
     default ones will be picked. The class_ param accepts both str and class types.
     """
     if class_:
@@ -72,15 +72,15 @@ def set_default_plugins(config):
 
         aiocache.settings.set_default_plugins([
             {
-                'class': my_module.MyPlugin,
+                'class': MyPlugin,
             },
             {
-                'class': my_module.OtherPlugin,
+                'class': 'my_module.OtherPlugin',
                 'arg': 1
             }
         })
 
-    Once the call is done, all decorators and instances where policiy params are not specified,
+    Once the call is done, all decorators and instances where plugin params are not specified,
     the default ones will be picked. The class_ param accepts both str and class types.
 
     If you define your own plugin, you can also set is a default and pass the desired extra

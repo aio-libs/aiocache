@@ -69,12 +69,6 @@ def base_cache():
 
 
 @pytest.fixture
-def memory_cache():
-    SimpleMemoryBackend._cache = {}
-    return SimpleMemoryCache()
-
-
-@pytest.fixture
 def redis_cache(mocker, event_loop):
     cache = RedisCache(loop=event_loop)
     return cache
