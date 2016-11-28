@@ -3,7 +3,7 @@ import asynctest
 
 import aiocache
 
-from aiocache.cache import RedisCache, BaseCache, SimpleMemoryCache
+from aiocache.cache import RedisCache, BaseCache
 from aiocache.backends import RedisBackend, MemcachedBackend, SimpleMemoryBackend
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
