@@ -10,6 +10,9 @@ aiocache
 .. image:: https://badge.fury.io/py/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
+.. image:: https://img.shields.io/pypi/pyversions/aiocache.svg
+  :target: https://pypi.python.org/pypi/aiocache
+
 **Aiocache is in beta version so breaking changes may be introduced in upcoming versions**.
 
 The asyncio cache that implements multiple backends.
