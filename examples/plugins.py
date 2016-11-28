@@ -38,8 +38,10 @@ async def redis():
 def test_redis():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(redis())
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.delete("expire_me"))
+    loop.run_until_complete(cache.delete("a"))
+    loop.run_until_complete(cache.delete("b"))
+    loop.run_until_complete(cache.delete("c"))
+    loop.run_until_complete(cache.delete("d"))
 
 
 if __name__ == "__main__":
