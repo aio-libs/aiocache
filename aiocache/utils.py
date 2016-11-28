@@ -21,7 +21,7 @@ def get_args_dict(func, args, kwargs):
 
 
 def cached(
-        ttl=0, key=None, key_from_attr=None, cache=None, serializer=None, policy=None, **kwargs):
+        ttl=0, key=None, key_from_attr=None, cache=None, serializer=None, plugins=None, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -38,10 +38,10 @@ def cached(
         Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
         Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
-    :param policy: policy instance to use when calling the cmd hooks
-        Default is the one configured in ``aiocache.settings.DEFAULT_POLICY``
+    :param plugins: plugins to use when calling the cmd hooks
+        Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
     """
-    cache = get_cache(cache=cache, serializer=serializer, policy=policy, **kwargs)
+    cache = get_cache(cache=cache, serializer=serializer, plugins=plugins, **kwargs)
 
     def cached_decorator(func):
         async def wrapper(*args, **kwargs):
@@ -72,7 +72,7 @@ def cached(
 
 def multi_cached(
         keys_from_attr, key_builder=None, ttl=0, cache=None,
-        serializer=None, policy=None, **kwargs):
+        serializer=None, plugins=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -92,10 +92,10 @@ def multi_cached(
         Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
         Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
-    :param policy: policy instance to use when calling the cmd hooks
-        Default is the one configured in ``aiocache.settings.DEFAULT_POLICY``
+    :param plugins: plugins to use when calling the cmd hooks
+        Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
     """
-    cache = get_cache(cache=cache, serializer=serializer, policy=policy, **kwargs)
+    cache = get_cache(cache=cache, serializer=serializer, plugins=plugins, **kwargs)
     key_builder = key_builder or (lambda x, args_dict: x)
 
     def multi_cached_decorator(func):
@@ -140,13 +140,13 @@ def multi_cached(
     return multi_cached_decorator
 
 
-def get_cache(cache=None, serializer=None, policy=None, **kwargs):
+def get_cache(cache=None, serializer=None, plugins=None, **kwargs):
     cache = cache or aiocache.settings.DEFAULT_CACHE
-    serializer = serializer or aiocache.settings.DEFAULT_SERIALIZER()
-    policy = policy or aiocache.settings.DEFAULT_POLICY()
+    serializer = serializer
+    plugins = plugins
 
     instance = cache(
         serializer=serializer,
-        policy=policy,
+        plugins=plugins,
         **{**aiocache.settings.DEFAULT_CACHE_KWARGS, **kwargs})
     return instance

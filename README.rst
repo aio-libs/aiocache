@@ -10,6 +10,8 @@ aiocache
 .. image:: https://badge.fury.io/py/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
+**Aiocache is in beta version so breaking changes may be introduced in upcoming versions**.
+
 The asyncio cache that implements multiple backends.
 
 This library aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
@@ -32,12 +34,12 @@ Aiocache provides 3 main entities:
 
 - **backends**: Allow you specify which backend you want to use for your cache. Currently supporting: SimpleMemoryCache, RedisCache using aioredis_ and MemCache using aiomcache_.
 - **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: DefaultSerializer, PickleSerializer, JsonSerializer.
-- **policies**: Allows the cache to use a policy. Currently supporting: DefaultPolicy, LRUPolicy.
+- **plugins**: Implement a hooks system that allows to execute extra behavior before and after of each command.
 
 .. image:: docs/images/architecture.png
   :align: center
 
-Those 3 entities combine during some of the cache operations to apply the desired command (backend), data transformation (serializer) and pre/post hooks (policies). To have a better vision of what happens, here you can check how ``set`` function works in ``aiocache``:
+Those 3 entities combine during some of the cache operations to apply the desired command (backend), data transformation (serializer) and pre/post hooks (plugins). To have a better vision of what happens, here you can check how ``set`` function works in ``aiocache``:
 
 .. image:: docs/images/set_operation_flow.png
   :align: center
@@ -84,9 +86,9 @@ Documentation
 -------------
 
 - `Usage <http://aiocache.readthedocs.io/en/latest/usage.html>`_
-- `Backends <http://aiocache.readthedocs.io/en/latest/backends.html>`_
+- `Caches <http://aiocache.readthedocs.io/en/latest/caches.html>`_
 - `Serializers <http://aiocache.readthedocs.io/en/latest/serializers.html>`_
-- `Policies <http://aiocache.readthedocs.io/en/latest/policies.html>`_
+- `Plugins <http://aiocache.readthedocs.io/en/latest/plugins.html>`_
 - `Decorators <http://aiocache.readthedocs.io/en/latest/decorators.html>`_
 - `Testing <http://aiocache.readthedocs.io/en/latest/testing.html>`_
 - `Examples <https://github.com/argaen/aiocache/tree/master/examples>`_

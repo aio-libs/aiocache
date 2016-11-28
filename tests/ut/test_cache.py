@@ -70,8 +70,8 @@ class TestCache:
 
         assert mock_cache.serializer.loads.call_count == 1
         assert mock_cache._build_key.call_count == 1
-        assert mock_cache.policy.pre_get.call_count == 1
-        assert mock_cache.policy.post_get.call_count == 1
+        assert mock_cache.plugins[0].pre_get.call_count == 1
+        assert mock_cache.plugins[0].post_get.call_count == 1
 
     @pytest.mark.asyncio
     async def test_get_timeouts(self, mock_cache):
@@ -86,8 +86,8 @@ class TestCache:
 
         assert mock_cache.serializer.dumps.call_count == 1
         assert mock_cache._build_key.call_count == 1
-        assert mock_cache.policy.pre_set.call_count == 1
-        assert mock_cache.policy.post_set.call_count == 1
+        assert mock_cache.plugins[0].pre_set.call_count == 1
+        assert mock_cache.plugins[0].post_set.call_count == 1
 
     @pytest.mark.asyncio
     async def test_set_timeouts(self, mock_cache):
@@ -103,8 +103,8 @@ class TestCache:
 
         assert mock_cache.serializer.dumps.call_count == 1
         assert mock_cache._build_key.call_count == 1
-        assert mock_cache.policy.pre_set.call_count == 1
-        assert mock_cache.policy.post_set.call_count == 1
+        assert mock_cache.plugins[0].pre_add.call_count == 1
+        assert mock_cache.plugins[0].post_add.call_count == 1
 
     @pytest.mark.asyncio
     async def test_add_timeouts(self, mock_cache):
@@ -119,8 +119,8 @@ class TestCache:
 
         assert mock_cache.serializer.loads.call_count == 2
         assert mock_cache._build_key.call_count == 2
-        assert mock_cache.policy.pre_get.call_count == 2
-        assert mock_cache.policy.post_get.call_count == 2
+        assert mock_cache.plugins[0].pre_multi_get.call_count == 1
+        assert mock_cache.plugins[0].post_multi_get.call_count == 1
 
     @pytest.mark.asyncio
     async def test_mget_timeouts(self, mock_cache):
@@ -135,8 +135,8 @@ class TestCache:
 
         assert mock_cache.serializer.dumps.call_count == 2
         assert mock_cache._build_key.call_count == 2
-        assert mock_cache.policy.pre_set.call_count == 2
-        assert mock_cache.policy.post_set.call_count == 2
+        assert mock_cache.plugins[0].pre_multi_set.call_count == 1
+        assert mock_cache.plugins[0].post_multi_set.call_count == 1
 
     @pytest.mark.asyncio
     async def test_mset_timeouts(self, mock_cache):
