@@ -44,7 +44,11 @@ for method in BasePlugin._HOOKED_METHODS:
 
 
 class TimingPlugin(BasePlugin):
-    pass
+    """
+    Calculates average, min and max times each command took. The data is saved
+    in the cache class as a dict attribute called ``profiling``. For example, to
+    access the average time of the operation get, you can do ``cache.profiling['get_avg']``
+    """
 
 
 def save_time(method):
@@ -73,6 +77,12 @@ for method in TimingPlugin._HOOKED_METHODS:
 
 
 class HitMissRatioPlugin(BasePlugin):
+    """
+    Calculates the ratio of hits the cache has. The data is saved in the cache class as a dict
+    attribute called ``hit_miss_ratio``. For example, to access the hit ratio of the cache,
+    you can do ``cache.hit_miss_ratio['hit_ratio']``. It also provides the "total" and "hits"
+    keys.
+    """
     async def post_get(self, client, key, took=0, ret=None):
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
@@ -87,25 +97,15 @@ class HitMissRatioPlugin(BasePlugin):
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
 
     async def post_multi_get(self, client, keys, took=0, ret=None):
-        if hasattr(client, "hit_miss_ratio"):
-            client.hit_miss_ratio["total"] += len(keys)
-            for result in ret:
-                if result is not None:
-                    client.hit_miss_ratio["hits"] += 1
-                else:
-                    client.hit_miss_ratio["miss"] += 1
-        else:
+        if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
-            client.hit_miss_ratio["total"] = len(keys)
-            for result in ret:
-                if result is not None:
-                    client.hit_miss_ratio["hits"] = 1
-                    client.hit_miss_ratio["miss"] = 0
-                else:
-                    client.hit_miss_ratio["hits"] = 0
-                    client.hit_miss_ratio["miss"] = 1
+            client.hit_miss_ratio["total"] = 0
+            client.hit_miss_ratio["hits"] = 0
+
+        client.hit_miss_ratio["total"] += len(keys)
+        for result in ret:
+            if result is not None:
+                client.hit_miss_ratio["hits"] += 1
 
         client.hit_miss_ratio['hit_ratio'] = \
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
-        client.hit_miss_ratio['miss_ratio'] = \
-            client.hit_miss_ratio["miss"] / client.hit_miss_ratio["total"]
