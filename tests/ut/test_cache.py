@@ -4,6 +4,10 @@ import asynctest
 import aiocache
 
 
+async def dummy():
+    return True
+
+
 class TestBaseCache:
     """
     Tests that the client calls do nothing. If a BaseCache is instantiated, it must not interact

@@ -2,22 +2,26 @@
 This module implements different plugins you can attach to your cache instance. They
 are coded in a collaborative so you can use multiple inheritance.
 """
+import os
 import time
 
 
 def plugin_pipeline(func):
     async def wrapper(self, *args, **kwargs):
-        start = time.time()
-        for plugin in self.plugins:
-            await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
+        if not os.getenv('AIOCACHE_DISABLE') == "1":
+            start = time.time()
+            for plugin in self.plugins:
+                await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
 
-        ret = await func(self, *args, **kwargs)
+            ret = await func(self, *args, **kwargs)
 
-        for plugin in self.plugins:
-            await getattr(
-                plugin, "post_{}".format(func.__name__))(
-                    self, *args, took=time.time() - start, ret=ret, **kwargs)
-        return ret
+            for plugin in self.plugins:
+                await getattr(
+                    plugin, "post_{}".format(func.__name__))(
+                        self, *args, took=time.time() - start, ret=ret, **kwargs)
+            return ret
+        else:
+            return BasePlugin.NULL_RETURN.get(func.__name__)
     return wrapper
 
 
@@ -33,6 +37,18 @@ class BasePlugin:
         'clear',
         'raw',
     ]
+
+    NULL_RETURN = {
+        'get': None,
+        'set': True,
+        'multi_get': [],
+        'multi_set': True,
+        'add': True,
+        'delete': 0,
+        'exists': False,
+        'clear': True,
+        'raw': None,
+    }
 
 
 async def do_nothing(self, client, *args, **kwargs):

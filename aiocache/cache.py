@@ -80,7 +80,7 @@ class BaseCache:
 
             await self._add(ns_key, dumps(value), ttl)
 
-            logger.info("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
+            logger.debug("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
             return True
 
     async def _add(self, key, value, ttl):
@@ -105,7 +105,7 @@ class BaseCache:
 
             value = loads(await self._get(ns_key))
 
-            logger.info("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
+            logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
             return value or default
 
     async def _get(self, key):
@@ -129,7 +129,7 @@ class BaseCache:
             ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
             values = [loads(value) for value in await self._multi_get(ns_keys)]
 
-            logger.info(
+            logger.debug(
                 "MULTI_GET %s %d (%.4f)s",
                 ns_keys,
                 len([value for value in values if value is not None]),
@@ -159,7 +159,7 @@ class BaseCache:
 
             await self._set(ns_key, dumps(value), ttl)
 
-            logger.info("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
+            logger.debug("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
             return True
 
     async def _set(self, key, value, ttl):
@@ -187,7 +187,7 @@ class BaseCache:
 
             await self._multi_set(tmp_pairs, ttl=ttl)
 
-            logger.info(
+            logger.debug(
                 "MULTI_SET %s %d (%.4f)s",
                 [key for key, value in tmp_pairs],
                 len(pairs),
@@ -211,7 +211,7 @@ class BaseCache:
             start = time.time()
             ns_key = self._build_key(key, namespace=namespace)
             ret = await self._delete(ns_key)
-            logger.info("DELETE %s %d (%.4f)s", ns_key, ret, time.time() - start)
+            logger.debug("DELETE %s %d (%.4f)s", ns_key, ret, time.time() - start)
             return ret
 
     async def _delete(self, key):
@@ -231,7 +231,7 @@ class BaseCache:
             start = time.time()
             ns_key = self._build_key(key, namespace=namespace)
             ret = await self._exists(ns_key)
-            logger.info("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
+            logger.debug("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
             return ret
 
     async def _exists(self, key):
@@ -250,7 +250,7 @@ class BaseCache:
         with Timeout(self._timeout):
             start = time.time()
             ret = await self._clear(namespace)
-            logger.info("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
+            logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
             return ret
 
     async def _clear(self, namespace):
@@ -268,7 +268,7 @@ class BaseCache:
         with Timeout(self._timeout):
             start = time.time()
             ret = await self._raw(command, *args, **kwargs)
-            logger.info("%s (%.4f)s", command, time.time() - start)
+            logger.debug("%s (%.4f)s", command, time.time() - start)
             return ret
 
     async def _raw(self, command, *args, **kwargs):

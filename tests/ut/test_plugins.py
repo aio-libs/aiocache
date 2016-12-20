@@ -1,3 +1,4 @@
+import os
 import pytest
 import inspect
 import asynctest
@@ -23,6 +24,15 @@ class TestPluginDecorator:
 
         assert len(mock_cache.plugins) == 2
 
+    @pytest.mark.parametrize("method", BasePlugin._HOOKED_METHODS)
+    @pytest.mark.asyncio
+    async def test_aiocache_disable(self, method, mock_cache, set_aiocache_disable):
+        """
+        Test that if AIOCACHE_DISABLE is activated, we ignore the cache
+        operations (they always will return None)
+        """
+        assert await getattr(mock_cache, method)(pytest.KEY) == BasePlugin.NULL_RETURN[method]
+
 
 class TestBasePlugin:
 
@@ -44,3 +54,10 @@ async def test_save_time(mock_cache):
     assert mock_cache.profiling["get_max"] == 2
     assert mock_cache.profiling["get_min"] == 1
     assert mock_cache.profiling["get_avg"] == 1.5
+
+
+@pytest.fixture
+def set_aiocache_disable():
+    os.environ['AIOCACHE_DISABLE'] = "1"
+    yield
+    os.environ['AIOCACHE_DISABLE'] = "0"
