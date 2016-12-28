@@ -101,7 +101,7 @@ class MemcachedBackend:
         """
         return 1 if await self.client.delete(key) else 0
 
-    async def _clear(self, namespace):
+    async def _clear(self, namespace=None):
         """
         Deletes the given key.
 

@@ -69,6 +69,6 @@ def base_cache():
 
 
 @pytest.fixture
-def redis_cache(mocker, event_loop):
+def redis_cache(event_loop):
     cache = RedisCache(loop=event_loop)
     return cache

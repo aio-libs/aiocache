@@ -7,6 +7,7 @@ class SimpleMemoryBackend:
     """
 
     _cache = {}
+    _handlers = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -41,7 +42,7 @@ class SimpleMemoryBackend:
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()
-            loop.call_later(ttl, self.__delete, key)
+            SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
     async def _multi_set(self, pairs, ttl=None):
@@ -56,7 +57,7 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._cache[key] = value
             if ttl:
                 loop = asyncio.get_event_loop()
-                loop.call_later(ttl, self.__delete, key)
+                SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
     async def _add(self, key, value, ttl=None):
@@ -98,7 +99,7 @@ class SimpleMemoryBackend:
         """
         return self.__delete(key)
 
-    async def _clear(self, namespace):
+    async def _clear(self, namespace=None):
         """
         Deletes the given key.
 
@@ -123,4 +124,11 @@ class SimpleMemoryBackend:
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
     def __delete(self, key):
-        return 1 if SimpleMemoryBackend._cache.pop(key, None) else 0
+        if SimpleMemoryBackend._cache.pop(key, None):
+            handle = SimpleMemoryBackend._handlers.get(key)
+            if handle:
+                handle.cancel()
+                SimpleMemoryBackend._handlers.pop(key)
+            return 1
+
+        return 0
