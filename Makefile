@@ -20,7 +20,7 @@ test:
 
 cov:
 	docker-compose -f docker-compose.yml up -d
-	pytest --cov-report term-missing --cov=aiocache -sv tests
+	pytest --cov-report term-missing --cov=aiocache -sv tests/ut
 	docker-compose -f docker-compose.yml stop
 
 doc:
