@@ -111,7 +111,7 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.delete(key)
 
-    async def _clear(self, namespace):
+    async def _clear(self, namespace=None):
         """
         Deletes the given key.
 
