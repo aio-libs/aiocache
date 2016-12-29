@@ -105,6 +105,16 @@ class MemcachedBackend:
         """
         return await self.client.append(key, b'')
 
+    async def _expire(self, key, ttl):
+        """
+        Expire the given key in ttl seconds. If ttl is 0, remove the expiration
+
+        :param key: str key to expire
+        :param ttl: int number of seconds for expiration. If 0, ttl is disabled
+        :returns: True if set, False if key is not found
+        """
+        return await self.client.touch(key, ttl)
+
     async def _delete(self, key):
         """
         Deletes the given key.

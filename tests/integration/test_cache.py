@@ -113,14 +113,14 @@ class TestCache:
     async def test_multi_set_with_ttl(self, cache):
         pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs, ttl=1) is True
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.1)
 
         assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == [None, None]
 
     @pytest.mark.asyncio
     async def test_set_with_ttl(self, cache):
         await cache.set(pytest.KEY, "value", ttl=1)
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.1)
 
         assert await cache.get(pytest.KEY) is None
 
@@ -177,6 +177,17 @@ class TestCache:
     async def test_exists_existing(self, cache):
         await cache.set(pytest.KEY, "value")
         assert await cache.exists(pytest.KEY) is True
+
+    @pytest.mark.asyncio
+    async def test_expire_existing(self, cache):
+        await cache.set(pytest.KEY, "value")
+        assert await cache.expire(pytest.KEY, 1) is True
+        await asyncio.sleep(1.1)
+        assert await cache.exists(pytest.KEY) is False
+
+    @pytest.mark.asyncio
+    async def test_expire_missing(self, cache):
+        assert await cache.expire(pytest.KEY, 1) is False
 
     @pytest.mark.asyncio
     async def test_clear(self, cache):

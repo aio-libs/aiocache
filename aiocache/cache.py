@@ -238,6 +238,26 @@ class BaseCache:
         raise NotImplementedError()
 
     @plugin_pipeline
+    async def expire(self, key, ttl, namespace=None):
+        """
+        Set the ttl to the given key. By setting it to 0, it will disable it
+
+        :param key: str key to expire
+        :param ttl: int number of seconds for expiration. If 0, ttl is disabled
+        :param namespace: str alternative namespace to use
+        :returns: True if set, False if key is not found
+        """
+        with Timeout(self._timeout):
+            start = time.time()
+            ns_key = self._build_key(key, namespace=namespace)
+            ret = await self._expire(ns_key, ttl)
+            logger.debug("EXPIRE %s %d (%.4f)s", ns_key, ret, time.time() - start)
+            return ret
+
+    async def _expire(self, key, ttl):
+        raise NotImplementedError()
+
+    @plugin_pipeline
     async def clear(self, namespace=None):
         """
         Clears the cache in the cache namespace. If an alternative namespace is given, it will

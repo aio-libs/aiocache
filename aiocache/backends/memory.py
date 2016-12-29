@@ -90,6 +90,24 @@ class SimpleMemoryBackend:
         """
         return key in SimpleMemoryBackend._cache
 
+    async def _expire(self, key, ttl):
+        """
+        Expire the given key in ttl seconds. If ttl is 0, remove the expiration
+
+        :param key: str key to expire
+        :param ttl: int number of seconds for expiration. If 0, ttl is disabled
+        :returns: True if set, False if key is not found
+        """
+        if key in SimpleMemoryBackend._cache:
+            handle = SimpleMemoryBackend._handlers.pop(key, None)
+            if handle:
+                handle.cancel()
+            loop = asyncio.get_event_loop()
+            SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
+            return True
+
+        return False
+
     async def _delete(self, key):
         """
         Deletes the given key.

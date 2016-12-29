@@ -49,6 +49,11 @@ class TestBaseCache:
             await base_cache.exists(pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_expire(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache.expire(pytest.KEY, 0)
+
+    @pytest.mark.asyncio
     async def test_clear(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache.clear("namespace")
@@ -174,6 +179,23 @@ class TestCache:
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.delete(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_expire(self, mock_cache):
+        await mock_cache.expire(pytest.KEY, 1)
+        mock_cache._expire.assert_called_with(mock_cache._build_key(pytest.KEY), 1)
+
+    @pytest.mark.asyncio
+    async def test_expire_timeouts(self, mock_cache):
+        mock_cache._expire = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_cache.expire(pytest.KEY, 0)
+
+    @pytest.mark.asyncio
+    async def test_clear(self, mock_cache):
+        await mock_cache.clear(pytest.KEY)
+        mock_cache._clear.assert_called_with(mock_cache._build_key(pytest.KEY))
 
     @pytest.mark.asyncio
     async def test_clear_timeouts(self, mock_cache):
