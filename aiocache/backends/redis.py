@@ -2,19 +2,36 @@ import asyncio
 import itertools
 import aioredis
 
+import aiocache
+
 
 class RedisBackend:
 
     pools = {}
+    DEFAULT_ENDPOINT = "127.0.0.1"
+    DEFAULT_PORT = 6379
+    DEFAULT_DB = 0
+    DEFAULT_PASSWORD = None
 
     def __init__(
-            self, endpoint="127.0.0.1", port=6379, db=0, password=None, loop=None, **kwargs):
+            self, endpoint=None, port=None, db=None, password=None, loop=None, **kwargs):
         super().__init__(**kwargs)
-        self.endpoint = endpoint or "127.0.0.1"
-        self.port = port or 6379
+        if issubclass(aiocache.settings.DEFAULT_CACHE, self.__class__):
+            self._from_defaults(endpoint, port, db, password)
+        else:
+            self.endpoint = endpoint or self.DEFAULT_ENDPOINT
+            self.port = port or self.DEFAULT_PORT
+            self.db = db or self.DEFAULT_DB
+            self.password = password or self.DEFAULT_PASSWORD
         self._loop = loop or asyncio.get_event_loop()
-        self.database = db
-        self.password = password
+
+    def _from_defaults(self, endpoint, port, db, password):
+        self.endpoint = endpoint or \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
+        self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
+        self.db = db or aiocache.settings.DEFAULT_CACHE_KWARGS.get("db", self.DEFAULT_DB)
+        self.password = password or \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("password", self.DEFAULT_PASSWORD)
 
     async def _get(self, key):
         """
@@ -138,14 +155,14 @@ class RedisBackend:
 
     async def _connect(self):
         pool_key = "{}{}{}{}{}{}".format(
-            self.endpoint, self.port, self.encoding, self.database, self.password, id(self._loop))
+            self.endpoint, self.port, self.encoding, self.db, self.password, id(self._loop))
         pool = RedisBackend.pools.get(pool_key)
 
         if pool is None:
             pool = await aioredis.create_pool(
                 (self.endpoint, self.port),
                 encoding=self.encoding,
-                db=self.database,
+                db=self.db,
                 password=self.password,
                 loop=self._loop)
             RedisBackend.pools[pool_key] = pool

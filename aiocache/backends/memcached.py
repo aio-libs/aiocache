@@ -1,16 +1,29 @@
 import asyncio
 import aiomcache
 
+import aiocache
+
 
 class MemcachedBackend:
 
+    DEFAULT_ENDPOINT = "127.0.0.1"
+    DEFAULT_PORT = 11211
+
     def __init__(self, endpoint=None, port=None, loop=None, **kwargs):
         super().__init__(**kwargs)
-        self.endpoint = endpoint or "127.0.0.1"
-        self.port = port or 11211
+        if issubclass(aiocache.settings.DEFAULT_CACHE, self.__class__):
+            self._from_defaults(endpoint, port)
+        else:
+            self.endpoint = endpoint or self.DEFAULT_ENDPOINT
+            self.port = port or self.DEFAULT_PORT
         self._loop = loop or asyncio.get_event_loop()
         self.client = aiomcache.Client(self.endpoint, self.port, loop=self._loop)
         self.encoding = "utf-8"
+
+    def _from_defaults(self, endpoint, port):
+        self.endpoint = endpoint or \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
+        self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
 
     async def _get(self, key):
         """

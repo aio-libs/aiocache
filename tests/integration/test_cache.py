@@ -245,8 +245,8 @@ class TestRedisCache:
 
         assert len(RedisCache.pools) == 1
 
-        cache.database = 1
+        cache.db = 1
         await cache._clear(None)
 
         assert len(RedisCache.pools) == 2
-        assert other_cache.database == 0
+        assert other_cache.db == 0

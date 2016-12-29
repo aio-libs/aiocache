@@ -17,7 +17,7 @@ DEFAULT_SERIALIZER_KWARGS = {}
 DEFAULT_PLUGINS = {}
 
 
-def set_defaults(class_=None, **kwargs):
+def set_defaults(class_=SimpleMemoryCache, **kwargs):
     """
     Set the default settings for the cache. If within your project you are working with a Redis
     backend, you can use it as::
@@ -39,7 +39,7 @@ def set_defaults(class_=None, **kwargs):
     globals()['DEFAULT_CACHE_KWARGS'] = kwargs
 
 
-def set_default_serializer(class_=None, **kwargs):
+def set_default_serializer(class_=DefaultSerializer, **kwargs):
     """
     Set the default settings for the serializer. If within your project you are working with
     json objects, you may want to call it as::
