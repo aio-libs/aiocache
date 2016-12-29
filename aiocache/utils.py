@@ -122,14 +122,18 @@ def multi_cached(
                     logger.exception("Unexpected error with %s", cache)
                     missing_keys = "all"
 
+            if ttl:
+                for key in partial_result:
+                    await cache.expire(key_builder(key, args_dict), ttl)
+
             if missing_keys:
                 result = await func(**args_dict)
-                partial_result.update(result)
-                if partial_result:
+                if result:
+                    partial_result.update(result)
                     try:
                         await cache.multi_set(
                             [(key_builder(
-                                key, args_dict), value) for key, value in partial_result.items()],
+                                key, args_dict), value) for key, value in result.items()],
                             ttl=ttl)
                     except Exception:
                         logger.exception("Unexpected error with %s", cache)
