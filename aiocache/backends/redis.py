@@ -118,6 +118,17 @@ class RedisBackend:
             exists = await redis.exists(key)
             return True if exists > 0 else False
 
+    async def _expire(self, key, ttl):
+        """
+        Expire the given key in ttl seconds. If ttl is 0, remove the expiration
+
+        :param key: str key to expire
+        :param ttl: int number of seconds for expiration. If 0, ttl is disabled
+        :returns: True if set, False if key is not found
+        """
+        with await self._connect() as redis:
+            return await redis.expire(key, ttl)
+
     async def _delete(self, key):
         """
         Deletes the given key.

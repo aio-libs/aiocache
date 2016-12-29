@@ -34,6 +34,7 @@ class BasePlugin:
         'multi_set',
         'delete',
         'exists',
+        'expire',
         'clear',
         'raw',
     ]
@@ -46,6 +47,7 @@ class BasePlugin:
         'add': True,
         'delete': 0,
         'exists': False,
+        'expire': True,
         'clear': True,
         'raw': None,
     }
