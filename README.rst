@@ -13,19 +13,18 @@ aiocache
 .. image:: https://img.shields.io/pypi/pyversions/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
-**Aiocache is in beta version so breaking changes may be introduced in upcoming versions**.
-
 The asyncio cache that implements multiple backends.
 
 This library aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
 
 - ``add``
-- ``exists``
 - ``get``
 - ``set``
 - ``multi_get``
 - ``multi_set``
 - ``delete``
+- ``exists``
+- ``expire``
 - ``clear``
 - ``raw``: Sends raw command to the underlying client
 
@@ -38,6 +37,8 @@ Aiocache provides 3 main entities:
 - **backends**: Allow you specify which backend you want to use for your cache. Currently supporting: SimpleMemoryCache, RedisCache using aioredis_ and MemCache using aiomcache_.
 - **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: DefaultSerializer, PickleSerializer, JsonSerializer.
 - **plugins**: Implement a hooks system that allows to execute extra behavior before and after of each command.
+
+ If you are missing an implementation of backend, serializer or plugin you think it could be interesting for the package, do not hesitate to open a new issue.
 
 .. image:: docs/images/architecture.png
   :align: center
