@@ -29,7 +29,7 @@ def cached(
     An example would be endpoint and port for the RedisCache. You can send those args as
     kwargs and they will be propagated accordingly.
 
-    :param ttl: int seconds to store the function call. Default is 0
+    :param ttl: int seconds to store the function call. Default is 0 which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
         key_from_attr param. If key and key_from_attr are not passed, it will use module_name
         + function_name + args + kwargs
@@ -87,7 +87,7 @@ def multi_cached(
         as keys to index in the cache.
     :param key_builder: Callable that allows to change the format of the keys before storing.
         Receives a dict with all the args of the function.
-    :param ttl: int seconds to store the keys. Default is 0
+    :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -124,12 +124,12 @@ def multi_cached(
 
             if missing_keys:
                 result = await func(**args_dict)
-                partial_result.update(result)
-                if partial_result:
+                if result:
+                    partial_result.update(result)
                     try:
                         await cache.multi_set(
                             [(key_builder(
-                                key, args_dict), value) for key, value in partial_result.items()],
+                                key, args_dict), value) for key, value in result.items()],
                             ttl=ttl)
                     except Exception:
                         logger.exception("Unexpected error with %s", cache)

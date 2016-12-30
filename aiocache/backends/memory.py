@@ -102,8 +102,9 @@ class SimpleMemoryBackend:
             handle = SimpleMemoryBackend._handlers.pop(key, None)
             if handle:
                 handle.cancel()
-            loop = asyncio.get_event_loop()
-            SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
+            if ttl:
+                loop = asyncio.get_event_loop()
+                SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
             return True
 
         return False

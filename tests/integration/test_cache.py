@@ -186,6 +186,13 @@ class TestCache:
         assert await cache.exists(pytest.KEY) is False
 
     @pytest.mark.asyncio
+    async def test_expire_with_0(self, cache):
+        await cache.set(pytest.KEY, "value", 1)
+        assert await cache.expire(pytest.KEY, 0) is True
+        await asyncio.sleep(1.1)
+        assert await cache.exists(pytest.KEY) is True
+
+    @pytest.mark.asyncio
     async def test_expire_missing(self, cache):
         assert await cache.expire(pytest.KEY, 1) is False
 

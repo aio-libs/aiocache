@@ -46,6 +46,7 @@ def memory_mock_cache(mocker):
     mocker.spy(cache, 'multi_get')
     mocker.spy(cache, 'get')
     mocker.spy(cache, 'exists')
+    mocker.spy(cache, 'expire')
     mocker.spy(cache, 'set')
     yield cache
     SimpleMemoryBackend._cache = {}
@@ -152,7 +153,7 @@ class TestMultiCachedDecorator:
         mocker.patch("aiocache.utils.get_cache", return_value=memory_mock_cache)
 
     @pytest.mark.asyncio
-    async def test_multi_cached(self, mocker):
+    async def test_multi_cached(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'return_dict')
         multi_cached_decorator = multi_cached('keys')
@@ -160,16 +161,19 @@ class TestMultiCachedDecorator:
         default_keys = {'a', 'd', 'z', 'y'}
         resp_default = await multi_cached_decorator(return_dict)(keys=default_keys)
         return_dict.assert_called_with(keys=list(default_keys))
+        assert len(memory_mock_cache.multi_set.call_args[0][0]) == len(default_keys)
         assert default_keys == set(resp_default.keys())
 
         keys1 = {'a', 'b', 'c'}
         resp1 = await multi_cached_decorator(return_dict)(keys=keys1)
         return_dict.assert_called_with(keys=list(keys1 - default_keys))
+        assert len(memory_mock_cache.multi_set.call_args[0][0]) == len(keys1 - default_keys)
         assert keys1 == set(resp1.keys())
 
         keys2 = {'a', 'b', 'd', 'e', 'f'}
         resp2 = await multi_cached_decorator(return_dict)(keys=keys2)
         return_dict.assert_called_with(keys=list(keys2 - keys1 - default_keys))
+        assert len(memory_mock_cache.multi_set.call_args[0][0]) == len(keys2 - keys1 - default_keys)
         assert keys2 == set(resp2.keys())
 
     @pytest.mark.asyncio
