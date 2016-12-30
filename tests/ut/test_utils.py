@@ -177,20 +177,6 @@ class TestMultiCachedDecorator:
         assert keys2 == set(resp2.keys())
 
     @pytest.mark.asyncio
-    async def test_multi_cached_with_ttl(self, mocker, memory_mock_cache):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'return_dict')
-        multi_cached_decorator = multi_cached('keys', ttl=1)
-
-        default_keys = {'a', 'b', 'd', 'z', 'y'}
-        await multi_cached_decorator(return_dict)(keys=default_keys)
-        assert memory_mock_cache.expire.call_count == 0
-
-        keys1 = {'a', 'b', 'c'}
-        await multi_cached_decorator(return_dict)(keys=keys1)
-        assert memory_mock_cache.expire.call_count == 2
-
-    @pytest.mark.asyncio
     async def test_multi_cached_keys_from_attr(self, memory_mock_cache):
         keys1 = {'a', 'b'}
 

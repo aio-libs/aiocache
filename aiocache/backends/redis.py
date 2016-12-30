@@ -127,6 +127,8 @@ class RedisBackend:
         :returns: True if set, False if key is not found
         """
         with await self._connect() as redis:
+            if ttl == 0:
+                return await redis.persist(key)
             return await redis.expire(key, ttl)
 
     async def _delete(self, key):
