@@ -3,6 +3,9 @@ import asyncio
 import asynctest
 import aiocache
 
+from aiocache import SimpleMemoryCache, MemcachedCache
+from aiocache.cache import BaseCache
+
 
 async def dummy():
     return True
@@ -204,6 +207,18 @@ class TestCache:
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.clear(pytest.KEY)
 
+    @pytest.mark.asyncio
+    async def test_raw(self, mock_cache):
+        await mock_cache.raw("get", pytest.KEY)
+        mock_cache._raw.assert_called_with("get", mock_cache._build_key(pytest.KEY))
+
+    @pytest.mark.asyncio
+    async def test_raw_timeouts(self, mock_cache):
+        mock_cache._raw = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_cache.raw("clear")
+
     @pytest.fixture
     def set_test_namespace(self):
         aiocache.settings.DEFAULT_CACHE_KWARGS = {"namespace": "test"}
@@ -223,11 +238,34 @@ class TestRedisCache:
         ["", pytest.KEY],
         ["my_ns", "my_ns:" + pytest.KEY],)
     )
-    def test_build_key(self, set_test_namespace, redis_cache, namespace, expected):
+    def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
         assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
 
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
+
+
+class TestSimpleMemoryCache:
+
+    def test_inheritance(self):
+        assert isinstance(SimpleMemoryCache(), BaseCache)
+
+
+class TestMemcachedCache:
+
+    def test_inheritance(self):
+        assert isinstance(MemcachedCache(), BaseCache)
+
+    @pytest.mark.parametrize("namespace, expected", (
+        [None, "test" + pytest.KEY],
+        ["", pytest.KEY],
+        ["my_ns", "my_ns" + pytest.KEY],)
+    )
+    def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
+        assert memcached_cache._build_key(pytest.KEY, namespace=namespace) == expected.encode()
+
+    def test_build_key_no_namespace(self, memcached_cache):
+        assert memcached_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
 
 
 @pytest.fixture
