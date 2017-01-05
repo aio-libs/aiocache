@@ -54,10 +54,7 @@ class SimpleMemoryBackend:
         :returns: True
         """
         for key, value in pairs:
-            SimpleMemoryBackend._cache[key] = value
-            if ttl:
-                loop = asyncio.get_event_loop()
-                SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
+            await self._set(key, value, ttl=ttl)
         return True
 
     async def _add(self, key, value, ttl=None):
@@ -75,10 +72,7 @@ class SimpleMemoryBackend:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
 
-        SimpleMemoryBackend._cache[key] = value
-        if ttl:
-            loop = asyncio.get_event_loop()
-            loop.call_later(ttl, self.__delete, key)
+        await self._set(key, value, ttl=ttl)
         return True
 
     async def _exists(self, key):
@@ -126,11 +120,12 @@ class SimpleMemoryBackend:
         :returns: True
         """
         if namespace:
-            for key in list(SimpleMemoryBackend._cache):
+            for key in SimpleMemoryBackend._cache:
                 if key.startswith(namespace):
                     self.__delete(key)
         else:
             SimpleMemoryBackend._cache = {}
+            SimpleMemoryBackend._handlers = {}
         return True
 
     async def _raw(self, command, *args, **kwargs):
@@ -144,10 +139,9 @@ class SimpleMemoryBackend:
 
     def __delete(self, key):
         if SimpleMemoryBackend._cache.pop(key, None):
-            handle = SimpleMemoryBackend._handlers.get(key)
+            handle = SimpleMemoryBackend._handlers.pop(key, None)
             if handle:
                 handle.cancel()
-                SimpleMemoryBackend._handlers.pop(key)
             return 1
 
         return 0

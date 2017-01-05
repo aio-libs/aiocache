@@ -7,10 +7,6 @@ from aiocache import SimpleMemoryCache, MemcachedCache
 from aiocache.cache import BaseCache
 
 
-async def dummy():
-    return True
-
-
 class TestBaseCache:
     """
     Tests that the client calls do nothing. If a BaseCache is instantiated, it must not interact
@@ -19,52 +15,52 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_add(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.add(pytest.KEY, "value")
+            await base_cache._add(pytest.KEY, "value", 0)
 
     @pytest.mark.asyncio
     async def test_get(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.get(pytest.KEY)
+            await base_cache._get(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_set(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.set(pytest.KEY, "value")
+            await base_cache._set(pytest.KEY, "value", 0)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.multi_get([pytest.KEY])
+            await base_cache._multi_get([pytest.KEY])
 
     @pytest.mark.asyncio
     async def test_multi_set(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.multi_set([(pytest.KEY, "value")])
+            await base_cache._multi_set([(pytest.KEY, "value")], 0)
 
     @pytest.mark.asyncio
     async def test_delete(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.delete(pytest.KEY)
+            await base_cache._delete(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_exists(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.exists(pytest.KEY)
+            await base_cache._exists(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_expire(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.expire(pytest.KEY, 0)
+            await base_cache._expire(pytest.KEY, 0)
 
     @pytest.mark.asyncio
     async def test_clear(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.clear("namespace")
+            await base_cache._clear("namespace")
 
     @pytest.mark.asyncio
     async def test_raw(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.raw("get", pytest.KEY)
+            await base_cache._raw("get", pytest.KEY)
 
 
 class TestCache:
