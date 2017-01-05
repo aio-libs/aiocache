@@ -4,9 +4,11 @@ are coded in a collaborative so you can use multiple inheritance.
 """
 import os
 import time
+import functools
 
 
 def plugin_pipeline(func):
+    @functools.wraps(func)
     async def wrapper(self, *args, **kwargs):
         if not os.getenv('AIOCACHE_DISABLE') == "1":
             start = time.time()
@@ -21,25 +23,13 @@ def plugin_pipeline(func):
                         self, *args, took=time.time() - start, ret=ret, **kwargs)
             return ret
         else:
-            return BasePlugin.NULL_RETURN.get(func.__name__)
+            return BasePlugin._HOOKED_METHODS.get(func.__name__)
     return wrapper
 
 
 class BasePlugin:
-    _HOOKED_METHODS = [
-        'add',
-        'get',
-        'multi_get',
-        'set',
-        'multi_set',
-        'delete',
-        'exists',
-        'expire',
-        'clear',
-        'raw',
-    ]
 
-    NULL_RETURN = {
+    _HOOKED_METHODS = {
         'get': None,
         'set': True,
         'multi_get': [],

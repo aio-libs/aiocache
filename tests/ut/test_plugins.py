@@ -31,7 +31,7 @@ class TestPluginDecorator:
         Test that if AIOCACHE_DISABLE is activated, we ignore the cache
         operations (they always will return None)
         """
-        assert await getattr(mock_cache, method)(pytest.KEY) == BasePlugin.NULL_RETURN[method]
+        assert await getattr(mock_cache, method)(pytest.KEY) == BasePlugin._HOOKED_METHODS[method]
 
 
 class TestBasePlugin:

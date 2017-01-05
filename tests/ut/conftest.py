@@ -3,7 +3,7 @@ import asynctest
 
 import aiocache
 
-from aiocache.cache import RedisCache, BaseCache
+from aiocache.cache import RedisCache, BaseCache, MemcachedCache
 from aiocache.backends import RedisBackend, MemcachedBackend, SimpleMemoryBackend
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
@@ -72,4 +72,10 @@ def base_cache():
 @pytest.fixture
 def redis_cache(event_loop):
     cache = RedisCache(loop=event_loop)
+    return cache
+
+
+@pytest.fixture
+def memcached_cache(event_loop):
+    cache = MemcachedCache(loop=event_loop)
     return cache

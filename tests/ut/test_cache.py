@@ -3,9 +3,8 @@ import asyncio
 import asynctest
 import aiocache
 
-
-async def dummy():
-    return True
+from aiocache import SimpleMemoryCache, MemcachedCache
+from aiocache.cache import BaseCache
 
 
 class TestBaseCache:
@@ -16,52 +15,52 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_add(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.add(pytest.KEY, "value")
+            await base_cache._add(pytest.KEY, "value", 0)
 
     @pytest.mark.asyncio
     async def test_get(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.get(pytest.KEY)
+            await base_cache._get(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_set(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.set(pytest.KEY, "value")
+            await base_cache._set(pytest.KEY, "value", 0)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.multi_get([pytest.KEY])
+            await base_cache._multi_get([pytest.KEY])
 
     @pytest.mark.asyncio
     async def test_multi_set(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.multi_set([(pytest.KEY, "value")])
+            await base_cache._multi_set([(pytest.KEY, "value")], 0)
 
     @pytest.mark.asyncio
     async def test_delete(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.delete(pytest.KEY)
+            await base_cache._delete(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_exists(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.exists(pytest.KEY)
+            await base_cache._exists(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_expire(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.expire(pytest.KEY, 0)
+            await base_cache._expire(pytest.KEY, 0)
 
     @pytest.mark.asyncio
     async def test_clear(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.clear("namespace")
+            await base_cache._clear("namespace")
 
     @pytest.mark.asyncio
     async def test_raw(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache.raw("get", pytest.KEY)
+            await base_cache._raw("get", pytest.KEY)
 
 
 class TestCache:
@@ -204,6 +203,18 @@ class TestCache:
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.clear(pytest.KEY)
 
+    @pytest.mark.asyncio
+    async def test_raw(self, mock_cache):
+        await mock_cache.raw("get", pytest.KEY)
+        mock_cache._raw.assert_called_with("get", mock_cache._build_key(pytest.KEY))
+
+    @pytest.mark.asyncio
+    async def test_raw_timeouts(self, mock_cache):
+        mock_cache._raw = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_cache.raw("clear")
+
     @pytest.fixture
     def set_test_namespace(self):
         aiocache.settings.DEFAULT_CACHE_KWARGS = {"namespace": "test"}
@@ -223,11 +234,34 @@ class TestRedisCache:
         ["", pytest.KEY],
         ["my_ns", "my_ns:" + pytest.KEY],)
     )
-    def test_build_key(self, set_test_namespace, redis_cache, namespace, expected):
+    def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
         assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
 
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
+
+
+class TestSimpleMemoryCache:
+
+    def test_inheritance(self):
+        assert isinstance(SimpleMemoryCache(), BaseCache)
+
+
+class TestMemcachedCache:
+
+    def test_inheritance(self):
+        assert isinstance(MemcachedCache(), BaseCache)
+
+    @pytest.mark.parametrize("namespace, expected", (
+        [None, "test" + pytest.KEY],
+        ["", pytest.KEY],
+        ["my_ns", "my_ns" + pytest.KEY],)
+    )
+    def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
+        assert memcached_cache._build_key(pytest.KEY, namespace=namespace) == expected.encode()
+
+    def test_build_key_no_namespace(self, memcached_cache):
+        assert memcached_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
 
 
 @pytest.fixture
