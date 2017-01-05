@@ -166,15 +166,19 @@ class RedisBackend:
         with await self._connect() as redis:
             return await getattr(redis, command)(*args, **kwargs)
 
-    async def _connect(self):
+    def get_pool(self):
         pool_key = "{}{}{}{}{}{}".format(
-            self.endpoint, self.port, self.encoding, self.db, self.password, id(self._loop))
-        pool = RedisBackend.pools.get(pool_key)
+            self.endpoint, self.port, getattr(self, "encoding", None),
+            self.db, self.password, id(self._loop))
+        return pool_key, RedisBackend.pools.get(pool_key)
+
+    async def _connect(self):
+        pool_key, pool = self.get_pool()
 
         if pool is None:
             pool = await aioredis.create_pool(
                 (self.endpoint, self.port),
-                encoding=self.encoding,
+                encoding=getattr(self, "encoding", None),
                 db=self.db,
                 password=self.password,
                 loop=self._loop)

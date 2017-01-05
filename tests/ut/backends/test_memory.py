@@ -110,7 +110,7 @@ class TestSimpleMemoryBackend:
     async def test_clear_no_namespace(self, memory):
         SimpleMemoryBackend._handlers = "asdad"
         SimpleMemoryBackend._cache = "asdad"
-        await memory._clear("nm")
+        await memory._clear()
         SimpleMemoryBackend._handlers = {}
         SimpleMemoryBackend._cache = {}
 
