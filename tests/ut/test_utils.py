@@ -166,7 +166,7 @@ class TestMultiCachedDecorator:
 
         keys1 = {'a', 'b', 'c'}
         resp1 = await multi_cached_decorator(return_dict)(keys=keys1)
-        return_dict.assert_called_with(keys=list(keys1 - default_keys))
+        assert keys1 - default_keys == set(return_dict.call_args[1]['keys'])
         assert len(memory_mock_cache.multi_set.call_args[0][0]) == len(keys1 - default_keys)
         assert keys1 == set(resp1.keys())
 
