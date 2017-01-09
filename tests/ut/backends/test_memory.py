@@ -90,12 +90,23 @@ class TestSimpleMemoryBackend:
         assert isinstance(memory._handlers.get(pytest.KEY), asyncio.Handle)
 
     @pytest.mark.asyncio
+    async def test_expire_missing(self, memory):
+        SimpleMemoryBackend._cache.__contains__.return_value = False
+        assert await memory._expire(pytest.KEY, 1) is False
+
+    @pytest.mark.asyncio
     async def test_delete(self, memory):
         fake = MagicMock()
         SimpleMemoryBackend._handlers[pytest.KEY] = fake
         await memory._delete(pytest.KEY)
         assert fake.cancel.call_count == 1
         assert pytest.KEY not in SimpleMemoryBackend._handlers
+        SimpleMemoryBackend._cache.pop.assert_called_with(pytest.KEY, None)
+
+    @pytest.mark.asyncio
+    async def test_delete_missing(self, memory):
+        SimpleMemoryBackend._cache.pop.return_value = None
+        await memory._delete(pytest.KEY)
         SimpleMemoryBackend._cache.pop.assert_called_with(pytest.KEY, None)
 
     @pytest.mark.asyncio

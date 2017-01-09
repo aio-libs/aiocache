@@ -43,7 +43,7 @@ class FakePool:
 
 
 @pytest.fixture
-def redis(event_loop, mocker):
+def redis(event_loop):
     redis = RedisBackend()
     pool = FakePool()
     redis._connect = pool
