@@ -7,14 +7,15 @@ pylint:
 ut:
 	pytest -sv tests/ut
 
-integration:
+acceptance:
 	docker-compose -f docker-compose.yml up -d
-	pytest -sv tests/integration
+	pytest -sv tests/acceptance
 	docker-compose -f docker-compose.yml stop
 
 test:
 	docker-compose -f docker-compose.yml up -d
-	pytest -sv tests
+	pytest -sv tests/ut
+	pytest -sv tests/acceptance
 	bash examples/run_all.sh
 	docker-compose -f docker-compose.yml stop
 
@@ -26,7 +27,7 @@ cov:
 doc:
 	make -C docs/ html
 
-example:
+functional:
 	docker-compose -f docker-compose.yml up -d
 	bash examples/run_all.sh
 	docker-compose -f docker-compose.yml stop

@@ -49,7 +49,7 @@ class MemcachedBackend:
             if value is not None and self.encoding is not None:
                 values.append(bytes.decode(value))
             else:
-                values.append(None)
+                values.append(value)
         return values
 
     async def _set(self, key, value, ttl=0):
@@ -94,7 +94,7 @@ class MemcachedBackend:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
 
-        return ret
+        return True
 
     async def _exists(self, key):
         """
