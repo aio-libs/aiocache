@@ -4,7 +4,9 @@ import inspect
 import asynctest
 
 from unittest import mock
+
 from aiocache.plugins import BasePlugin, save_time
+from aiocache.cache import API
 
 
 class TestPluginDecorator:
@@ -24,24 +26,15 @@ class TestPluginDecorator:
 
         assert len(mock_cache.plugins) == 2
 
-    @pytest.mark.parametrize("method", BasePlugin._HOOKED_METHODS)
-    @pytest.mark.asyncio
-    async def test_aiocache_disable(self, method, mock_cache, set_aiocache_disable):
-        """
-        Test that if AIOCACHE_DISABLE is activated, we ignore the cache
-        operations (they always will return None)
-        """
-        assert await getattr(mock_cache, method)(pytest.KEY) == BasePlugin._HOOKED_METHODS[method]
-
 
 class TestBasePlugin:
 
     def test_interface_methods(self):
-        for method in BasePlugin._HOOKED_METHODS:
-            assert hasattr(BasePlugin, "pre_{}".format(method)) and \
-                inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method)))
-            assert hasattr(BasePlugin, "post_{}".format(method)) and \
-                inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method)))
+        for method in API.CMDS:
+            assert hasattr(BasePlugin, "pre_{}".format(method.__name__)) and \
+                inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method.__name__)))
+            assert hasattr(BasePlugin, "post_{}".format(method.__name__)) and \
+                inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method.__name__)))
 
 
 @pytest.mark.asyncio
