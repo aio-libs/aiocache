@@ -2,53 +2,20 @@
 This module implements different plugins you can attach to your cache instance. They
 are coded in a collaborative so you can use multiple inheritance.
 """
-import os
-import time
-import functools
 
-
-def plugin_pipeline(func):
-    @functools.wraps(func)
-    async def wrapper(self, *args, **kwargs):
-        if not os.getenv('AIOCACHE_DISABLE') == "1":
-            start = time.time()
-            for plugin in self.plugins:
-                await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
-
-            ret = await func(self, *args, **kwargs)
-
-            for plugin in self.plugins:
-                await getattr(
-                    plugin, "post_{}".format(func.__name__))(
-                        self, *args, took=time.time() - start, ret=ret, **kwargs)
-            return ret
-        else:
-            return BasePlugin._HOOKED_METHODS.get(func.__name__)
-    return wrapper
+from aiocache.cache import API
 
 
 class BasePlugin:
-
-    _HOOKED_METHODS = {
-        'get': None,
-        'set': True,
-        'multi_get': [],
-        'multi_set': True,
-        'add': True,
-        'delete': 0,
-        'exists': False,
-        'expire': True,
-        'clear': True,
-        'raw': None,
-    }
+    pass
 
 
 async def do_nothing(self, client, *args, **kwargs):
     pass
 
-for method in BasePlugin._HOOKED_METHODS:
-    setattr(BasePlugin, "pre_{}".format(method), classmethod(do_nothing))
-    setattr(BasePlugin, "post_{}".format(method), classmethod(do_nothing))
+for method in API.CMDS:
+    setattr(BasePlugin, "pre_{}".format(method.__name__), classmethod(do_nothing))
+    setattr(BasePlugin, "post_{}".format(method.__name__), classmethod(do_nothing))
 
 
 class TimingPlugin(BasePlugin):
@@ -80,8 +47,9 @@ def save_time(method):
     return do_save_time
 
 
-for method in TimingPlugin._HOOKED_METHODS:
-    setattr(TimingPlugin, "post_{}".format(method), classmethod(save_time(method)))
+for method in API.CMDS:
+    setattr(
+        TimingPlugin, "post_{}".format(method.__name__), classmethod(save_time(method.__name__)))
 
 
 class HitMissRatioPlugin(BasePlugin):

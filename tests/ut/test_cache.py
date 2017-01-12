@@ -1,10 +1,83 @@
+import os
 import pytest
 import asyncio
 import asynctest
 import aiocache
 
+from unittest.mock import patch, MagicMock, ANY
+
 from aiocache import SimpleMemoryCache, MemcachedCache
-from aiocache.cache import BaseCache
+from aiocache.cache import BaseCache, API
+
+
+class TestAPI:
+
+    def test_register(self):
+        @API.register
+        def dummy():
+            pass
+
+        assert dummy in API.CMDS
+        API.unregister(dummy)
+
+    def test_unregister(self):
+        @API.register
+        def dummy():
+            pass
+
+        API.unregister(dummy)
+        assert dummy not in API.CMDS
+
+    def test_unregister_unexisting(self):
+        def dummy():
+            pass
+
+        API.unregister(dummy)
+        assert dummy not in API.CMDS
+
+    @pytest.mark.asyncio
+    async def test_aiocache_enabled(self):
+        @API.aiocache_enabled()
+        async def dummy(*args, **kwargs):
+            return True
+
+        assert await dummy() is True
+
+    @pytest.mark.asyncio
+    async def test_aiocache_enabled_disabled(self):
+        @API.aiocache_enabled(fake_return=[])
+        async def dummy(*args, **kwargs):
+            return True
+
+        with patch.dict(os.environ, {'AIOCACHE_DISABLE': '1'}):
+            assert await dummy() == []
+
+    @pytest.mark.asyncio
+    async def test_timeout(self):
+        self = MagicMock()
+        self.timeout = 0.002
+
+        @API.timeout
+        async def dummy(self, *args, **kwargs):
+            await asyncio.sleep(0.005)
+
+        with pytest.raises(asyncio.TimeoutError):
+            await dummy(self)
+
+    @pytest.mark.asyncio
+    async def test_plugins(self):
+        self = MagicMock()
+        plugin1 = asynctest.CoroutineMock()
+        plugin2 = asynctest.CoroutineMock()
+        self.plugins = [plugin1, plugin2]
+
+        @API.plugins
+        async def dummy(self, *args, **kwargs):
+            return True
+
+        assert await dummy(self) is True
+        plugin1.pre_dummy.assert_called_with(self)
+        plugin1.post_dummy.assert_called_with(self, took=ANY, ret=True)
 
 
 class TestBaseCache:

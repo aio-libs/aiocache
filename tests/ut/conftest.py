@@ -57,7 +57,7 @@ class MockCache(BaseCache):
 @pytest.fixture
 def mock_cache(mocker):
     cache = MockCache()
-    cache._timeout = 0.002
+    cache.timeout = 0.002
     mocker.spy(cache, '_build_key')
     cache.serializer = asynctest.Mock(spec=DefaultSerializer)
     cache.plugins = [asynctest.Mock(spec=BasePlugin)]
