@@ -6,7 +6,7 @@ setup(
     author="Manuel Miranda",
     url="https://github.com/argaen/aiocache",
     author_email="manu.mirandad@gmail.com",
-    description="Asynchronous redis cache",
+    description="multi backend asyncio cache",
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.5",
