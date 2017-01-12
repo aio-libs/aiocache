@@ -1,30 +1,10 @@
-import os
 import pytest
 import inspect
-import asynctest
 
-from unittest import mock
+from unittest.mock import MagicMock
 
-from aiocache.plugins import BasePlugin, save_time
-from aiocache.cache import API
-
-
-class TestPluginDecorator:
-
-    @pytest.mark.asyncio
-    async def test_calls_pre_post(self, mock_cache):
-        class TestPlugin(BasePlugin):
-            pass
-        namespace = "test"
-        mock_cache.plugins += [asynctest.Mock(spec=TestPlugin)]
-        await mock_cache.clear(namespace=namespace)
-
-        for plugin in mock_cache.plugins:
-            plugin.pre_clear.assert_called_with(mock_cache, namespace=namespace)
-            plugin.post_clear.assert_called_with(
-                mock_cache, namespace=namespace, ret=mock.ANY, took=mock.ANY)
-
-        assert len(mock_cache.plugins) == 2
+from aiocache.plugins import BasePlugin, HitMissRatioPlugin, save_time, do_nothing
+from aiocache.cache import API, BaseCache
 
 
 class TestBasePlugin:
@@ -35,6 +15,11 @@ class TestBasePlugin:
                 inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method.__name__)))
             assert hasattr(BasePlugin, "post_{}".format(method.__name__)) and \
                 inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method.__name__)))
+
+
+@pytest.mark.asyncio
+async def test_do_nothing():
+    assert await do_nothing(MagicMock(), MagicMock()) is None
 
 
 @pytest.mark.asyncio
@@ -49,8 +34,31 @@ async def test_save_time(mock_cache):
     assert mock_cache.profiling["get_avg"] == 1.5
 
 
-@pytest.fixture
-def set_aiocache_disable():
-    os.environ['AIOCACHE_DISABLE'] = "1"
-    yield
-    os.environ['AIOCACHE_DISABLE'] = "0"
+class TestHitMissRatioPlugin:
+
+    @pytest.fixture
+    def plugin(self):
+        return HitMissRatioPlugin()
+
+    @pytest.mark.asyncio
+    async def test_post_get(self, plugin):
+        client = MagicMock(spec=BaseCache)
+        await plugin.post_get(client, pytest.KEY)
+
+        assert client.hit_miss_ratio['hits'] == 0
+        assert client.hit_miss_ratio["total"] == 1
+        assert client.hit_miss_ratio['hit_ratio'] == 0
+
+        await plugin.post_get(client, pytest.KEY, ret="value")
+        assert client.hit_miss_ratio['hits'] == 1
+        assert client.hit_miss_ratio["total"] == 2
+        assert client.hit_miss_ratio['hit_ratio'] == 0.5
+
+    @pytest.mark.asyncio
+    async def test_post_multi_get(self, plugin):
+        client = MagicMock(spec=BaseCache)
+        await plugin.post_multi_get(client, [pytest.KEY, pytest.KEY_1], ret=[None, "random"])
+
+        assert client.hit_miss_ratio['hits'] == 1
+        assert client.hit_miss_ratio["total"] == 2
+        assert client.hit_miss_ratio['hit_ratio'] == 0.5
