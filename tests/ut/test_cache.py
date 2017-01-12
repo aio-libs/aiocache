@@ -145,6 +145,9 @@ class TestCache:
 
     The calls to the client are mocked so it doesn't interact with any storage.
     """
+    async def asleep(self, *args, **kwargs):
+        await asyncio.sleep(0.005)
+
     @pytest.mark.asyncio
     async def test_get(self, mock_cache):
         await mock_cache.get(pytest.KEY)
@@ -156,7 +159,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_get_timeouts(self, mock_cache):
-        mock_cache._get = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._get = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.get(pytest.KEY)
@@ -172,7 +175,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_set_timeouts(self, mock_cache):
-        mock_cache._set = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._set = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.set(pytest.KEY, "value")
@@ -189,7 +192,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_add_timeouts(self, mock_cache):
-        mock_cache._add = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._add = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.add(pytest.KEY, "value")
@@ -205,7 +208,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_mget_timeouts(self, mock_cache):
-        mock_cache._multi_get = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._multi_get = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.multi_get(pytest.KEY, "value")
@@ -221,7 +224,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_mset_timeouts(self, mock_cache):
-        mock_cache._multi_set = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._multi_set = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
@@ -234,7 +237,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_exists_timeouts(self, mock_cache):
-        mock_cache._exists = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._exists = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.exists(pytest.KEY)
@@ -247,7 +250,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_delete_timeouts(self, mock_cache):
-        mock_cache._delete = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._delete = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.delete(pytest.KEY)
@@ -259,7 +262,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_expire_timeouts(self, mock_cache):
-        mock_cache._expire = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._expire = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.expire(pytest.KEY, 0)
@@ -271,7 +274,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_clear_timeouts(self, mock_cache):
-        mock_cache._clear = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._clear = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.clear(pytest.KEY)
@@ -283,7 +286,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_raw_timeouts(self, mock_cache):
-        mock_cache._raw = asynctest.CoroutineMock(side_effect=asyncio.sleep(0.005))
+        mock_cache._raw = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.raw("clear")
