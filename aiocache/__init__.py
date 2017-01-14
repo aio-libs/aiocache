@@ -1,5 +1,5 @@
 from aiocache.cache import SimpleMemoryCache, RedisCache, MemcachedCache
-from aiocache.utils import cached, multi_cached
+from aiocache.decorators import cached, multi_cached
 from aiocache import settings
 
 
