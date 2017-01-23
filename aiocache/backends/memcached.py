@@ -72,9 +72,12 @@ class MemcachedBackend:
         :param ttl: int
         :returns: True
         """
+        tasks = []
         for key, value in pairs:
             value = str.encode(value) if isinstance(value, str) else value
-            await self.client.set(key, value, exptime=ttl or 0)
+            tasks.append(asyncio.ensure_future(self.client.set(key, value, exptime=ttl or 0)))
+
+        asyncio.gather(*tasks)
 
         return True
 
