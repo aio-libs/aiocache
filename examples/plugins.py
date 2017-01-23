@@ -20,11 +20,11 @@ async def redis():
 
     possible_keys = ["a", "b", "c", "d", "e", "f"]
 
-    for t in range(30):
+    for t in range(1000):
         await cache.get(random.choice(possible_keys))
 
     assert cache.hit_miss_ratio["hit_ratio"] > 0.5
-    assert cache.hit_miss_ratio["total"] == 30
+    assert cache.hit_miss_ratio["total"] == 1000
 
     assert cache.profiling["get_min"] > 0
     assert cache.profiling["set_min"] > 0
