@@ -29,10 +29,12 @@ class TestPickleSerializer:
 class TestJsonSerializer:
 
     def test_dumps(self):
-        assert JsonSerializer().dumps({"hi": 1}) == '{"hi": 1}'
+        assert (
+            JsonSerializer().dumps({"hi": 1}) == '{"hi": 1}' or  # json
+            JsonSerializer().dumps({"hi": 1}) == '{"hi":1}')     # ujson
 
     def test_dumps_with_none(self):
-        assert JsonSerializer().dumps(None) is 'null'
+        assert JsonSerializer().dumps(None) == 'null'
 
     def test_loads_with_null(self):
         assert JsonSerializer().loads('null') is None
