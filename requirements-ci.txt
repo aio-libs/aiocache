@@ -7,5 +7,5 @@ pytest-cov==2.4.0
 pytest-mock==1.5.0
 codecov==2.0.5
 sphinx==1.5.2
-marshmallow==2.12.0
+marshmallow==2.12.1
 asynctest==0.10.0
