@@ -102,10 +102,11 @@ class RedisBackend:
         """
 
         with await self._connect() as redis:
-            if await redis.exists(key):
+            was_set = await redis.set(key, value, expire=ttl, exist=redis.SET_IF_NOT_EXIST)
+            if not was_set:
                 raise ValueError(
                     "Key {} already exists, use .set to update the value".format(key))
-            return await redis.set(key, value, expire=ttl)
+            return was_set
 
     async def _exists(self, key):
         """
