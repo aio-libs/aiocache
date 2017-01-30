@@ -22,8 +22,12 @@ def set_settings():
 
 class FakePool:
 
+    SET_IF_NOT_EXIST = 'SET_IF_NOT_EXIST'
+
     def __init__(self):
-        self.client = CoroutineMock()
+        client = CoroutineMock()
+        client.SET_IF_NOT_EXIST = self.SET_IF_NOT_EXIST
+        self.client = client
         self.transaction = MagicMock()
         self.client.multi_exec = MagicMock(return_value=self.transaction)
         self.client.multi_exec.return_value.execute = CoroutineMock()
@@ -156,13 +160,14 @@ class TestRedisBackend:
     @pytest.mark.asyncio
     async def test_add(self, redis):
         cache, pool = redis
-        pool.client.exists.return_value = False
         await cache._add(pytest.KEY, "value")
-        pool.client.set.assert_called_with(pytest.KEY, "value", expire=None)
+        pool.client.set.assert_called_with(
+            pytest.KEY, "value", expire=None, exist=pool.SET_IF_NOT_EXIST)
 
     @pytest.mark.asyncio
     async def test_add_existing(self, redis):
         cache, pool = redis
+        pool.client.set.return_value = False
         with pytest.raises(ValueError):
             await cache._add(pytest.KEY, "value")
 
