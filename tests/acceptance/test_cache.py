@@ -5,7 +5,7 @@ import string
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache import serializers, RedisCache
+from aiocache import serializers, RedisCache, exceptions
 
 
 @pytest.fixture(params=[
@@ -104,20 +104,6 @@ class TestCache:
         assert await cache.set(pytest.KEY, "value") is True
 
     @pytest.mark.asyncio
-    async def test_multi_set(self, cache):
-        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
-        assert await cache.multi_set(pairs) is True
-        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == ["value", "random_value"]
-
-    @pytest.mark.asyncio
-    async def test_multi_set_with_ttl(self, cache):
-        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
-        assert await cache.multi_set(pairs, ttl=1) is True
-        await asyncio.sleep(1.1)
-
-        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == [None, None]
-
-    @pytest.mark.asyncio
     async def test_set_with_ttl(self, cache):
         await cache.set(pytest.KEY, "value", ttl=1)
         await asyncio.sleep(1.1)
@@ -133,6 +119,36 @@ class TestCache:
     async def test_set_complex_type(self, cache, obj, serializer):
         cache.serializer = serializer()
         assert await cache.set(pytest.KEY, obj) is True
+
+    @pytest.mark.asyncio
+    async def test_set_optimistic_lock(self, cache):
+        await cache.set(pytest.KEY, "value")
+        await cache.get(pytest.KEY, watch=True)
+        assert await cache.set(pytest.KEY, "lol", optimistic_lock=True) is True
+        assert await cache.get(pytest.KEY) == "lol"
+
+    @pytest.mark.asyncio
+    async def test_set_optimistic_lock_race(self, cache):
+        await cache.get(pytest.KEY, watch=True)
+        await cache.set(pytest.KEY, "immaracecondition")
+        with pytest.raises(exceptions.WatchError):
+            await cache.set(pytest.KEY, "lol", optimistic_lock=True)
+
+        assert await cache.get(pytest.KEY) == "immaracecondition"
+
+    @pytest.mark.asyncio
+    async def test_multi_set(self, cache):
+        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
+        assert await cache.multi_set(pairs) is True
+        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == ["value", "random_value"]
+
+    @pytest.mark.asyncio
+    async def test_multi_set_with_ttl(self, cache):
+        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
+        assert await cache.multi_set(pairs, ttl=1) is True
+        await asyncio.sleep(1.1)
+
+        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == [None, None]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("obj, serializer", [
@@ -226,6 +242,11 @@ class TestCache:
 
         assert await memcached_cache.exists(pytest.KEY, namespace="test") is True
 
+    @pytest.mark.asyncio
+    async def test_watch(self, cache):
+        assert await cache.watch(pytest.KEY) is True
+        assert await cache.watch(pytest.KEY, namespace="test") is True
+
 
 class TestMemoryCache:
 
@@ -268,3 +289,20 @@ class TestRedisCache:
 
         assert len(RedisCache.pools) == 2
         assert other_cache.db == 0
+
+    @pytest.mark.asyncio
+    async def test_watched_keys_not_leaking(self, redis_cache):
+        await asyncio.gather(redis_cache.watch(pytest.KEY), redis_cache.watch(pytest.KEY))
+        assert len(redis_cache.watched_keys["test:" + pytest.KEY]) == 2
+
+        await redis_cache.set(pytest.KEY, "value", optimistic_lock=True)
+        assert len(redis_cache.watched_keys["test:" + pytest.KEY]) == 1
+
+        with pytest.raises(exceptions.WatchError):
+            await redis_cache.set(pytest.KEY, "value", optimistic_lock=True)
+        assert len(redis_cache.watched_keys["test:" + pytest.KEY]) == 0
+
+    @pytest.mark.asyncio
+    async def test_set_optimistic_locking_without_conn(self, redis_cache):
+        await redis_cache.set(pytest.KEY, "value", optimistic_lock=True)
+        assert await redis_cache.get(pytest.KEY) == "value"

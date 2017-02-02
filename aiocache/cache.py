@@ -144,12 +144,13 @@ class BaseCache:
     @API.aiocache_enabled()
     @API.timeout
     @API.plugins
-    async def get(self, key, default=None, loads_fn=None, namespace=None):
+    async def get(self, key, default=None, watch=False, loads_fn=None, namespace=None):
         """
         Get a value from the cache. Returns default if not found.
 
         :param key: str
         :param default: obj to return when key is not found
+        :param watch: start monitoring the key for changes
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
         :returns: obj loaded
@@ -159,7 +160,7 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
         ns_key = self._build_key(key, namespace=namespace)
 
-        value = loads(await self._get(ns_key))
+        value = loads(await self._get(ns_key, watch=watch))
 
         logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
         return value or default
@@ -201,13 +202,15 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def set(self, key, value, ttl=None, dumps_fn=None, namespace=None):
+    async def set(self, key, value, ttl=None, optimistic_lock=False, dumps_fn=None, namespace=None):
         """
         Stores the value in the given key with ttl if specified
 
         :param key: str
         :param value: obj
         :param ttl: int the expiration time in seconds
+        :param optimistic_lock: perform the set operation checking if the key changed since last
+            get. Requires a prior call to ``watch`` command before the get.
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :returns: True
@@ -217,7 +220,7 @@ class BaseCache:
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key, namespace=namespace)
 
-        await self._set(ns_key, dumps(value), ttl)
+        await self._set(ns_key, dumps(value), ttl=ttl, optimistic_lock=optimistic_lock)
 
         logger.debug("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
         return True
@@ -344,6 +347,28 @@ class BaseCache:
         return ret
 
     async def _clear(self, namespace):
+        raise NotImplementedError()
+
+    @API.register
+    @API.aiocache_enabled(fake_return=True)
+    @API.timeout
+    @API.plugins
+    async def watch(self, key, namespace=None):
+        """
+        Starts monitoring the key for changes. Useful for set with optimistic
+        locking.
+
+        :param key: str key to monitor
+        :param namespace: str alternative namespace to use
+        :returns: True
+        """
+        start = time.time()
+        ns_key = self._build_key(key, namespace=namespace)
+        ret = await self._watch(ns_key)
+        logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
+        return ret
+
+    async def _watch(self, key, namespace):
         raise NotImplementedError()
 
     @API.register

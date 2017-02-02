@@ -25,7 +25,7 @@ class MemcachedBackend:
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
         self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
 
-    async def _get(self, key):
+    async def _get(self, key, watch=False):
         """
         Get a value from the cache. Returns default if not found.
 
@@ -52,7 +52,7 @@ class MemcachedBackend:
                 values.append(value)
         return values
 
-    async def _set(self, key, value, ttl=0):
+    async def _set(self, key, value, ttl=0, optimistic_lock=False):
         """
         Stores the value in the given key.
 
@@ -138,6 +138,15 @@ class MemcachedBackend:
             raise ValueError("MemcachedBackend doesnt support flushing by namespace")
         else:
             await self.client.flush_all()
+        return True
+
+    async def _watch(self, key):
+        """
+        Start watching a key
+
+        :param key: str
+        :returns: True
+        """
         return True
 
     async def _raw(self, command, *args, **kwargs):
