@@ -1,6 +1,6 @@
 -r requirements.txt
 -e .
-flake8==3.2.1
+flake8==3.3.0
 pytest==3.0.6
 pytest-asyncio==0.5.0
 pytest-cov==2.4.0
