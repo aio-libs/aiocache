@@ -137,6 +137,11 @@ class TestCache:
         assert await cache.get(pytest.KEY) == "immaracecondition"
 
     @pytest.mark.asyncio
+    async def test_set_optimistic_lock_unexisting_key(self, cache):
+        await cache.set(pytest.KEY, "value", optimistic_lock=True)
+        assert await cache.get(pytest.KEY) == "value"
+
+    @pytest.mark.asyncio
     async def test_multi_set(self, cache):
         pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs) is True
@@ -256,6 +261,16 @@ class TestMemoryCache:
         assert await memory_cache.raw("get", b"key") == b"value"
         assert list(await memory_cache.raw("keys")) == [b"key"]
 
+    @pytest.mark.asyncio
+    async def test_watched_keys_not_leaking(self, memory_cache):
+        await memory_cache.watch(pytest.KEY)
+        await memory_cache.watch(pytest.KEY_1)
+        assert len(memory_cache._watched_keys) == 2
+
+        await memory_cache.set(pytest.KEY, "value", optimistic_lock=True)
+        await memory_cache.set(pytest.KEY_1, "value", optimistic_lock=True)
+        assert len(memory_cache._watched_keys) == 0
+
 
 class TestMemcachedCache:
 
@@ -293,16 +308,11 @@ class TestRedisCache:
     @pytest.mark.asyncio
     async def test_watched_keys_not_leaking(self, redis_cache):
         await asyncio.gather(redis_cache.watch(pytest.KEY), redis_cache.watch(pytest.KEY))
-        assert len(redis_cache.watched_keys["test:" + pytest.KEY]) == 2
+        assert len(redis_cache._watched_keys["test:" + pytest.KEY]) == 2
 
         await redis_cache.set(pytest.KEY, "value", optimistic_lock=True)
-        assert len(redis_cache.watched_keys["test:" + pytest.KEY]) == 1
+        assert len(redis_cache._watched_keys["test:" + pytest.KEY]) == 1
 
         with pytest.raises(exceptions.WatchError):
             await redis_cache.set(pytest.KEY, "value", optimistic_lock=True)
-        assert len(redis_cache.watched_keys["test:" + pytest.KEY]) == 0
-
-    @pytest.mark.asyncio
-    async def test_set_optimistic_locking_without_conn(self, redis_cache):
-        await redis_cache.set(pytest.KEY, "value", optimistic_lock=True)
-        assert await redis_cache.get(pytest.KEY) == "value"
+        assert len(redis_cache._watched_keys["test:" + pytest.KEY]) == 0

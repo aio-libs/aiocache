@@ -11,7 +11,7 @@ from aiocache.exceptions import WatchError
 class RedisBackend:
 
     pools = {}
-    watched_keys = defaultdict(set)
+    _watched_keys = defaultdict(set)
     DEFAULT_ENDPOINT = "127.0.0.1"
     DEFAULT_PORT = 6379
     DEFAULT_DB = 0
@@ -77,8 +77,8 @@ class RedisBackend:
             return await redis.set(key, value, expire=ttl)
 
     async def _set_optimistic_lock(self, key, value, ttl=None):
-        if key in RedisBackend.watched_keys:
-            redis = RedisBackend.watched_keys[key].pop()
+        if key in RedisBackend._watched_keys:
+            redis = RedisBackend._watched_keys[key].pop()
         else:
             redis = await (await self.create_pool()).acquire()
         transaction = redis.multi_exec()
@@ -187,7 +187,7 @@ class RedisBackend:
         :returns: True
         """
         with await self._connect() as redis:
-            RedisBackend.watched_keys[key].add(redis)
+            RedisBackend._watched_keys[key].add(redis)
             return await redis.watch(key)
 
     async def _raw(self, command, *args, **kwargs):

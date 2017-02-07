@@ -52,7 +52,7 @@ class FakePool:
 
 @pytest.fixture
 def redis(event_loop):
-    RedisBackend.watched_keys.clear()
+    RedisBackend._watched_keys.clear()
     redis = RedisBackend()
     pool = FakePool()
     redis.create_pool = CoroutineMock(side_effect=pool)
@@ -155,6 +155,8 @@ class TestRedisBackend:
         pool.transaction.set.assert_called_with(pytest.KEY, "value", expire=None)
         assert pool.transaction.execute.call_count == 1
 
+        assert pytest.KEY not in cache._watched_keys
+
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):
         cache, pool = redis
@@ -242,7 +244,7 @@ class TestRedisBackend:
         cache, pool = redis
         cache._connect = CoroutineMock(side_effect=[FakePool(), FakePool()])
         await asyncio.gather(cache._watch(pytest.KEY), cache._watch(pytest.KEY))
-        assert len(cache.watched_keys[pytest.KEY]) == 2
+        assert len(cache._watched_keys[pytest.KEY]) == 2
 
     @pytest.mark.asyncio
     async def test_raw(self, redis):
