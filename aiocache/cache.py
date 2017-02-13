@@ -26,6 +26,8 @@ class API:
     def timeout(cls, fn):
         @functools.wraps(fn)
         async def _timeout(self, *args, **kwargs):
+            if self.timeout == 0:
+                return await fn(self, *args, **kwargs)
             return await asyncio.wait_for(fn(self, *args, **kwargs), self.timeout)
 
         return _timeout
