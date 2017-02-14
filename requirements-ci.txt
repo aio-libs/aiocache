@@ -12,4 +12,4 @@ asynctest==0.10.0
 
 sanic
 aiohttp
-tornado
+tornado==4.4.2
