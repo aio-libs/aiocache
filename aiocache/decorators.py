@@ -3,7 +3,8 @@ from aiocache.utils import get_args_dict, get_cache
 
 
 def cached(
-        ttl=0, key=None, key_from_attr=None, cache=None, serializer=None, plugins=None, **kwargs):
+        ttl=0, key=None, key_from_attr=None, cache=None, serializer=None,
+        plugins=None, noself=False, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -22,6 +23,9 @@ def cached(
         Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
     :param plugins: plugins to use when calling the cmd hooks
         Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
+    :param noself: if you are decorating a class function, self is also used for generating the
+        key. This will result in same function calls done by different class instances to use
+        different cache keys. Use noself=True if you want to ignore the class instance.
     """
     cache_kwargs = kwargs
 
@@ -32,7 +36,8 @@ def cached(
             args_dict = get_args_dict(func, args, kwargs)
             cache_key = key or args_dict.get(
                 key_from_attr,
-                (func.__module__ or 'stub') + func.__name__ + str(args) + str(kwargs))
+                (func.__module__ or 'stub') + func.__name__ + str(
+                    args[1:] if noself else args) + str(kwargs))
 
             try:
                 if await cache_instance.exists(cache_key):
