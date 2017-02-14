@@ -12,7 +12,7 @@ acceptance:
 	pytest -sv tests/acceptance
 	docker-compose -f docker-compose.yml stop
 
-test:
+test: syntax
 	docker-compose -f docker-compose.yml up -d
 	pytest -sv tests/ut
 	pytest -sv tests/acceptance
