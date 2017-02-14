@@ -23,28 +23,30 @@ def cached(
     :param plugins: plugins to use when calling the cmd hooks
         Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
     """
-    cache = get_cache(cache=cache, serializer=serializer, plugins=plugins, **kwargs)
+    cache_kwargs = kwargs
 
     def cached_decorator(func):
         async def wrapper(*args, **kwargs):
+            cache_instance = get_cache(
+                cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             args_dict = get_args_dict(func, args, kwargs)
             cache_key = key or args_dict.get(
                 key_from_attr,
                 (func.__module__ or 'stub') + func.__name__ + str(args) + str(kwargs))
 
             try:
-                if await cache.exists(cache_key):
-                    return await cache.get(cache_key)
+                if await cache_instance.exists(cache_key):
+                    return await cache_instance.get(cache_key)
 
             except Exception:
-                logger.exception("Unexpected error with %s", cache)
+                logger.exception("Unexpected error with %s", cache_instance)
 
             result = await func(*args, **kwargs)
 
             try:
-                await cache.set(cache_key, result, ttl=ttl)
+                await cache_instance.set(cache_key, result, ttl=ttl)
             except Exception:
-                logger.exception("Unexpected error with %s", cache)
+                logger.exception("Unexpected error with %s", cache_instance)
 
             return result
 
@@ -77,11 +79,13 @@ def multi_cached(
     :param plugins: plugins to use when calling the cmd hooks
         Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
     """
-    cache = get_cache(cache=cache, serializer=serializer, plugins=plugins, **kwargs)
     key_builder = key_builder or (lambda x, args_dict: x)
+    cache_kwargs = kwargs
 
     def multi_cached_decorator(func):
         async def wrapper(*args, **kwargs):
+            cache_instance = get_cache(
+                cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             partial_result = {}
             args_dict = get_args_dict(func, args, kwargs)
             keys = args_dict[keys_from_attr]
@@ -92,7 +96,7 @@ def multi_cached(
             if len(keys) > 0:
                 missing_keys = []
                 try:
-                    values = await cache.multi_get(cache_keys)
+                    values = await cache_instance.multi_get(cache_keys)
                     for key, value in zip(keys, values):
                         if value is not None:
                             partial_result[key] = value
@@ -101,7 +105,7 @@ def multi_cached(
                     args_dict[keys_from_attr] = missing_keys
 
                 except Exception:
-                    logger.exception("Unexpected error with %s", cache)
+                    logger.exception("Unexpected error with %s", cache_instance)
                     missing_keys = "all"
 
             if missing_keys:
@@ -109,12 +113,12 @@ def multi_cached(
                 if result:
                     partial_result.update(result)
                     try:
-                        await cache.multi_set(
+                        await cache_instance.multi_set(
                             [(key_builder(
                                 key, args_dict), value) for key, value in result.items()],
                             ttl=ttl)
                     except Exception:
-                        logger.exception("Unexpected error with %s", cache)
+                        logger.exception("Unexpected error with %s", cache_instance)
 
             return partial_result
 

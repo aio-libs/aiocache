@@ -7,7 +7,7 @@ from aiocache.serializers import JsonSerializer
 
 class MainHandler(tornado.web.RequestHandler):
 
-    @cached(key="my_custom_key", serializer=JsonSerializer(), timeout=0)
+    @cached(key="my_custom_key", serializer=JsonSerializer())
     async def time(self):
         return {"time": datetime.now().isoformat()}
 
