@@ -10,6 +10,6 @@ sphinx==1.5.2
 marshmallow==2.12.2
 asynctest==0.10.0
 
-sanic
+sanic==0.3.1
 aiohttp
 tornado
