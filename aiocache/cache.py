@@ -73,7 +73,7 @@ class BaseCache:
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
-        By default its 5.
+        By default its 5. Use 0 if you want to disable it.
     """
 
     def __init__(self, serializer=None, plugins=None, namespace=None, timeout=5):
