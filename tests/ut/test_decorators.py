@@ -141,6 +141,34 @@ class TestCachedDecorator:
         with pytest.raises(ValueError):
             await cached_decorator(raise_exception)()
 
+    @pytest.mark.asyncio
+    async def test_cached_uses_class_instance(self, mocker, memory_mock_cache):
+        class Dummy:
+            @cached()
+            async def what(self):
+                return True
+
+        first_dummy = Dummy()
+        second_dummy = Dummy()
+
+        await first_dummy.what()
+        await second_dummy.what()
+        assert len(memory_mock_cache._cache) == 2
+
+    @pytest.mark.asyncio
+    async def test_cached_doesnt_uses_class_instance_when_noself(self, mocker, memory_mock_cache):
+        class Dummy:
+            @cached(noself=True)
+            async def what(self):
+                return True
+
+        first_dummy = Dummy()
+        second_dummy = Dummy()
+
+        await first_dummy.what()
+        await second_dummy.what()
+        assert len(memory_mock_cache._cache) == 1
+
 
 class TestMultiCachedDecorator:
 
