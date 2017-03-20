@@ -80,7 +80,7 @@ class RedisBackend:
         if key in RedisBackend.watched_keys:
             redis = RedisBackend.watched_keys[key].pop()
         else:
-            redis = await (await self.create_pool()).acquire()
+            redis = await self._get_connection()
         transaction = redis.multi_exec()
         transaction.set(key, value, expire=ttl)
         try:
@@ -222,3 +222,11 @@ class RedisBackend:
             password=self.password,
             loop=self._loop, maxsize=1)
         return pool
+
+    async def _get_connection(self):
+        return await aioredis.create_redis(
+            (self.endpoint, self.port),
+            encoding=getattr(self, "encoding", None),
+            db=self.db,
+            password=self.password,
+            loop=self._loop)

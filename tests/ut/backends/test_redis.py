@@ -56,6 +56,7 @@ def redis(event_loop):
     redis = RedisBackend()
     pool = FakePool()
     redis.create_pool = CoroutineMock(side_effect=pool)
+    redis._get_connection = CoroutineMock()
     redis._connect = pool
     yield redis, pool
 
@@ -149,11 +150,14 @@ class TestRedisBackend:
     @pytest.mark.asyncio
     async def test_set_optimistic_lock(self, redis):
         cache, pool = redis
+
+        mock_conn = FakePool()
+        cache._get_connection = mock_conn.acquire
         await cache._set(pytest.KEY, "value", optimistic_lock=True)
 
-        assert pool.client.multi_exec.call_count == 1
-        pool.transaction.set.assert_called_with(pytest.KEY, "value", expire=None)
-        assert pool.transaction.execute.call_count == 1
+        assert mock_conn.client.multi_exec.call_count == 1
+        mock_conn.transaction.set.assert_called_with(pytest.KEY, "value", expire=None)
+        assert mock_conn.transaction.execute.call_count == 1
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):
