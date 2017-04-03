@@ -24,22 +24,35 @@ class API:
 
     @classmethod
     def timeout(cls, fn):
+        """
+        This decorator sets a maximum timeout for a coroutine to execute. The timeout can be both
+        set in the ``self.timeout`` attribute or in the ``timeout`` kwarg of the function call.
+        I.e if you have a function ``get(self, key)``, if its decorated with this decorator, you
+        will be able to call it with ``await get(self, "my_key", timeout=4)``.
+
+        Use either 0 or None to disable the timeout.
+        """
         @functools.wraps(fn)
-        async def _timeout(self, *args, **kwargs):
-            if self.timeout == 0:
+        async def _timeout(self, *args, timeout=None, **kwargs):
+            timeout = timeout or self.timeout
+            if timeout == 0 or timeout is None:
                 return await fn(self, *args, **kwargs)
-            return await asyncio.wait_for(fn(self, *args, **kwargs), self.timeout)
+            return await asyncio.wait_for(fn(self, *args, **kwargs), timeout)
 
         return _timeout
 
     @classmethod
     def aiocache_enabled(cls, fake_return=None):
+        """
+        Use this decorator to be able to fake the return of the function by setting the
+        ``AIOCACHE_DISABLE`` environment variable
+        """
         def enabled(fn):
             @functools.wraps(fn)
             async def _enabled(*args, **kwargs):
-                if not os.getenv('AIOCACHE_DISABLE') == "1":
-                    return await fn(*args, **kwargs)
-                return fake_return
+                if os.getenv('AIOCACHE_DISABLE') == "1":
+                    return fake_return
+                return await fn(*args, **kwargs)
 
             return _enabled
         return enabled
@@ -73,11 +86,12 @@ class BaseCache:
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
-        By default its 5. Use 0 if you want to disable it.
+        By default its 5. Use 0 or None if you want to disable it.
     """
 
-    def __init__(self, serializer=None, plugins=None, namespace=None, timeout=5):
-        self.timeout = timeout
+    def __init__(self, serializer=None, plugins=None, namespace=None, timeout=None):
+        self.timeout = timeout if timeout is not None else \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("timeout")
         self.namespace = namespace if namespace is not None else \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("namespace")
         self.encoding = "utf-8"
@@ -125,6 +139,8 @@ class BaseCache:
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: True if key is inserted
         :raises:
             - ValueError if key already exists
@@ -154,6 +170,8 @@ class BaseCache:
         :param default: obj to return when key is not found
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: obj loaded
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -180,6 +198,8 @@ class BaseCache:
         :param keys: list of str
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: list of objs
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -212,6 +232,8 @@ class BaseCache:
         :param ttl: int the expiration time in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -239,6 +261,8 @@ class BaseCache:
         :param ttl: int the expiration time of the keys in seconds
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -271,6 +295,8 @@ class BaseCache:
 
         :param key: Key to be deleted
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: int number of deleted keys
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -293,6 +319,8 @@ class BaseCache:
 
         :param key: str key to check
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: True if key exists otherwise False
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -316,6 +344,8 @@ class BaseCache:
         :param key: str key to expire
         :param ttl: int number of seconds for expiration. If 0, ttl is disabled
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: True if set, False if key is not found
         """
         start = time.time()
@@ -337,6 +367,8 @@ class BaseCache:
         clear those ones instead.
 
         :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -357,6 +389,8 @@ class BaseCache:
         Send the raw command to the underlying client.
 
         :param command: str with the command.
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
         :returns: whatever the underlying client returns
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
