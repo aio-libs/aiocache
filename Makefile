@@ -1,3 +1,9 @@
+dockerup:
+	docker-compose -f docker-compose.yml up -d
+
+dockerdown:
+	docker-compose -f docker-compose.yml stop
+
 syntax:
 	flake8
 
@@ -7,27 +13,23 @@ pylint:
 ut:
 	pytest -sv tests/ut
 
-acceptance:
-	docker-compose -f docker-compose.yml up -d
+_acceptance:
 	pytest -sv tests/acceptance
-	docker-compose -f docker-compose.yml stop
 
-test: syntax
-	docker-compose -f docker-compose.yml up -d
-	pytest -sv tests/ut
-	pytest -sv tests/acceptance
-	bash examples/run_all.sh
-	docker-compose -f docker-compose.yml stop
+acceptance: dockerup _acceptance dockerdown
 
 cov:
-	docker-compose -f docker-compose.yml up -d
 	pytest --cov-report term-missing --cov=aiocache -sv tests/ut
-	docker-compose -f docker-compose.yml stop
 
 doc:
 	make -C docs/ html
 
-functional:
-	docker-compose -f docker-compose.yml up -d
+_functional:
 	bash examples/run_all.sh
-	docker-compose -f docker-compose.yml stop
+
+functional: dockerup _functional dockerdown
+
+test: syntax ut dockerup _acceptance _functional dockerdown
+
+changelog:
+	gitchangelog > CHANGELOG.rst
