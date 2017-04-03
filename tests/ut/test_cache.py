@@ -53,16 +53,39 @@ class TestAPI:
             assert await dummy() == []
 
     @pytest.mark.asyncio
-    async def test_timeout(self):
+    async def test_timeout_self(self):
         self = MagicMock()
         self.timeout = 0.002
 
         @API.timeout
-        async def dummy(self, *args, **kwargs):
+        async def dummy(self):
             await asyncio.sleep(0.005)
 
         with pytest.raises(asyncio.TimeoutError):
             await dummy(self)
+
+    @pytest.mark.asyncio
+    async def test_timeout_kwarg(self):
+        self = MagicMock()
+
+        @API.timeout
+        async def dummy(self):
+            await asyncio.sleep(0.005)
+
+        with pytest.raises(asyncio.TimeoutError):
+            await dummy(self, timeout=0.002)
+
+    @pytest.mark.asyncio
+    async def test_timeout_self_kwarg(self):
+        self = MagicMock()
+        self.timeout = 5
+
+        @API.timeout
+        async def dummy(self):
+            await asyncio.sleep(0.005)
+
+        with pytest.raises(asyncio.TimeoutError):
+            await dummy(self, timeout=0.003)
 
     @pytest.mark.asyncio
     async def test_plugins(self):

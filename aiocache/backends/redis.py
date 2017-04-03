@@ -29,7 +29,8 @@ class RedisBackend:
         self.endpoint = endpoint or \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
         self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
-        self.db = db or aiocache.settings.DEFAULT_CACHE_KWARGS.get("db", self.DEFAULT_DB)
+        self.db = db if db is not None else \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("db")
         self.password = password or \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("password", self.DEFAULT_PASSWORD)
 
