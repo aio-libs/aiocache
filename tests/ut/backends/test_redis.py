@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 
 from asynctest import CoroutineMock, MagicMock, patch
 
@@ -42,14 +43,19 @@ class FakePool:
     def __exit__(self, *args, **kwargs):
         pass
 
+    async def acquire(self):
+        return self.client
+
     def __call__(self):
         return self
 
 
 @pytest.fixture
 def redis(event_loop):
+    RedisBackend._watched_keys.clear()
     redis = RedisBackend()
     pool = FakePool()
+    redis.create_pool = CoroutineMock(side_effect=pool)
     redis._connect = pool
     yield redis, pool
 
@@ -125,6 +131,13 @@ class TestRedisBackend:
         pool.client.get.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_get_watch(self, redis):
+        cache, pool = redis
+        await cache._get(pytest.KEY, watch=True)
+        pool.client.watch.assert_called_with(pytest.KEY)
+        pool.client.get.assert_called_with(pytest.KEY)
+
+    @pytest.mark.asyncio
     async def test_set(self, redis):
         cache, pool = redis
         await cache._set(pytest.KEY, "value")
@@ -132,6 +145,17 @@ class TestRedisBackend:
 
         await cache._set(pytest.KEY, "value", ttl=1)
         pool.client.set.assert_called_with(pytest.KEY, "value", expire=1)
+
+    @pytest.mark.asyncio
+    async def test_set_optimistic_lock(self, redis):
+        cache, pool = redis
+        await cache._set(pytest.KEY, "value", optimistic_lock=True)
+
+        assert pool.client.multi_exec.call_count == 1
+        pool.transaction.set.assert_called_with(pytest.KEY, "value", expire=None)
+        assert pool.transaction.execute.call_count == 1
+
+        assert pytest.KEY not in cache._watched_keys
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):
@@ -208,6 +232,19 @@ class TestRedisBackend:
         cache, pool = redis
         await cache._clear()
         assert pool.client.flushdb.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_watch(self, redis):
+        cache, pool = redis
+        await cache._watch(pytest.KEY)
+        pool.client.watch.assert_called_with(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_watch_tracks_connection(self, redis):
+        cache, pool = redis
+        cache._connect = CoroutineMock(side_effect=[FakePool(), FakePool()])
+        await asyncio.gather(cache._watch(pytest.KEY), cache._watch(pytest.KEY))
+        assert len(cache._watched_keys[pytest.KEY]) == 2
 
     @pytest.mark.asyncio
     async def test_raw(self, redis):

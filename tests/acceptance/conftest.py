@@ -36,6 +36,7 @@ def reset_redis_pools(event_loop):
 @pytest.fixture
 def redis_cache(event_loop):
     cache = RedisCache(namespace="test", loop=event_loop)
+    cache._watched_keys.clear()
     yield cache
 
     event_loop.run_until_complete(cache.delete(pytest.KEY))
@@ -49,6 +50,7 @@ def redis_cache(event_loop):
 @pytest.fixture
 def memory_cache(event_loop):
     cache = SimpleMemoryCache(namespace="test")
+    cache._watched_keys.clear()
     yield cache
 
     event_loop.run_until_complete(cache.delete(pytest.KEY))

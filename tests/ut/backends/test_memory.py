@@ -4,12 +4,14 @@ import asyncio
 from unittest.mock import MagicMock
 
 from aiocache.backends import SimpleMemoryBackend
+from aiocache.exceptions import WatchError
 
 
 @pytest.fixture
 def memory(event_loop, mocker):
-    SimpleMemoryBackend._handlers = {}
-    SimpleMemoryBackend._cache = {}
+    SimpleMemoryBackend._handlers.clear()
+    SimpleMemoryBackend._cache.clear()
+    SimpleMemoryBackend._watched_keys.clear()
     mocker.spy(SimpleMemoryBackend, "_cache")
     return SimpleMemoryBackend()
 
@@ -20,6 +22,14 @@ class TestSimpleMemoryBackend:
     async def test_get(self, memory):
         await memory._get(pytest.KEY)
         SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_get_watch(self, memory):
+        SimpleMemoryBackend._cache.get.return_value = None
+        await memory._get(pytest.KEY, watch=True)
+        await memory._get(pytest.KEY_1, watch=True)
+        assert SimpleMemoryBackend._watched_keys[pytest.KEY] == \
+            SimpleMemoryBackend._watched_keys[pytest.KEY_1]
 
     @pytest.mark.asyncio
     async def test_set(self, memory):
@@ -39,6 +49,14 @@ class TestSimpleMemoryBackend:
         await memory._set(pytest.KEY, "value", ttl=100)
         assert pytest.KEY in memory._handlers
         assert isinstance(memory._handlers[pytest.KEY], asyncio.Handle)
+
+    @pytest.mark.asyncio
+    async def test_set_optimistic_lock(self, memory):
+        SimpleMemoryBackend._cache.get.return_value = None
+        await memory._get(pytest.KEY, watch=True)
+        await memory._set(pytest.KEY, "value", optimistic_lock=True)
+
+        assert pytest.KEY not in memory._watched_keys
 
     @pytest.mark.asyncio
     async def test_multi_get(self, memory):
@@ -124,6 +142,18 @@ class TestSimpleMemoryBackend:
         await memory._clear()
         SimpleMemoryBackend._handlers = {}
         SimpleMemoryBackend._cache = {}
+
+    @pytest.mark.asyncio
+    async def test_watch(self, memory):
+        SimpleMemoryBackend._cache.get.return_value = None
+        await memory._watch(pytest.KEY)
+        await memory._watch(pytest.KEY_1)
+        assert len(memory._watched_keys) == 2
+
+    @pytest.mark.asyncio
+    async def test_watch_cant_pickle(self, memory):
+        with pytest.raises(WatchError):
+            await memory._watch(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_raw(self, memory):

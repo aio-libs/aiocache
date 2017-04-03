@@ -1,0 +1,2 @@
+class WatchError(Exception):
+    pass

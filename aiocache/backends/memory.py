@@ -1,4 +1,7 @@
 import asyncio
+import pickle
+
+from aiocache.exceptions import WatchError
 
 
 class SimpleMemoryBackend:
@@ -6,19 +9,22 @@ class SimpleMemoryBackend:
     Wrapper around dict operations to use it as a cache backend
     """
 
+    _watched_keys = {}
     _cache = {}
     _handlers = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def _get(self, key):
+    async def _get(self, key, watch=False):
         """
         Get a value from the cache
 
         :param key: str
         :returns: obj in key if found else None
         """
+        if watch:
+            await self._watch(key)
         return SimpleMemoryBackend._cache.get(key)
 
     async def _multi_get(self, keys):
@@ -30,7 +36,7 @@ class SimpleMemoryBackend:
         """
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
-    async def _set(self, key, value, ttl=None):
+    async def _set(self, key, value, ttl=None, optimistic_lock=False):
         """
         Stores the value in the given key.
 
@@ -39,6 +45,10 @@ class SimpleMemoryBackend:
         :param ttl: int
         :returns: True
         """
+        if optimistic_lock is True and key in SimpleMemoryBackend._watched_keys:
+            if self._build_unique_hash(await self._get(key)) != \
+                    SimpleMemoryBackend._watched_keys.pop(key):
+                raise WatchError("Key {} was changed before current transaction".format(key))
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()
@@ -128,6 +138,21 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._handlers = {}
         return True
 
+    async def _watch(self, key):
+        """
+        Start watching a key
+
+        :param key: str
+        :returns: True
+        """
+        try:
+            h = self._build_unique_hash(SimpleMemoryBackend._cache.get(key))
+        except pickle.PicklingError:
+            raise WatchError(
+                "Object stored in %s can't be serialized by pickle. Watch failed.", key)
+        SimpleMemoryBackend._watched_keys[key] = h
+        return True
+
     async def _raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying dict structure. It's under
@@ -145,3 +170,6 @@ class SimpleMemoryBackend:
             return 1
 
         return 0
+
+    def _build_unique_hash(self, value):
+        return hash(pickle.dumps(value))
