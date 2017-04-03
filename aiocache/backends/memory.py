@@ -12,7 +12,7 @@ class SimpleMemoryBackend:
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def _get(self, key):
+    async def _get(self, key, watch=False):
         """
         Get a value from the cache
 
@@ -30,7 +30,7 @@ class SimpleMemoryBackend:
         """
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
-    async def _set(self, key, value, ttl=None):
+    async def _set(self, key, value, ttl=None, optimistic_lock=False):
         """
         Stores the value in the given key.
 
@@ -126,6 +126,15 @@ class SimpleMemoryBackend:
         else:
             SimpleMemoryBackend._cache = {}
             SimpleMemoryBackend._handlers = {}
+        return True
+
+    async def _watch(self, key):
+        """
+        Start watching a key
+
+        :param key: str
+        :returns: True
+        """
         return True
 
     async def _raw(self, command, *args, **kwargs):

@@ -1,13 +1,17 @@
 import asyncio
 import itertools
 import aioredis
-
 import aiocache
+
+from collections import defaultdict
+
+from aiocache.exceptions import WatchError
 
 
 class RedisBackend:
 
     pools = {}
+    watched_keys = defaultdict(set)
     DEFAULT_ENDPOINT = "127.0.0.1"
     DEFAULT_PORT = 6379
     DEFAULT_DB = 0
@@ -34,13 +38,16 @@ class RedisBackend:
         self.password = password or \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("password", self.DEFAULT_PASSWORD)
 
-    async def _get(self, key):
+    async def _get(self, key, watch=False):
         """
         Get a value from the cache
 
         :param key: str
         :returns: obj in key if found else None
         """
+
+        if watch:
+            await self._watch(key)
 
         with await self._connect() as redis:
             return await redis.get(key)
@@ -55,7 +62,7 @@ class RedisBackend:
         with await self._connect() as redis:
             return await redis.mget(*keys)
 
-    async def _set(self, key, value, ttl=None):
+    async def _set(self, key, value, ttl=None, optimistic_lock=False):
         """
         Stores the value in the given key.
 
@@ -64,8 +71,23 @@ class RedisBackend:
         :param ttl: int
         :returns: True
         """
+        if optimistic_lock is True:
+            return await self._set_optimistic_lock(key, value, ttl)
+
         with await self._connect() as redis:
             return await redis.set(key, value, expire=ttl)
+
+    async def _set_optimistic_lock(self, key, value, ttl=None):
+        if key in RedisBackend.watched_keys:
+            redis = RedisBackend.watched_keys[key].pop()
+        else:
+            redis = await self._get_connection()
+        transaction = redis.multi_exec()
+        transaction.set(key, value, expire=ttl)
+        try:
+            return await transaction.execute()
+        except aioredis.errors.MultiExecError:
+            raise WatchError("Key {} was changed before current transaction".format(key))
 
     async def _multi_set(self, pairs, ttl=None):
         """
@@ -158,6 +180,17 @@ class RedisBackend:
                 await redis.flushdb()
         return True
 
+    async def _watch(self, key):
+        """
+        Start watching a key
+
+        :param key: str
+        :returns: True
+        """
+        with await self._connect() as redis:
+            RedisBackend.watched_keys[key].add(redis)
+            return await redis.watch(key)
+
     async def _raw(self, command, *args, **kwargs):
         """
         Executes a raw command using the underlying client of aioredis. It's under
@@ -168,22 +201,33 @@ class RedisBackend:
         with await self._connect() as redis:
             return await getattr(redis, command)(*args, **kwargs)
 
+    async def _connect(self):
+        pool_key, pool = self.get_pool()
+
+        if pool is None:
+            pool = await self.create_pool()
+            RedisBackend.pools[pool_key] = pool
+        return await pool
+
     def get_pool(self):
         pool_key = "{}{}{}{}{}{}".format(
             self.endpoint, self.port, getattr(self, "encoding", None),
             self.db, self.password, id(self._loop))
         return pool_key, RedisBackend.pools.get(pool_key)
 
-    async def _connect(self):
-        pool_key, pool = self.get_pool()
+    async def create_pool(self):
+        pool = await aioredis.create_pool(
+            (self.endpoint, self.port),
+            encoding=getattr(self, "encoding", None),
+            db=self.db,
+            password=self.password,
+            loop=self._loop, maxsize=1)
+        return pool
 
-        if pool is None:
-            pool = await aioredis.create_pool(
-                (self.endpoint, self.port),
-                encoding=getattr(self, "encoding", None),
-                db=self.db,
-                password=self.password,
-                loop=self._loop)
-            RedisBackend.pools[pool_key] = pool
-
-        return await pool
+    async def _get_connection(self):
+        return await aioredis.create_redis(
+            (self.endpoint, self.port),
+            encoding=getattr(self, "encoding", None),
+            db=self.db,
+            password=self.password,
+            loop=self._loop)
