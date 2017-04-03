@@ -8,7 +8,6 @@ https://github.com/argaen/aiocache
 """
 
 import asyncio
-import aiocache
 
 from sanic import Sanic
 from sanic.response import json
@@ -17,14 +16,6 @@ from aiocache import cached
 from aiocache.serializers import JsonSerializer
 
 app = Sanic(__name__)
-
-
-def init_cache(sanic, loop):
-    aiocache.settings.set_defaults(
-        class_="aiocache.RedisCache",
-        # class_="aiocache.SimpleMemoryCache",
-        loop=loop
-    )
 
 
 @cached(key="my_custom_key", serializer=JsonSerializer())
@@ -40,4 +31,4 @@ async def test(request):
     return json(await expensive_call())
 
 
-app.run(host="0.0.0.0", port=8000, before_start=init_cache)
+app.run(host="0.0.0.0", port=8000)
