@@ -12,7 +12,9 @@ def set_settings():
         'endpoint': "endpoint",
         'port': "port",
         'password': "pass",
-        'db': 2
+        'db': 2,
+        'pool_min_size': 2,
+        'pool_max_size': 20
     }
     settings.DEFAULT_CACHE = RedisCache
     yield
@@ -62,6 +64,8 @@ class TestRedisBackend:
         assert redis_backend.port == 6379
         assert redis_backend.db == 0
         assert redis_backend.password is None
+        assert redis_backend.pool_min_size == 1
+        assert redis_backend.pool_max_size == 10
 
     def test_setup_override(self):
         redis_backend = RedisBackend(
@@ -85,12 +89,16 @@ class TestRedisBackend:
         redis_backend = RedisBackend(
             endpoint="a",
             port=123,
-            db=1)
+            db=1,
+            pool_min_size=5,
+            pool_max_size=6)
 
         assert redis_backend.endpoint == "a"
         assert redis_backend.port == 123
         assert redis_backend.db == 1
         assert redis_backend.password == "pass"
+        assert redis_backend.pool_min_size == 5
+        assert redis_backend.pool_max_size == 6
 
     def test_setup_default_ignored_wrong_class(self, set_settings):
         settings.DEFAULT_CACHE = str
