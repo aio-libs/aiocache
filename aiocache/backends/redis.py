@@ -12,20 +12,27 @@ class RedisBackend:
     DEFAULT_PORT = 6379
     DEFAULT_DB = 0
     DEFAULT_PASSWORD = None
+    DEFAULT_POOL_MIN_SIZE = 1
+    DEFAULT_POOL_MAX_SIZE = 10
 
     def __init__(
-            self, endpoint=None, port=None, db=None, password=None, loop=None, **kwargs):
+            self, endpoint=None, port=None, db=None,
+            password=None, loop=None, pool_min_size=None, pool_max_size=None, **kwargs):
         super().__init__(**kwargs)
         if issubclass(aiocache.settings.DEFAULT_CACHE, self.__class__):
-            self._from_defaults(endpoint, port, db, password)
+            self._from_defaults(endpoint, port, db, password, pool_min_size, pool_max_size)
         else:
             self.endpoint = endpoint or self.DEFAULT_ENDPOINT
             self.port = port or self.DEFAULT_PORT
-            self.db = db or self.DEFAULT_DB
+            self.db = db if db is not None else self.DEFAULT_DB
+            self.pool_min_size = pool_min_size if pool_min_size is not None else \
+                self.DEFAULT_POOL_MIN_SIZE
+            self.pool_max_size = pool_max_size if pool_max_size is not None else \
+                self.DEFAULT_POOL_MAX_SIZE
             self.password = password or self.DEFAULT_PASSWORD
         self._loop = loop or asyncio.get_event_loop()
 
-    def _from_defaults(self, endpoint, port, db, password):
+    def _from_defaults(self, endpoint, port, db, password, pool_min_size, pool_max_size):
         self.endpoint = endpoint or \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
         self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
@@ -33,6 +40,10 @@ class RedisBackend:
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("db")
         self.password = password or \
             aiocache.settings.DEFAULT_CACHE_KWARGS.get("password", self.DEFAULT_PASSWORD)
+        self.pool_min_size = pool_min_size or \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("pool_min_size", self.DEFAULT_POOL_MIN_SIZE)
+        self.pool_max_size = pool_max_size or \
+            aiocache.settings.DEFAULT_CACHE_KWARGS.get("pool_max_size", self.DEFAULT_POOL_MAX_SIZE)
 
     async def _get(self, key):
         """
@@ -180,10 +191,12 @@ class RedisBackend:
         if pool is None:
             pool = await aioredis.create_pool(
                 (self.endpoint, self.port),
-                encoding=getattr(self, "encoding", None),
                 db=self.db,
                 password=self.password,
-                loop=self._loop)
+                loop=self._loop,
+                encoding=getattr(self, "encoding", None),
+                minsize=self.pool_min_size,
+                maxsize=self.pool_max_size)
             RedisBackend.pools[pool_key] = pool
 
         return await pool
