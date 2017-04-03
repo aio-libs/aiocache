@@ -46,6 +46,8 @@ Each cache instance has three main components:
 Configuring project default settings
 ------------------------------------
 
+  DISCLAIMER: The following utilities are using a globals-like anti pattern. If your project has an approach for dependency injection or using singletons use them please.
+
 Sometimes you just want to use the same settings all over your project. To do so, some helpers are provided like ``set_defaults``, ``set_default_serializer``, ``set_default_plugins``:
 
 .. automodule:: aiocache.settings
