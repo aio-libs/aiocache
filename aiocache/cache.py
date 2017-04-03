@@ -6,6 +6,7 @@ import asyncio
 import aiocache
 
 from aiocache.log import logger
+from aiocache.utils import get_cache_value_with_fallbacks
 from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBackend
 
 
@@ -88,12 +89,15 @@ class BaseCache:
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     """
+    DEFAULT_TIMEOUT = 5
 
     def __init__(self, serializer=None, plugins=None, namespace=None, timeout=None):
-        self.timeout = timeout if timeout is not None else \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("timeout")
-        self.namespace = namespace if namespace is not None else \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("namespace")
+        self.timeout = get_cache_value_with_fallbacks(
+            timeout, from_config="timeout",
+            from_fallback=self.DEFAULT_TIMEOUT, cls=self.__class__)
+        self.namespace = get_cache_value_with_fallbacks(
+            namespace, from_config="namespace",
+            from_fallback=namespace, cls=self.__class__)
         self.encoding = "utf-8"
 
         self._serializer = None

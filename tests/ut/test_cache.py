@@ -323,11 +323,18 @@ class TestCache:
         ["", pytest.KEY],
         ["my_ns", "my_ns" + pytest.KEY],)
     )
-    def test_build_key(self, set_test_namespace, mock_cache, namespace, expected):
-        assert mock_cache._build_key(pytest.KEY, namespace=namespace) == expected
+    def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
+        assert base_cache._build_key(pytest.KEY, namespace=namespace) == expected
 
 
 class TestRedisCache:
+
+    @pytest.fixture(autouse=True)
+    def redis_defaults(self):
+        aiocache.settings.set_defaults(class_="aiocache.RedisCache")
+        yield
+        aiocache.settings.set_defaults(class_="aiocache.SimpleMemoryCache")
+
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test:" + pytest.KEY],
         ["", pytest.KEY],
@@ -347,6 +354,12 @@ class TestSimpleMemoryCache:
 
 
 class TestMemcachedCache:
+
+    @pytest.fixture(autouse=True)
+    def memcached_defaults(self):
+        aiocache.settings.set_defaults(class_="aiocache.MemcachedCache")
+        yield
+        aiocache.settings.set_defaults(class_="aiocache.MemcachedCache")
 
     def test_inheritance(self):
         assert isinstance(MemcachedCache(), BaseCache)

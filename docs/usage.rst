@@ -1,5 +1,12 @@
-Usage
-=====
+Installation and Usage
+======================
+
+
+Installing
+----------
+
+You just need to do a ``pip install aiocache``.
+
 
 Caches
 ------
@@ -28,19 +35,6 @@ Here we are using the :ref:`simplememorycache` but you can use any other listed 
   - ``delete``: Deletes key and returns number of deleted items.
   - ``clear``: Clears the items stored.
   - ``raw``: Executes the specified command using the underlying client.
-
-
-Cache components
-----------------
-
-Each cache instance has three main components:
-  - **backend**: Is the client that connects the cache with the client that talks with the desired backend (Redis, Memcached, etc...).
-  - **serializer**: It transforms the value when saving and retrieving. This allows to save complex Python objects, change format of the data stored, etc. :ref:`defaultserializer` is used by default if not specified during instantiation time. Check :ref:`serializers` for a list of available serializers. If the functionality you need is not covered, you can write your custom serializer.
-  - **plugin**: Implements extra behavior before and after executing a command. Check :ref:`plugins` for a list of available plugins. You can create your custom one by inheriting from :ref:`baseplugin` and override the need ``pre`` or ``post`` functions (for example, ``set`` command has the ``pre_set`` and ``post_set`` hooks).
-
-
-.. image:: images/architecture.png
-  :align: center
 
 
 Configuring project default settings

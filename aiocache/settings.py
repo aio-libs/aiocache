@@ -45,7 +45,7 @@ def set_default_serializer(class_=DefaultSerializer, **kwargs):
     json objects, you may want to call it as::
 
         aiocache.settings.set_default_serializer(
-            class_="aiocache.serializers.DefaultSerializer")
+            class_="aiocache.serializers.JsonSerializer")
 
     Once the call is done, all decorators and instances where serializer params are not specified,
     the default ones will be picked. The class_ param accepts both str and class types.
@@ -81,7 +81,7 @@ def set_default_plugins(config):
         })
 
     Once the call is done, all decorators and instances where plugin params are not specified,
-    the default ones will be picked. The class_ param accepts both str and class types.
+    the default ones will be picked. The class param accepts both str and class types.
 
     If you define your own plugin, you can also set is a default and pass the desired extra
     params through this call.

@@ -1,7 +1,7 @@
 import asyncio
 import aiomcache
 
-import aiocache
+from aiocache.utils import get_cache_value_with_fallbacks
 
 
 class MemcachedBackend:
@@ -11,19 +11,15 @@ class MemcachedBackend:
 
     def __init__(self, endpoint=None, port=None, loop=None, **kwargs):
         super().__init__(**kwargs)
-        if issubclass(aiocache.settings.DEFAULT_CACHE, self.__class__):
-            self._from_defaults(endpoint, port)
-        else:
-            self.endpoint = endpoint or self.DEFAULT_ENDPOINT
-            self.port = port or self.DEFAULT_PORT
+        self.endpoint = get_cache_value_with_fallbacks(
+            endpoint, from_config="endpoint",
+            from_fallback=self.DEFAULT_ENDPOINT, cls=self.__class__)
+        self.port = get_cache_value_with_fallbacks(
+            port, from_config="port",
+            from_fallback=self.DEFAULT_PORT, cls=self.__class__)
         self._loop = loop or asyncio.get_event_loop()
         self.client = aiomcache.Client(self.endpoint, self.port, loop=self._loop)
         self.encoding = "utf-8"
-
-    def _from_defaults(self, endpoint, port):
-        self.endpoint = endpoint or \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
-        self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
 
     async def _get(self, key):
         """

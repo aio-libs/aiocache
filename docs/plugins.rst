@@ -10,7 +10,7 @@ Plugins can be used to change the behavior of the cache. By default all caches a
     cache = SimpleMemoryCache(plugins=[HitMissRatioPlugin()])
     cache.plugins += [TimingPlugin()]
 
-You can define your custom plugin by inheriting from `BasePlugin`_ and overriding the needed methods. All commands have a ``pre`` and a ``post`` hooks.
+You can define your custom plugin by inheriting from `BasePlugin`_ and overriding the needed methods (the overrides NEED to be async). All commands have a ``pre`` and a ``post`` hooks.
 
 An complete example of using the plugins:
 

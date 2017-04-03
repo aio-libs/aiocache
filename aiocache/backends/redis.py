@@ -2,7 +2,7 @@ import asyncio
 import itertools
 import aioredis
 
-import aiocache
+from aiocache.utils import get_cache_value_with_fallbacks
 
 
 class RedisBackend:
@@ -19,31 +19,25 @@ class RedisBackend:
             self, endpoint=None, port=None, db=None,
             password=None, loop=None, pool_min_size=None, pool_max_size=None, **kwargs):
         super().__init__(**kwargs)
-        if issubclass(aiocache.settings.DEFAULT_CACHE, self.__class__):
-            self._from_defaults(endpoint, port, db, password, pool_min_size, pool_max_size)
-        else:
-            self.endpoint = endpoint or self.DEFAULT_ENDPOINT
-            self.port = port or self.DEFAULT_PORT
-            self.db = db if db is not None else self.DEFAULT_DB
-            self.pool_min_size = pool_min_size if pool_min_size is not None else \
-                self.DEFAULT_POOL_MIN_SIZE
-            self.pool_max_size = pool_max_size if pool_max_size is not None else \
-                self.DEFAULT_POOL_MAX_SIZE
-            self.password = password or self.DEFAULT_PASSWORD
+        self.endpoint = get_cache_value_with_fallbacks(
+            endpoint, from_config="endpoint",
+            from_fallback=self.DEFAULT_ENDPOINT, cls=self.__class__)
+        self.port = get_cache_value_with_fallbacks(
+            port, from_config="port",
+            from_fallback=self.DEFAULT_PORT, cls=self.__class__)
+        self.db = get_cache_value_with_fallbacks(
+            db, from_config="db",
+            from_fallback=self.DEFAULT_DB, cls=self.__class__)
+        self.password = get_cache_value_with_fallbacks(
+            password, from_config="password",
+            from_fallback=self.DEFAULT_PASSWORD, cls=self.__class__)
+        self.pool_min_size = get_cache_value_with_fallbacks(
+            pool_min_size, from_config="pool_min_size",
+            from_fallback=self.DEFAULT_POOL_MIN_SIZE, cls=self.__class__)
+        self.pool_max_size = get_cache_value_with_fallbacks(
+            pool_max_size, from_config="pool_max_size",
+            from_fallback=self.DEFAULT_POOL_MAX_SIZE, cls=self.__class__)
         self._loop = loop or asyncio.get_event_loop()
-
-    def _from_defaults(self, endpoint, port, db, password, pool_min_size, pool_max_size):
-        self.endpoint = endpoint or \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("endpoint", self.DEFAULT_ENDPOINT)
-        self.port = port or aiocache.settings.DEFAULT_CACHE_KWARGS.get("port", self.DEFAULT_PORT)
-        self.db = db if db is not None else \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("db")
-        self.password = password or \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("password", self.DEFAULT_PASSWORD)
-        self.pool_min_size = pool_min_size or \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("pool_min_size", self.DEFAULT_POOL_MIN_SIZE)
-        self.pool_max_size = pool_max_size or \
-            aiocache.settings.DEFAULT_CACHE_KWARGS.get("pool_max_size", self.DEFAULT_POOL_MAX_SIZE)
 
     async def _get(self, key):
         """
