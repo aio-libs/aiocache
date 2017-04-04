@@ -453,6 +453,8 @@ class RedisCache(RedisBackend, BaseCache):
     :param port: int with the port to connect to
     :param db: int indicating database to use
     :param password: str indicating password to use
+    :param pool_min_size: int minimum pool size for the redis connections pool
+    :param pool_max_size: int maximum pool size for the redis connections pool
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
