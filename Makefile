@@ -31,4 +31,7 @@ functional: dockerup _functional dockerdown
 
 test: syntax ut dockerup _acceptance _functional dockerdown
 
-release:
+_release:
+	scripts/make_release
+
+release: test _release

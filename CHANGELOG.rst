@@ -12,13 +12,9 @@ Unreleased
   <https://github.com/argaen/issues/#166>`_ [Manuel Miranda]
 - Added disclaimer regarding the defaults module. [argaen]
 - Fixed framework examples. [argaen]
-- Update pytest-mock from 1.5.0 to 1.6.0 `#160
-  <https://github.com/argaen/issues/#160>`_ [pyup.io bot]
 - Removed async-timeout as a dependency. [argaen]
-- Updated README. [argaen]
 - Added noself arg to cached decorator `#137
   <https://github.com/argaen/issues/#137>`_ [Manuel Miranda]
-- 0.3.2 version bump. [argaen]
 - Cache instance in decorators is built in every call `#135
   <https://github.com/argaen/issues/#135>`_ [Manuel Miranda]
 - Added framework examples. [argaen]
@@ -43,10 +39,8 @@ Unreleased
 0.3.0 (2017-01-12)
 ------------------
 - Changed setup.py description. [argaen]
-- 0.3.0 version bump. [argaen]
 - Fixed asynctest issues for timeout tests `#109
   <https://github.com/argaen/issues/#109>`_ [Manuel Miranda]
-- 0.2.3 version bump. [argaen]
 - Created new API class `#108 <https://github.com/argaen/issues/#108>`_
   [Manuel Miranda]
 - Enhancement #94/increase unit test coverage `#106
@@ -56,34 +50,27 @@ Unreleased
   <https://github.com/argaen/issues/#102>`_ [Manuel Miranda]
 - Enhancement #94/increase unit test coverage `#101
   <https://github.com/argaen/issues/#101>`_ [Manuel Miranda]
-- Update README. [argaen]
 - Set multicached keys only when non existing `#98
   <https://github.com/argaen/issues/#98>`_ [Manuel Miranda]
 - Added expire command `#97 <https://github.com/argaen/issues/#97>`_
   [Manuel Miranda]
-- 0.2.2 version bump. [argaen]
 - All backend kwargs pull default attributes. [argaen]
 - Removed integrtion from coverage. [argaen]
 - Ttl tasks are cancelled for memory backend if key is deleted `#92
   <https://github.com/argaen/issues/#92>`_ [Manuel Miranda]
-- Added extra example in README. [argaen]
 - Merge branch 'master' of https://github.com/argaen/aiocache. [argaen]
 - Ignore caching if AIOCACHE_DISABLED is set to 1 `#90
   <https://github.com/argaen/issues/#90>`_ [Manuel Miranda]
-- 0.2.1 version bump. [argaen]
 - Merge branch 'master' of github.com:argaen/aiocache. [argaen]
 - Added some docs to plugins. [argaen]
 
 
 0.2.0 (2016-12-14)
 ------------------
-- 0.2.0 version bump. [argaen]
 - Added python version badge. [argaen]
 - LRU plugin example. [Manuel Miranda]
 - Feature #57/policy to generic hooks `#83
   <https://github.com/argaen/issues/#83>`_ [Manuel Miranda]
-- Update pytest-mock from 1.4.0 to 1.5.0 `#81
-  <https://github.com/argaen/issues/#81>`_ [pyup.io bot]
 - Added new test. [argaen]
 - Reuse redis pools `#77 <https://github.com/argaen/issues/#77>`_
   [Manuel Miranda]
@@ -110,10 +97,8 @@ Unreleased
 - Optional namespace in commands. [argaen]
 - Set_defaults only works with strings now. [argaen]
 - Fix documentation. [argaen]
-- 0.1.13 version bump. [argaen]
 - Added timeout option for the cache instances. [argaen]
 - Catch all exceptions in decorators. [argaen]
-- 0.1.12 version bump. [argaen]
 - Enhancement #34/add logs `#53 <https://github.com/argaen/issues/#53>`_
   [Manuel Miranda]
 - Minor style changes. [argaen]
@@ -127,9 +112,6 @@ Unreleased
 - Fixed setup.py. [argaen]
 - Fixed default namespace. [argaen]
 - Renamed args in decorators. [argaen]
-- Update pytest-mock from 1.3.0 to 1.4.0 `#49
-  <https://github.com/argaen/issues/#49>`_ [pyup.io bot]
-- 0.1.7 version bump. [argaen]
 - Removed pytest.ini for running examples. [argaen]
 - Fixed incorrect documentation link. [argaen]
 - Improved how default configuration works. [argaen]
@@ -141,12 +123,9 @@ Unreleased
 - Cleaned up code. [argaen]
 - Removed unused arg. [argaen]
 - Added architecture image. [argaen]
-- 0.1.4 version bump. [argaen]
 - Examples as acceptance tests. [argaen]
 - Refactor to split cache and backend logic `#42
   <https://github.com/argaen/issues/#42>`_ [Manuel Miranda]
-- Update pytest-mock from 1.2 to 1.3.0 `#40
-  <https://github.com/argaen/issues/#40>`_ [pyup.io bot]
 - Fixed multi_cached behavior. `#38
   <https://github.com/argaen/issues/#38>`_ [Manuel Miranda]
 - Updated exmples and docs. [argaen]
@@ -157,7 +136,6 @@ Unreleased
   bot]
 - Support breaking change of aioredis with exists. [argaen]
 - Added missing references to raw. [argaen]
-- 0.1.1 version bump. [argaen]
 - Added raw functionality `#28 <https://github.com/argaen/issues/#28>`_
   [Manuel Miranda]
 - Added step to build examples. [argaen]
@@ -166,11 +144,9 @@ Unreleased
 
 0.1.0 (2016-10-24)
 ------------------
-- 0.1.0 version bump. [argaen]
 - Some code cleanup. [argaen]
 - Changed the way to deal with default_cache. [argaen]
 - Some code cleaning. [argaen]
-- Updated README. [argaen]
 - Updated documentation. [argaen]
 - Fixed RTD environment. [argaen]
 - Added key_attribute for decorators. [argaen]
@@ -189,7 +165,6 @@ Unreleased
 - Added add for all backends. [argaen]
 - Unified tests for different backends to ensure minimum interface.
   [argaen]
-- Updated README. [argaen]
 - Fixed examples. [argaen]
 - Changed serializer functions. [argaen]
 - Changed LICENSE. [argaen]
