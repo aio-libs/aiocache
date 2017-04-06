@@ -20,7 +20,8 @@ def increase_version(filename, key, old_version):
 
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../' + filename), 'r') as f:
         filedata = f.read()
-    filedata = filedata.replace("{}\"{}\"".format(key, old_version), "{}\"{}\"".format(key, new_version))
+    filedata = filedata.replace(
+        "{}\"{}\"".format(key, old_version), "{}\"{}\"".format(key, new_version))
 
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../' + filename), 'w') as f:
         f.write(filedata)
