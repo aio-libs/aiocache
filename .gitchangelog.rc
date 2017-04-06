@@ -58,11 +58,15 @@
 ## will be ignored and won't be reported in the changelog.
 ##
 ignore_regexps = [
-    r'@minor', r'!minor',
-    r'@cosmetic', r'!cosmetic',
-    r'@refactor', r'!refactor',
-    r'@wip', r'!wip',
-    r'Update \w+ from [0-9.]+ to [0-9]+',
+    r'!minor',
+    r'!cosmetic',
+    r'!refactor',
+    r'!docs',
+    r'!wip',
+    r'Bump version|bump version|version bump',
+    r'README',
+    r'Update [\w-]+ from [0-9.]+ to [0-9]+',
+    r'Pin [\w-]+ to latest version',
     r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[p|P]kg:',
     r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*[d|D]ev:',
     r'^(.{3,3}\s*:)?\s*[fF]irst commit.?\s*$',
@@ -132,7 +136,7 @@ section_regexps = [
 ## Additionally, you can `pipe` the provided filters, for instance:
 #body_process = Wrap(regexp=r'\n(?=\w+\s*:)') | Indent(chars="  ")
 #body_process = Wrap(regexp=r'\n(?=\w+\s*:)')
-#body_process = noop
+body_process = ReSub(r'.*', r'') | strip
 
 
 ## ``subject_process`` is a callable
