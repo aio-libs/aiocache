@@ -2,8 +2,11 @@ Changelog
 =========
 
 
-Unreleased
-----------
+0.3.3 (2017-04-06)
+------------------
+- Added CHANGELOG and release process `#172
+  <https://github.com/argaen/issues/#172>`_ [Manuel Miranda]
+- Updated RedisCache docs @minor. [argaen]
 - Added CHANGELOG and release process. [argaen]
 - Improvement in getting attrs with fallbacks. [argaen]
 - Added pool_min_size pool_max_size to redisbackend `#167
