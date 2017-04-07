@@ -7,15 +7,20 @@ from aiocache.cache import API
 
 
 class BasePlugin:
-    pass
+
+    @classmethod
+    def add_hook(cls, fn, hooks):
+        for hook in hooks:
+            setattr(cls, hook, fn)
+
+    async def do_nothing(self, *args, **kwargs):
+        pass
 
 
-async def do_nothing(self, client, *args, **kwargs):
-    pass
-
-for method in API.CMDS:
-    setattr(BasePlugin, "pre_{}".format(method.__name__), classmethod(do_nothing))
-    setattr(BasePlugin, "post_{}".format(method.__name__), classmethod(do_nothing))
+BasePlugin.add_hook(
+    BasePlugin.do_nothing, ["pre_{}".format(method.__name__) for method in API.CMDS])
+BasePlugin.add_hook(
+    BasePlugin.do_nothing, ["post_{}".format(method.__name__) for method in API.CMDS])
 
 
 class TimingPlugin(BasePlugin):
@@ -25,31 +30,31 @@ class TimingPlugin(BasePlugin):
     access the average time of the operation get, you can do ``cache.profiling['get_avg']``
     """
 
+    @classmethod
+    def save_time(cls, method):
 
-def save_time(method):
+        async def do_save_time(self, client, *args, took=0, **kwargs):
+            if not hasattr(client, "profiling"):
+                client.profiling = {}
 
-    async def do_save_time(self, client, *args, took=0, **kwargs):
-        if not hasattr(client, "profiling"):
-            client.profiling = {}
+            previous_total = client.profiling.get("{}_total".format(method), 0)
+            previous_avg = client.profiling.get("{}_avg".format(method), 0)
+            previous_max = client.profiling.get("{}_max".format(method), 0)
+            previous_min = client.profiling.get("{}_min".format(method))
 
-        previous_total = client.profiling.get("{}_total".format(method), 0)
-        previous_avg = client.profiling.get("{}_avg".format(method), 0)
-        previous_max = client.profiling.get("{}_max".format(method), 0)
-        previous_min = client.profiling.get("{}_min".format(method))
+            client.profiling["{}_total".format(method)] = previous_total + 1
+            client.profiling["{}_avg".format(method)] = \
+                previous_avg + (took - previous_avg) / (previous_total + 1)
+            client.profiling["{}_max".format(method)] = max(took, previous_max)
+            client.profiling["{}_min".format(method)] = \
+                min(took, previous_min) if previous_min else took
 
-        client.profiling["{}_total".format(method)] = previous_total + 1
-        client.profiling["{}_avg".format(method)] = \
-            previous_avg + (took - previous_avg) / (previous_total + 1)
-        client.profiling["{}_max".format(method)] = max(took, previous_max)
-        client.profiling["{}_min".format(method)] = \
-            min(took, previous_min) if previous_min else took
-
-    return do_save_time
+        return do_save_time
 
 
 for method in API.CMDS:
-    setattr(
-        TimingPlugin, "post_{}".format(method.__name__), classmethod(save_time(method.__name__)))
+    TimingPlugin.add_hook(
+        TimingPlugin.save_time(method.__name__), ["post_{}".format(method.__name__)])
 
 
 class HitMissRatioPlugin(BasePlugin):
