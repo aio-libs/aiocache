@@ -6,6 +6,7 @@ cd ..
 
 version=$((python scripts/increase_version.py) 2>&1)
 git tag -a "$version" -m "$version"
+git push origin "$version"
 gitchangelog > CHANGELOG.rst
 git add setup.py docs/conf.py CHANGELOG.rst
 git commit -m "Bump version $version"
