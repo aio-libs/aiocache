@@ -58,11 +58,11 @@
 ## will be ignored and won't be reported in the changelog.
 ##
 ignore_regexps = [
-    r'!minor',
-    r'!cosmetic',
-    r'!refactor',
-    r'!docs',
-    r'!wip',
+    r':minor',
+    r':cosmetic',
+    r':refactor',
+    r':docs',
+    r':wip',
     r'Bump version|bump version|version bump',
     r'README',
     r'Update [\w-]+ from [0-9.]+ to [0-9]+',

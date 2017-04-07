@@ -42,10 +42,10 @@ def get_cache_value_with_fallbacks(value, from_config, from_fallback, cls=None):
     :param from_fallback: fallback value to apply in case none of the previous applied.
     :param cls: class of the caller to match with DEFAULT_CACHE.
     """
-    v = from_fallback
+    new_value = from_fallback
     if value is not None:
-        v = value
+        new_value = value
     elif cls and issubclass(aiocache.settings.DEFAULT_CACHE, cls):
-        v = aiocache.settings.DEFAULT_CACHE_KWARGS.get(from_config, v)
+        new_value = aiocache.settings.DEFAULT_CACHE_KWARGS.get(from_config, new_value)
 
-    return v
+    return new_value

@@ -4,7 +4,6 @@ import asynctest
 import aiocache
 
 from aiocache.cache import RedisCache, BaseCache, MemcachedCache
-from aiocache.backends import RedisBackend, MemcachedBackend, SimpleMemoryBackend
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
 
@@ -19,13 +18,6 @@ def pytest_namespace():
 @pytest.fixture(autouse=True)
 def disable_logs(mocker):
     mocker.patch("aiocache.cache.logger")
-
-
-@pytest.fixture(autouse=True)
-def reset_instances():
-    RedisBackend.instances = {}
-    MemcachedBackend.instances = {}
-    SimpleMemoryBackend.instances = {}
 
 
 @pytest.fixture(autouse=True)

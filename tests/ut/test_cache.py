@@ -53,6 +53,20 @@ class TestAPI:
             assert await dummy() == []
 
     @pytest.mark.asyncio
+    async def test_timeout_no_timeout(self):
+        self = MagicMock()
+        self.timeout = 0
+
+        @API.timeout
+        async def dummy(self):
+            self()
+
+        with patch("asyncio.wait_for") as wait_for:
+            await dummy(self)
+            assert self.call_count == 1
+            assert wait_for.call_count == 0
+
+    @pytest.mark.asyncio
     async def test_timeout_self(self):
         self = MagicMock()
         self.timeout = 0.002

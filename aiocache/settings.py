@@ -95,7 +95,7 @@ def set_default_plugins(config):
             new_plugins[class_] = plugin
         else:
             logger.warning(
-                "%s must be a str or class subclassing aiocache.plugins.BasePlugin" % class_)
+                "%s must be a str or class subclassing aiocache.plugins.BasePlugin", class_)
 
     globals()['DEFAULT_PLUGINS'] = new_plugins
 
