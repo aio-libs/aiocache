@@ -1,37 +1,52 @@
 import pytest
-import inspect
 
 from unittest.mock import MagicMock
 
-from aiocache.plugins import BasePlugin, HitMissRatioPlugin, save_time, do_nothing
+from aiocache.plugins import BasePlugin, TimingPlugin, HitMissRatioPlugin
 from aiocache.cache import API, BaseCache
 
 
 class TestBasePlugin:
 
-    def test_interface_methods(self):
+    @pytest.mark.asyncio
+    async def test_interface_methods(self):
         for method in API.CMDS:
-            assert hasattr(BasePlugin, "pre_{}".format(method.__name__)) and \
-                inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method.__name__)))
-            assert hasattr(BasePlugin, "post_{}".format(method.__name__)) and \
-                inspect.iscoroutinefunction(getattr(BasePlugin, "pre_{}".format(method.__name__)))
+            assert await getattr(BasePlugin, "pre_{}".format(method.__name__))(MagicMock()) is None
+            assert await getattr(BasePlugin, "post_{}".format(method.__name__))(MagicMock()) is None
+
+    @pytest.mark.asyncio
+    async def test_do_nothing(self):
+        assert await BasePlugin().do_nothing() is None
 
 
-@pytest.mark.asyncio
-async def test_do_nothing():
-    assert await do_nothing(MagicMock(), MagicMock()) is None
+class TestTimingPlugin:
 
+    @pytest.mark.asyncio
+    async def test_save_time(mock_cache):
+        do_save_time = TimingPlugin().save_time('get')
+        await do_save_time('self', mock_cache, took=1)
+        await do_save_time('self', mock_cache, took=2)
 
-@pytest.mark.asyncio
-async def test_save_time(mock_cache):
-    do_save_time = save_time('get')
-    await do_save_time('self', mock_cache, took=1)
-    await do_save_time('self', mock_cache, took=2)
+        assert mock_cache.profiling["get_total"] == 2
+        assert mock_cache.profiling["get_max"] == 2
+        assert mock_cache.profiling["get_min"] == 1
+        assert mock_cache.profiling["get_avg"] == 1.5
 
-    assert mock_cache.profiling["get_total"] == 2
-    assert mock_cache.profiling["get_max"] == 2
-    assert mock_cache.profiling["get_min"] == 1
-    assert mock_cache.profiling["get_avg"] == 1.5
+    @pytest.mark.asyncio
+    async def test_save_time_post_set(mock_cache):
+        await TimingPlugin().post_set(mock_cache, took=1)
+        await TimingPlugin().post_set(mock_cache, took=2)
+
+        assert mock_cache.profiling["set_total"] == 2
+        assert mock_cache.profiling["set_max"] == 2
+        assert mock_cache.profiling["set_min"] == 1
+        assert mock_cache.profiling["set_avg"] == 1.5
+
+    @pytest.mark.asyncio
+    async def test_interface_methods(self):
+        for method in API.CMDS:
+            assert hasattr(TimingPlugin, "pre_{}".format(method.__name__))
+            assert hasattr(TimingPlugin, "post_{}".format(method.__name__))
 
 
 class TestHitMissRatioPlugin:

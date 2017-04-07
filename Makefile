@@ -35,3 +35,6 @@ _release:
 	scripts/make_release
 
 release: test _release
+
+changelog:
+	gitchangelog

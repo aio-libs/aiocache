@@ -1,18 +1,29 @@
 import asyncio
 import random
+import logging
 
-from aiocache import RedisCache
-from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
+from aiocache import SimpleMemoryCache
+from aiocache.plugins import HitMissRatioPlugin, TimingPlugin, BasePlugin
 
 
-cache = RedisCache(
-    endpoint="127.0.0.1",
-    plugins=[HitMissRatioPlugin(), TimingPlugin()],
-    port=6379,
+logger = logging.getLogger(__name__)
+
+
+class MyCustomPlugin(BasePlugin):
+
+    async def pre_set(self, *args, **kwargs):
+        logger.info("I'm the pre_set hook being called with %s %s" % (args, kwargs))
+
+    async def post_set(self, *args, **kwargs):
+        logger.info("I'm the post_set hook being called with %s %s" % (args, kwargs))
+
+
+cache = SimpleMemoryCache(
+    plugins=[HitMissRatioPlugin(), TimingPlugin(), MyCustomPlugin()],
     namespace="main")
 
 
-async def redis():
+async def run():
     await cache.set("a", 1)
     await cache.set("b", 2)
     await cache.set("c", 3)
@@ -35,9 +46,9 @@ async def redis():
     print(cache.profiling)
 
 
-def test_redis():
+def test_run():
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(redis())
+    loop.run_until_complete(run())
     loop.run_until_complete(cache.delete("a"))
     loop.run_until_complete(cache.delete("b"))
     loop.run_until_complete(cache.delete("c"))
@@ -45,4 +56,4 @@ def test_redis():
 
 
 if __name__ == "__main__":
-    test_redis()
+    test_run()
