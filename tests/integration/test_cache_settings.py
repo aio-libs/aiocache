@@ -1,12 +1,11 @@
 import pytest
-import aiocache
 
-from aiocache import RedisCache
+from aiocache import RedisCache, settings
 
 
 @pytest.fixture(autouse=True)
 def reset_defaults():
-    aiocache.settings.set_from_dict({
+    settings.set_config({
         "CACHE": {
             "class": "aiocache.SimpleMemoryCache",
         },
@@ -19,8 +18,8 @@ def reset_defaults():
 
 class TestRedisSettings:
     def test_cache_settings(self):
-        aiocache.settings.set_defaults(
-            class_=aiocache.RedisCache, endpoint="127.0.0.1", port=6379, timeout=10, db=1)
+        settings.set_cache(
+            RedisCache, endpoint="127.0.0.1", port=6379, timeout=10, db=1)
         cache = RedisCache(db=0)
 
         assert cache.endpoint == "127.0.0.1"

@@ -2,11 +2,10 @@ import os
 import pytest
 import asyncio
 import asynctest
-import aiocache
 
 from unittest.mock import patch, MagicMock, ANY
 
-from aiocache import SimpleMemoryCache, MemcachedCache
+from aiocache import SimpleMemoryCache, MemcachedCache, settings
 from aiocache.cache import BaseCache, API
 
 
@@ -330,7 +329,7 @@ class TestCache:
 
     @pytest.fixture
     def set_test_namespace(self):
-        aiocache.settings.DEFAULT_CACHE_KWARGS = {"namespace": "test"}
+        settings._CACHE_KWARGS = {"namespace": "test"}
 
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test" + pytest.KEY],
@@ -345,9 +344,9 @@ class TestRedisCache:
 
     @pytest.fixture(autouse=True)
     def redis_defaults(self):
-        aiocache.settings.set_defaults(class_="aiocache.RedisCache")
+        settings.set_cache("aiocache.RedisCache")
         yield
-        aiocache.settings.set_defaults(class_="aiocache.SimpleMemoryCache")
+        settings.set_cache("aiocache.SimpleMemoryCache")
 
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test:" + pytest.KEY],
@@ -371,9 +370,9 @@ class TestMemcachedCache:
 
     @pytest.fixture(autouse=True)
     def memcached_defaults(self):
-        aiocache.settings.set_defaults(class_="aiocache.MemcachedCache")
+        settings.set_cache("aiocache.MemcachedCache")
         yield
-        aiocache.settings.set_defaults(class_="aiocache.MemcachedCache")
+        settings.set_cache("aiocache.MemcachedCache")
 
     def test_inheritance(self):
         assert isinstance(MemcachedCache(), BaseCache)
@@ -392,4 +391,4 @@ class TestMemcachedCache:
 
 @pytest.fixture
 def set_test_namespace():
-    aiocache.settings.DEFAULT_CACHE_KWARGS = {"namespace": "test"}
+    settings._CACHE_KWARGS = {"namespace": "test"}

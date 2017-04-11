@@ -8,18 +8,17 @@ from aiocache.backends import RedisBackend
 
 @pytest.fixture
 def set_settings():
-    settings.DEFAULT_CACHE_KWARGS = {
-        'endpoint': "endpoint",
-        'port': "port",
-        'password': "pass",
-        'db': 2,
-        'pool_min_size': 2,
-        'pool_max_size': 20
-    }
-    settings.DEFAULT_CACHE = RedisCache
+    settings.set_cache(
+        RedisCache,
+        endpoint="endpoint",
+        port="port",
+        password="pass",
+        db=2,
+        pool_min_size=2,
+        pool_max_size=20
+    )
     yield
-    settings.DEFAULT_CACHE = SimpleMemoryCache
-    settings.DEFAULT_CACHE_KWARGS = {}
+    settings.set_cache(SimpleMemoryCache)
 
 
 class FakePool:
@@ -101,7 +100,7 @@ class TestRedisBackend:
         assert redis_backend.pool_max_size == 6
 
     def test_setup_default_ignored_wrong_class(self, set_settings):
-        settings.DEFAULT_CACHE = str
+        settings._CACHE = str
 
         redis_backend = RedisBackend()
         assert redis_backend.endpoint == "127.0.0.1"

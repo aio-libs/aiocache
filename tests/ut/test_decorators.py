@@ -6,6 +6,7 @@ import asynctest
 from unittest import mock
 
 from aiocache import cached, multi_cached, SimpleMemoryCache
+from aiocache.decorators import _get_args_dict
 from aiocache.backends import SimpleMemoryBackend
 
 
@@ -280,3 +281,19 @@ class TestMultiCachedDecorator:
 
         with pytest.raises(ValueError):
             await cached_decorator(raise_exception)(keys=[])
+
+
+def test_get_args_dict():
+
+    async def arg_return_dict(keys, dummy=None):
+        ret = {}
+        for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
+            ret[key] = value
+        return ret
+
+    args = ({'b', 'a'},)
+
+    assert _get_args_dict(arg_return_dict, args, {}) == {'dummy': None, 'keys': {'a', 'b'}}
+    assert _get_args_dict(arg_return_dict, args, {'dummy': 'dummy'}) == \
+        {'dummy': 'dummy', 'keys': {'a', 'b'}}
+    assert _get_args_dict(arg_return_dict, [], {'dummy': 'dummy'}) == {'dummy': 'dummy'}
