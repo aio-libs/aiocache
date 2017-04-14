@@ -3,10 +3,9 @@ import time
 import functools
 import asyncio
 
-import aiocache
-
-from aiocache.log import logger
+from aiocache import settings
 from aiocache.utils import get_cache_value_with_fallbacks
+from aiocache.log import logger
 from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBackend
 
 
@@ -107,10 +106,10 @@ class BaseCache:
         self.plugins = plugins or self.get_default_plugins()
 
     def get_default_serializer(self):
-        return aiocache.settings.DEFAULT_SERIALIZER()
+        return settings.get_serializer_class()()
 
     def get_default_plugins(self):
-        return [plugin(**config) for plugin, config in aiocache.settings.DEFAULT_PLUGINS.items()]
+        return [plugin(**config) for plugin, config in settings._PLUGINS]
 
     @property
     def serializer(self):

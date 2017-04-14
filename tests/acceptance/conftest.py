@@ -1,8 +1,6 @@
 import pytest
 
-import aiocache
-
-from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
+from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache, settings
 from aiocache.backends import RedisBackend
 
 
@@ -15,7 +13,7 @@ def pytest_namespace():
 
 @pytest.fixture(autouse=True)
 def reset_defaults():
-    aiocache.settings.set_from_dict({
+    settings.set_config({
         "CACHE": {
             "class": "aiocache.SimpleMemoryCache",
         },

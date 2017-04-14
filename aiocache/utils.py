@@ -1,32 +1,15 @@
-import inspect
-
-import aiocache
-
-
-def class_from_string(class_path):
-    class_name = class_path.split('.')[-1]
-    module_name = class_path.rstrip(class_name).rstrip(".")
-    return getattr(__import__(module_name, fromlist=[class_name]), class_name)
-
-
-def get_args_dict(func, args, kwargs):
-    defaults = {
-        arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
-        if arg.default is not inspect._empty
-    }
-    args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
-    return {**defaults, **dict(zip(args_names, args)), **kwargs}
+from aiocache import settings
 
 
 def get_cache(cache=None, serializer=None, plugins=None, **kwargs):
-    cache = cache or aiocache.settings.DEFAULT_CACHE
+    cache = cache or settings.get_cache_class()
     serializer = serializer
     plugins = plugins
 
     instance = cache(
         serializer=serializer,
         plugins=plugins,
-        **{**aiocache.settings.DEFAULT_CACHE_KWARGS, **kwargs})
+        **{**settings.get_cache_args(), **kwargs})
     return instance
 
 
@@ -45,7 +28,7 @@ def get_cache_value_with_fallbacks(value, from_config, from_fallback, cls=None):
     new_value = from_fallback
     if value is not None:
         new_value = value
-    elif cls and issubclass(aiocache.settings.DEFAULT_CACHE, cls):
-        new_value = aiocache.settings.DEFAULT_CACHE_KWARGS.get(from_config, new_value)
+    elif cls and issubclass(settings.get_cache_class(), cls):
+        new_value = settings.get_cache_args().get(from_config, new_value)
 
     return new_value

@@ -1,6 +1,6 @@
-from aiocache.cache import SimpleMemoryCache, RedisCache, MemcachedCache
+from aiocache.settings import Settings as settings
 from aiocache.decorators import cached, multi_cached
-from aiocache import settings
+from aiocache.cache import SimpleMemoryCache, RedisCache, MemcachedCache
 
 
 __all__ = (

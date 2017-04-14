@@ -1,9 +1,20 @@
-import aiocache
-
-from aiocache import RedisCache
-from aiocache.utils import get_cache, get_args_dict
+from aiocache import settings, RedisCache
 from aiocache.serializers import PickleSerializer
 from aiocache.plugins import BasePlugin
+from aiocache.utils import get_cache_value_with_fallbacks, get_cache
+
+
+def test_get_cache_value_with_fallbacks_with_value():
+    assert get_cache_value_with_fallbacks("value", "fake_key", "DEFAULT") == "value"
+
+
+def test_get_cache_value_with_fallbacks_with_settings():
+    settings.set_cache(RedisCache, fake_key="random")
+    assert get_cache_value_with_fallbacks(None, "fake_key", "DEFAULT", cls=RedisCache) == "random"
+
+
+def test_get_cache_value_with_fallbacks_with_default():
+    assert get_cache_value_with_fallbacks(None, "fake_key", "DEFAULT") == "DEFAULT"
 
 
 class TestCacheFactory:
@@ -14,8 +25,8 @@ class TestCacheFactory:
         assert isinstance(cache, RedisCache)
 
     def test_get_cache_with_default_config(self):
-        aiocache.settings.set_defaults(
-            class_="aiocache.RedisCache", endpoint="http://...", port=6379)
+        settings.set_cache(
+            "aiocache.RedisCache", endpoint="http://...", port=6379)
         cache = get_cache(
             namespace="default", serializer=PickleSerializer(),
             plugins=BasePlugin(), port=123)
@@ -28,8 +39,8 @@ class TestCacheFactory:
         assert isinstance(cache.plugins, BasePlugin)
 
     def test_get_cache_with_default_plugins_kwargs(self):
-        aiocache.settings.set_defaults(
-            class_="aiocache.RedisCache", endpoint="http://...", port=6379)
+        settings.set_cache(
+            "aiocache.RedisCache", endpoint="http://...", port=6379)
         cache = get_cache(
             namespace="default", serializer=PickleSerializer(),
             plugins=BasePlugin(), port=123)
@@ -52,19 +63,3 @@ class TestCacheFactory:
         assert cache.namespace == "default"
         assert isinstance(cache.serializer, PickleSerializer)
         assert isinstance(cache.plugins, BasePlugin)
-
-
-def test_get_args_dict():
-
-    async def arg_return_dict(keys, dummy=None):
-        ret = {}
-        for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
-            ret[key] = value
-        return ret
-
-    args = ({'b', 'a'},)
-
-    assert get_args_dict(arg_return_dict, args, {}) == {'dummy': None, 'keys': {'a', 'b'}}
-    assert get_args_dict(arg_return_dict, args, {'dummy': 'dummy'}) == \
-        {'dummy': 'dummy', 'keys': {'a', 'b'}}
-    assert get_args_dict(arg_return_dict, [], {'dummy': 'dummy'}) == {'dummy': 'dummy'}

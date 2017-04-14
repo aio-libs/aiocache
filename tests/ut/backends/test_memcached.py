@@ -9,14 +9,13 @@ from aiocache.backends import MemcachedBackend
 
 @pytest.fixture
 def set_settings():
-    settings.DEFAULT_CACHE_KWARGS = {
-        'endpoint': "endpoint",
-        'port': "port",
-    }
-    settings.DEFAULT_CACHE = MemcachedCache
+    settings.set_cache(
+        MemcachedCache,
+        endpoint="endpoint",
+        port="port",
+    )
     yield
-    settings.DEFAULT_CACHE = SimpleMemoryCache
-    settings.DEFAULT_CACHE_KWARGS = {}
+    settings.set_cache(SimpleMemoryCache)
 
 
 @pytest.fixture
@@ -55,7 +54,7 @@ class TestMemcachedBackend:
         assert redis_backend.port == "port"
 
     def test_setup_default_ignored_wrong_class(self, set_settings):
-        settings.DEFAULT_CACHE = str
+        settings._CACHE = str
 
         redis_backend = MemcachedBackend()
         assert redis_backend.endpoint == "127.0.0.1"

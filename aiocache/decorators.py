@@ -1,5 +1,7 @@
+import inspect
+
+from aiocache.utils import get_cache
 from aiocache.log import logger
-from aiocache.utils import get_args_dict, get_cache
 
 
 def cached(
@@ -33,7 +35,7 @@ def cached(
         async def wrapper(*args, **kwargs):
             cache_instance = get_cache(
                 cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
-            args_dict = get_args_dict(func, args, kwargs)
+            args_dict = _get_args_dict(func, args, kwargs)
             cache_key = key or args_dict.get(
                 key_from_attr,
                 (func.__module__ or 'stub') + func.__name__ + str(
@@ -92,7 +94,7 @@ def multi_cached(
             cache_instance = get_cache(
                 cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             partial_result = {}
-            args_dict = get_args_dict(func, args, kwargs)
+            args_dict = _get_args_dict(func, args, kwargs)
             keys = args_dict[keys_from_attr]
             cache_keys = [key_builder(key, args_dict) for key in keys]
 
@@ -129,3 +131,12 @@ def multi_cached(
 
         return wrapper
     return multi_cached_decorator
+
+
+def _get_args_dict(func, args, kwargs):
+    defaults = {
+        arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
+        if arg.default is not inspect._empty
+    }
+    args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
+    return {**defaults, **dict(zip(args_names, args)), **kwargs}

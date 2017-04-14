@@ -13,6 +13,11 @@ pylint:
 ut:
 	pytest -sv tests/ut
 
+_integration:
+	pytest -sv tests/integration
+
+integration: dockerup _integration dockerdown
+
 _acceptance:
 	pytest -sv tests/acceptance
 
@@ -29,7 +34,7 @@ _functional:
 
 functional: dockerup _functional dockerdown
 
-test: syntax ut dockerup _acceptance _functional dockerdown
+test: syntax ut dockerup _integration _acceptance _functional dockerdown
 
 _release:
 	scripts/make_release
