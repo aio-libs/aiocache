@@ -19,6 +19,7 @@ class DefaultSerializer:
     Dummy serializer that returns the same value passed both in serialize and
     deserialize methods.
     """
+    encoding = 'utf-8'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,7 +35,6 @@ class PickleSerializer(DefaultSerializer):
     """
     Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
     """
-
     encoding = None
 
     def dumps(self, value):

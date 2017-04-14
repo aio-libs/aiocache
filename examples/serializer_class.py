@@ -1,24 +1,47 @@
+import sys
 import asyncio
+import zlib
 
 from aiocache import RedisCache
 
 
-class MySerializer:
+class CompressionSerializer:
+
+    # This is needed because zlib works with bytes.
+    # this way the underlying backend knows how to
+    # store/retrieve values
+    encoding = None
+
     def dumps(self, value):
-        return 1
+        print("I've received:\n{}".format(value))
+        compressed = zlib.compress(value.encode())
+        print("But I'm storing:\n{}".format(compressed))
+        return compressed
 
     def loads(self, value):
-        return 2
+        print("I've RETRIEVED:\n{}".format(value))
+        decompressed = zlib.decompress(value).decode()
+        print("But I'm returning:\n{}".format(decompressed))
+        return decompressed
 
 
-cache = RedisCache(serializer=MySerializer(), namespace="main")
+cache = RedisCache(serializer=CompressionSerializer(), namespace="main")
 
 
 async def serializer():
-    await cache.set("key", "value")
+    text = (
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+        "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation"
+        "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"
+        "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur"
+        "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit"
+        "anim id est laborum.")
+    await cache.set("key", text)
+    print("-----------------------------------")
+    real_value = await cache.get("key")
 
-    assert await cache.raw("get", "main:key") == '1'
-    assert await cache.get("key") == 2
+    compressed_value = await cache.raw("get", "main:key")
+    assert sys.getsizeof(compressed_value) < sys.getsizeof(real_value)
 
 
 def test_serializer():
