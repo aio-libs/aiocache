@@ -146,6 +146,13 @@ class TestCache:
         assert await cache.get(pytest.KEY) == obj
 
     @pytest.mark.asyncio
+    @pytest.mark.xfail(reason="Incosistency with defaultserializer and backends")
+    async def test_get_complex_type_int(self, cache):
+        cache.serializer = serializers.DefaultSerializer()
+        await cache.set(pytest.KEY, 1)
+        assert await cache.get(pytest.KEY) == '1'
+
+    @pytest.mark.asyncio
     async def test_get_set_alt_serializer_functions(self, cache):
         await cache.set(pytest.KEY, "value", dumps_fn=dumps)
         assert await cache.get(pytest.KEY) == "v4lu3"
