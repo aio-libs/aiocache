@@ -24,10 +24,10 @@ cache = SimpleMemoryCache(
 
 
 async def run():
-    await cache.set("a", 1)
-    await cache.set("b", 2)
-    await cache.set("c", 3)
-    await cache.set("d", 4)
+    await cache.set("a", "1")
+    await cache.set("b", "2")
+    await cache.set("c", "3")
+    await cache.set("d", "4")
 
     possible_keys = ["a", "b", "c", "d", "e", "f"]
 

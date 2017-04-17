@@ -9,6 +9,12 @@ Serializers can be attached to backends in order to serialize/deserialize data s
     >>> from aiocache.serializers import PickleSerializer
     cache = SimpleMemoryCache(serializer=PickleSerializer())
 
+Currently the following are built in:
+
+- DefaultSerializer: ideal for storing str values.
+- PickleSerializer: ideal for storing any Python object.
+- JsonSerializer: ideal for storing in json format.
+
 In case the current serializers are not covering your needs, you can always define your custom serializer as shown in ``examples/serializer_class.py``.
 
 By default cache backends assume they are working with ``str`` types. If your custom implementation transform data to bytes, you will need to set the class attribute ``encoding`` to ``None``.

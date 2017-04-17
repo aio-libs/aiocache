@@ -19,11 +19,8 @@ class DefaultSerializer:
     Dummy serializer that returns the same value passed both in serialize and
     deserialize methods.
 
-    There is an edge case to take into account with python types. Due to backends
-    working with bytes, although it may be possible to save an ``int`` type, when
-    retrieving it it will become an str. If you want to keep types, you will have
-    to use something like ``PickleSerializer`` or marshmallow custom serializer
-    class.
+    Supports only str values. If you want to store other python types, coerce them
+    to str or use ``PickleSerializer``/``JsonSerializer``.
     """
     encoding = 'utf-8'
 
@@ -31,6 +28,10 @@ class DefaultSerializer:
         super().__init__(*args, **kwargs)
 
     def dumps(self, value):
+        if not isinstance(value, str):
+            raise TypeError(
+                "DefaultSerializer only supports str types, for other types"
+                " check PickleSerializer or JsonSerializer")
         return value
 
     def loads(self, value):

@@ -1,9 +1,26 @@
+import pytest
+
 from collections import namedtuple
 
-from aiocache.serializers import PickleSerializer, JsonSerializer
+from aiocache.serializers import DefaultSerializer, PickleSerializer, JsonSerializer
 
 
 Dummy = namedtuple("Dummy", "a, b")
+
+
+class TestDefaultSerializer:
+
+    @pytest.mark.parametrize("obj", [
+        1, True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    def test_set_types(self, obj):
+        with pytest.raises(TypeError):
+            DefaultSerializer().dumps(obj)
+
+    def test_dumps(self):
+        assert DefaultSerializer().dumps("hi") == "hi"
+
+    def test_loads(self):
+        assert DefaultSerializer().loads("hi") == "hi"
 
 
 class TestPickleSerializer:
