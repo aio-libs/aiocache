@@ -11,5 +11,5 @@ marshmallow==2.13.5
 asynctest==0.10.0
 
 aiohttp==2.0.7
-tornado==4.4.3
+tornado==4.5
 sanic==0.5.1
