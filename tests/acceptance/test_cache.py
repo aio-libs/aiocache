@@ -86,6 +86,24 @@ class TestCache:
         assert await cache.exists(pytest.KEY) is True
 
     @pytest.mark.asyncio
+    async def test_increment_missing(self, cache):
+        assert await cache.increment(pytest.KEY, delta=2) == 2
+        assert await cache.increment(pytest.KEY_1, delta=-2) == -2
+
+    @pytest.mark.asyncio
+    async def test_increment_existing(self, cache):
+        await cache.set(pytest.KEY, "2")
+        assert await cache.increment(pytest.KEY, delta=2) == 4
+        assert await cache.increment(pytest.KEY, delta=1) == 5
+        assert await cache.increment(pytest.KEY, delta=-3) == 2
+
+    @pytest.mark.asyncio
+    async def test_increment_typeerror(self, cache):
+        await cache.set(pytest.KEY, "value")
+        with pytest.raises(TypeError):
+            assert await cache.increment(pytest.KEY)
+
+    @pytest.mark.asyncio
     async def test_expire_existing(self, cache):
         await cache.set(pytest.KEY, "value")
         assert await cache.expire(pytest.KEY, 1) is True

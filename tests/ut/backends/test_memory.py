@@ -69,6 +69,27 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.__contains__.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_increment(self, memory):
+        await memory._increment(pytest.KEY, 2)
+        SimpleMemoryBackend._cache.__contains__.assert_called_with(pytest.KEY)
+        SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
+    async def test_increment_missing(self, memory):
+        SimpleMemoryBackend._cache.__contains__.return_value = True
+        SimpleMemoryBackend._cache.__getitem__.return_value = 2
+        await memory._increment(pytest.KEY, 2)
+        SimpleMemoryBackend._cache.__getitem__.assert_called_with(pytest.KEY)
+        SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, 4)
+
+    @pytest.mark.asyncio
+    async def test_increment_typerror(self, memory):
+        SimpleMemoryBackend._cache.__contains__.return_value = True
+        SimpleMemoryBackend._cache.__getitem__.return_value = "asd"
+        with pytest.raises(TypeError):
+            await memory._increment(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
     async def test_expire_no_handle_no_ttl(self, memory):
         SimpleMemoryBackend._cache.__contains__.return_value = True
         await memory._expire(pytest.KEY, 0)

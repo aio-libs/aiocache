@@ -32,6 +32,7 @@ Here we are using the :ref:`simplememorycache` but you can use any other listed 
   - ``multi_get``: Retrieves multiple key/values.
   - ``multi_set``: Sets multiple key/values.
   - ``exists``: Returns True if key exists False otherwise.
+  - ``increment``: Increment the value of given key.
   - ``delete``: Deletes key and returns number of deleted items.
   - ``clear``: Clears the items stored.
   - ``raw``: Executes the specified command using the underlying client.

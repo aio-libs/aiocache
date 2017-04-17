@@ -1,4 +1,5 @@
 import pytest
+import aioredis
 
 from asynctest import CoroutineMock, MagicMock, patch
 
@@ -212,6 +213,19 @@ class TestRedisBackend:
         cache, pool = redis
         await cache._expire(pytest.KEY, ttl=1)
         pool.client.expire.assert_called_with(pytest.KEY, 1)
+
+    @pytest.mark.asyncio
+    async def test_increment(self, redis):
+        cache, pool = redis
+        await cache._increment(pytest.KEY, delta=2)
+        pool.client.incrby.assert_called_with(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
+    async def test_increment_typerror(self, redis):
+        cache, pool = redis
+        pool.client.incrby.side_effect = aioredis.errors.ReplyError
+        with pytest.raises(TypeError):
+            await cache._increment(pytest.KEY, 2)
 
     @pytest.mark.asyncio
     async def test_expire_0_ttl(self, redis):

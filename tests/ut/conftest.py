@@ -40,6 +40,7 @@ class MockCache(BaseCache):
     _multi_set = asynctest.CoroutineMock()
     _delete = asynctest.CoroutineMock()
     _exists = asynctest.CoroutineMock()
+    _increment = asynctest.CoroutineMock()
     _expire = asynctest.CoroutineMock()
     _clear = asynctest.CoroutineMock()
     _raw = asynctest.CoroutineMock()

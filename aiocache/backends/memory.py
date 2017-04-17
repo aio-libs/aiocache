@@ -84,6 +84,16 @@ class SimpleMemoryBackend:
         """
         return key in SimpleMemoryBackend._cache
 
+    async def _increment(self, key, delta):
+        if key not in SimpleMemoryBackend._cache:
+            SimpleMemoryBackend._cache[key] = delta
+        else:
+            try:
+                SimpleMemoryBackend._cache[key] = int(SimpleMemoryBackend._cache[key]) + delta
+            except ValueError:
+                raise TypeError("Value is not an integer") from None
+        return SimpleMemoryBackend._cache[key]
+
     async def _expire(self, key, ttl):
         """
         Expire the given key in ttl seconds. If ttl is 0, remove the expiration

@@ -157,6 +157,11 @@ class TestBaseCache:
             await base_cache._exists(pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_increment(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache._increment(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
     async def test_expire(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache._expire(pytest.KEY, 0)
@@ -188,8 +193,7 @@ class TestCache:
     async def test_get(self, mock_cache):
         await mock_cache.get(pytest.KEY)
 
-        assert mock_cache.serializer.loads.call_count == 1
-        assert mock_cache._build_key.call_count == 1
+        mock_cache._get.assert_called_with(mock_cache._build_key(pytest.KEY))
         assert mock_cache.plugins[0].pre_get.call_count == 1
         assert mock_cache.plugins[0].post_get.call_count == 1
 
@@ -202,10 +206,9 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_set(self, mock_cache):
-        await mock_cache.set(pytest.KEY, "value")
+        await mock_cache.set(pytest.KEY, "value", ttl=2)
 
-        assert mock_cache.serializer.dumps.call_count == 1
-        assert mock_cache._build_key.call_count == 1
+        mock_cache._set.assert_called_with(mock_cache._build_key(pytest.KEY), asynctest.ANY, 2)
         assert mock_cache.plugins[0].pre_set.call_count == 1
         assert mock_cache.plugins[0].post_set.call_count == 1
 
@@ -219,10 +222,9 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
         mock_cache._exists.return_value = False
-        await mock_cache.add(pytest.KEY, "value")
+        await mock_cache.add(pytest.KEY, "value", ttl=2)
 
-        assert mock_cache.serializer.dumps.call_count == 1
-        assert mock_cache._build_key.call_count == 1
+        mock_cache._add.assert_called_with(mock_cache._build_key(pytest.KEY), asynctest.ANY, 2)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
@@ -237,8 +239,8 @@ class TestCache:
     async def test_mget(self, mock_cache):
         await mock_cache.multi_get([pytest.KEY, pytest.KEY_1])
 
-        assert mock_cache.serializer.loads.call_count == 2
-        assert mock_cache._build_key.call_count == 2
+        mock_cache._multi_get.assert_called_with([
+            mock_cache._build_key(pytest.KEY), mock_cache._build_key(pytest.KEY_1)])
         assert mock_cache.plugins[0].pre_multi_get.call_count == 1
         assert mock_cache.plugins[0].post_multi_get.call_count == 1
 
@@ -251,10 +253,11 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_mset(self, mock_cache):
-        await mock_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
+        await mock_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=2)
 
-        assert mock_cache.serializer.dumps.call_count == 2
-        assert mock_cache._build_key.call_count == 2
+        mock_cache._multi_set.assert_called_with([
+            (mock_cache._build_key(pytest.KEY), asynctest.ANY),
+            (mock_cache._build_key(pytest.KEY_1), asynctest.ANY)], 2)
         assert mock_cache.plugins[0].pre_multi_set.call_count == 1
         assert mock_cache.plugins[0].post_multi_set.call_count == 1
 
@@ -269,7 +272,9 @@ class TestCache:
     async def test_exists(self, mock_cache):
         await mock_cache.exists(pytest.KEY)
 
-        assert mock_cache._build_key.call_count == 1
+        mock_cache._exists.assert_called_with(mock_cache._build_key(pytest.KEY))
+        assert mock_cache.plugins[0].pre_exists.call_count == 1
+        assert mock_cache.plugins[0].post_exists.call_count == 1
 
     @pytest.mark.asyncio
     async def test_exists_timeouts(self, mock_cache):
@@ -279,10 +284,27 @@ class TestCache:
             await mock_cache.exists(pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_increment(self, mock_cache):
+        await mock_cache.increment(pytest.KEY, 2)
+
+        mock_cache._increment.assert_called_with(mock_cache._build_key(pytest.KEY), 2)
+        assert mock_cache.plugins[0].pre_increment.call_count == 1
+        assert mock_cache.plugins[0].post_increment.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_increment_timeouts(self, mock_cache):
+        mock_cache._increment = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_cache.increment(pytest.KEY)
+
+    @pytest.mark.asyncio
     async def test_delete(self, mock_cache):
         await mock_cache.delete(pytest.KEY)
 
-        assert mock_cache._build_key.call_count == 1
+        mock_cache._delete.assert_called_with(mock_cache._build_key(pytest.KEY))
+        assert mock_cache.plugins[0].pre_delete.call_count == 1
+        assert mock_cache.plugins[0].post_delete.call_count == 1
 
     @pytest.mark.asyncio
     async def test_delete_timeouts(self, mock_cache):
@@ -295,6 +317,8 @@ class TestCache:
     async def test_expire(self, mock_cache):
         await mock_cache.expire(pytest.KEY, 1)
         mock_cache._expire.assert_called_with(mock_cache._build_key(pytest.KEY), 1)
+        assert mock_cache.plugins[0].pre_expire.call_count == 1
+        assert mock_cache.plugins[0].post_expire.call_count == 1
 
     @pytest.mark.asyncio
     async def test_expire_timeouts(self, mock_cache):
@@ -307,6 +331,8 @@ class TestCache:
     async def test_clear(self, mock_cache):
         await mock_cache.clear(pytest.KEY)
         mock_cache._clear.assert_called_with(mock_cache._build_key(pytest.KEY))
+        assert mock_cache.plugins[0].pre_clear.call_count == 1
+        assert mock_cache.plugins[0].post_clear.call_count == 1
 
     @pytest.mark.asyncio
     async def test_clear_timeouts(self, mock_cache):
@@ -319,6 +345,8 @@ class TestCache:
     async def test_raw(self, mock_cache):
         await mock_cache.raw("get", pytest.KEY)
         mock_cache._raw.assert_called_with("get", mock_cache._build_key(pytest.KEY))
+        assert mock_cache.plugins[0].pre_raw.call_count == 1
+        assert mock_cache.plugins[0].post_raw.call_count == 1
 
     @pytest.mark.asyncio
     async def test_raw_timeouts(self, mock_cache):

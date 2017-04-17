@@ -125,6 +125,13 @@ class RedisBackend:
             exists = await redis.exists(key)
             return True if exists > 0 else False
 
+    async def _increment(self, key, delta):
+        with await self._connect() as redis:
+            try:
+                return await redis.incrby(key, delta)
+            except aioredis.errors.ReplyError:
+                raise TypeError("Value is not an integer") from None
+
     async def _expire(self, key, ttl):
         """
         Expire the given key in ttl seconds. If ttl is 0, remove the expiration
