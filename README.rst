@@ -1,6 +1,10 @@
 aiocache
 ========
 
+.. image:: https://api.codacy.com/project/badge/Grade/96f772e38e63489ca884dbaf6e9fb7fd
+   :alt: Codacy Badge
+   :target: https://www.codacy.com/app/argaen/aiocache?utm_source=github.com&utm_medium=referral&utm_content=argaen/aiocache&utm_campaign=badger
+
 .. image:: https://travis-ci.org/argaen/aiocache.svg?branch=master
   :target: https://travis-ci.org/argaen/aiocache
 
