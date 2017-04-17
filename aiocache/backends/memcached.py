@@ -104,6 +104,21 @@ class MemcachedBackend:
         """
         return await self.client.append(key, b'')
 
+    async def _increment(self, key, delta):
+        incremented = None
+        try:
+            if delta > 0:
+                incremented = await self.client.incr(key, delta)
+            else:
+                incremented = await self.client.decr(key, abs(delta))
+        except aiomcache.exceptions.ClientException as e:
+            if "NOT_FOUND" in str(e):
+                await self._set(key, str(delta))
+            else:
+                raise TypeError("Value is not an integer") from None
+
+        return incremented or delta
+
     async def _expire(self, key, ttl):
         """
         Expire the given key in ttl seconds. If ttl is 0, remove the expiration

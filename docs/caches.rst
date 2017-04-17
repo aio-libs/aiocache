@@ -25,6 +25,7 @@ The supported operations are:
   - multi_set
   - delete
   - exists
+  - increment
   - expire
   - clear
   - raw

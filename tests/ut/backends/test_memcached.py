@@ -138,6 +138,36 @@ class TestMemcachedBackend:
         memcached.client.append.assert_called_with(pytest.KEY, b'')
 
     @pytest.mark.asyncio
+    async def test_increment(self, memcached):
+        await memcached._increment(pytest.KEY, 2)
+        memcached.client.incr.assert_called_with(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
+    async def test_increment_negative(self, memcached):
+        await memcached._increment(pytest.KEY, -2)
+        memcached.client.decr.assert_called_with(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
+    async def test_increment_missing(self, memcached):
+        memcached.client.incr.side_effect = aiomcache.exceptions.ClientException("NOT_FOUND")
+        await memcached._increment(pytest.KEY, 2)
+        memcached.client.incr.assert_called_with(pytest.KEY, 2)
+        memcached.client.set.assert_called_with(pytest.KEY, b"2", exptime=0)
+
+    @pytest.mark.asyncio
+    async def test_increment_missing_negative(self, memcached):
+        memcached.client.decr.side_effect = aiomcache.exceptions.ClientException("NOT_FOUND")
+        await memcached._increment(pytest.KEY, -2)
+        memcached.client.decr.assert_called_with(pytest.KEY, 2)
+        memcached.client.set.assert_called_with(pytest.KEY, b"-2", exptime=0)
+
+    @pytest.mark.asyncio
+    async def test_increment_typerror(self, memcached):
+        memcached.client.incr.side_effect = aiomcache.exceptions.ClientException("")
+        with pytest.raises(TypeError):
+            await memcached._increment(pytest.KEY, 2)
+
+    @pytest.mark.asyncio
     async def test_expire(self, memcached):
         await memcached._expire(pytest.KEY, 1)
         memcached.client.touch.assert_called_with(pytest.KEY, 1)

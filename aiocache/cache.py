@@ -276,7 +276,7 @@ class BaseCache:
         for key, value in pairs:
             tmp_pairs.append((self._build_key(key, namespace=namespace), dumps(value)))
 
-        await self._multi_set(tmp_pairs, ttl=ttl)
+        await self._multi_set(tmp_pairs, ttl)
 
         logger.debug(
             "MULTI_SET %s %d (%.4f)s",
@@ -337,6 +337,33 @@ class BaseCache:
         raise NotImplementedError()
 
     @API.register
+    @API.aiocache_enabled(fake_return=1)
+    @API.timeout
+    @API.plugins
+    async def increment(self, key, delta=1, namespace=None):
+        """
+        Increments value stored in key by delta (can be negative). If key doesn't
+        exist, it creates the key with delta as value.
+
+        :param key: str key to check
+        :param delta: int amount to increment/decrement
+        :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last. None by default
+        :returns: Value of the key once incremented. -1 if key is not found.
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
+        :raises: :class:`TypeError` if value is not incrementable
+        """
+        start = time.time()
+        ns_key = self._build_key(key, namespace=namespace)
+        ret = await self._increment(ns_key, delta)
+        logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.time() - start)
+        return ret
+
+    async def _increment(self, key, delta):
+        raise NotImplementedError()
+
+    @API.register
     @API.aiocache_enabled(fake_return=False)
     @API.timeout
     @API.plugins
@@ -389,7 +416,8 @@ class BaseCache:
     @API.plugins
     async def raw(self, command, *args, **kwargs):
         """
-        Send the raw command to the underlying client.
+        Send the raw command to the underlying client. Note that by using this CMD you
+        will lose compatibility with other backends.
 
         :param command: str with the command.
         :param timeout: int or float in seconds specifying maximum timeout
