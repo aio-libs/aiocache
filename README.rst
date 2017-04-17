@@ -13,6 +13,9 @@ aiocache
 .. image:: https://img.shields.io/pypi/pyversions/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
+.. image:: https://api.codacy.com/project/badge/Grade/96f772e38e63489ca884dbaf6e9fb7fd
+  :target: https://www.codacy.com/app/argaen/aiocache
+
 The asyncio cache that implements multiple backends.
 
 This library aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
