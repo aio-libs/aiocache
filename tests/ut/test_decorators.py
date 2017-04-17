@@ -13,14 +13,7 @@ from aiocache.backends import SimpleMemoryBackend
 async def return_dict(keys=None):
     ret = {}
     for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
-        ret[key] = value
-    return ret
-
-
-async def arg_return_dict(keys, dummy=None):
-    ret = {}
-    for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
-        ret[key] = value
+        ret[key] = str(value)
     return ret
 
 
@@ -32,8 +25,10 @@ async def raise_exception(*args, **kwargs):
     raise ValueError
 
 
-async def stub(*args, **kwargs):
-    return random.randint(1, 50)
+async def stub(*args, key=None, **kwargs):
+    if key:
+        return str(key)
+    return str(random.randint(1, 50))
 
 
 @pytest.fixture
@@ -90,14 +85,14 @@ class TestCachedDecorator:
 
     @pytest.mark.asyncio
     async def test_cached_arg_key_from_attr(self, mocker, memory_mock_cache):
-        cached_decorator = cached(key_from_attr="keys")
+        cached_decorator = cached(key_from_attr="key")
 
-        resp1 = await cached_decorator(arg_return_dict)("asd")
-        resp2 = await cached_decorator(arg_return_dict)("asd")
+        resp1 = await cached_decorator(stub)(key="2")
+        resp2 = await cached_decorator(stub)(key="2")
 
-        assert resp1 is resp2
+        assert resp1 == resp2
 
-        memory_mock_cache.set.assert_called_with("asd", mock.ANY, ttl=0)
+        memory_mock_cache.set.assert_called_with("2", mock.ANY, ttl=0)
 
     @pytest.mark.asyncio
     async def test_cached_key(self, mocker, memory_mock_cache):
@@ -147,7 +142,7 @@ class TestCachedDecorator:
         class Dummy:
             @cached()
             async def what(self):
-                return True
+                return "1"
 
         first_dummy = Dummy()
         second_dummy = Dummy()
@@ -161,7 +156,7 @@ class TestCachedDecorator:
         class Dummy:
             @cached(noself=True)
             async def what(self):
-                return True
+                return "1"
 
         first_dummy = Dummy()
         second_dummy = Dummy()
@@ -220,7 +215,7 @@ class TestMultiCachedDecorator:
         keys1 = {'a', 'b'}
 
         multi_cached_decorator = multi_cached(keys_from_attr='keys')
-        await multi_cached_decorator(arg_return_dict)(keys1)
+        await multi_cached_decorator(return_dict)(keys1)
 
         memory_mock_cache.multi_get.assert_called_with(list(keys1))
         assert memory_mock_cache.multi_get.call_count == 1
@@ -229,7 +224,7 @@ class TestMultiCachedDecorator:
     @pytest.mark.asyncio
     async def test_multi_cached_empty_keys(self, memory_mock_cache):
         multi_cached_decorator = multi_cached(keys_from_attr='keys')
-        await multi_cached_decorator(arg_return_dict)([])
+        await multi_cached_decorator(return_dict)([])
 
         assert memory_mock_cache.multi_get.call_count == 0
         assert memory_mock_cache.multi_set.call_count == 1
