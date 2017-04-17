@@ -27,6 +27,7 @@ This library aims for simplicity over specialization. It provides a common inter
 - ``multi_set``
 - ``delete``
 - ``exists``
+- ``increment``
 - ``expire``
 - ``clear``
 - ``raw``: Sends raw command to the underlying client
