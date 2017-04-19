@@ -6,7 +6,7 @@ import asynctest
 from unittest.mock import patch, MagicMock, ANY
 
 from aiocache import SimpleMemoryCache, MemcachedCache, RedisCache, settings
-from aiocache.cache import BaseCache, API
+from aiocache.base import BaseCache, API
 from aiocache.serializers import PickleSerializer, DefaultSerializer
 from aiocache.plugins import HitMissRatioPlugin
 

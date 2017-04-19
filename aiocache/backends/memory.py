@@ -1,5 +1,7 @@
 import asyncio
 
+from aiocache.base import BaseCache
+
 
 class SimpleMemoryBackend:
     """
@@ -155,3 +157,23 @@ class SimpleMemoryBackend:
             return 1
 
         return 0
+
+
+class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
+    """
+    :class:`aiocache.backends.SimpleMemoryBackend` cache implementation with
+    the following components as defaults:
+      - serializer: :class:`aiocache.serializers.DefaultSerializer`
+      - plugins: None
+
+    Config options are:
+
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is None.
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default its 5.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)

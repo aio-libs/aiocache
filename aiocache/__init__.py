@@ -1,8 +1,30 @@
 from copy import deepcopy
 
 from aiocache.settings import Settings as settings
-from aiocache.cache import SimpleMemoryCache, RedisCache, MemcachedCache
+from aiocache.log import logger
+from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.decorators import cached, multi_cached
+
+
+__caches = [SimpleMemoryCache]
+
+try:
+    import aioredis
+except ImportError:
+    logger.info("aioredis not installed, RedisCache unavailable")
+else:
+    from aiocache.backends.redis import RedisCache
+    __caches.append(RedisCache)
+    del aioredis
+
+try:
+    import aiomcache
+except ImportError:
+    logger.info("aiomcache not installed, Memcached unavailable")
+else:
+    from aiocache.backends.memcached import MemcachedCache
+    __caches.append(MemcachedCache)
+    del aiomcache
 
 
 __all__ = (
@@ -10,9 +32,7 @@ __all__ = (
     'cached',
     'caches',
     'multi_cached',
-    'RedisCache',
-    'SimpleMemoryCache',
-    'MemcachedCache',
+    *__caches,
 )
 
 

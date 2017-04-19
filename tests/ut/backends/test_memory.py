@@ -3,7 +3,7 @@ import asyncio
 
 from unittest.mock import MagicMock
 
-from aiocache.backends import SimpleMemoryBackend
+from aiocache.backends.memory import SimpleMemoryBackend
 
 
 @pytest.fixture

@@ -1,6 +1,8 @@
 import asyncio
 import aiomcache
 
+from aiocache.base import BaseCache
+
 
 class MemcachedBackend:
 
@@ -174,3 +176,33 @@ class MemcachedBackend:
             if encoding is not None and value is not None:
                 return value.decode(encoding)
         return value
+
+
+class MemcachedCache(MemcachedBackend, BaseCache):
+    """
+    :class:`aiocache.backends.MemcachedCache` cache implementation with the following
+    components as defaults:
+      - serializer: :class:`aiocache.serializers.DefaultSerializer`
+      - plugins: []
+
+    Config options are:
+
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is None
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default its 5.
+    :param endpoint: str with the endpoint to connect to. Default is 127.0.0.1.
+    :param port: int with the port to connect to. Default is 11211.
+    :param pool_size: int size for memcached connections pool. Default is 2.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _build_key(self, key, namespace=None):
+        ns_key = super()._build_key(key, namespace=namespace)
+        return str.encode(ns_key)
+
+    def __repr__(self):  # pragma: no cover
+        return "MemcachedCache ({}:{})".format(self.endpoint, self.port)

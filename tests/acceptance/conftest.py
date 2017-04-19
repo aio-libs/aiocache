@@ -1,7 +1,7 @@
 import pytest
 
 from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache, settings, caches
-from aiocache.backends import RedisBackend
+from aiocache.backends.redis import RedisBackend
 
 
 def pytest_namespace():

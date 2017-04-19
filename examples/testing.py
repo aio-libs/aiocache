@@ -2,7 +2,7 @@ import asyncio
 
 from asynctest import Mock
 
-from aiocache.cache import BaseCache
+from aiocache.base import BaseCache
 
 
 async def async_main():

@@ -3,7 +3,7 @@ import aiomcache
 
 from asynctest import MagicMock, patch, ANY
 
-from aiocache.backends import MemcachedBackend
+from aiocache.backends.memcached import MemcachedBackend
 
 
 @pytest.fixture
