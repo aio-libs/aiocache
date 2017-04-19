@@ -518,6 +518,7 @@ class MemcachedCache(MemcachedBackend, BaseCache):
         By default its 5.
     :param endpoint: str with the endpoint to connect to
     :param port: int with the port to connect to
+    :param pool_size: int size for memcached connections pool
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

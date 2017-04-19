@@ -3,18 +3,23 @@
 Caches
 ======
 
-You can use different caches according to your needs. All the caches implement the same interface which includes the methods: ``add``, ``get``, ``set``, ``multi_get``, ``multi_set``, ``delete``, ``exists``, ``raw``. If you feel a method is really missing here do not hesitate to open an issue in github.
+You can use different caches according to your needs. All the caches implement the same interface.
 
-Caches are always working through a serializer. The serializer allows to transform the data when storing and retrieving the data from the storage. This for example, allows to store python classes in Redis which by default, it only supports storing bytes. As you may have guessed, this has a con: in some cases the data won't be raw accessible in the storage as the serializer may apply some weird transformations on it before storing it. To give an idea, the set operation on any backend works as follows:
+Caches are always working together with a serializer which transforms data when storing and retrieving from the backend. It may also contain plugins that are able to enrich the behavior of your cache (like adding metrics, logs, etc).
+
+This is the flow of the ``set`` command:
 
 .. image:: images/set_operation_flow.png
   :align: center
 
 Let's go with a more specific case. Let's pick Redis as the cache with namespace "test" and PickleSerializer as the serializer:
 
-#. We receive a set("key", "value")
-#. "key" will become "test:key" when applying the ``build_key``
-#. "value" will become an array of bytes when calling ``serializer.dumps``
+#. We receive ``set("key", "value")``.
+#. Hook ``pre_set`` of all attached plugins (none by default) is called.
+#. "key" will become "test:key" when calling ``build_key``.
+#. "value" will become an array of bytes when calling ``serializer.dumps`` because of ``PickleSerializer``.
+#. the byte array is stored together with the key using ``set`` cmd in Redis.
+#. Hook ``post_set`` of all attached plugins is called.
 
 The supported operations are:
 
@@ -29,6 +34,10 @@ The supported operations are:
   - expire
   - clear
   - raw
+
+If you feel a method is really missing here do not hesitate to open an issue in github.
+
+By default, all commands are covered by a timeout that will trigger an ``asyncio.TimeoutError`` in case of timeout. Timeout can be set at instance level or when calling the command.
 
 
 ..  _basecache:
