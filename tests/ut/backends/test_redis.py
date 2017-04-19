@@ -3,7 +3,7 @@ import aioredis
 
 from asynctest import CoroutineMock, MagicMock, patch
 
-from aiocache import settings, RedisCache, SimpleMemoryCache
+from aiocache import settings, RedisCache
 from aiocache.backends import RedisBackend
 
 
@@ -19,7 +19,6 @@ def set_settings():
         pool_max_size=20
     )
     yield
-    settings.set_cache(SimpleMemoryCache)
 
 
 class FakePool:

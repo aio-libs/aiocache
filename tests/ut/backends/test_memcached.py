@@ -1,9 +1,9 @@
 import pytest
 import aiomcache
 
-from asynctest import MagicMock
+from asynctest import MagicMock, patch, ANY
 
-from aiocache import settings, MemcachedCache, SimpleMemoryCache
+from aiocache import settings, MemcachedCache
 from aiocache.backends import MemcachedBackend
 
 
@@ -13,9 +13,9 @@ def set_settings():
         MemcachedCache,
         endpoint="endpoint",
         port="port",
+        pool_size=12,
     )
     yield
-    settings.set_cache(SimpleMemoryCache)
 
 
 @pytest.fixture
@@ -28,37 +28,55 @@ def memcached(event_loop):
 class TestMemcachedBackend:
 
     def test_setup(self):
-        redis_backend = MemcachedBackend()
-        assert redis_backend.endpoint == "127.0.0.1"
-        assert redis_backend.port == 11211
+        with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
+            memory_backend = MemcachedBackend()
+
+            aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=2)
+
+        assert memory_backend.endpoint == "127.0.0.1"
+        assert memory_backend.port == 11211
 
     def test_setup_override(self):
-        redis_backend = MemcachedBackend(
-            endpoint="127.0.0.2",
-            port=2)
+        with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
+            memory_backend = MemcachedBackend(
+                endpoint="127.0.0.2",
+                port=2,
+                pool_size=10)
 
-        assert redis_backend.endpoint == "127.0.0.2"
-        assert redis_backend.port == 2
+            aiomcache_client.assert_called_with("127.0.0.2", 2, loop=ANY, pool_size=10)
+
+        assert memory_backend.endpoint == "127.0.0.2"
+        assert memory_backend.port == 2
 
     def test_setup_default_settings(self, set_settings):
-        redis_backend = MemcachedBackend()
+        with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
+            memory_backend = MemcachedBackend()
 
-        assert redis_backend.endpoint == "endpoint"
-        assert redis_backend.port == "port"
+            aiomcache_client.assert_called_with("endpoint", "port", loop=ANY, pool_size=12)
+
+        assert memory_backend.endpoint == "endpoint"
+        assert memory_backend.port == "port"
 
     def test_setup_default_settings_kwargs_override(self, set_settings):
-        redis_backend = MemcachedBackend(
-            endpoint="a")
+        with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
+            memory_backend = MemcachedBackend(
+                endpoint="a")
 
-        assert redis_backend.endpoint == "a"
-        assert redis_backend.port == "port"
+            aiomcache_client.assert_called_with("a", "port", loop=ANY, pool_size=12)
+
+        assert memory_backend.endpoint == "a"
+        assert memory_backend.port == "port"
 
     def test_setup_default_ignored_wrong_class(self, set_settings):
         settings._CACHE = str
 
-        redis_backend = MemcachedBackend()
-        assert redis_backend.endpoint == "127.0.0.1"
-        assert redis_backend.port == 11211
+        with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
+            memory_backend = MemcachedBackend()
+
+            aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=2)
+
+        assert memory_backend.endpoint == "127.0.0.1"
+        assert memory_backend.port == 11211
 
     @pytest.mark.asyncio
     async def test_get(self, memcached):
