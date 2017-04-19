@@ -19,9 +19,8 @@ class MemcachedBackend:
             from_fallback=self.DEFAULT_PORT, cls=self.__class__)
         self._loop = loop or asyncio.get_event_loop()
         self.client = aiomcache.Client(self.endpoint, self.port, loop=self._loop)
-        self.encoding = "utf-8"
 
-    async def _get(self, key):
+    async def _get(self, key, encoding="utf-8"):
         """
         Get a value from the cache. Returns default if not found.
 
@@ -29,11 +28,11 @@ class MemcachedBackend:
         :returns: obj in key if found else None
         """
         value = await self.client.get(key)
-        if value is not None and self.encoding is not None:
-            return bytes.decode(value)
-        return value
+        if encoding is None or value is None:
+            return value
+        return value.decode(encoding)
 
-    async def _multi_get(self, keys):
+    async def _multi_get(self, keys, encoding="utf-8"):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -42,10 +41,10 @@ class MemcachedBackend:
         """
         values = []
         for value in await self.client.multi_get(*keys):
-            if value is not None and self.encoding is not None:
-                values.append(bytes.decode(value))
-            else:
+            if encoding is None or value is None:
                 values.append(value)
+            else:
+                values.append(value.decode(encoding))
         return values
 
     async def _set(self, key, value, ttl=0):
@@ -88,7 +87,8 @@ class MemcachedBackend:
         :returns: True if key is inserted
         :raises: Value error if key already exists
         """
-        ret = await self.client.add(key, str.encode(value), exptime=ttl or 0)
+        value = str.encode(value) if isinstance(value, str) else value
+        ret = await self.client.add(key, value, exptime=ttl or 0)
         if not ret:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
@@ -113,7 +113,7 @@ class MemcachedBackend:
                 incremented = await self.client.decr(key, abs(delta))
         except aiomcache.exceptions.ClientException as e:
             if "NOT_FOUND" in str(e):
-                await self._set(key, str(delta))
+                await self._set(key, str(delta).encode())
             else:
                 raise TypeError("Value is not an integer") from None
 
@@ -151,11 +151,15 @@ class MemcachedBackend:
             await self.client.flush_all()
         return True
 
-    async def _raw(self, command, *args, **kwargs):
+    async def _raw(self, command, *args, encoding="utf-8", **kwargs):
         """
         Executes a raw command using the underlying client of memcached. It's under
         the developer responsibility to send the needed args and kwargs.
 
         :param command: str command to execute
         """
-        return await getattr(self.client, command)(*args, **kwargs)
+        value = await getattr(self.client, command)(*args, **kwargs)
+        if command in ["get", "multi_get"]:
+            if encoding is not None and value is not None:
+                return value.decode(encoding)
+        return value

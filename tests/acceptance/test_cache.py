@@ -36,14 +36,14 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_delete_existing(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, b"value")
         assert await cache.delete(pytest.KEY) == 1
 
         assert await cache.get(pytest.KEY) is None
 
     @pytest.mark.asyncio
     async def test_set(self, cache):
-        assert await cache.set(pytest.KEY, "value") is True
+        assert await cache.set(pytest.KEY, b"value") is True
 
     @pytest.mark.asyncio
     async def test_multi_set(self, cache):
@@ -53,7 +53,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, cache):
-        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
+        pairs = [(pytest.KEY, b"value"), [pytest.KEY_1, b"random_value"]]
         assert await cache.multi_set(pairs, ttl=1) is True
         await asyncio.sleep(1.1)
 
@@ -61,20 +61,20 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_set_with_ttl(self, cache):
-        await cache.set(pytest.KEY, "value", ttl=1)
+        await cache.set(pytest.KEY, b"value", ttl=1)
         await asyncio.sleep(1.1)
 
         assert await cache.get(pytest.KEY) is None
 
     @pytest.mark.asyncio
     async def test_add_missing(self, cache):
-        assert await cache.add(pytest.KEY, "value", ttl=1) is True
+        assert await cache.add(pytest.KEY, b"value", ttl=1) is True
 
     @pytest.mark.asyncio
     async def test_add_existing(self, cache):
-        await cache.set(pytest.KEY, "value") is True
+        await cache.set(pytest.KEY, b"value") is True
         with pytest.raises(ValueError):
-            await cache.add(pytest.KEY, "value")
+            await cache.add(pytest.KEY, b"value")
 
     @pytest.mark.asyncio
     async def test_exists_missing(self, cache):
@@ -82,7 +82,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_exists_existing(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, b"value")
         assert await cache.exists(pytest.KEY) is True
 
     @pytest.mark.asyncio
@@ -99,20 +99,20 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_increment_typeerror(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, b"value")
         with pytest.raises(TypeError):
             assert await cache.increment(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_expire_existing(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, b"value")
         assert await cache.expire(pytest.KEY, 1) is True
         await asyncio.sleep(1.1)
         assert await cache.exists(pytest.KEY) is False
 
     @pytest.mark.asyncio
     async def test_expire_with_0(self, cache):
-        await cache.set(pytest.KEY, "value", 1)
+        await cache.set(pytest.KEY, b"value", 1)
         assert await cache.expire(pytest.KEY, 0) is True
         await asyncio.sleep(1.1)
         assert await cache.exists(pytest.KEY) is True
@@ -123,28 +123,40 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_clear(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, b"value")
         await cache.clear()
 
         assert await cache.exists(pytest.KEY) is False
 
-    @pytest.mark.asyncio
-    async def test_clear_with_namespace_redis(self, redis_cache):
-        await redis_cache.set(pytest.KEY, "value", namespace="test")
-        await redis_cache.clear(namespace="test")
 
-        assert await redis_cache.exists(pytest.KEY, namespace="test") is False
+class TestMemoryCache:
+
+    @pytest.mark.asyncio
+    async def test_raw(self, memory_cache):
+        await memory_cache.raw("setdefault", "key", "value")
+        assert await memory_cache.raw("get", "key") == "value"
+        assert list(await memory_cache.raw("keys")) == ["key"]
 
     @pytest.mark.asyncio
     async def test_clear_with_namespace_memory(self, memory_cache):
-        await memory_cache.set(pytest.KEY, "value", namespace="test")
+        await memory_cache.set(pytest.KEY, b"value", namespace="test")
         await memory_cache.clear(namespace="test")
 
         assert await memory_cache.exists(pytest.KEY, namespace="test") is False
 
+
+class TestMemcachedCache:
+
+    @pytest.mark.asyncio
+    async def test_raw(self, memcached_cache):
+        await memcached_cache.raw("set", b"key", b"value")
+        assert await memcached_cache.raw("get", b"key") == "value"
+        assert await memcached_cache.raw("prepend", b"key", b"super") is True
+        assert await memcached_cache.raw("get", b"key") == "supervalue"
+
     @pytest.mark.asyncio
     async def test_clear_with_namespace_memcached(self, memcached_cache):
-        await memcached_cache.set(pytest.KEY, "value", namespace="test")
+        await memcached_cache.set(pytest.KEY, b"value", namespace="test")
 
         with pytest.raises(ValueError):
             await memcached_cache.clear(namespace="test")
@@ -152,29 +164,10 @@ class TestCache:
         assert await memcached_cache.exists(pytest.KEY, namespace="test") is True
 
 
-class TestMemoryCache:
-
-    @pytest.mark.asyncio
-    async def test_raw(self, memory_cache):
-        await memory_cache.raw('setdefault', b"key", b"value")
-        assert await memory_cache.raw("get", b"key") == b"value"
-        assert list(await memory_cache.raw("keys")) == [b"key"]
-
-
-class TestMemcachedCache:
-
-    @pytest.mark.asyncio
-    async def test_raw(self, memcached_cache):
-        await memcached_cache.raw('set', b"key", b"value")
-        assert await memcached_cache.raw("get", b"key") == b"value"
-        assert await memcached_cache.raw("prepend", b"key", b"super") is True
-        assert await memcached_cache.raw("get", b"key") == b"supervalue"
-
-
 class TestRedisCache:
     @pytest.mark.asyncio
     async def test_raw(self, redis_cache):
-        await redis_cache.raw('set', "key", "value")
+        await redis_cache.raw("set", "key", "value")
         assert await redis_cache.raw("get", "key") == "value"
         assert await redis_cache.raw("keys", "k*") == ["key"]
 
@@ -193,3 +186,10 @@ class TestRedisCache:
 
         assert len(RedisCache.pools) == 2
         assert other_cache.db == 0
+
+    @pytest.mark.asyncio
+    async def test_clear_with_namespace_redis(self, redis_cache):
+        await redis_cache.set(pytest.KEY, "value", namespace="test")
+        await redis_cache.clear(namespace="test")
+
+        assert await redis_cache.exists(pytest.KEY, namespace="test") is False

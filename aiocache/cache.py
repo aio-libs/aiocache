@@ -97,7 +97,6 @@ class BaseCache:
         self.namespace = get_cache_value_with_fallbacks(
             namespace, from_config="namespace",
             from_fallback=namespace, cls=self.__class__)
-        self.encoding = "utf-8"
 
         self._serializer = None
         self.serializer = serializer or self.get_default_serializer()
@@ -105,10 +104,12 @@ class BaseCache:
         self._plugins = None
         self.plugins = plugins or self.get_default_plugins()
 
-    def get_default_serializer(self):
+    @classmethod
+    def get_default_serializer(cls):
         return settings.get_serializer_class()()
 
-    def get_default_plugins(self):
+    @classmethod
+    def get_default_plugins(cls):
         return [plugin(**config) for plugin, config in settings._PLUGINS]
 
     @property
@@ -118,7 +119,6 @@ class BaseCache:
     @serializer.setter
     def serializer(self, value):
         self._serializer = value
-        self.encoding = getattr(self._serializer, "encoding", 'utf-8')
 
     @property
     def plugins(self):
@@ -182,12 +182,12 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
         ns_key = self._build_key(key, namespace=namespace)
 
-        value = loads(await self._get(ns_key))
+        value = loads(await self._get(ns_key, encoding=self.serializer.encoding))
 
         logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
         return value or default
 
-    async def _get(self, key):
+    async def _get(self, key, encoding):
         raise NotImplementedError()
 
     @API.register
@@ -210,7 +210,8 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
 
         ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
-        values = [loads(value) for value in await self._multi_get(ns_keys)]
+        values = [loads(value) for value in await self._multi_get(
+            ns_keys, encoding=self.serializer.encoding)]
 
         logger.debug(
             "MULTI_GET %s %d (%.4f)s",
@@ -219,7 +220,7 @@ class BaseCache:
             time.time() - start)
         return values
 
-    async def _multi_get(self, keys):
+    async def _multi_get(self, keys, encoding):
         raise NotImplementedError()
 
     @API.register
@@ -419,6 +420,9 @@ class BaseCache:
         Send the raw command to the underlying client. Note that by using this CMD you
         will lose compatibility with other backends.
 
+        Due to limitations with aiomcache client, args have to be provided as bytes.
+        For rest of backends, str.
+
         :param command: str with the command.
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last. None by default
@@ -426,7 +430,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.time()
-        ret = await self._raw(command, *args, **kwargs)
+        ret = await self._raw(command, *args, encoding=self.serializer.encoding, **kwargs)
         logger.debug("%s (%.4f)s", command, time.time() - start)
         return ret
 

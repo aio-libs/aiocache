@@ -12,7 +12,7 @@ class SimpleMemoryBackend:
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def _get(self, key):
+    async def _get(self, key, encoding="utf-8"):
         """
         Get a value from the cache
 
@@ -21,7 +21,7 @@ class SimpleMemoryBackend:
         """
         return SimpleMemoryBackend._cache.get(key)
 
-    async def _multi_get(self, keys):
+    async def _multi_get(self, keys, encoding="utf-8"):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -138,7 +138,7 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._handlers = {}
         return True
 
-    async def _raw(self, command, *args, **kwargs):
+    async def _raw(self, command, *args, encoding="utf-8", **kwargs):
         """
         Executes a raw command using the underlying dict structure. It's under
         the developer responsibility to send the needed args and kwargs.
