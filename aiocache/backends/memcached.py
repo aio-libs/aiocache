@@ -9,7 +9,8 @@ class MemcachedBackend:
     DEFAULT_ENDPOINT = "127.0.0.1"
     DEFAULT_PORT = 11211
 
-    def __init__(self, endpoint=None, port=None, loop=None, **kwargs):
+    def __init__(self, endpoint=None, port=None,
+                 loop=None, pool_size=2, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = get_cache_value_with_fallbacks(
             endpoint, from_config="endpoint",
@@ -18,7 +19,9 @@ class MemcachedBackend:
             port, from_config="port",
             from_fallback=self.DEFAULT_PORT, cls=self.__class__)
         self._loop = loop or asyncio.get_event_loop()
-        self.client = aiomcache.Client(self.endpoint, self.port, loop=self._loop)
+        self.client = aiomcache.Client(
+            self.endpoint, self.port, loop=self._loop, pool_size=pool_size
+        )
         self.encoding = "utf-8"
 
     async def _get(self, key):
