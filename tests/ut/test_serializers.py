@@ -1,4 +1,8 @@
 import pytest
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 from collections import namedtuple
 
@@ -11,19 +15,21 @@ Dummy = namedtuple("Dummy", "a, b")
 class TestDefaultSerializer:
 
     @pytest.mark.parametrize("obj", [
-        1, True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
     def test_set_types(self, obj):
-        with pytest.raises(TypeError):
-            DefaultSerializer().dumps(obj)
-
-    def test_dumps(self):
-        assert DefaultSerializer().dumps("hi") == "hi"
+        assert DefaultSerializer().dumps(obj) == str(obj)
 
     def test_loads(self):
         assert DefaultSerializer().loads("hi") == "hi"
 
 
 class TestPickleSerializer:
+
+    @pytest.mark.parametrize("obj", [
+        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    def test_set_types(self, obj):
+        serializer = PickleSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
 
     def test_dumps(self):
         assert PickleSerializer().dumps("hi") == b'\x80\x03X\x02\x00\x00\x00hiq\x00.'
@@ -44,6 +50,11 @@ class TestPickleSerializer:
 
 
 class TestJsonSerializer:
+
+    @pytest.mark.parametrize("obj", [
+        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    def test_set_types(self, obj):
+        assert JsonSerializer().dumps(obj) == json.dumps(obj)
 
     def test_dumps(self):
         assert (

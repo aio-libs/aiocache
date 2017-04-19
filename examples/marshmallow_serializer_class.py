@@ -5,6 +5,7 @@ import asyncio
 from marshmallow import fields, Schema, post_load
 
 from aiocache import SimpleMemoryCache
+from aiocache.serializers import DefaultSerializer
 
 
 class RandomModel:
@@ -20,7 +21,7 @@ class RandomModel:
         return self.__dict__ == obj.__dict__
 
 
-class MarshmallowSerializer(Schema):
+class MarshmallowSerializer(Schema, DefaultSerializer):
     int_type = fields.Integer()
     str_type = fields.String()
     dict_type = fields.Dict()

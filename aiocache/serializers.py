@@ -16,11 +16,14 @@ except ImportError:
 
 class DefaultSerializer:
     """
-    Dummy serializer that returns the same value passed both in serialize and
-    deserialize methods.
+    Converts all input values to str. All return values are also str. Be
+    careful because this means that if you store an ``int(1)``, you will get
+    back '1'.
 
-    Supports only str values. If you want to store other python types, coerce them
-    to str or use ``PickleSerializer``/``JsonSerializer``.
+    The transformation is done by just casting to str in the ``dumps`` method.
+
+    If you want to keep python types, use ``PickleSerializer``. ``JsonSerializer``
+    may also be useful to keep type of symple python types.
     """
     encoding = 'utf-8'
 
@@ -28,13 +31,18 @@ class DefaultSerializer:
         super().__init__(*args, **kwargs)
 
     def dumps(self, value):
-        if not isinstance(value, str):
-            raise TypeError(
-                "DefaultSerializer only supports str types, for other types"
-                " check PickleSerializer or JsonSerializer")
-        return value
+        """
+        Serialize the received value casting it to str.
+
+        :param value: obj Anything support cast to str
+        :returns: str
+        """
+        return str(value)
 
     def loads(self, value):
+        """
+        Returns value back without transformations
+        """
         return value
 
 
@@ -67,7 +75,8 @@ class PickleSerializer(DefaultSerializer):
 
 class JsonSerializer(DefaultSerializer):
     """
-    Transform data to json string with json.dumps and json.loads to retrieve it back.
+    Transform data to json string with json.dumps and json.loads to retrieve it back. Check
+    https://docs.python.org/3/library/json.html#py-to-json-table for how types are converted.
     """
 
     def dumps(self, value):
@@ -84,7 +93,7 @@ class JsonSerializer(DefaultSerializer):
         Deserialize value using ``json.loads``.
 
         :param value: str
-        :returns: dict
+        :returns: output of ``json.loads``.
         """
         if value is None:
             return None

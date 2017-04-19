@@ -39,7 +39,7 @@ class RedisBackend:
             from_fallback=self.DEFAULT_POOL_MAX_SIZE, cls=self.__class__)
         self._loop = loop or asyncio.get_event_loop()
 
-    async def _get(self, key):
+    async def _get(self, key, encoding="utf-8"):
         """
         Get a value from the cache
 
@@ -48,9 +48,9 @@ class RedisBackend:
         """
 
         with await self._connect() as redis:
-            return await redis.get(key)
+            return await redis.get(key, encoding=encoding)
 
-    async def _multi_get(self, keys):
+    async def _multi_get(self, keys, encoding="utf-8"):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -58,7 +58,7 @@ class RedisBackend:
         :returns: list of obj for each key found, else if not found
         """
         with await self._connect() as redis:
-            return await redis.mget(*keys)
+            return await redis.mget(*keys, encoding=encoding)
 
     async def _set(self, key, value, ttl=None):
         """
@@ -170,19 +170,21 @@ class RedisBackend:
                 await redis.flushdb()
         return True
 
-    async def _raw(self, command, *args, **kwargs):
+    async def _raw(self, command, *args, encoding="utf-8", **kwargs):
         """
         Executes a raw command using the underlying client of aioredis. It's under
         the developer responsibility to send the needed args and kwargs.
 
         :param command: str command to execute
         """
+        if command in ["get", "mget"]:
+            kwargs["encoding"] = encoding
         with await self._connect() as redis:
             return await getattr(redis, command)(*args, **kwargs)
 
     def get_pool(self):
-        pool_key = "{}{}{}{}{}{}".format(
-            self.endpoint, self.port, getattr(self, "encoding", None),
+        pool_key = "{}{}{}{}{}".format(
+            self.endpoint, self.port,
             self.db, self.password, id(self._loop))
         return pool_key, RedisBackend.pools.get(pool_key)
 
@@ -195,7 +197,7 @@ class RedisBackend:
                 db=self.db,
                 password=self.password,
                 loop=self._loop,
-                encoding=getattr(self, "encoding", None),
+                encoding="utf-8",
                 minsize=self.pool_min_size,
                 maxsize=self.pool_max_size)
             RedisBackend.pools[pool_key] = pool

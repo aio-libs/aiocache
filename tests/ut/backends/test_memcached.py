@@ -92,9 +92,8 @@ class TestMemcachedBackend:
 
     @pytest.mark.asyncio
     async def test_get_no_encoding(self, memcached):
-        memcached.encoding = None
         memcached.client.get.return_value = b"value"
-        assert await memcached._get(pytest.KEY) == b"value"
+        assert await memcached._get(pytest.KEY, encoding=None) == b"value"
         memcached.client.get.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
@@ -119,9 +118,9 @@ class TestMemcachedBackend:
 
     @pytest.mark.asyncio
     async def test_multi_get_no_encoding(self, memcached):
-        memcached.encoding = None
         memcached.client.multi_get.return_value = [b"value", None]
-        assert await memcached._multi_get([pytest.KEY, pytest.KEY_1]) == [b"value", None]
+        assert await memcached._multi_get(
+            [pytest.KEY, pytest.KEY_1], encoding=None) == [b"value", None]
         memcached.client.multi_get.assert_called_with(pytest.KEY, pytest.KEY_1)
 
     @pytest.mark.asyncio
@@ -214,4 +213,13 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_raw(self, memcached):
         await memcached._raw("get", pytest.KEY)
+        await memcached._raw("set", pytest.KEY, 1)
         memcached.client.get.assert_called_with(pytest.KEY)
+        memcached.client.set.assert_called_with(pytest.KEY, 1)
+
+    @pytest.mark.asyncio
+    async def test_raw_bytes(self, memcached):
+        await memcached._raw("set", pytest.KEY, "asd")
+        await memcached._raw("get", pytest.KEY, encoding=None)
+        memcached.client.get.assert_called_with(pytest.KEY)
+        memcached.client.set.assert_called_with(pytest.KEY, "asd")

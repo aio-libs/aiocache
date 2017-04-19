@@ -3,9 +3,10 @@ import asyncio
 import zlib
 
 from aiocache import RedisCache
+from aiocache.serializers import DefaultSerializer
 
 
-class CompressionSerializer:
+class CompressionSerializer(DefaultSerializer):
 
     # This is needed because zlib works with bytes.
     # this way the underlying backend knows how to

@@ -5,7 +5,7 @@ import asynctest
 
 from unittest.mock import patch, MagicMock, ANY
 
-from aiocache import SimpleMemoryCache, MemcachedCache, settings
+from aiocache import SimpleMemoryCache, MemcachedCache, RedisCache, settings
 from aiocache.cache import BaseCache, API
 
 
@@ -129,7 +129,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_get(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache._get(pytest.KEY)
+            await base_cache._get(pytest.KEY, "utf-8")
 
     @pytest.mark.asyncio
     async def test_set(self, base_cache):
@@ -139,7 +139,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_multi_get(self, base_cache):
         with pytest.raises(NotImplementedError):
-            await base_cache._multi_get([pytest.KEY])
+            await base_cache._multi_get([pytest.KEY], encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_multi_set(self, base_cache):
@@ -193,7 +193,7 @@ class TestCache:
     async def test_get(self, mock_cache):
         await mock_cache.get(pytest.KEY)
 
-        mock_cache._get.assert_called_with(mock_cache._build_key(pytest.KEY))
+        mock_cache._get.assert_called_with(mock_cache._build_key(pytest.KEY), encoding=ANY)
         assert mock_cache.plugins[0].pre_get.call_count == 1
         assert mock_cache.plugins[0].post_get.call_count == 1
 
@@ -240,7 +240,7 @@ class TestCache:
         await mock_cache.multi_get([pytest.KEY, pytest.KEY_1])
 
         mock_cache._multi_get.assert_called_with([
-            mock_cache._build_key(pytest.KEY), mock_cache._build_key(pytest.KEY_1)])
+            mock_cache._build_key(pytest.KEY), mock_cache._build_key(pytest.KEY_1)], encoding=ANY)
         assert mock_cache.plugins[0].pre_multi_get.call_count == 1
         assert mock_cache.plugins[0].post_multi_get.call_count == 1
 
@@ -344,7 +344,8 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_raw(self, mock_cache):
         await mock_cache.raw("get", pytest.KEY)
-        mock_cache._raw.assert_called_with("get", mock_cache._build_key(pytest.KEY))
+        mock_cache._raw.assert_called_with(
+            "get", mock_cache._build_key(pytest.KEY), encoding=ANY)
         assert mock_cache.plugins[0].pre_raw.call_count == 1
         assert mock_cache.plugins[0].post_raw.call_count == 1
 
@@ -386,6 +387,16 @@ class TestRedisCache:
 
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
+
+    def test_cache_settings(self):
+        settings.set_cache(
+            RedisCache, endpoint="127.0.0.1", port=6379, timeout=10, db=1)
+        cache = RedisCache(db=0)
+
+        assert cache.endpoint == "127.0.0.1"
+        assert cache.port == 6379
+        assert cache.timeout == 10
+        assert cache.db == 0
 
 
 class TestSimpleMemoryCache:

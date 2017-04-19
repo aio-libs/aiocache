@@ -1,7 +1,7 @@
 import pytest
 import aioredis
 
-from asynctest import CoroutineMock, MagicMock, patch
+from asynctest import CoroutineMock, MagicMock, patch, ANY
 
 from aiocache import settings, RedisCache
 from aiocache.backends import RedisBackend
@@ -111,9 +111,8 @@ class TestRedisBackend:
     def test_get_pool(self):
         redis = RedisBackend()
         pool_key, pool = redis.get_pool()
-        assert pool_key == "{}{}{}{}{}{}".format(
-            redis.endpoint, redis.port, getattr(redis, "encoding", None),
-            redis.db, redis.password, id(redis._loop))
+        assert pool_key == "{}{}{}{}{}".format(
+            redis.endpoint, redis.port, redis.db, redis.password, id(redis._loop))
 
     @pytest.mark.asyncio
     async def test_connect_with_pool(self):
@@ -134,7 +133,7 @@ class TestRedisBackend:
                 db=redis.db,
                 password=redis.password,
                 loop=redis._loop,
-                encoding=getattr(redis, "encoding", None),
+                encoding="utf-8",
                 minsize=redis.pool_min_size,
                 maxsize=redis.pool_max_size)
 
@@ -151,7 +150,7 @@ class TestRedisBackend:
     async def test_get(self, redis):
         cache, pool = redis
         await cache._get(pytest.KEY)
-        pool.client.get.assert_called_with(pytest.KEY)
+        pool.client.get.assert_called_with(pytest.KEY, encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_set(self, redis):
@@ -166,7 +165,7 @@ class TestRedisBackend:
     async def test_multi_get(self, redis):
         cache, pool = redis
         await cache._multi_get([pytest.KEY, pytest.KEY_1])
-        pool.client.mget.assert_called_with(pytest.KEY, pytest.KEY_1)
+        pool.client.mget.assert_called_with(pytest.KEY, pytest.KEY_1, encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_multi_set(self, redis):
@@ -255,4 +254,6 @@ class TestRedisBackend:
     async def test_raw(self, redis):
         cache, pool = redis
         await cache._raw("get", pytest.KEY)
-        pool.client.get.assert_called_with(pytest.KEY)
+        await cache._raw("set", pytest.KEY, 1)
+        pool.client.get.assert_called_with(pytest.KEY, encoding=ANY)
+        pool.client.set.assert_called_with(pytest.KEY, 1)
