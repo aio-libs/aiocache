@@ -26,7 +26,7 @@ settings.set_config({
 })
 
 
-async def alt_cache():
+async def default_cache():
     cache = caches['default']   # This always returns the same instance
     await cache.set("key", "value")
 
@@ -35,7 +35,7 @@ async def alt_cache():
     assert isinstance(cache.serializer, DefaultSerializer)
 
 
-async def default_cache():
+async def alt_cache():
     cache = caches['redis_alt']   # This always returns the same instance
     await cache.set("key", "value")
 

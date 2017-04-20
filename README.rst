@@ -20,16 +20,16 @@ The asyncio cache that implements multiple backends.
 
 This library aims for simplicity over specialization. All caches contain the same minimum interface which consists on the following functions:
 
-  - ``add``: Only adds key/value if key does not exist. Otherwise raises ValueError.
-  - ``get``: Retrieve value identified by key.
-  - ``set``: Sets key/value.
-  - ``multi_get``: Retrieves multiple key/values.
-  - ``multi_set``: Sets multiple key/values.
-  - ``exists``: Returns True if key exists False otherwise.
-  - ``increment``: Increment the value stored in the given key.
-  - ``delete``: Deletes key and returns number of deleted items.
-  - ``clear``: Clears the items stored.
-  - ``raw``: Executes the specified command using the underlying client.
+- ``add``: Only adds key/value if key does not exist.
+- ``get``: Retrieve value identified by key.
+- ``set``: Sets key/value.
+- ``multi_get``: Retrieves multiple key/values.
+- ``multi_set``: Sets multiple key/values.
+- ``exists``: Returns True if key exists False otherwise.
+- ``increment``: Increment the value stored in the given key.
+- ``delete``: Deletes key and returns number of deleted items.
+- ``clear``: Clears the items stored.
+- ``raw``: Executes the specified command using the underlying client.
 
 
 Installing
@@ -63,6 +63,7 @@ You can also setup cache aliases like in Django settings:
   from aiocache import settings, caches, SimpleMemoryCache, RedisCache
   from aiocache.serializers import DefaultSerializer, PickleSerializer
 
+  # You can use either classes or strings for referencing classes
   settings.set_config({
       'default': {
           'cache': "aiocache.SimpleMemoryCache",
@@ -86,7 +87,7 @@ You can also setup cache aliases like in Django settings:
   })
 
 
-  async def alt_cache():
+  async def default_cache():
       cache = caches['default']   # This always returns the same instance
       await cache.set("key", "value")
 
@@ -95,7 +96,7 @@ You can also setup cache aliases like in Django settings:
       assert isinstance(cache.serializer, DefaultSerializer)
 
 
-  async def default_cache():
+  async def alt_cache():
       cache = caches['redis_alt']   # This always returns the same instance
       await cache.set("key", "value")
 
@@ -122,15 +123,15 @@ You can also setup cache aliases like in Django settings:
 
 In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ you can check different use cases:
 
+- `Integrations with frameworks like Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
+- `Storing a python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
+- `Creating a custom serializer class that compresses data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
+- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
+- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
 - `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
 - `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
 - `Configuring cache class default args <https://github.com/argaen/aiocache/blob/master/examples/config_default_cache.py>`_
 - `Simple LRU plugin for memory <https://github.com/argaen/aiocache/blob/master/examples/lru_plugin.py>`_
-- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
-- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
-- `Storing a python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
-- `Creating a custom serializer class that compresses data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
-- `Integrations with frameworks like Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
 
 
 
