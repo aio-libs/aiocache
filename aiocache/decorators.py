@@ -1,12 +1,17 @@
 import inspect
 
-from aiocache.utils import get_cache
 from aiocache.log import logger
+from aiocache import SimpleMemoryCache
+
+
+def _get_cache(
+        cache=SimpleMemoryCache, serializer=None, plugins=None, **cache_kwargs):
+    return cache(serializer=serializer, plugins=plugins, **cache_kwargs)
 
 
 def cached(
-        ttl=0, key=None, key_from_attr=None, cache=None, serializer=None,
-        plugins=None, noself=False, **kwargs):
+        ttl=0, key=None, key_from_attr=None, cache=SimpleMemoryCache,
+        serializer=None, plugins=None, noself=False, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -20,20 +25,20 @@ def cached(
         + function_name + args + kwargs
     :param key_from_attr: arg or kwarg name from the function to use as a key.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
-        Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
+        Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
+        Default is pulled from the cache class being used.
     :param plugins: plugins to use when calling the cmd hooks
-        Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
-    :param noself: if you are decorating a class function, self is also used for generating the
-        key. This will result in same function calls done by different class instances to use
-        different cache keys. Use noself=True if you want to ignore the class instance.
+        Default is pulled from the cache class being used.
+    :param noself: if you are decorating a class function, by default self is also used to generate
+        the key. This will result in same function calls done by different class instances to use
+        different cache keys. Use noself=True if you want to ignore it.
     """
     cache_kwargs = kwargs
 
     def cached_decorator(func):
         async def wrapper(*args, **kwargs):
-            cache_instance = get_cache(
+            cache_instance = _get_cache(
                 cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             args_dict = _get_args_dict(func, args, kwargs)
             cache_key = key or args_dict.get(
@@ -62,7 +67,7 @@ def cached(
 
 
 def multi_cached(
-        keys_from_attr, key_builder=None, ttl=0, cache=None,
+        keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
         serializer=None, plugins=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
@@ -80,18 +85,18 @@ def multi_cached(
         Receives a dict with all the args of the function.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
-        Default is the one configured in ``aiocache.settings.DEFAULT_CACHE``
+        Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is the one configured in ``aiocache.settings.DEFAULT_SERIALIZER``
+        Default is pulled from the cache class being used.
     :param plugins: plugins to use when calling the cmd hooks
-        Default is the one configured in ``aiocache.settings.DEFAULT_PLUGINS``
+        Default is pulled from the cache class being used.
     """
     key_builder = key_builder or (lambda x, args_dict: x)
     cache_kwargs = kwargs
 
     def multi_cached_decorator(func):
         async def wrapper(*args, **kwargs):
-            cache_instance = get_cache(
+            cache_instance = _get_cache(
                 cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             partial_result = {}
             args_dict = _get_args_dict(func, args, kwargs)

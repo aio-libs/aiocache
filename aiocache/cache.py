@@ -3,8 +3,7 @@ import time
 import functools
 import asyncio
 
-from aiocache import settings
-from aiocache.utils import get_cache_value_with_fallbacks
+from aiocache import serializers
 from aiocache.log import logger
 from aiocache.backends import SimpleMemoryBackend, RedisBackend, MemcachedBackend
 
@@ -81,36 +80,31 @@ class BaseCache:
     Base class that agregates the common logic for the different caches that may exist. Cache
     related available options are:
 
-    :param serializer: obj with :class:`aiocache.serializers.DefaultSerializer` interface.
-    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`. Default is
+        :class:`aiocache.serializers.DefaultSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes. Default is empty
+        list.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend.
+        the backend. Default is None
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     """
     DEFAULT_TIMEOUT = 5
+    DEFAULT_NAMESPACE = None
+    DEFAULT_SERIALIZER = serializers.DefaultSerializer()
+    DEFAULT_PLUGINS = []
 
-    def __init__(self, serializer=None, plugins=None, namespace=None, timeout=None):
-        self.timeout = get_cache_value_with_fallbacks(
-            timeout, from_config="timeout",
-            from_fallback=self.DEFAULT_TIMEOUT, cls=self.__class__)
-        self.namespace = get_cache_value_with_fallbacks(
-            namespace, from_config="namespace",
-            from_fallback=namespace, cls=self.__class__)
+    def __init__(
+            self, serializer=None, plugins=None,
+            namespace=None, timeout=None):
+        self.timeout = timeout if timeout is not None else self.DEFAULT_TIMEOUT
+        self.namespace = namespace if namespace is not None else self.DEFAULT_NAMESPACE
 
         self._serializer = None
-        self.serializer = serializer or self.get_default_serializer()
+        self.serializer = serializer if serializer is not None else self.DEFAULT_SERIALIZER
 
         self._plugins = None
-        self.plugins = plugins or self.get_default_plugins()
-
-    @classmethod
-    def get_default_serializer(cls):
-        return settings.get_serializer_class()()
-
-    @classmethod
-    def get_default_plugins(cls):
-        return [plugin(**config) for plugin, config in settings._PLUGINS]
+        self.plugins = plugins if plugins is not None else self.DEFAULT_PLUGINS
 
     @property
     def serializer(self):
@@ -127,6 +121,15 @@ class BaseCache:
     @plugins.setter
     def plugins(self, value):
         self._plugins = value
+
+    @classmethod
+    def set_defaults(
+            cls, timeout=DEFAULT_TIMEOUT, namespace=DEFAULT_NAMESPACE,
+            serializer=DEFAULT_SERIALIZER, plugins=None):
+        cls.DEFAULT_TIMEOUT = timeout
+        cls.DEFAULT_NAMESPACE = namespace
+        cls.DEFAULT_SERIALIZER = serializer
+        cls.DEFAULT_PLUGINS = plugins or []
 
     @API.register
     @API.aiocache_enabled(fake_return=True)
@@ -314,7 +317,7 @@ class BaseCache:
         raise NotImplementedError()
 
     @API.register
-    @API.aiocache_enabled(fake_return=0)
+    @API.aiocache_enabled(fake_return=False)
     @API.timeout
     @API.plugins
     async def exists(self, key, namespace=None):
@@ -454,10 +457,10 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
 
     Config options are:
 
-    :param serializer: obj with :class:`aiocache.serializers.DefaultSerializer` interface.
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend.
+        the backend. Default is None.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """
@@ -470,22 +473,22 @@ class RedisCache(RedisBackend, BaseCache):
     :class:`aiocache.backends.RedisBackend` cache implementation with the
     following components as defaults:
       - serializer: :class:`aiocache.serializers.DefaultSerializer`
-      - plugins: None
+      - plugins: []
 
     Config options are:
 
-    :param serializer: obj with :class:`aiocache.serializers.DefaultSerializer` interface.
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend.
+        the backend. Default is None.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
-    :param endpoint: str with the endpoint to connect to
-    :param port: int with the port to connect to
-    :param db: int indicating database to use
-    :param password: str indicating password to use
-    :param pool_min_size: int minimum pool size for the redis connections pool
-    :param pool_max_size: int maximum pool size for the redis connections pool
+    :param endpoint: str with the endpoint to connect to. Default is "127.0.0.1".
+    :param port: int with the port to connect to. Default is 6379.
+    :param db: int indicating database to use. Default is 0.
+    :param password: str indicating password to use. Default is None.
+    :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
+    :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -506,19 +509,19 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     :class:`aiocache.backends.MemcachedCache` cache implementation with the following
     components as defaults:
       - serializer: :class:`aiocache.serializers.DefaultSerializer`
-      - plugins: None
+      - plugins: []
 
     Config options are:
 
-    :param serializer: obj with :class:`aiocache.serializers.DefaultSerializer` interface.
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend.
+        the backend. Default is None
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
-    :param endpoint: str with the endpoint to connect to
-    :param port: int with the port to connect to
-    :param pool_size: int size for memcached connections pool
+    :param endpoint: str with the endpoint to connect to. Default is 127.0.0.1.
+    :param port: int with the port to connect to. Default is 11211.
+    :param pool_size: int size for memcached connections pool. Default is 2.
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

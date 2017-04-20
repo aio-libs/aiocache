@@ -7,6 +7,8 @@ from unittest.mock import patch, MagicMock, ANY
 
 from aiocache import SimpleMemoryCache, MemcachedCache, RedisCache, settings
 from aiocache.cache import BaseCache, API
+from aiocache.serializers import PickleSerializer, DefaultSerializer
+from aiocache.plugins import HitMissRatioPlugin
 
 
 class TestAPI:
@@ -117,10 +119,36 @@ class TestAPI:
 
 
 class TestBaseCache:
-    """
-    Tests that the client calls do nothing. If a BaseCache is instantiated, it must not interact
-    with the underlying storage.
-    """
+
+    @pytest.fixture(autouse=True)
+    def reset_basecache(self):
+        BaseCache.set_defaults()
+
+    def test_set_defaults(self):
+        serializer = PickleSerializer()
+        plugins = [HitMissRatioPlugin()]
+        BaseCache.set_defaults(
+            timeout=6,
+            namespace="test",
+            serializer=serializer,
+            plugins=plugins
+        )
+        base_cache = BaseCache()
+
+        assert base_cache.timeout == 6
+        assert base_cache.namespace == "test"
+        assert base_cache.serializer == serializer
+        assert base_cache.plugins == plugins
+
+    def test_reset_defaults(self):
+        BaseCache.set_defaults()
+        base_cache = BaseCache()
+
+        assert base_cache.timeout == 5
+        assert base_cache.namespace is None
+        assert isinstance(base_cache.serializer, DefaultSerializer)
+        assert base_cache.plugins == []
+
     @pytest.mark.asyncio
     async def test_add(self, base_cache):
         with pytest.raises(NotImplementedError):
@@ -175,6 +203,20 @@ class TestBaseCache:
     async def test_raw(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache._raw("get", pytest.KEY)
+
+    @pytest.fixture
+    def set_test_namespace(self):
+        BaseCache.set_defaults(namespace="test")
+        yield
+        BaseCache.set_defaults()
+
+    @pytest.mark.parametrize("namespace, expected", (
+        [None, "test" + pytest.KEY],
+        ["", pytest.KEY],
+        ["my_ns", "my_ns" + pytest.KEY],)
+    )
+    def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
+        assert base_cache._build_key(pytest.KEY, namespace=namespace) == expected
 
 
 class TestCache:
@@ -356,26 +398,17 @@ class TestCache:
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.raw("clear")
 
-    @pytest.fixture
-    def set_test_namespace(self):
-        settings._CACHE_KWARGS = {"namespace": "test"}
-
-    @pytest.mark.parametrize("namespace, expected", (
-        [None, "test" + pytest.KEY],
-        ["", pytest.KEY],
-        ["my_ns", "my_ns" + pytest.KEY],)
-    )
-    def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
-        assert base_cache._build_key(pytest.KEY, namespace=namespace) == expected
-
 
 class TestRedisCache:
 
-    @pytest.fixture(autouse=True)
-    def redis_defaults(self):
-        settings.set_cache("aiocache.RedisCache")
+    @pytest.fixture
+    def set_test_namespace(self):
+        RedisCache.set_defaults(namespace="test")
         yield
-        settings.set_cache("aiocache.SimpleMemoryCache")
+        RedisCache.set_defaults()
+
+    def test_inheritance(self):
+        assert isinstance(RedisCache(), BaseCache)
 
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test:" + pytest.KEY],
@@ -389,8 +422,8 @@ class TestRedisCache:
         assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
 
     def test_cache_settings(self):
-        settings.set_cache(
-            RedisCache, endpoint="127.0.0.1", port=6379, timeout=10, db=1)
+        RedisCache.set_defaults(
+            endpoint="127.0.0.1", port=6379, timeout=10, db=1)
         cache = RedisCache(db=0)
 
         assert cache.endpoint == "127.0.0.1"
@@ -407,11 +440,11 @@ class TestSimpleMemoryCache:
 
 class TestMemcachedCache:
 
-    @pytest.fixture(autouse=True)
-    def memcached_defaults(self):
-        settings.set_cache("aiocache.MemcachedCache")
+    @pytest.fixture
+    def set_test_namespace(self):
+        MemcachedCache.set_defaults(namespace="test")
         yield
-        settings.set_cache("aiocache.MemcachedCache")
+        MemcachedCache.set_defaults()
 
     def test_inheritance(self):
         assert isinstance(MemcachedCache(), BaseCache)

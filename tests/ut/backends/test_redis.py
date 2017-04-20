@@ -3,22 +3,7 @@ import aioredis
 
 from asynctest import CoroutineMock, MagicMock, patch, ANY
 
-from aiocache import settings, RedisCache
 from aiocache.backends import RedisBackend
-
-
-@pytest.fixture
-def set_settings():
-    settings.set_cache(
-        RedisCache,
-        endpoint="endpoint",
-        port="port",
-        password="pass",
-        db=2,
-        pool_min_size=2,
-        pool_max_size=20
-    )
-    yield
 
 
 class FakePool:
@@ -55,6 +40,11 @@ def redis(event_loop):
     yield redis, pool
 
 
+@pytest.fixture(autouse=True)
+def reset_redis():
+    RedisBackend.set_defaults()
+
+
 class TestRedisBackend:
 
     def test_setup(self):
@@ -76,43 +66,41 @@ class TestRedisBackend:
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
-    def test_setup_default_settings(self, set_settings):
-        redis_backend = RedisBackend()
-
-        assert redis_backend.endpoint == "endpoint"
-        assert redis_backend.port == "port"
-        assert redis_backend.db == 2
-        assert redis_backend.password == "pass"
-
-    def test_setup_default_settings_kwargs_override(self, set_settings):
-        redis_backend = RedisBackend(
-            endpoint="a",
-            port=123,
-            db=1,
-            pool_min_size=5,
-            pool_max_size=6)
-
-        assert redis_backend.endpoint == "a"
-        assert redis_backend.port == 123
-        assert redis_backend.db == 1
-        assert redis_backend.password == "pass"
-        assert redis_backend.pool_min_size == 5
-        assert redis_backend.pool_max_size == 6
-
-    def test_setup_default_ignored_wrong_class(self, set_settings):
-        settings._CACHE = str
-
-        redis_backend = RedisBackend()
-        assert redis_backend.endpoint == "127.0.0.1"
-        assert redis_backend.port == 6379
-        assert redis_backend.db == 0
-        assert redis_backend.password is None
-
     def test_get_pool(self):
         redis = RedisBackend()
         pool_key, pool = redis.get_pool()
         assert pool_key == "{}{}{}{}{}".format(
             redis.endpoint, redis.port, redis.db, redis.password, id(redis._loop))
+
+    def test_set_defaults(self):
+        RedisBackend.set_defaults(
+            endpoint="127.0.0.10",
+            port=11212,
+            password="pass",
+            db=2,
+            pool_min_size=3,
+            pool_max_size=11
+        )
+
+        redis = RedisBackend()
+
+        assert redis.endpoint == "127.0.0.10"
+        assert redis.port == 11212
+        assert redis.password == "pass"
+        assert redis.db == 2
+        assert redis.pool_min_size == 3
+        assert redis.pool_max_size == 11
+
+    def test_reset_defaults(self):
+        RedisBackend.set_defaults()
+        redis = RedisBackend()
+
+        assert redis.endpoint == "127.0.0.1"
+        assert redis.port == 6379
+        assert redis.password is None
+        assert redis.db == 0
+        assert redis.pool_min_size == 1
+        assert redis.pool_max_size == 10
 
     @pytest.mark.asyncio
     async def test_connect_with_pool(self):

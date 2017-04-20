@@ -3,7 +3,9 @@
 Serializers
 ===========
 
-Serializers can be attached to backends in order to serialize/deserialize data sent and retrieved from the backend. To use a specific serializer::
+Serializers can be attached to backends in order to serialize/deserialize data sent and retrieved from the backend. This allows to apply transformations to data in case you want it to be saved in a specific format in your cache backend. For example, imagine you have your ``Model`` and want to serialize it to something that Redis can understand (Redis can't store python objects). This is the task of a serializer.
+
+To use a specific serializer::
 
     >>> from aiocache import SimpleMemoryCache
     >>> from aiocache.serializers import PickleSerializer
@@ -11,8 +13,8 @@ Serializers can be attached to backends in order to serialize/deserialize data s
 
 Currently the following are built in:
 
-- DefaultSerializer: ideal for storing str values.
-- PickleSerializer: ideal for storing any Python object.
+- DefaultSerializer: stores data casting it to str. Won't return the same type if the data stored is not a str.
+- PickleSerializer: ideal for storing any Python object or keeping types.
 - JsonSerializer: ideal for storing in json format.
 
 In case the current serializers are not covering your needs, you can always define your custom serializer as shown in ``examples/serializer_class.py``:

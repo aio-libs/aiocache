@@ -6,8 +6,9 @@ import asynctest
 from unittest import mock
 
 from aiocache import cached, multi_cached, SimpleMemoryCache
-from aiocache.decorators import _get_args_dict
+from aiocache.decorators import _get_args_dict, _get_cache
 from aiocache.backends import SimpleMemoryBackend
+from aiocache.serializers import DefaultSerializer
 
 
 async def return_dict(keys=None):
@@ -48,7 +49,7 @@ class TestCachedDecorator:
 
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, memory_mock_cache):
-        mocker.patch("aiocache.decorators.get_cache", return_value=memory_mock_cache)
+        mocker.patch("aiocache.decorators._get_cache", return_value=memory_mock_cache)
 
     @pytest.mark.asyncio
     async def test_cached_ttl(self, mocker, memory_mock_cache):
@@ -170,7 +171,7 @@ class TestMultiCachedDecorator:
 
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, memory_mock_cache):
-        mocker.patch("aiocache.decorators.get_cache", return_value=memory_mock_cache)
+        mocker.patch("aiocache.decorators._get_cache", return_value=memory_mock_cache)
 
     @pytest.mark.asyncio
     async def test_multi_cached(self, mocker, memory_mock_cache):
@@ -292,3 +293,11 @@ def test_get_args_dict():
     assert _get_args_dict(arg_return_dict, args, {'dummy': 'dummy'}) == \
         {'dummy': 'dummy', 'keys': {'a', 'b'}}
     assert _get_args_dict(arg_return_dict, [], {'dummy': 'dummy'}) == {'dummy': 'dummy'}
+
+
+def test_get_cache():
+
+    cache = _get_cache(SimpleMemoryCache, serializer=DefaultSerializer())
+
+    assert isinstance(cache, SimpleMemoryCache)
+    assert isinstance(cache.serializer, DefaultSerializer)
