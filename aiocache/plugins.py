@@ -25,7 +25,7 @@ BasePlugin.add_hook(
 
 class TimingPlugin(BasePlugin):
     """
-    Calculates average, min and max times each command took. The data is saved
+    Calculates average, min and max times each command takes. The data is saved
     in the cache class as a dict attribute called ``profiling``. For example, to
     access the average time of the operation get, you can do ``cache.profiling['get_avg']``
     """

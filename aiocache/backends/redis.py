@@ -2,8 +2,6 @@ import asyncio
 import itertools
 import aioredis
 
-from aiocache.utils import get_cache_value_with_fallbacks
-
 
 class RedisBackend:
 
@@ -16,28 +14,34 @@ class RedisBackend:
     DEFAULT_POOL_MAX_SIZE = 10
 
     def __init__(
-            self, endpoint=None, port=None, db=None,
-            password=None, loop=None, pool_min_size=None, pool_max_size=None, **kwargs):
+            self, endpoint=None, port=None, db=None, password=None, pool_min_size=None,
+            pool_max_size=None, loop=None, **kwargs):
         super().__init__(**kwargs)
-        self.endpoint = get_cache_value_with_fallbacks(
-            endpoint, from_config="endpoint",
-            from_fallback=self.DEFAULT_ENDPOINT, cls=self.__class__)
-        self.port = get_cache_value_with_fallbacks(
-            port, from_config="port",
-            from_fallback=self.DEFAULT_PORT, cls=self.__class__)
-        self.db = get_cache_value_with_fallbacks(
-            db, from_config="db",
-            from_fallback=self.DEFAULT_DB, cls=self.__class__)
-        self.password = get_cache_value_with_fallbacks(
-            password, from_config="password",
-            from_fallback=self.DEFAULT_PASSWORD, cls=self.__class__)
-        self.pool_min_size = get_cache_value_with_fallbacks(
-            pool_min_size, from_config="pool_min_size",
-            from_fallback=self.DEFAULT_POOL_MIN_SIZE, cls=self.__class__)
-        self.pool_max_size = get_cache_value_with_fallbacks(
-            pool_max_size, from_config="pool_max_size",
-            from_fallback=self.DEFAULT_POOL_MAX_SIZE, cls=self.__class__)
+        self.endpoint = endpoint if endpoint is not None else self.DEFAULT_ENDPOINT
+        self.port = port if port is not None else self.DEFAULT_PORT
+        self.db = db if db is not None else self.DEFAULT_DB
+        self.password = password if password is not None else self.DEFAULT_PASSWORD
+        self.pool_min_size = pool_min_size if pool_min_size is not None \
+            else self.DEFAULT_POOL_MIN_SIZE
+        self.pool_max_size = pool_max_size if pool_max_size is not None \
+            else self.DEFAULT_POOL_MAX_SIZE
         self._loop = loop or asyncio.get_event_loop()
+
+    @classmethod
+    def set_defaults(
+            cls, endpoint=DEFAULT_ENDPOINT, port=DEFAULT_PORT, db=DEFAULT_DB,
+            password=DEFAULT_PASSWORD, pool_min_size=DEFAULT_POOL_MIN_SIZE,
+            pool_max_size=DEFAULT_POOL_MAX_SIZE, **kwargs):
+        try:
+            super().set_defaults(**kwargs)
+        except AttributeError:
+            pass
+        cls.DEFAULT_ENDPOINT = endpoint
+        cls.DEFAULT_PORT = port
+        cls.DEFAULT_DB = db
+        cls.DEFAULT_PASSWORD = password
+        cls.DEFAULT_POOL_MAX_SIZE = pool_max_size
+        cls.DEFAULT_POOL_MIN_SIZE = pool_min_size
 
     async def _get(self, key, encoding="utf-8"):
         """

@@ -1,26 +1,32 @@
 import asyncio
-import aiocache
 
 from collections import namedtuple
 
 from aiocache import cached, RedisCache
+from aiocache.serializers import PickleSerializer
 
 Result = namedtuple('Result', "content, status")
 
-aiocache.settings.set_cache("aiocache.RedisCache")
-aiocache.settings.set_serializer("aiocache.serializers.PickleSerializer")
+RedisCache.set_defaults(
+    namespace="main",
+    db=1,
+    pool_min_size=3,
+    serializer=PickleSerializer())
 
 
-@cached(ttl=10, key="key", namespace="main")
+@cached(cache=RedisCache, ttl=10, key="key")
 async def decorator():
     return Result("content", 200)
 
 
 async def global_cache():
-    obj = await RedisCache(namespace="main").get("key")
+    cache = RedisCache()
+    obj = await cache.get("key")
 
     assert obj.content == "content"
     assert obj.status == 200
+    assert cache.db == 1
+    assert cache.pool_min_size == 3
 
 
 def test_default_cache():

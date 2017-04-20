@@ -17,13 +17,12 @@ def pytest_namespace():
 @pytest.fixture(autouse=True)
 def reset_settings():
     settings.set_config({
-        "CACHE": {
-            "class": "aiocache.SimpleMemoryCache",
-        },
-        "SERIALIZER": {
-            "class": "aiocache.serializers.DefaultSerializer",
-        },
-        "PLUGINS": []
+        'default': {
+            'cache': "aiocache.SimpleMemoryCache",
+            'serializer': {
+                'class': "aiocache.serializers.DefaultSerializer"
+            }
+        }
     })
 
 

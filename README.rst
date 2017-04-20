@@ -18,19 +18,120 @@ aiocache
 
 The asyncio cache that implements multiple backends.
 
-This library aims for simplicity over specialization. It provides a common interface for all caches which allows to store any python object. The operations supported by all backends are:
+This library aims for simplicity over specialization. All caches contain the same minimum interface which consists on the following functions:
 
-- ``add``
-- ``get``
-- ``set``
-- ``multi_get``
-- ``multi_set``
-- ``delete``
-- ``exists``
-- ``increment``
-- ``expire``
-- ``clear``
-- ``raw``: Sends raw command to the underlying client
+  - ``add``: Only adds key/value if key does not exist. Otherwise raises ValueError.
+  - ``get``: Retrieve value identified by key.
+  - ``set``: Sets key/value.
+  - ``multi_get``: Retrieves multiple key/values.
+  - ``multi_set``: Sets multiple key/values.
+  - ``exists``: Returns True if key exists False otherwise.
+  - ``increment``: Increment the value stored in the given key.
+  - ``delete``: Deletes key and returns number of deleted items.
+  - ``clear``: Clears the items stored.
+  - ``raw``: Executes the specified command using the underlying client.
+
+
+Installing
+----------
+
+Do ``pip install aiocache``.
+
+
+Usage
+-----
+
+Using a cache is as simple as
+
+.. code-block:: python
+
+    >>> import asyncio
+    >>> loop = asyncio.get_event_loop()
+    >>> from aiocache import SimpleMemoryCache
+    >>> cache = SimpleMemoryCache()
+    >>> loop.run_until_complete(cache.set('key', 'value'))
+    True
+    >>> loop.run_until_complete(cache.get('key'))
+    'value'
+
+You can also setup cache aliases like in Django settings:
+
+.. code-block:: python
+
+  import asyncio
+
+  from aiocache import settings, caches, SimpleMemoryCache, RedisCache
+  from aiocache.serializers import DefaultSerializer, PickleSerializer
+
+  settings.set_config({
+      'default': {
+          'cache': "aiocache.SimpleMemoryCache",
+          'serializer': {
+              'class': "aiocache.serializers.DefaultSerializer"
+          }
+      },
+      'redis_alt': {
+          'cache': "aiocache.RedisCache",
+          'endpoint': "127.0.0.1",
+          'port': 6379,
+          'timeout': 1,
+          'serializer': {
+              'class': "aiocache.serializers.PickleSerializer"
+          },
+          'plugins': [
+              {'class': "aiocache.plugins.HitMissRatioPlugin"},
+              {'class': "aiocache.plugins.TimingPlugin"}
+          ]
+      }
+  })
+
+
+  async def alt_cache():
+      cache = caches['default']   # This always returns the same instance
+      await cache.set("key", "value")
+
+      assert await cache.get("key") == "value"
+      assert isinstance(cache, SimpleMemoryCache)
+      assert isinstance(cache.serializer, DefaultSerializer)
+
+
+  async def default_cache():
+      cache = caches['redis_alt']   # This always returns the same instance
+      await cache.set("key", "value")
+
+      assert await cache.get("key") == "value"
+      assert isinstance(cache, RedisCache)
+      assert isinstance(cache.serializer, PickleSerializer)
+      assert len(cache.plugins) == 2
+      assert cache.endpoint == "127.0.0.1"
+      assert cache.timeout == 1
+      assert cache.port == 6379
+
+
+  def test_alias():
+      loop = asyncio.get_event_loop()
+      loop.run_until_complete(default_cache())
+      loop.run_until_complete(alt_cache())
+
+      loop.run_until_complete(RedisCache().delete("key"))
+
+
+  if __name__ == "__main__":
+      test_alias()
+
+
+In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ you can check different use cases:
+
+- `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
+- `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
+- `Configuring cache class default args <https://github.com/argaen/aiocache/blob/master/examples/config_default_cache.py>`_
+- `Simple LRU plugin for memory <https://github.com/argaen/aiocache/blob/master/examples/lru_plugin.py>`_
+- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
+- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
+- `Storing a python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
+- `Creating a custom serializer class that compresses data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
+- `Integrations with frameworks like Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
+
 
 
 How does it work
@@ -53,83 +154,14 @@ Those 3 entities combine during some of the cache operations to apply the desire
   :align: center
 
 
-Usage
------
-
-Install the package with ``pip install aiocache``.
-
-simple redis
-~~~~~~~~~~~~
-
-.. code-block:: python
-
-  import asyncio
-
-  from aiocache import RedisCache
-
-
-  cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
-
-
-  async def redis():
-      await cache.set("key", "value")
-      await cache.set("expire_me", "value", ttl=10)
-
-      assert await cache.get("key") == "value"
-      assert await cache.get("expire_me") == "value"
-      assert await cache.raw("ttl", "main:expire_me") > 0
-
-
-  def test_redis():
-      loop = asyncio.get_event_loop()
-      loop.run_until_complete(redis())
-      loop.run_until_complete(cache.delete("key"))
-      loop.run_until_complete(cache.delete("expire_me"))
-
-
-  if __name__ == "__main__":
-      test_redis()
-
-
-cached decorator
-~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-  import asyncio
-
-  from collections import namedtuple
-
-  from aiocache import cached, RedisCache
-  from aiocache.serializers import PickleSerializer
-
-  Result = namedtuple('Result', "content, status")
-
-
-  @cached(ttl=10, cache=RedisCache, serializer=PickleSerializer())
-  async def async_main():
-      print("First ASYNC non cached call...")
-      await asyncio.sleep(1)
-      return Result("content", 200)
-
-
-  if __name__ == "__main__":
-      loop = asyncio.get_event_loop()
-      print(loop.run_until_complete(async_main()))
-      print(loop.run_until_complete(async_main()))
-      print(loop.run_until_complete(async_main()))
-      print(loop.run_until_complete(async_main()))
-
-The decorator by default will use the ``SimpleMemoryCache`` backend and the ``DefaultSerializer``. If you want to use a different backend, you can call it with ``cached(ttl=10, cache=RedisCache)``. Also, if you want to use a specific serializer just use ``cached(ttl=10, serializer=DefaultSerializer())``
-
-
 Documentation
 -------------
 
-- `Usage <http://aiocache.readthedocs.io/en/latest/usage.html>`_
+- `Usage <http://aiocache.readthedocs.io/en/latest>`_
 - `Caches <http://aiocache.readthedocs.io/en/latest/caches.html>`_
 - `Serializers <http://aiocache.readthedocs.io/en/latest/serializers.html>`_
 - `Plugins <http://aiocache.readthedocs.io/en/latest/plugins.html>`_
+- `Configuration <http://aiocache.readthedocs.io/en/latest/configuration.html>`_
 - `Decorators <http://aiocache.readthedocs.io/en/latest/decorators.html>`_
 - `Testing <http://aiocache.readthedocs.io/en/latest/testing.html>`_
 - `Examples <https://github.com/argaen/aiocache/tree/master/examples>`_

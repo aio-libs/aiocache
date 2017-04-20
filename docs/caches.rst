@@ -21,7 +21,9 @@ Let's go with a more specific case. Let's pick Redis as the cache with namespace
 #. the byte array is stored together with the key using ``set`` cmd in Redis.
 #. Hook ``post_set`` of all attached plugins is called.
 
-The supported operations are:
+By default, all commands are covered by a timeout that will trigger an ``asyncio.TimeoutError`` in case of timeout. Timeout can be set at instance level or when calling the command.
+
+The supported commands are:
 
   - add
   - get
@@ -35,9 +37,7 @@ The supported operations are:
   - clear
   - raw
 
-If you feel a method is really missing here do not hesitate to open an issue in github.
-
-By default, all commands are covered by a timeout that will trigger an ``asyncio.TimeoutError`` in case of timeout. Timeout can be set at instance level or when calling the command.
+If you feel a command is missing here do not hesitate to `open an issue <https://github.com/argaen/aiocache/issues>`_
 
 
 ..  _basecache:
