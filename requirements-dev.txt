@@ -1,2 +1,2 @@
 sphinx-autobuild==0.6.0
-gitchangelog==3.0.1
+gitchangelog==3.0.2
