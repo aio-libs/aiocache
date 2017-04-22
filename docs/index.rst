@@ -14,10 +14,10 @@ Installing
 
 If you don't need redis or memcached support, you can install as follows:
 
-```
-AIOCACHE_REDIS=no pip install aiocache       # Don't install redis client (aioredis)
-AIOCACHE_MEMCACHED=no pip install aiocache   # Don't install memcached client (aiomcache)
-```
+.. code-block:: python
+
+    AIOCACHE_REDIS=no pip install aiocache       # Don't install redis client (aioredis)
+    AIOCACHE_MEMCACHED=no pip install aiocache   # Don't install memcached client (aiomcache)
 
 
 Usage
@@ -38,16 +38,16 @@ Using a cache is as simple as
 
 Here we are using the :ref:`simplememorycache` but you can use any other listed in :ref:`caches`. All caches contain the same minimum interface which consists on the following functions:
 
-  - ``add``: Only adds key/value if key does not exist. Otherwise raises ValueError.
-  - ``get``: Retrieve value identified by key.
-  - ``set``: Sets key/value.
-  - ``multi_get``: Retrieves multiple key/values.
-  - ``multi_set``: Sets multiple key/values.
-  - ``exists``: Returns True if key exists False otherwise.
-  - ``increment``: Increment the value stored in the given key.
-  - ``delete``: Deletes key and returns number of deleted items.
-  - ``clear``: Clears the items stored.
-  - ``raw``: Executes the specified command using the underlying client.
+- ``add``: Only adds key/value if key does not exist. Otherwise raises ValueError.
+- ``get``: Retrieve value identified by key.
+- ``set``: Sets key/value.
+- ``multi_get``: Retrieves multiple key/values.
+- ``multi_set``: Sets multiple key/values.
+- ``exists``: Returns True if key exists False otherwise.
+- ``increment``: Increment the value stored in the given key.
+- ``delete``: Deletes key and returns number of deleted items.
+- ``clear``: Clears the items stored.
+- ``raw``: Executes the specified command using the underlying client.
 
 
 You can also setup cache aliases like in Django settings:
