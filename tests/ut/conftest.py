@@ -1,8 +1,8 @@
 import pytest
 import asynctest
 
-from aiocache import settings
-from aiocache.cache import RedisCache, BaseCache, MemcachedCache
+from aiocache.base import BaseCache
+from aiocache import settings, RedisCache, MemcachedCache
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
 
@@ -28,7 +28,7 @@ def reset_settings():
 
 @pytest.fixture(autouse=True)
 def disable_logs(mocker):
-    mocker.patch("aiocache.cache.logger")
+    mocker.patch("aiocache.log.logger")
 
 
 class MockCache(BaseCache):

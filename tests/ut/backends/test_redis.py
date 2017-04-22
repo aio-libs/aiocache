@@ -3,7 +3,7 @@ import aioredis
 
 from asynctest import CoroutineMock, MagicMock, patch, ANY
 
-from aiocache.backends import RedisBackend
+from aiocache.backends.redis import RedisBackend
 
 
 class FakePool:

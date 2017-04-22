@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from aiocache.plugins import BasePlugin, TimingPlugin, HitMissRatioPlugin
-from aiocache.cache import API, BaseCache
+from aiocache.base import API, BaseCache
 
 
 class TestBasePlugin:

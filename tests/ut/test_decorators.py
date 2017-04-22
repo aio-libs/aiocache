@@ -7,7 +7,7 @@ from unittest import mock
 
 from aiocache import cached, multi_cached, SimpleMemoryCache
 from aiocache.decorators import _get_args_dict, _get_cache
-from aiocache.backends import SimpleMemoryBackend
+from aiocache.backends.memory import SimpleMemoryBackend
 from aiocache.serializers import DefaultSerializer
 
 

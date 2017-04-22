@@ -2,6 +2,8 @@ import asyncio
 import itertools
 import aioredis
 
+from aiocache.base import BaseCache
+
 
 class RedisBackend:
 
@@ -207,3 +209,39 @@ class RedisBackend:
             RedisBackend.pools[pool_key] = pool
 
         return await pool
+
+
+class RedisCache(RedisBackend, BaseCache):
+    """
+    :class:`aiocache.backends.RedisBackend` cache implementation with the
+    following components as defaults:
+      - serializer: :class:`aiocache.serializers.DefaultSerializer`
+      - plugins: []
+
+    Config options are:
+
+    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is None.
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default its 5.
+    :param endpoint: str with the endpoint to connect to. Default is "127.0.0.1".
+    :param port: int with the port to connect to. Default is 6379.
+    :param db: int indicating database to use. Default is 0.
+    :param password: str indicating password to use. Default is None.
+    :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
+    :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _build_key(self, key, namespace=None):
+        if namespace is not None:
+            return "{}{}{}".format(namespace, ":" if namespace else "", key)
+        if self.namespace is not None:
+            return "{}{}{}".format(self.namespace, ":" if self.namespace else "", key)
+        return key
+
+    def __repr__(self):  # pragma: no cover
+        return "RedisCache ({}:{})".format(self.endpoint, self.port)
