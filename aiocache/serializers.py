@@ -7,11 +7,7 @@ except ImportError:
     logger.warning("ujson module not found, usin json")
     import json
 
-try:
-    import cPickle as pickle
-except ImportError:
-    logger.warning("cPickle module not found, using pickle")
-    import pickle
+import pickle
 
 
 class DefaultSerializer:
