@@ -1,9 +1,10 @@
 from copy import deepcopy
 
-from aiocache.settings import Settings as settings
-from aiocache.log import logger
-from aiocache.backends.memory import SimpleMemoryCache
-from aiocache.decorators import cached, multi_cached
+from .settings import Settings as settings
+from .log import logger
+from .backends.memory import SimpleMemoryCache
+from .decorators import cached, multi_cached
+from ._version import __version__
 
 
 __caches = [SimpleMemoryCache]
@@ -33,6 +34,7 @@ __all__ = (
     'caches',
     'multi_cached',
     *__caches,
+    '__version__',
 )
 
 

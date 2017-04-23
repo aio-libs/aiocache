@@ -1,7 +1,19 @@
+import re
 import os
 
 from setuptools import setup, find_packages
 from distutils.util import strtobool
+
+with open(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '../aiocache/_version.py')) as fp:
+    try:
+        version = re.findall(
+            r"^__version__ = '([^']+)'\r?$", fp.read(), re.M)[0]
+    except IndexError:
+        raise RuntimeError('Unable to determine version.')
+
 
 aioredis = "aioredis==0.3.0"
 aiomcache = "aiomcache==0.5.1"
@@ -10,7 +22,7 @@ install_requires = set((aioredis, aiomcache))
 
 setup_kwargs = {
     'name': "aiocache",
-    'version': "0.3.3",
+    'version': version,
     'author': "Manuel Miranda",
     'url': "https://github.com/argaen/aiocache",
     'author_email': "manu.mirandad@gmail.com",

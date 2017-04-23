@@ -5,12 +5,12 @@ pushd $(dirname "$SCRIPT")
 cd ..
 
 version=$((python scripts/increase_version.py) 2>&1)
-git tag -a "$version" -m "$version"
-git push origin "$version"
-gitchangelog > CHANGELOG.rst
+gitchangelog ^0.3.3 HEAD | sed 's/Unreleased/0.5.0/g'
 git add setup.py docs/conf.py CHANGELOG.rst
 git commit -m "Bump version $version"
 git push
+git tag -a "$version" -m "$version"
+git push origin "$version"
 
 python setup.py sdist
 twine upload "aiocache-$version.tar.gz"
