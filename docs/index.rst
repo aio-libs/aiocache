@@ -10,7 +10,7 @@ Welcome to aiocache's documentation!
 Installing
 ----------
 
-``pip install aiocache``.
+``pip install aiocache``
 
 If you don't need redis or memcached support, you can install as follows:
 

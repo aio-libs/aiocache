@@ -25,6 +25,6 @@ multi_cached
 .. automodule:: aiocache
   :members: multi_cached
 
-.. literalinclude:: ../examples/multi_cached_decorator.py
+.. literalinclude:: ../examples/multicached_decorator.py
   :language: python
   :linenos:
