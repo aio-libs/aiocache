@@ -8,42 +8,18 @@ from aiocache.base import BaseCache
 class RedisBackend:
 
     pools = {}
-    DEFAULT_ENDPOINT = "127.0.0.1"
-    DEFAULT_PORT = 6379
-    DEFAULT_DB = 0
-    DEFAULT_PASSWORD = None
-    DEFAULT_POOL_MIN_SIZE = 1
-    DEFAULT_POOL_MAX_SIZE = 10
 
     def __init__(
-            self, endpoint=None, port=None, db=None, password=None, pool_min_size=None,
-            pool_max_size=None, loop=None, **kwargs):
+            self, endpoint="127.0.0.1", port=6379, db=0, password=None,
+            pool_min_size=1, pool_max_size=10, loop=None, **kwargs):
         super().__init__(**kwargs)
-        self.endpoint = endpoint if endpoint is not None else self.DEFAULT_ENDPOINT
-        self.port = port if port is not None else self.DEFAULT_PORT
-        self.db = db if db is not None else self.DEFAULT_DB
-        self.password = password if password is not None else self.DEFAULT_PASSWORD
-        self.pool_min_size = pool_min_size if pool_min_size is not None \
-            else self.DEFAULT_POOL_MIN_SIZE
-        self.pool_max_size = pool_max_size if pool_max_size is not None \
-            else self.DEFAULT_POOL_MAX_SIZE
+        self.endpoint = endpoint
+        self.port = port
+        self.db = db
+        self.password = password
+        self.pool_min_size = pool_min_size
+        self.pool_max_size = pool_max_size
         self._loop = loop or asyncio.get_event_loop()
-
-    @classmethod
-    def set_defaults(
-            cls, endpoint=DEFAULT_ENDPOINT, port=DEFAULT_PORT, db=DEFAULT_DB,
-            password=DEFAULT_PASSWORD, pool_min_size=DEFAULT_POOL_MIN_SIZE,
-            pool_max_size=DEFAULT_POOL_MAX_SIZE, **kwargs):
-        try:
-            super().set_defaults(**kwargs)
-        except AttributeError:
-            pass
-        cls.DEFAULT_ENDPOINT = endpoint
-        cls.DEFAULT_PORT = port
-        cls.DEFAULT_DB = db
-        cls.DEFAULT_PASSWORD = password
-        cls.DEFAULT_POOL_MAX_SIZE = pool_max_size
-        cls.DEFAULT_POOL_MIN_SIZE = pool_min_size
 
     async def _get(self, key, encoding="utf-8"):
         """

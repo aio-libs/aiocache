@@ -88,22 +88,18 @@ class BaseCache:
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     """
-    DEFAULT_TIMEOUT = 5
-    DEFAULT_NAMESPACE = None
-    DEFAULT_SERIALIZER = serializers.DefaultSerializer()
-    DEFAULT_PLUGINS = []
 
     def __init__(
             self, serializer=None, plugins=None,
-            namespace=None, timeout=None):
-        self.timeout = timeout if timeout is not None else self.DEFAULT_TIMEOUT
-        self.namespace = namespace if namespace is not None else self.DEFAULT_NAMESPACE
+            namespace=None, timeout=5):
+        self.timeout = timeout
+        self.namespace = namespace
 
         self._serializer = None
-        self.serializer = serializer if serializer is not None else self.DEFAULT_SERIALIZER
+        self.serializer = serializer or serializers.DefaultSerializer()
 
         self._plugins = None
-        self.plugins = plugins if plugins is not None else self.DEFAULT_PLUGINS
+        self.plugins = plugins or []
 
     @property
     def serializer(self):
@@ -120,15 +116,6 @@ class BaseCache:
     @plugins.setter
     def plugins(self, value):
         self._plugins = value
-
-    @classmethod
-    def set_defaults(
-            cls, timeout=DEFAULT_TIMEOUT, namespace=DEFAULT_NAMESPACE,
-            serializer=DEFAULT_SERIALIZER, plugins=None):
-        cls.DEFAULT_TIMEOUT = timeout
-        cls.DEFAULT_NAMESPACE = namespace
-        cls.DEFAULT_SERIALIZER = serializer
-        cls.DEFAULT_PLUGINS = plugins or []
 
     @API.register
     @API.aiocache_enabled(fake_return=True)

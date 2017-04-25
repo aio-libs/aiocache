@@ -26,18 +26,3 @@ Those are the fallbacks for args:
 - From cache class defaults.
 
 When you access an alias with ``caches['default']``, the cache instance is built lazily. Next accesses will return the same instance. This also means that if after accessing it you change the config for that alias, it won't be applied.
-
-
-Cache classes defaults
-----------------------
-
-In some cases you won't be using aliases but explicit instances of the classes. You can change the defaults the classes are using with its respective ``set_defaults``:
-
-.. literalinclude:: ../examples/config_default_cache.py
-  :language: python
-  :linenos:
-  :emphasize-lines: 10-14
-
-You can set back the original defaults by calling ``set_defaults`` without arguments.
-
-You can override any attribute supported by the class. You can check those in :ref:`caches` reference.
