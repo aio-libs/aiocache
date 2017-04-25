@@ -6,7 +6,7 @@ Configuration
 Cache aliases
 -------------
 
-The settings module allows to setup different cache configurations and then use them with the specified alias. To set the config, call ``settings.set_config``:
+The settings module allows to setup cache configurations and then use them with the specified alias. To set the config, call ``settings.set_config``:
 
 .. automethod:: aiocache.settings.set_config
 
@@ -20,9 +20,4 @@ Next snippet shows an example usage:
   :linenos:
   :emphasize-lines: 6-26
 
-Those are the fallbacks for args:
-
-- From ``set_config``.
-- From cache class defaults.
-
-When you access an alias with ``caches['default']``, the cache instance is built lazily. Next accesses will return the same instance. This also means that if after accessing it you change the config for that alias, it won't be applied.
+When you access an alias with ``caches['alias_name']``, the cache instance is built lazily. Next accesses will return the **same** instance. If instead of reusing the same instance, you need a new one, use ``caches.create('alias_name')``.
