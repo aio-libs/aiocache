@@ -39,8 +39,14 @@ class TestCacheHandler:
         with pytest.raises(KeyError):
             caches["wrong_cache"]
 
+        with pytest.raises(KeyError):
+            caches.create("wrong_cache")
+
     def test_reuse_instance(self):
-        assert caches['default'] == caches['default']
+        assert caches['default'] is caches['default']
+
+    def test_create_not_reuse(self):
+        assert caches.create('default') is not caches.create('default')
 
     def test_retrieve_cache(self):
         settings.set_config({
@@ -59,6 +65,29 @@ class TestCacheHandler:
         })
 
         cache = caches['default']
+        assert isinstance(cache, RedisCache)
+        assert cache.endpoint == "127.0.0.10"
+        assert cache.port == 6378
+        assert isinstance(cache.serializer, PickleSerializer)
+        assert len(cache.plugins) == 2
+
+    def test_retrieve_cache_new_instance(self):
+        settings.set_config({
+            'default': {
+                'cache': "aiocache.RedisCache",
+                'endpoint': "127.0.0.10",
+                'port': 6378,
+                'serializer': {
+                    'class': "aiocache.serializers.PickleSerializer"
+                },
+                'plugins': [
+                    {'class': "aiocache.plugins.HitMissRatioPlugin"},
+                    {'class': "aiocache.plugins.TimingPlugin"}
+                ]
+            }
+        })
+
+        cache = caches.create('default')
         assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378

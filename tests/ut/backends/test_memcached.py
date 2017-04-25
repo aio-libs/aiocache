@@ -13,11 +13,6 @@ def memcached(event_loop):
     yield memcached
 
 
-@pytest.fixture(autouse=True)
-def reset_memcached():
-    MemcachedBackend.set_defaults()
-
-
 class TestMemcachedBackend:
 
     def test_setup(self):
@@ -42,27 +37,6 @@ class TestMemcachedBackend:
         assert memcached.endpoint == "127.0.0.2"
         assert memcached.port == 2
         assert memcached.pool_size == 10
-
-    def test_set_defaults(self):
-        MemcachedBackend.set_defaults(
-            endpoint="127.0.0.10",
-            port=11212,
-            pool_size=3
-        )
-
-        memcached = MemcachedBackend()
-
-        assert memcached.endpoint == "127.0.0.10"
-        assert memcached.port == 11212
-        assert memcached.pool_size == 3
-
-    def test_set_no_defaults(self):
-        MemcachedBackend.set_defaults()
-        memcached = MemcachedBackend()
-
-        assert memcached.endpoint == "127.0.0.1"
-        assert memcached.port == 11211
-        assert memcached.pool_size == 2
 
     @pytest.mark.asyncio
     async def test_get(self, memcached):

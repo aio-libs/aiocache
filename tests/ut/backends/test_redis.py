@@ -40,11 +40,6 @@ def redis(event_loop):
     yield redis, pool
 
 
-@pytest.fixture(autouse=True)
-def reset_redis():
-    RedisBackend.set_defaults()
-
-
 class TestRedisBackend:
 
     def test_setup(self):
@@ -71,36 +66,6 @@ class TestRedisBackend:
         pool_key, pool = redis.get_pool()
         assert pool_key == "{}{}{}{}{}".format(
             redis.endpoint, redis.port, redis.db, redis.password, id(redis._loop))
-
-    def test_set_defaults(self):
-        RedisBackend.set_defaults(
-            endpoint="127.0.0.10",
-            port=11212,
-            password="pass",
-            db=2,
-            pool_min_size=3,
-            pool_max_size=11
-        )
-
-        redis = RedisBackend()
-
-        assert redis.endpoint == "127.0.0.10"
-        assert redis.port == 11212
-        assert redis.password == "pass"
-        assert redis.db == 2
-        assert redis.pool_min_size == 3
-        assert redis.pool_max_size == 11
-
-    def test_reset_defaults(self):
-        RedisBackend.set_defaults()
-        redis = RedisBackend()
-
-        assert redis.endpoint == "127.0.0.1"
-        assert redis.port == 6379
-        assert redis.password is None
-        assert redis.db == 0
-        assert redis.pool_min_size == 1
-        assert redis.pool_max_size == 10
 
     @pytest.mark.asyncio
     async def test_connect_with_pool(self):

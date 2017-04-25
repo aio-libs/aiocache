@@ -36,7 +36,7 @@ async def default_cache():
 
 
 async def alt_cache():
-    cache = caches['redis_alt']   # This always returns the same instance
+    cache = caches.create('redis_alt')   # This generates a new instance every time!
     await cache.set("key", "value")
 
     assert await cache.get("key") == "value"
