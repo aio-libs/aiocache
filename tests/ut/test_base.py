@@ -7,8 +7,6 @@ from unittest.mock import patch, MagicMock, ANY
 
 from aiocache import SimpleMemoryCache, MemcachedCache, RedisCache, settings
 from aiocache.base import BaseCache, API
-from aiocache.serializers import PickleSerializer, DefaultSerializer
-from aiocache.plugins import HitMissRatioPlugin
 
 
 class TestAPI:
@@ -120,35 +118,6 @@ class TestAPI:
 
 class TestBaseCache:
 
-    @pytest.fixture(autouse=True)
-    def reset_basecache(self):
-        BaseCache.set_defaults()
-
-    def test_set_defaults(self):
-        serializer = PickleSerializer()
-        plugins = [HitMissRatioPlugin()]
-        BaseCache.set_defaults(
-            timeout=6,
-            namespace="test",
-            serializer=serializer,
-            plugins=plugins
-        )
-        base_cache = BaseCache()
-
-        assert base_cache.timeout == 6
-        assert base_cache.namespace == "test"
-        assert base_cache.serializer == serializer
-        assert base_cache.plugins == plugins
-
-    def test_reset_defaults(self):
-        BaseCache.set_defaults()
-        base_cache = BaseCache()
-
-        assert base_cache.timeout == 5
-        assert base_cache.namespace is None
-        assert isinstance(base_cache.serializer, DefaultSerializer)
-        assert base_cache.plugins == []
-
     @pytest.mark.asyncio
     async def test_add(self, base_cache):
         with pytest.raises(NotImplementedError):
@@ -205,10 +174,10 @@ class TestBaseCache:
             await base_cache._raw("get", pytest.KEY)
 
     @pytest.fixture
-    def set_test_namespace(self):
-        BaseCache.set_defaults(namespace="test")
+    def set_test_namespace(self, base_cache):
+        base_cache.namespace = "test"
         yield
-        BaseCache.set_defaults()
+        base_cache.namespace = None
 
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test" + pytest.KEY],
@@ -263,7 +232,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
-        mock_cache._exists.return_value = False
+        mock_cache._exists = asynctest.CoroutineMock(return_value=False)
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
         mock_cache._add.assert_called_with(mock_cache._build_key(pytest.KEY), asynctest.ANY, 2)
@@ -402,10 +371,10 @@ class TestCache:
 class TestRedisCache:
 
     @pytest.fixture
-    def set_test_namespace(self):
-        RedisCache.set_defaults(namespace="test")
+    def set_test_namespace(self, redis_cache):
+        redis_cache.namespace = "test"
         yield
-        RedisCache.set_defaults()
+        redis_cache.namespace = None
 
     def test_inheritance(self):
         assert isinstance(RedisCache(), BaseCache)
@@ -421,16 +390,6 @@ class TestRedisCache:
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
 
-    def test_cache_settings(self):
-        RedisCache.set_defaults(
-            endpoint="127.0.0.1", port=6379, timeout=10, db=1)
-        cache = RedisCache(db=0)
-
-        assert cache.endpoint == "127.0.0.1"
-        assert cache.port == 6379
-        assert cache.timeout == 10
-        assert cache.db == 0
-
 
 class TestSimpleMemoryCache:
 
@@ -441,10 +400,10 @@ class TestSimpleMemoryCache:
 class TestMemcachedCache:
 
     @pytest.fixture
-    def set_test_namespace(self):
-        MemcachedCache.set_defaults(namespace="test")
+    def set_test_namespace(self, memcached_cache):
+        memcached_cache.namespace = "test"
         yield
-        MemcachedCache.set_defaults()
+        memcached_cache.namespace = None
 
     def test_inheritance(self):
         assert isinstance(MemcachedCache(), BaseCache)

@@ -6,32 +6,16 @@ from aiocache.base import BaseCache
 
 class MemcachedBackend:
 
-    DEFAULT_ENDPOINT = "127.0.0.1"
-    DEFAULT_PORT = 11211
-    DEFAULT_POOL_SIZE = 2
-
     def __init__(
-            self, endpoint=None, port=None, pool_size=None,
+            self, endpoint="127.0.0.1", port=11211, pool_size=2,
             loop=None, **kwargs):
         super().__init__(**kwargs)
-        self.endpoint = endpoint if endpoint is not None else self.DEFAULT_ENDPOINT
-        self.port = port if port is not None else self.DEFAULT_PORT
-        self.pool_size = pool_size if pool_size is not None else self.DEFAULT_POOL_SIZE
+        self.endpoint = endpoint
+        self.port = port
+        self.pool_size = pool_size
         self._loop = loop
         self.client = aiomcache.Client(
             self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size)
-
-    @classmethod
-    def set_defaults(
-            cls, endpoint=DEFAULT_ENDPOINT, port=DEFAULT_PORT,
-            pool_size=DEFAULT_POOL_SIZE, **kwargs):
-        try:
-            super().set_defaults(**kwargs)
-        except AttributeError:
-            pass
-        cls.DEFAULT_ENDPOINT = endpoint
-        cls.DEFAULT_PORT = port
-        cls.DEFAULT_POOL_SIZE = pool_size
 
     async def _get(self, key, encoding="utf-8"):
         """
@@ -180,7 +164,7 @@ class MemcachedBackend:
 
 class MemcachedCache(MemcachedBackend, BaseCache):
     """
-    :class:`aiocache.backends.MemcachedCache` cache implementation with the following
+    Memcached cache implementation with the following
     components as defaults:
       - serializer: :class:`aiocache.serializers.DefaultSerializer`
       - plugins: []

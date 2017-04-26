@@ -40,11 +40,6 @@ def redis(event_loop):
     yield redis, pool
 
 
-@pytest.fixture(autouse=True)
-def reset_redis():
-    RedisBackend.set_defaults()
-
-
 class TestRedisBackend:
 
     def test_setup(self):
@@ -66,48 +61,14 @@ class TestRedisBackend:
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
-    def test_get_pool(self):
-        redis = RedisBackend()
-        pool_key, pool = redis.get_pool()
-        assert pool_key == "{}{}{}{}{}".format(
-            redis.endpoint, redis.port, redis.db, redis.password, id(redis._loop))
-
-    def test_set_defaults(self):
-        RedisBackend.set_defaults(
-            endpoint="127.0.0.10",
-            port=11212,
-            password="pass",
-            db=2,
-            pool_min_size=3,
-            pool_max_size=11
-        )
-
-        redis = RedisBackend()
-
-        assert redis.endpoint == "127.0.0.10"
-        assert redis.port == 11212
-        assert redis.password == "pass"
-        assert redis.db == 2
-        assert redis.pool_min_size == 3
-        assert redis.pool_max_size == 11
-
-    def test_reset_defaults(self):
-        RedisBackend.set_defaults()
-        redis = RedisBackend()
-
-        assert redis.endpoint == "127.0.0.1"
-        assert redis.port == 6379
-        assert redis.password is None
-        assert redis.db == 0
-        assert redis.pool_min_size == 1
-        assert redis.pool_max_size == 10
-
     @pytest.mark.asyncio
     async def test_connect_with_pool(self):
         redis = RedisBackend()
         pool = FakePool()
-        redis.get_pool = MagicMock(return_value=["key", pool])
-        assert await redis._connect() == pool
+        with patch(
+                "aiocache.backends.redis.aioredis.create_pool",
+                MagicMock(return_value=pool)):
+            assert await redis._connect() == pool
 
     @pytest.mark.asyncio
     async def test_connect_calls_create_pool(self):
@@ -126,13 +87,21 @@ class TestRedisBackend:
                 maxsize=redis.pool_max_size)
 
     @pytest.mark.asyncio
-    async def test_connect_stores_pool(self):
+    async def test_connect_sets_pool(self):
         with patch("aiocache.backends.redis.aioredis.create_pool") as create_pool:
             pool = FakePool()
             create_pool.return_value = pool
             redis = RedisBackend()
             await redis._connect()
-        assert RedisBackend.pools[redis.get_pool()[0]] is pool
+        assert redis._pool == pool
+
+    @pytest.mark.asyncio
+    async def test_connect_reuses_existing_pool(self):
+        pool = FakePool()
+        redis = RedisBackend()
+        redis._pool = pool
+        await redis._connect()
+        assert redis._pool == pool
 
     @pytest.mark.asyncio
     async def test_get(self, redis):

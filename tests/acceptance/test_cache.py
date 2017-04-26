@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from aiocache import serializers, RedisCache
+from aiocache import serializers
 
 
 class TestCache:
@@ -170,22 +170,6 @@ class TestRedisCache:
         await redis_cache.raw("set", "key", "value")
         assert await redis_cache.raw("get", "key") == "value"
         assert await redis_cache.raw("keys", "k*") == ["key"]
-
-    @pytest.mark.asyncio
-    async def test_pool_reusage(self):
-        cache = RedisCache()
-        await cache._clear(None)
-
-        other_cache = RedisCache()
-        await other_cache._clear(None)
-
-        assert len(RedisCache.pools) == 1
-
-        cache.db = 1
-        await cache._clear(None)
-
-        assert len(RedisCache.pools) == 2
-        assert other_cache.db == 0
 
     @pytest.mark.asyncio
     async def test_clear_with_namespace_redis(self, redis_cache):
