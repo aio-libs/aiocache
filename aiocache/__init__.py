@@ -6,7 +6,7 @@ from .decorators import cached, multi_cached
 from ._version import __version__
 
 
-__caches = [SimpleMemoryCache]
+__cache_types = [SimpleMemoryCache]
 
 try:
     import aioredis
@@ -14,7 +14,7 @@ except ImportError:
     logger.info("aioredis not installed, RedisCache unavailable")
 else:
     from aiocache.backends.redis import RedisCache
-    __caches.append(RedisCache)
+    __cache_types.append(RedisCache)
     del aioredis
 
 try:
@@ -23,7 +23,7 @@ except ImportError:
     logger.info("aiomcache not installed, Memcached unavailable")
 else:
     from aiocache.backends.memcached import MemcachedCache
-    __caches.append(MemcachedCache)
+    __cache_types.append(MemcachedCache)
     del aiomcache
 
 
@@ -32,6 +32,6 @@ __all__ = (
     'settings',
     'cached',
     'multi_cached',
-    *__caches,
+    *__cache_types,
     '__version__',
 )
