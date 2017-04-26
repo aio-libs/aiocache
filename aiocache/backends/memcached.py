@@ -164,7 +164,7 @@ class MemcachedBackend:
 
 class MemcachedCache(MemcachedBackend, BaseCache):
     """
-    :class:`aiocache.backends.MemcachedCache` cache implementation with the following
+    Memcached cache implementation with the following
     components as defaults:
       - serializer: :class:`aiocache.serializers.DefaultSerializer`
       - plugins: []

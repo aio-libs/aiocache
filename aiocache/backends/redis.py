@@ -20,6 +20,7 @@ class RedisBackend:
         self.pool_min_size = pool_min_size
         self.pool_max_size = pool_max_size
         self._loop = loop or asyncio.get_event_loop()
+        self._pool = None
 
     async def _get(self, key, encoding="utf-8"):
         """
@@ -164,17 +165,9 @@ class RedisBackend:
         with await self._connect() as redis:
             return await getattr(redis, command)(*args, **kwargs)
 
-    def get_pool(self):
-        pool_key = "{}{}{}{}{}".format(
-            self.endpoint, self.port,
-            self.db, self.password, id(self._loop))
-        return pool_key, RedisBackend.pools.get(pool_key)
-
     async def _connect(self):
-        pool_key, pool = self.get_pool()
-
-        if pool is None:
-            pool = await aioredis.create_pool(
+        if self._pool is None:
+            self._pool = await aioredis.create_pool(
                 (self.endpoint, self.port),
                 db=self.db,
                 password=self.password,
@@ -182,14 +175,13 @@ class RedisBackend:
                 encoding="utf-8",
                 minsize=self.pool_min_size,
                 maxsize=self.pool_max_size)
-            RedisBackend.pools[pool_key] = pool
 
-        return await pool
+        return await self._pool
 
 
 class RedisCache(RedisBackend, BaseCache):
     """
-    :class:`aiocache.backends.RedisBackend` cache implementation with the
+    Redis cache implementation with the
     following components as defaults:
       - serializer: :class:`aiocache.serializers.DefaultSerializer`
       - plugins: []

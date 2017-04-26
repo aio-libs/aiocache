@@ -161,7 +161,7 @@ class SimpleMemoryBackend:
 
 class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     """
-    :class:`aiocache.backends.SimpleMemoryBackend` cache implementation with
+    Memory cache implementation with
     the following components as defaults:
       - serializer: :class:`aiocache.serializers.DefaultSerializer`
       - plugins: None
