@@ -132,7 +132,7 @@ class TestCachedDecorator:
         assert stub.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_cached_func_exception(self, mocker, memory_mock_cache):
+    async def test_cached_func_exception(self, mocker):
         cached_decorator = cached(key="key")
 
         with pytest.raises(ValueError):
@@ -165,6 +165,35 @@ class TestCachedDecorator:
         await first_dummy.what()
         await second_dummy.what()
         assert len(memory_mock_cache._cache) == 1
+
+    @pytest.mark.asyncio
+    async def test_cached_from_alias(self, mocker, mock_cache):
+        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+            mocker.spy(mock_cache, "exists")
+            mocker.spy(mock_cache, "get")
+            cm.__getitem__.return_value = mock_cache
+
+            cached_decorator = cached(key="key", alias="whatever")
+            await cached_decorator(stub)()
+
+            cm.__getitem__.assert_called_with('whatever')
+            mock_cache.exists.assert_called_with('key')
+            mock_cache.get.assert_called_with('key')
+
+    @pytest.mark.asyncio
+    async def test_cached_alias_takes_precedence(self, mocker, memory_mock_cache, mock_cache):
+        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+            mocker.spy(mock_cache, "exists")
+            mocker.spy(mock_cache, "get")
+            cm.__getitem__.return_value = mock_cache
+
+            cached_decorator = cached(key="key", alias="whatever")
+            await cached_decorator(stub)()
+
+            cm.__getitem__.assert_called_with('whatever')
+            assert memory_mock_cache.exists.call_count == 0
+            assert memory_mock_cache.get.call_count == 0
+            assert memory_mock_cache.set.call_count == 0
 
 
 class TestMultiCachedDecorator:
@@ -272,11 +301,37 @@ class TestMultiCachedDecorator:
         assert return_dict.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_multi_cached_func_exception(self, mocker, memory_mock_cache):
+    async def test_multi_cached_func_exception(self, mocker):
         cached_decorator = multi_cached(keys_from_attr="keys")
 
         with pytest.raises(ValueError):
             await cached_decorator(raise_exception)(keys=[])
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_from_alias(self, mocker, mock_cache):
+        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+            mocker.spy(mock_cache, "multi_get")
+            mocker.spy(mock_cache, "multi_set")
+            cm.__getitem__.return_value = mock_cache
+
+            multi_cached_decorator = multi_cached(keys_from_attr='keys', alias="whatever")
+            await multi_cached_decorator(return_dict)(keys=['key'])
+            cm.__getitem__.assert_called_with('whatever')
+            assert mock_cache.multi_get.call_count == 1
+            assert mock_cache.multi_set.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_alias_takes_precedence(self, mocker, memory_mock_cache, mock_cache):
+        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+            mocker.spy(mock_cache, "multi_get")
+            mocker.spy(mock_cache, "multi_set")
+            cm.__getitem__.return_value = mock_cache
+
+            multi_cached_decorator = multi_cached(keys_from_attr='keys', alias="whatever")
+            await multi_cached_decorator(return_dict)(keys=['key'])
+            cm.__getitem__.assert_called_with('whatever')
+            assert memory_mock_cache.multi_get.call_count == 0
+            assert memory_mock_cache.multi_set.call_count == 0
 
 
 def test_get_args_dict():

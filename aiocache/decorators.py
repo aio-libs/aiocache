@@ -1,7 +1,7 @@
 import inspect
 
 from aiocache.log import logger
-from aiocache import SimpleMemoryCache
+from aiocache import SimpleMemoryCache, caches
 
 
 def _get_cache(
@@ -11,7 +11,7 @@ def _get_cache(
 
 def cached(
         ttl=0, key=None, key_from_attr=None, cache=SimpleMemoryCache,
-        serializer=None, plugins=None, noself=False, **kwargs):
+        serializer=None, plugins=None, alias=None, noself=False, **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -30,6 +30,8 @@ def cached(
         Default is pulled from the cache class being used.
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
+    :param alias: str specifying the alias to load the config from. If alias is passed, other config
+        parameters are ignored.
     :param noself: if you are decorating a class function, by default self is also used to generate
         the key. This will result in same function calls done by different class instances to use
         different cache keys. Use noself=True if you want to ignore it.
@@ -38,8 +40,11 @@ def cached(
 
     def cached_decorator(func):
         async def wrapper(*args, **kwargs):
-            cache_instance = _get_cache(
-                cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
+            if alias:
+                cache_instance = caches[alias]
+            else:
+                cache_instance = _get_cache(
+                    cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             args_dict = _get_args_dict(func, args, kwargs)
             cache_key = key or args_dict.get(
                 key_from_attr,
@@ -68,7 +73,7 @@ def cached(
 
 def multi_cached(
         keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
-        serializer=None, plugins=None, **kwargs):
+        serializer=None, plugins=None, alias=None, **kwargs):
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -90,14 +95,19 @@ def multi_cached(
         Default is pulled from the cache class being used.
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
+    :param alias: str specifying the alias to load the config from. If alias is passed, other config
+        parameters are ignored.
     """
     key_builder = key_builder or (lambda x, args_dict: x)
     cache_kwargs = kwargs
 
     def multi_cached_decorator(func):
         async def wrapper(*args, **kwargs):
-            cache_instance = _get_cache(
-                cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
+            if alias:
+                cache_instance = caches[alias]
+            else:
+                cache_instance = _get_cache(
+                    cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
             partial_result = {}
             args_dict = _get_args_dict(func, args, kwargs)
             keys = args_dict[keys_from_attr]

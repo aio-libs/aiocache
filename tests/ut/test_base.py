@@ -263,7 +263,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
-        mock_cache._exists.return_value = False
+        mock_cache._exists = asynctest.CoroutineMock(return_value=False)
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
         mock_cache._add.assert_called_with(mock_cache._build_key(pytest.KEY), asynctest.ANY, 2)

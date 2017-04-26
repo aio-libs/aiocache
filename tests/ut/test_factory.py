@@ -1,8 +1,7 @@
 import pytest
 
-from aiocache import (
-    _class_from_string, _create_cache,
-    SimpleMemoryCache, RedisCache, settings, caches)
+from aiocache import SimpleMemoryCache, RedisCache, settings, caches
+from aiocache.factory import _class_from_string, _create_cache
 from aiocache.serializers import PickleSerializer
 from aiocache.plugins import TimingPlugin
 
