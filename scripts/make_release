@@ -4,15 +4,34 @@ SCRIPT=$(readlink -f "$0")
 pushd $(dirname "$SCRIPT")
 cd ..
 
-version=$((python scripts/increase_version.py) 2>&1)
-gitchangelog ^0.3.3 HEAD | sed 's/Unreleased/0.5.0/g'
-git add setup.py docs/conf.py CHANGELOG.rst
-git commit -m "Bump version $version"
-git push
-git tag -a "$version" -m "$version"
-git push origin "$version"
+version=$(grep -o -E "([0-9]+\.[0-9]+\.[0-9]+)" aiocache/_version.py)
+echo -n "New version number (current is $version): "
+read new_version
+gitchangelog ^$version HEAD | sed "s/Unreleased/$new_version/g" > _release_notes
+cat _release_notes
+echo -n "Are you happy with the release notes (if not, modify the ./_release_notes file manually)? (y/n) "
+read answer
 
-python setup.py sdist
-twine upload "aiocache-$version.tar.gz"
+if echo "$answer" | grep -iq "^y" ;then
+  echo "Generating new release..."
+  cat _release_notes
+  git add setup.py docs/conf.py CHANGELOG.rst aiocache/_version.py
+  git commit -m "Bump version $version"
+  git tag -a "$version" -m "$version"
+  git push --follow-tags
+
+  echo -n "Tag generated and pushed. Do you wish to publish the new version? (y/n) "
+  read answer
+
+  if echo "$answer" | grep -iq "^y" ;then
+    python setup.py sdist
+    twine upload "aiocache-$new_version.tar.gz"
+  else
+    exit 1
+  fi
+
+else
+  exit 1
+fi
 
 popd

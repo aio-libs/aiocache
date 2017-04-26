@@ -88,3 +88,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+dump.rdb
+_release_notes
