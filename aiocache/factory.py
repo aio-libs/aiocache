@@ -36,20 +36,31 @@ class CacheHandler:
     def __init__(self):
         self._caches = {}
 
-    def __getitem__(self, alias):
-        try:
-            return self._caches[alias]
-        except KeyError:
-            pass
-
+    @classmethod
+    def _get_alias_config(cls, alias):
         config = settings.get_config()
         if alias not in config:
             raise KeyError(
                 "Could not find config for '{}' in settings, ensure you called settings.from_config"
                 "specifying the config for that cache".format(alias))
 
-        cache = _create_cache(**deepcopy(config[alias]))
+        return config[alias]
+
+    def __getitem__(self, alias):
+
+        try:
+            return self._caches[alias]
+        except KeyError:
+            pass
+
+        config = self._get_alias_config(alias)
+        cache = _create_cache(**deepcopy(config))
         self._caches[alias] = cache
+        return cache
+
+    def create(self, alias):
+        config = self._get_alias_config(alias)
+        cache = _create_cache(**deepcopy(config))
         return cache
 
 
