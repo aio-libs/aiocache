@@ -7,7 +7,7 @@ from distutils.util import strtobool
 with open(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '../aiocache/_version.py')) as fp:
+            'aiocache/_version.py')) as fp:
     try:
         version = re.findall(
             r"^__version__ = '([^']+)'\r?$", fp.read(), re.M)[0]
