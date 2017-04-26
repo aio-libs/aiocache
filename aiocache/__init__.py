@@ -1,8 +1,9 @@
-from .settings import settings
 from .log import logger
+from .settings import settings
 from .backends.memory import SimpleMemoryCache
 from .factory import caches
 from .decorators import cached, multi_cached
+from ._version import __version__
 
 
 __caches = [SimpleMemoryCache]
@@ -32,4 +33,5 @@ __all__ = (
     'cached',
     'multi_cached',
     *__caches,
+    '__version__',
 )
