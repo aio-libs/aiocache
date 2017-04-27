@@ -1,5 +1,5 @@
 aiocache
-========
+########
 
 .. image:: https://travis-ci.org/argaen/aiocache.svg?branch=master
   :target: https://travis-ci.org/argaen/aiocache
@@ -32,14 +32,23 @@ This library aims for simplicity over specialization. All caches contain the sam
 - ``raw``: Executes the specified command using the underlying client.
 
 
+
+.. role:: python(code)
+  :language: python
+
+.. contents::
+
+.. section-numbering:
+
+
 Installing
-----------
+==========
 
 Do ``pip install aiocache``.
 
 
 Usage
------
+=====
 
 Using a cache is as simple as
 
@@ -88,25 +97,15 @@ You can also setup cache aliases like in Django settings:
 
 
   async def default_cache():
-      cache = caches['default']   # This always returns the same instance
+      cache = caches.get('default')   # This always returns the SAME instance
       await cache.set("key", "value")
-
       assert await cache.get("key") == "value"
-      assert isinstance(cache, SimpleMemoryCache)
-      assert isinstance(cache.serializer, DefaultSerializer)
 
 
   async def alt_cache():
-      cache = caches['redis_alt']   # This always returns the same instance
+      cache = caches.create('redis_alt')   # This creates a NEW instance on every call
       await cache.set("key", "value")
-
       assert await cache.get("key") == "value"
-      assert isinstance(cache, RedisCache)
-      assert isinstance(cache.serializer, PickleSerializer)
-      assert len(cache.plugins) == 2
-      assert cache.endpoint == "127.0.0.1"
-      assert cache.timeout == 1
-      assert cache.port == 6379
 
 
   def test_alias():
@@ -114,34 +113,20 @@ You can also setup cache aliases like in Django settings:
       loop.run_until_complete(default_cache())
       loop.run_until_complete(alt_cache())
 
-      loop.run_until_complete(RedisCache().delete("key"))
+      loop.run_until_complete(caches.get('redis_alt').delete("key"))
 
 
   if __name__ == "__main__":
       test_alias()
 
 
-In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ you can check different use cases:
-
-- `Integrations with frameworks like Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
-- `Storing a python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
-- `Creating a custom serializer class that compresses data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
-- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
-- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
-- `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
-- `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
-- `Configuring cache class default args <https://github.com/argaen/aiocache/blob/master/examples/config_default_cache.py>`_
-- `Simple LRU plugin for memory <https://github.com/argaen/aiocache/blob/master/examples/lru_plugin.py>`_
-
-
-
 How does it work
-----------------
+================
 
 Aiocache provides 3 main entities:
 
 - **backends**: Allow you specify which backend you want to use for your cache. Currently supporting: SimpleMemoryCache, RedisCache using aioredis_ and MemCache using aiomcache_.
-- **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: DefaultSerializer, PickleSerializer, JsonSerializer.
+- **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: DefaultSerializer, PickleSerializer, JsonSerializer. But you can also build custom ones.
 - **plugins**: Implement a hooks system that allows to execute extra behavior before and after of each command.
 
  If you are missing an implementation of backend, serializer or plugin you think it could be interesting for the package, do not hesitate to open a new issue.
@@ -155,8 +140,24 @@ Those 3 entities combine during some of the cache operations to apply the desire
   :align: center
 
 
+Amazing examples
+================
+
+In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ you can check different use cases:
+
+- `Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
+- `Python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
+- `Custom serializer for compressing data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
+- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
+- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
+- `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
+- `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
+- `Simple LRU plugin for memory <https://github.com/argaen/aiocache/blob/master/examples/lru_plugin.py>`_
+
+
+
 Documentation
--------------
+=============
 
 - `Usage <http://aiocache.readthedocs.io/en/latest>`_
 - `Caches <http://aiocache.readthedocs.io/en/latest/caches.html>`_
