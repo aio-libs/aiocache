@@ -168,29 +168,31 @@ class TestCachedDecorator:
 
     @pytest.mark.asyncio
     async def test_cached_from_alias(self, mocker, mock_cache):
-        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+        with asynctest.patch(
+                "aiocache.decorators.caches.create",
+                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
             mocker.spy(mock_cache, "exists")
             mocker.spy(mock_cache, "get")
-            cm.__getitem__.return_value = mock_cache
 
             cached_decorator = cached(key="key", alias="whatever")
             await cached_decorator(stub)()
 
-            cm.__getitem__.assert_called_with('whatever')
+            mock_create.assert_called_with('whatever')
             mock_cache.exists.assert_called_with('key')
             mock_cache.get.assert_called_with('key')
 
     @pytest.mark.asyncio
     async def test_cached_alias_takes_precedence(self, mocker, memory_mock_cache, mock_cache):
-        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+        with asynctest.patch(
+                "aiocache.decorators.caches.create",
+                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
             mocker.spy(mock_cache, "exists")
             mocker.spy(mock_cache, "get")
-            cm.__getitem__.return_value = mock_cache
 
             cached_decorator = cached(key="key", alias="whatever")
             await cached_decorator(stub)()
 
-            cm.__getitem__.assert_called_with('whatever')
+            mock_create.assert_called_with('whatever')
             assert memory_mock_cache.exists.call_count == 0
             assert memory_mock_cache.get.call_count == 0
             assert memory_mock_cache.set.call_count == 0
@@ -309,27 +311,29 @@ class TestMultiCachedDecorator:
 
     @pytest.mark.asyncio
     async def test_multi_cached_from_alias(self, mocker, mock_cache):
-        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+        with asynctest.patch(
+                "aiocache.decorators.caches.create",
+                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
             mocker.spy(mock_cache, "multi_get")
             mocker.spy(mock_cache, "multi_set")
-            cm.__getitem__.return_value = mock_cache
 
             multi_cached_decorator = multi_cached(keys_from_attr='keys', alias="whatever")
             await multi_cached_decorator(return_dict)(keys=['key'])
-            cm.__getitem__.assert_called_with('whatever')
+            mock_create.assert_called_with('whatever')
             assert mock_cache.multi_get.call_count == 1
             assert mock_cache.multi_set.call_count == 0
 
     @pytest.mark.asyncio
     async def test_multi_cached_alias_takes_precedence(self, mocker, memory_mock_cache, mock_cache):
-        with asynctest.patch("aiocache.decorators.caches", autospec=True) as cm:
+        with asynctest.patch(
+                "aiocache.decorators.caches.create",
+                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
             mocker.spy(mock_cache, "multi_get")
             mocker.spy(mock_cache, "multi_set")
-            cm.__getitem__.return_value = mock_cache
 
             multi_cached_decorator = multi_cached(keys_from_attr='keys', alias="whatever")
             await multi_cached_decorator(return_dict)(keys=['key'])
-            cm.__getitem__.assert_called_with('whatever')
+            mock_create.assert_called_with('whatever')
             assert memory_mock_cache.multi_get.call_count == 0
             assert memory_mock_cache.multi_set.call_count == 0
 

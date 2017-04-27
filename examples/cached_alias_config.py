@@ -27,7 +27,7 @@ settings.set_config({
 
 
 async def default_cache():
-    cache = caches['default']   # This always returns the same instance
+    cache = caches.get('default')   # This always returns the same instance
     await cache.set("key", "value")
 
     assert await cache.get("key") == "value"

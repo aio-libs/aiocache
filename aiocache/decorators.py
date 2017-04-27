@@ -31,7 +31,7 @@ def cached(
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored.
+        parameters are ignored. New cache is created every time.
     :param noself: if you are decorating a class function, by default self is also used to generate
         the key. This will result in same function calls done by different class instances to use
         different cache keys. Use noself=True if you want to ignore it.
@@ -41,7 +41,7 @@ def cached(
     def cached_decorator(func):
         async def wrapper(*args, **kwargs):
             if alias:
-                cache_instance = caches[alias]
+                cache_instance = caches.create(alias)
             else:
                 cache_instance = _get_cache(
                     cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
@@ -96,7 +96,7 @@ def multi_cached(
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored.
+        parameters are ignored. New cache is created every time.
     """
     key_builder = key_builder or (lambda x, args_dict: x)
     cache_kwargs = kwargs
@@ -104,7 +104,7 @@ def multi_cached(
     def multi_cached_decorator(func):
         async def wrapper(*args, **kwargs):
             if alias:
-                cache_instance = caches[alias]
+                cache_instance = caches.create(alias)
             else:
                 cache_instance = _get_cache(
                     cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)

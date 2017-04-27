@@ -20,4 +20,4 @@ Next snippet shows an example usage:
   :linenos:
   :emphasize-lines: 6-26
 
-When you access an alias with ``caches['alias_name']``, the cache instance is built lazily. Next accesses will return the **same** instance. If instead of reusing the same instance, you need a new one, use ``caches.create('alias_name')``.
+When you do ``caches.get('alias_name')``, the cache instance is built lazily. Next accesses will return the **same** instance. If instead of reusing the same instance, you need a new one every time, use ``caches.create('alias_name')``.

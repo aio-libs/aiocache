@@ -36,13 +36,13 @@ class TestCacheHandler:
 
     def test_get_wrong_alias(self):
         with pytest.raises(KeyError):
-            caches["wrong_cache"]
+            caches.get("wrong_cache")
 
         with pytest.raises(KeyError):
             caches.create("wrong_cache")
 
     def test_reuse_instance(self):
-        assert caches['default'] is caches['default']
+        assert caches.get('default') is caches.get('default')
 
     def test_create_not_reuse(self):
         assert caches.create('default') is not caches.create('default')
@@ -63,7 +63,7 @@ class TestCacheHandler:
             }
         })
 
-        cache = caches['default']
+        cache = caches.get('default')
         assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
@@ -112,8 +112,8 @@ class TestCacheHandler:
             }
         })
 
-        default = caches['default']
-        alt = caches['alt']
+        default = caches.get('default')
+        alt = caches.get('alt')
 
         assert isinstance(default, RedisCache)
         assert default.endpoint == "127.0.0.10"

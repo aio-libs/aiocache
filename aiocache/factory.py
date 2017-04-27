@@ -42,12 +42,11 @@ class CacheHandler:
         if alias not in config:
             raise KeyError(
                 "Could not find config for '{}' in settings, ensure you called settings.from_config"
-                "specifying the config for that cache".format(alias))
+                " specifying the config for that cache".format(alias))
 
         return config[alias]
 
-    def __getitem__(self, alias):
-
+    def get(self, alias):
         try:
             return self._caches[alias]
         except KeyError:
