@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from aiocache import serializers
+from aiocache import serializers, RedisCache, SimpleMemoryCache, MemcachedCache
 
 
 class TestCache:
@@ -132,6 +132,11 @@ class TestCache:
 class TestMemoryCache:
 
     @pytest.mark.asyncio
+    async def test_accept_explicit_args(self):
+        with pytest.raises(TypeError):
+            SimpleMemoryCache(random_attr="wtf")
+
+    @pytest.mark.asyncio
     async def test_raw(self, memory_cache):
         await memory_cache.raw("setdefault", "key", "value")
         assert await memory_cache.raw("get", "key") == "value"
@@ -146,6 +151,11 @@ class TestMemoryCache:
 
 
 class TestMemcachedCache:
+
+    @pytest.mark.asyncio
+    async def test_accept_explicit_args(self):
+        with pytest.raises(TypeError):
+            MemcachedCache(random_attr="wtf")
 
     @pytest.mark.asyncio
     async def test_raw(self, memcached_cache):
@@ -165,6 +175,12 @@ class TestMemcachedCache:
 
 
 class TestRedisCache:
+
+    @pytest.mark.asyncio
+    async def test_accept_explicit_args(self):
+        with pytest.raises(TypeError):
+            RedisCache(random_attr="wtf")
+
     @pytest.mark.asyncio
     async def test_raw(self, redis_cache):
         await redis_cache.raw("set", "key", "value")
