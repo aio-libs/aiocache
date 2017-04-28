@@ -1,5 +1,5 @@
 from .log import logger
-from .settings import settings
+from .settings import Settings as settings
 from .backends.memory import SimpleMemoryCache
 from .factory import caches
 from .decorators import cached, multi_cached
