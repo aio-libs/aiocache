@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 
-class Settings:
+class settings:
 
     __instance = None
     _config = {
