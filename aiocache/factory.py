@@ -57,9 +57,9 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias):
+    def create(self, alias, **kwargs):
         config = self._get_alias_config(alias)
-        cache = _create_cache(**deepcopy(config))
+        cache = _create_cache(**{**config, **kwargs})
         return cache
 
 
