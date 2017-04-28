@@ -47,6 +47,20 @@ class TestCacheHandler:
     def test_create_not_reuse(self):
         assert caches.create('default') is not caches.create('default')
 
+    def test_create_extra_args(self):
+        settings.set_config({
+            'default': {
+                'cache': "aiocache.RedisCache",
+                'endpoint': "127.0.0.9",
+                'db': 10,
+                'port': 6378
+            }
+        })
+        cache = caches.create('default', namespace="whatever", endpoint="127.0.0.10", db=10)
+        assert cache.namespace == "whatever"
+        assert cache.endpoint == "127.0.0.10"
+        assert cache.db == 10
+
     def test_retrieve_cache(self):
         settings.set_config({
             'default': {
