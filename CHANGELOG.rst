@@ -2,6 +2,45 @@ Changelog
 =========
 
 
+0.5.0 (2017-04-29)
+------------------
+
+- Removed pool reusage for redis. A new one
+  is created for each instance [Manuel Miranda]
+- Soft dependencies for redis and memcached `#197
+  <https://github.com/argaen/issues/#197>`_ [Manuel Miranda]
+- Added incr CMD `#188 <https://github.com/argaen/issues/#188>`_ [Manuel
+  Miranda]
+- Create factory accepts cache args `#209
+  <https://github.com/argaen/issues/#209>`_ [Manuel Miranda]
+- Cached and multi_cached can use alias caches (creates new instance per call) `#205
+  <https://github.com/argaen/issues/#205>`_ [Manuel Miranda]
+- Method ``create`` to create new instances from alias `#204
+  <https://github.com/argaen/issues/#204>`_ [Manuel Miranda]
+- Remove unnecessary warning `#200
+  <https://github.com/argaen/issues/#200>`_ [Petr Timofeev]
+- Add asyncio trove classifier `#199
+  <https://github.com/argaen/issues/#199>`_ [Thanos Lefteris]
+- Pass pool_size to the underlayed aiomcache `#189
+  <https://github.com/argaen/issues/#189>`_ [Aurélien Busi]
+- Added marshmallow example `#181
+  <https://github.com/argaen/issues/#181>`_ [Manuel Miranda]
+- Added example for compression serializer `#179
+  <https://github.com/argaen/issues/#179>`_ [Manuel Miranda]
+- Added BasePlugin.add_hook helper `#173
+  <https://github.com/argaen/issues/#173>`_ [Manuel Miranda]
+
+Breaking
+~~~~~~~~
+- Refactored how settings and defaults work. Now
+  aliases are the only way. `#193
+  <https://github.com/argaen/issues/#193>`_ [Manuel Miranda]
+- Consistency between backends and serializers. With
+  SimpleMemoryCache, some data will change on how its stored
+  when using DefaultSerializer `#191
+  <https://github.com/argaen/issues/#191>`_ [Manuel Miranda]
+
+
 0.3.3 (2017-04-06)
 ------------------
 - Added CHANGELOG and release process `#172
