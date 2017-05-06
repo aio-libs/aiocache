@@ -1,9 +1,9 @@
 import asyncio
 
-from aiocache import settings, caches, SimpleMemoryCache, RedisCache
+from aiocache import caches, SimpleMemoryCache, RedisCache
 from aiocache.serializers import DefaultSerializer, PickleSerializer
 
-settings.set_config({
+caches.set_config({
     'default': {
         'cache': "aiocache.SimpleMemoryCache",
         'serializer': {
