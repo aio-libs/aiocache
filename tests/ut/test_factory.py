@@ -1,6 +1,6 @@
 import pytest
 
-from aiocache import SimpleMemoryCache, RedisCache, caches
+from aiocache import SimpleMemoryCache, RedisCache, settings, caches
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.serializers import PickleSerializer
 from aiocache.plugins import TimingPlugin
@@ -48,7 +48,7 @@ class TestCacheHandler:
         assert caches.create('default') is not caches.create('default')
 
     def test_create_extra_args(self):
-        caches.set_config({
+        settings.set_config({
             'default': {
                 'cache': "aiocache.RedisCache",
                 'endpoint': "127.0.0.9",
@@ -62,7 +62,7 @@ class TestCacheHandler:
         assert cache.db == 10
 
     def test_retrieve_cache(self):
-        caches.set_config({
+        settings.set_config({
             'default': {
                 'cache': "aiocache.RedisCache",
                 'endpoint': "127.0.0.10",
@@ -85,7 +85,7 @@ class TestCacheHandler:
         assert len(cache.plugins) == 2
 
     def test_retrieve_cache_new_instance(self):
-        caches.set_config({
+        settings.set_config({
             'default': {
                 'cache': "aiocache.RedisCache",
                 'endpoint': "127.0.0.10",
@@ -108,7 +108,7 @@ class TestCacheHandler:
         assert len(cache.plugins) == 2
 
     def test_multiple_caches(self):
-        caches.set_config({
+        settings.set_config({
             'default': {
                 'cache': "aiocache.RedisCache",
                 'endpoint': "127.0.0.10",
@@ -136,42 +136,3 @@ class TestCacheHandler:
         assert len(default.plugins) == 2
 
         assert isinstance(alt, SimpleMemoryCache)
-
-    def test_default_caches(self):
-        assert caches.get_config() == {
-            'default': {
-                'cache': "aiocache.SimpleMemoryCache",
-                'serializer': {
-                    'class': "aiocache.serializers.DefaultSerializer"
-                }
-            }
-        }
-
-    def test_get_alias_config(self):
-        assert caches.get_alias_config("default") == {
-            'cache': "aiocache.SimpleMemoryCache",
-            'serializer': {
-                'class': "aiocache.serializers.DefaultSerializer"
-            }
-        }
-
-    def test_set_empty_config(self):
-        with pytest.raises(ValueError):
-            caches.set_config({})
-
-    def test_set_config_no_default(self):
-        with pytest.raises(ValueError):
-            caches.set_config({
-                'no_default': {
-                    'cache': "aiocache.RedisCache",
-                    'endpoint': "127.0.0.10",
-                    'port': 6378,
-                    'serializer': {
-                        'class': "aiocache.serializers.PickleSerializer"
-                    },
-                    'plugins': [
-                        {'class': "aiocache.plugins.HitMissRatioPlugin"},
-                        {'class': "aiocache.plugins.TimingPlugin"}
-                    ]
-                }
-            })

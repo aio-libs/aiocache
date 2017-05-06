@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from aiocache.settings import settings
+
 
 def _class_from_string(class_path):
     class_name = class_path.split('.')[-1]
@@ -31,17 +33,18 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
 
 class CacheHandler:
 
-    _config = {
-        'default': {
-            'cache': "aiocache.SimpleMemoryCache",
-            'serializer': {
-                'class': "aiocache.serializers.DefaultSerializer"
-            }
-        }
-    }
-
     def __init__(self):
         self._caches = {}
+
+    @classmethod
+    def _get_alias_config(cls, alias):
+        config = settings.get_config()
+        if alias not in config:
+            raise KeyError(
+                "Could not find config for '{}' in settings, ensure you called settings.from_config"
+                " specifying the config for that cache".format(alias))
+
+        return config[alias]
 
     def get(self, alias):
         try:
@@ -49,78 +52,15 @@ class CacheHandler:
         except KeyError:
             pass
 
-        config = self.get_alias_config(alias)
+        config = self._get_alias_config(alias)
         cache = _create_cache(**deepcopy(config))
         self._caches[alias] = cache
         return cache
 
     def create(self, alias, **kwargs):
-        config = self.get_alias_config(alias)
+        config = self._get_alias_config(alias)
         cache = _create_cache(**{**config, **kwargs})
         return cache
-
-    def get_alias_config(self, alias):
-        config = self.get_config()
-        if alias not in config:
-            raise KeyError(
-                "Could not find config for '{0}', ensure you include {0} when calling"
-                "caches.set_config specifying the config for that cache".format(alias))
-
-        return config[alias]
-
-    def get_config(self):
-        """
-        Return copy of current stored config
-        """
-        return deepcopy(self._config)
-
-    def set_config(self, config):
-        """
-        Set (override) the default config for cache aliases from a dict-like structure.
-        The structure is the following::
-
-            {
-                'default': {
-                    'cache': "aiocache.SimpleMemoryCache",
-                    'serializer': {
-                        'class': "aiocache.serializers.DefaultSerializer"
-                    }
-                },
-                'redis_alt': {
-                    'cache': "aiocache.RedisCache",
-                    'endpoint': "127.0.0.10",
-                    'port': 6378,
-                    'serializer': {
-                        'class': "aiocache.serializers.PickleSerializer"
-                    },
-                    'plugins': [
-                        {'class': "aiocache.plugins.HitMissRatioPlugin"},
-                        {'class': "aiocache.plugins.TimingPlugin"}
-                    ]
-                }
-            }
-
-        'default' key must always exist when passing a new config. Default configuration
-        is::
-
-            {
-                'default': {
-                    'cache': "aiocache.SimpleMemoryCache",
-                    'serializer': {
-                        'class': "aiocache.serializers.DefaultSerializer"
-                    }
-                }
-            }
-
-        You can set your own classes there.
-        The class params accept both str and class types.
-
-        All keys in the config are optional, if they are not passed the defaults
-        for the specified class will be used.
-        """
-        if "default" not in config:
-            raise ValueError("default config must be provided")
-        self._config = config
 
 
 caches = CacheHandler()

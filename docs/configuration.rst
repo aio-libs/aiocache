@@ -6,11 +6,11 @@ Configuration
 Cache aliases
 -------------
 
-The caches module allows to setup cache configurations and then use them with the specified alias. To set the config, call ``caches.set_config``:
+The settings module allows to setup cache configurations and then use them with the specified alias. To set the config, call ``settings.set_config``:
 
-.. automethod:: aiocache.caches.set_config
+.. automethod:: aiocache.settings.set_config
 
-To retrieve a copy of the current config, you can use ``caches.get_config``.
+To retrieve a copy of the current config, you can use ``settings.get_config``.
 
 
 Next snippet shows an example usage:
