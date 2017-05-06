@@ -26,7 +26,8 @@ class DefaultSerializer:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def dumps(self, value):
+    @classmethod
+    def dumps(cls, value):
         """
         Serialize the received value casting it to str.
 
@@ -35,7 +36,8 @@ class DefaultSerializer:
         """
         return str(value)
 
-    def loads(self, value):
+    @classmethod
+    def loads(cls, value):
         """
         Returns value back without transformations
         """
@@ -48,7 +50,8 @@ class PickleSerializer(DefaultSerializer):
     """
     encoding = None
 
-    def dumps(self, value):
+    @classmethod
+    def dumps(cls, value):
         """
         Serialize the received value using ``pickle.dumps``.
 
@@ -57,7 +60,8 @@ class PickleSerializer(DefaultSerializer):
         """
         return pickle.dumps(value)
 
-    def loads(self, value):
+    @classmethod
+    def loads(cls, value):
         """
         Deserialize value using ``pickle.loads``.
 
@@ -75,7 +79,8 @@ class JsonSerializer(DefaultSerializer):
     https://docs.python.org/3/library/json.html#py-to-json-table for how types are converted.
     """
 
-    def dumps(self, value):
+    @classmethod
+    def dumps(cls, value):
         """
         Serialize the received value using ``json.dumps``.
 
@@ -84,7 +89,8 @@ class JsonSerializer(DefaultSerializer):
         """
         return json.dumps(value)
 
-    def loads(self, value):
+    @classmethod
+    def loads(cls, value):
         """
         Deserialize value using ``json.loads``.
 

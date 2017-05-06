@@ -9,9 +9,9 @@ from aiocache.base import API
 class BasePlugin:
 
     @classmethod
-    def add_hook(cls, fn, hooks):
+    def add_hook(cls, func, hooks):
         for hook in hooks:
-            setattr(cls, hook, fn)
+            setattr(cls, hook, func)
 
     async def do_nothing(self, *args, **kwargs):
         pass

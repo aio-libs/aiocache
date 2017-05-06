@@ -12,16 +12,16 @@ class API:
     CMDS = set()
 
     @classmethod
-    def register(cls, fn):
-        API.CMDS.add(fn)
-        return fn
+    def register(cls, func):
+        API.CMDS.add(func)
+        return func
 
     @classmethod
-    def unregister(cls, fn):
-        API.CMDS.discard(fn)
+    def unregister(cls, func):
+        API.CMDS.discard(func)
 
     @classmethod
-    def timeout(cls, fn):
+    def timeout(cls, func):
         """
         This decorator sets a maximum timeout for a coroutine to execute. The timeout can be both
         set in the ``self.timeout`` attribute or in the ``timeout`` kwarg of the function call.
@@ -30,12 +30,12 @@ class API:
 
         Use either 0 or None to disable the timeout.
         """
-        @functools.wraps(fn)
+        @functools.wraps(func)
         async def _timeout(self, *args, timeout=None, **kwargs):
             timeout = timeout or self.timeout
             if timeout == 0 or timeout is None:
-                return await fn(self, *args, **kwargs)
-            return await asyncio.wait_for(fn(self, *args, **kwargs), timeout)
+                return await func(self, *args, **kwargs)
+            return await asyncio.wait_for(func(self, *args, **kwargs), timeout)
 
         return _timeout
 
@@ -45,29 +45,29 @@ class API:
         Use this decorator to be able to fake the return of the function by setting the
         ``AIOCACHE_DISABLE`` environment variable
         """
-        def enabled(fn):
-            @functools.wraps(fn)
+        def enabled(func):
+            @functools.wraps(func)
             async def _enabled(*args, **kwargs):
                 if os.getenv('AIOCACHE_DISABLE') == "1":
                     return fake_return
-                return await fn(*args, **kwargs)
+                return await func(*args, **kwargs)
 
             return _enabled
         return enabled
 
     @classmethod
-    def plugins(cls, fn):
-        @functools.wraps(fn)
+    def plugins(cls, func):
+        @functools.wraps(func)
         async def _plugins(self, *args, **kwargs):
             start = time.time()
             for plugin in self.plugins:
-                await getattr(plugin, "pre_{}".format(fn.__name__))(self, *args, **kwargs)
+                await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
 
-            ret = await fn(self, *args, **kwargs)
+            ret = await func(self, *args, **kwargs)
 
             for plugin in self.plugins:
                 await getattr(
-                    plugin, "post_{}".format(fn.__name__))(
+                    plugin, "post_{}".format(func.__name__))(
                         self, *args, took=time.time() - start, ret=ret, **kwargs)
             return ret
 

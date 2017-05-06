@@ -149,9 +149,10 @@ class SimpleMemoryBackend:
         """
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
-    def __delete(self, key):
-        if SimpleMemoryBackend._cache.pop(key, None):
-            handle = SimpleMemoryBackend._handlers.pop(key, None)
+    @classmethod
+    def __delete(cls, key):
+        if cls._cache.pop(key, None):
+            handle = cls._handlers.pop(key, None)
             if handle:
                 handle.cancel()
             return 1
