@@ -1,4 +1,5 @@
 import inspect
+import functools
 
 from aiocache.log import logger
 from aiocache import SimpleMemoryCache, caches
@@ -39,6 +40,7 @@ def cached(
     cache_kwargs = kwargs
 
     def cached_decorator(func):
+        @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             if alias:
                 cache_instance = caches.create(alias)
@@ -102,6 +104,7 @@ def multi_cached(
     cache_kwargs = kwargs
 
     def multi_cached_decorator(func):
+        @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             if alias:
                 cache_instance = caches.create(alias)
