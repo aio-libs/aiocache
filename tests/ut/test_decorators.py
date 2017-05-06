@@ -1,6 +1,7 @@
 import sys
 import pytest
 import random
+import inspect
 import asynctest
 
 from unittest import mock
@@ -197,6 +198,16 @@ class TestCachedDecorator:
             assert memory_mock_cache.get.call_count == 0
             assert memory_mock_cache.set.call_count == 0
 
+    @pytest.mark.asyncio
+    async def test_cached_keeps_signature(self):
+        @cached()
+        async def what(self, a, b):
+            return "1"
+
+        assert what.__name__ == "what"
+        assert str(inspect.signature(what)) == '(self, a, b)'
+        assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'a', 'b']
+
 
 class TestMultiCachedDecorator:
 
@@ -336,6 +347,16 @@ class TestMultiCachedDecorator:
             mock_create.assert_called_with('whatever')
             assert memory_mock_cache.multi_get.call_count == 0
             assert memory_mock_cache.multi_set.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_keeps_signature(self):
+        @multi_cached('keys')
+        async def what(self, keys, a, b):
+            return "1"
+
+        assert what.__name__ == "what"
+        assert str(inspect.signature(what)) == '(self, keys, a, b)'
+        assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'keys', 'a', 'b']
 
 
 def test_get_args_dict():
