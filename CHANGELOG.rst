@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+0.5.1
+----------
+- Deprecate settings module `#215
+  <https://github.com/argaen/issues/#215>`_ [Manuel Miranda]
+- Decorators support introspection `#213
+  <https://github.com/argaen/issues/#213>`_ [Manuel Miranda]
+
+
 0.5.0 (2017-04-29)
 ------------------
 
