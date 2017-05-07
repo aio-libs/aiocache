@@ -1,7 +1,7 @@
 from .log import logger
-from .settings import settings
 from .backends.memory import SimpleMemoryCache
 from .factory import caches
+from .settings import settings
 from .decorators import cached, multi_cached
 from ._version import __version__
 

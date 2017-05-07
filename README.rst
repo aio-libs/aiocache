@@ -69,11 +69,11 @@ You can also setup cache aliases like in Django settings:
 
   import asyncio
 
-  from aiocache import settings, caches, SimpleMemoryCache, RedisCache
+  from aiocache import caches, SimpleMemoryCache, RedisCache
   from aiocache.serializers import DefaultSerializer, PickleSerializer
 
   # You can use either classes or strings for referencing classes
-  settings.set_config({
+  caches.set_config({
       'default': {
           'cache': "aiocache.SimpleMemoryCache",
           'serializer': {
