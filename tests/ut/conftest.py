@@ -2,7 +2,7 @@ import pytest
 import asynctest
 
 from aiocache.base import BaseCache
-from aiocache import caches, settings, RedisCache, MemcachedCache
+from aiocache import caches, RedisCache, MemcachedCache
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import DefaultSerializer
 
@@ -12,18 +12,6 @@ def pytest_namespace():
         'KEY': "key",
         'KEY_1': "random"
     }
-
-
-@pytest.fixture(autouse=True)
-def reset_settings():
-    settings.set_config({
-        'default': {
-            'cache': "aiocache.SimpleMemoryCache",
-            'serializer': {
-                'class': "aiocache.serializers.DefaultSerializer"
-            }
-        }
-    })
 
 
 @pytest.fixture(autouse=True)
