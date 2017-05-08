@@ -14,6 +14,7 @@ def redis_server():
     p.start()
     yield
     p.terminate()
+    time.sleep(2)
 
 
 @pytest.fixture
@@ -22,6 +23,7 @@ def memcached_server():
     p.start()
     yield
     p.terminate()
+    time.sleep(2)
 
 
 @pytest.fixture
@@ -30,30 +32,35 @@ def memory_server():
     p.start()
     yield
     p.terminate()
-    time.sleep(1)
+    time.sleep(2)
 
 
 @pytest.fixture(params=[
-    'redis_server',
     'memcached_server',
     'memory_server',
+    'redis_server',
 ])
 def server(request):
     return request.getfuncargvalue(request.param)
 
 
 def test_concurrency_error_rates(server):
-    total_requests = 3500
+    total_requests = 1500
     result = subprocess.run(
         ["ab", "-n", str(total_requests), "-c", "500", "http://127.0.0.1:8080/"],
         stdout=subprocess.PIPE)
 
-    failed_requests = int(re.search("Failed requests:\s+([0-9]+)", str(result.stdout)).group(1))
+    failed_requests = total_requests
+    m = re.search("Failed requests:\s+([0-9]+)", str(result.stdout))
+    if m:
+        failed_requests = int(m.group(1))
 
     non_200 = 0
     m = re.search("Non-2xx responses:\s+([0-9]+)", str(result.stdout))
     if m:
         non_200 = int(m.group(1))
 
+    print("Failed requests: {}%".format(failed_requests/total_requests * 100))
+    print("Non 200 requests: {}%".format(non_200/total_requests * 100))
     assert failed_requests/total_requests < 0.75  # aioredis is the problem here, need to improve it
     assert non_200/total_requests < 0.75

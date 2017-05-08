@@ -1,9 +1,13 @@
 import asyncio
 import argparse
+import logging
 import uuid
 import aiocache
 
 from aiohttp import web
+
+
+logging.getLogger('aiohttp.access').propagate = False
 
 
 AIOCACHE_BACKENDS = {

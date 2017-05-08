@@ -64,8 +64,7 @@ async def redis():
     assert await cache.get("key") is None
     assert await cache.get("key_1") == "value"
     assert await cache.get("key_2") == "value"
-    keys = await cache.raw("keys", "*")
-    assert len(keys) == 2
+    assert len(await cache.raw("keys", "{}:*".format(cache.namespace))) == 2
 
 
 def test_redis():
