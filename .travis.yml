@@ -4,6 +4,9 @@ python:
   - "3.5"
   - "3.6"
 
+before_install:
+  - sudo apt-get install apache2-utils
+
 install:
   - pip install -r requirements-ci.txt
 
