@@ -1,2 +1,2 @@
-aioredis==0.3.0
+aioredis==0.3.1
 aiomcache==0.5.1
