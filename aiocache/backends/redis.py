@@ -19,6 +19,7 @@ class RedisBackend:
         self.password = password
         self.pool_min_size = pool_min_size
         self.pool_max_size = pool_max_size
+        self._lock = asyncio.Lock()
         self._loop = loop or asyncio.get_event_loop()
         self._pool = None
 
@@ -166,15 +167,16 @@ class RedisBackend:
             return await getattr(redis, command)(*args, **kwargs)
 
     async def _connect(self):
-        if self._pool is None:
-            self._pool = await aioredis.create_pool(
-                (self.endpoint, self.port),
-                db=self.db,
-                password=self.password,
-                loop=self._loop,
-                encoding="utf-8",
-                minsize=self.pool_min_size,
-                maxsize=self.pool_max_size)
+        async with self._lock:
+            if self._pool is None:
+                self._pool = await aioredis.create_pool(
+                    (self.endpoint, self.port),
+                    db=self.db,
+                    password=self.password,
+                    loop=self._loop,
+                    encoding="utf-8",
+                    minsize=self.pool_min_size,
+                    maxsize=self.pool_max_size)
 
         return await self._pool
 
