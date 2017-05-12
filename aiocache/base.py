@@ -28,11 +28,11 @@ class API:
         I.e if you have a function ``get(self, key)``, if its decorated with this decorator, you
         will be able to call it with ``await get(self, "my_key", timeout=4)``.
 
-        Use either 0 or None to disable the timeout.
+        Use 0 to disable the timeout.
         """
         @functools.wraps(func)
         async def _timeout(self, *args, timeout=None, **kwargs):
-            timeout = timeout or self.timeout
+            timeout = self.timeout if timeout is None else timeout
             if timeout == 0 or timeout is None:
                 return await func(self, *args, **kwargs)
             return await asyncio.wait_for(func(self, *args, **kwargs), timeout)
