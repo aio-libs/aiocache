@@ -71,6 +71,20 @@ class TestRedisBackend:
             assert await redis._connect() == pool
 
     @pytest.mark.asyncio
+    async def test_connect_locked(self, mocker):
+        redis = RedisBackend()
+        pool = FakePool()
+        mocker.spy(redis._lock, "acquire")
+        mocker.spy(redis._lock, "release")
+
+        with patch(
+                "aiocache.backends.redis.aioredis.create_pool",
+                MagicMock(return_value=pool)):
+            assert await redis._connect() == pool
+            assert redis._lock.acquire.call_count == 1
+            assert redis._lock.release.call_count == 1
+
+    @pytest.mark.asyncio
     async def test_connect_calls_create_pool(self):
         with patch("aiocache.backends.redis.aioredis.create_pool") as create_pool:
             pool = FakePool()
