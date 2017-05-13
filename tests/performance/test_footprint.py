@@ -37,7 +37,7 @@ class TestRedis:
 
         print("{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aioredis_total_time, aiocache_total_time/aioredis_total_time))
-        assert aiocache_total_time/aioredis_total_time < 1.25
+        assert aiocache_total_time/aioredis_total_time < 1.30
 
     @pytest.mark.asyncio
     async def test_redis_multigetsetdel(self, aioredis_pool, redis_cache):
@@ -66,7 +66,7 @@ class TestRedis:
 
         print("{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aioredis_total_time, aiocache_total_time/aioredis_total_time))
-        assert aiocache_total_time/aioredis_total_time < 1.25
+        assert aiocache_total_time/aioredis_total_time < 1.30
 
 
 @pytest.fixture
@@ -120,6 +120,9 @@ class TestMemcached:
             # TODO: aiomcache pool behaves really BAD with concurrent requests so multi_set
             # is not ideal. With the new MR I've submitted aiomcache/#46 it will improve
             # although its not ideal...
+            # Also, performance if fat worse in local because we don't get benefit from
+            # concurrency because latency is stable. In build and real environments, the
+            # number is better.
             await memcached_cache.multi_set([(x, x) for x in values], timeout=0)
             await memcached_cache.multi_get(values, timeout=0)
             for k in values:

@@ -142,9 +142,7 @@ class TestRedisBackend:
     async def test_multi_set(self, redis):
         cache, pool = redis
         await cache._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")])
-        assert pool.client.multi_exec.call_count == 1
-        pool.transaction.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
-        assert pool.transaction.execute.call_count == 1
+        pool.client.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
 
     @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, redis):
