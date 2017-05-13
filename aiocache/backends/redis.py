@@ -66,18 +66,23 @@ class RedisBackend:
         """
         ttl = ttl or 0
 
-        with await self._connect() as redis:
-            transaction = redis.multi_exec()
-            flattened = list(itertools.chain.from_iterable(
-                (key, value) for key, value in pairs))
-            transaction.mset(*flattened)
-            if ttl > 0:
-                for key in flattened[::2]:
-                    transaction.expire(key, timeout=ttl)
+        flattened = list(itertools.chain.from_iterable(
+            (key, value) for key, value in pairs))
 
-            await transaction.execute()
+        with await self._connect() as redis:
+            if ttl:
+                await self.__multi_set_ttl(redis, flattened, ttl)
+            else:
+                await redis.mset(*flattened)
 
         return True
+
+    async def __multi_set_ttl(self, conn, flattened, ttl):
+        redis = conn.multi_exec()
+        redis.mset(*flattened)
+        for key in flattened[::2]:
+            redis.expire(key, timeout=ttl)
+        await redis.execute()
 
     async def _add(self, key, value, ttl=None):
         """
