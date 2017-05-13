@@ -28,11 +28,13 @@ class API:
         I.e if you have a function ``get(self, key)``, if its decorated with this decorator, you
         will be able to call it with ``await get(self, "my_key", timeout=4)``.
 
-        Use 0 to disable the timeout.
+        Use 0 or None to disable the timeout.
         """
+        NOT_SET = "NOT_SET"
+
         @functools.wraps(func)
-        async def _timeout(self, *args, timeout=None, **kwargs):
-            timeout = self.timeout if timeout is None else timeout
+        async def _timeout(self, *args, timeout=NOT_SET, **kwargs):
+            timeout = self.timeout if timeout == NOT_SET else timeout
             if timeout == 0 or timeout is None:
                 return await func(self, *args, **kwargs)
             return await asyncio.wait_for(func(self, *args, **kwargs), timeout)
@@ -132,8 +134,7 @@ class BaseCache:
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: True if key is inserted
         :raises:
             - ValueError if key already exists
@@ -164,8 +165,7 @@ class BaseCache:
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: obj loaded
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -193,8 +193,7 @@ class BaseCache:
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: list of objs
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -229,8 +228,7 @@ class BaseCache:
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -259,8 +257,7 @@ class BaseCache:
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -294,8 +291,7 @@ class BaseCache:
         :param key: Key to be deleted
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: int number of deleted keys
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -319,8 +315,7 @@ class BaseCache:
         :param key: str key to check
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: True if key exists otherwise False
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -346,8 +341,7 @@ class BaseCache:
         :param delta: int amount to increment/decrement
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: Value of the key once incremented. -1 if key is not found.
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         :raises: :class:`TypeError` if value is not incrementable
@@ -373,8 +367,7 @@ class BaseCache:
         :param ttl: int number of seconds for expiration. If 0, ttl is disabled
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: True if set, False if key is not found
         """
         start = time.time()
@@ -397,8 +390,7 @@ class BaseCache:
 
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -424,8 +416,7 @@ class BaseCache:
 
         :param command: str with the command.
         :param timeout: int or float in seconds specifying maximum timeout
-            for the operations to last. None by default (applies the one defined
-            in `self.timeout`)
+            for the operations to last
         :returns: whatever the underlying client returns
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
