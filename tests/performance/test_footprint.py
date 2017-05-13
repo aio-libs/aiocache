@@ -66,7 +66,7 @@ class TestRedis:
 
         print("{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aioredis_total_time, aiocache_total_time/aioredis_total_time))
-        assert aiocache_total_time/aioredis_total_time < 1.30
+        assert aiocache_total_time/aioredis_total_time < 1.35
 
 
 @pytest.fixture
