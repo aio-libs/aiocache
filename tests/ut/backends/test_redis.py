@@ -3,7 +3,9 @@ import aioredis
 
 from asynctest import CoroutineMock, MagicMock, patch, ANY
 
-from aiocache.backends.redis import RedisBackend
+from aiocache import RedisCache
+from aiocache.base import BaseCache
+from aiocache.backends.redis import RedisBackend, conn
 
 
 class FakePool:
@@ -11,19 +13,23 @@ class FakePool:
     SET_IF_NOT_EXIST = 'SET_IF_NOT_EXIST'
 
     def __init__(self):
-        client = CoroutineMock()
-        client.SET_IF_NOT_EXIST = self.SET_IF_NOT_EXIST
-        self.client = client
+        conn = CoroutineMock()
+        conn.SET_IF_NOT_EXIST = self.SET_IF_NOT_EXIST
+        self.conn = conn
         self.transaction = MagicMock()
-        self.client.multi_exec = MagicMock(return_value=self.transaction)
-        self.client.multi_exec.return_value.execute = CoroutineMock()
+        self.release = CoroutineMock()
+        self.conn.multi_exec = MagicMock(return_value=self.transaction)
+        self.conn.multi_exec.return_value.execute = CoroutineMock()
 
     def __await__(self):
         yield
         return self
 
+    async def acquire(self):
+        return self.conn
+
     def __enter__(self):
-        return self.client
+        return self.conn
 
     def __exit__(self, *args, **kwargs):
         pass
@@ -60,6 +66,28 @@ class TestRedisBackend:
         assert redis_backend.port == 6379
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
+
+    @pytest.mark.asyncio
+    async def test_acquire(self):
+        redis = RedisBackend()
+        pool = FakePool()
+        redis._pool = pool
+        with patch(
+                "aiocache.backends.redis.aioredis.create_pool",
+                MagicMock(return_value=pool)):
+            assert await redis.acquire() == pool.conn
+
+    @pytest.mark.asyncio
+    async def test_release(self):
+        redis = RedisBackend()
+        pool = FakePool()
+        redis._pool = pool
+        with patch(
+                "aiocache.backends.redis.aioredis.create_pool",
+                MagicMock(return_value=pool)):
+            conn = await redis.acquire()
+            await redis.release(conn)
+            redis._pool.release.assert_called_with(conn)
 
     @pytest.mark.asyncio
     async def test_connect_with_pool(self):
@@ -110,45 +138,44 @@ class TestRedisBackend:
         assert redis._pool == pool
 
     @pytest.mark.asyncio
-    async def test_connect_reuses_existing_pool(self):
-        pool = FakePool()
-        redis = RedisBackend()
-        redis._pool = pool
-        await redis._connect()
-        assert redis._pool == pool
+    async def test_connect_reuses_existing_pool(self, redis):
+        cache, pool = redis
+        cache._pool = pool
+        await cache._connect()
+        assert cache._pool == pool
 
     @pytest.mark.asyncio
     async def test_get(self, redis):
         cache, pool = redis
         await cache._get(pytest.KEY)
-        pool.client.get.assert_called_with(pytest.KEY, encoding="utf-8")
+        pool.conn.get.assert_called_with(pytest.KEY, encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_set(self, redis):
         cache, pool = redis
         await cache._set(pytest.KEY, "value")
-        pool.client.set.assert_called_with(pytest.KEY, "value", expire=None)
+        pool.conn.set.assert_called_with(pytest.KEY, "value", expire=None)
 
         await cache._set(pytest.KEY, "value", ttl=1)
-        pool.client.set.assert_called_with(pytest.KEY, "value", expire=1)
+        pool.conn.set.assert_called_with(pytest.KEY, "value", expire=1)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):
         cache, pool = redis
         await cache._multi_get([pytest.KEY, pytest.KEY_1])
-        pool.client.mget.assert_called_with(pytest.KEY, pytest.KEY_1, encoding="utf-8")
+        pool.conn.mget.assert_called_with(pytest.KEY, pytest.KEY_1, encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_multi_set(self, redis):
         cache, pool = redis
         await cache._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")])
-        pool.client.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
+        pool.conn.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
 
     @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, redis):
         cache, pool = redis
         await cache._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=1)
-        assert pool.client.multi_exec.call_count == 1
+        assert pool.conn.multi_exec.call_count == 1
         pool.transaction.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
         pool.transaction.expire.assert_any_call(pytest.KEY, timeout=1)
         pool.transaction.expire.assert_any_call(pytest.KEY_1, timeout=1)
@@ -158,39 +185,39 @@ class TestRedisBackend:
     async def test_add(self, redis):
         cache, pool = redis
         await cache._add(pytest.KEY, "value")
-        pool.client.set.assert_called_with(
+        pool.conn.set.assert_called_with(
             pytest.KEY, "value", expire=None, exist=pool.SET_IF_NOT_EXIST)
 
     @pytest.mark.asyncio
     async def test_add_existing(self, redis):
         cache, pool = redis
-        pool.client.set.return_value = False
+        pool.conn.set.return_value = False
         with pytest.raises(ValueError):
             await cache._add(pytest.KEY, "value")
 
     @pytest.mark.asyncio
     async def test_exists(self, redis):
         cache, pool = redis
-        pool.client.exists.return_value = 1
+        pool.conn.exists.return_value = 1
         await cache._exists(pytest.KEY)
-        pool.client.exists.assert_called_with(pytest.KEY)
+        pool.conn.exists.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_expire(self, redis):
         cache, pool = redis
         await cache._expire(pytest.KEY, ttl=1)
-        pool.client.expire.assert_called_with(pytest.KEY, 1)
+        pool.conn.expire.assert_called_with(pytest.KEY, 1)
 
     @pytest.mark.asyncio
     async def test_increment(self, redis):
         cache, pool = redis
         await cache._increment(pytest.KEY, delta=2)
-        pool.client.incrby.assert_called_with(pytest.KEY, 2)
+        pool.conn.incrby.assert_called_with(pytest.KEY, 2)
 
     @pytest.mark.asyncio
     async def test_increment_typerror(self, redis):
         cache, pool = redis
-        pool.client.incrby.side_effect = aioredis.errors.ReplyError
+        pool.conn.incrby.side_effect = aioredis.errors.ReplyError
         with pytest.raises(TypeError):
             await cache._increment(pytest.KEY, 2)
 
@@ -198,31 +225,85 @@ class TestRedisBackend:
     async def test_expire_0_ttl(self, redis):
         cache, pool = redis
         await cache._expire(pytest.KEY, ttl=0)
-        pool.client.persist.assert_called_with(pytest.KEY)
+        pool.conn.persist.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_delete(self, redis):
         cache, pool = redis
         await cache._delete(pytest.KEY)
-        pool.client.delete.assert_called_with(pytest.KEY)
+        pool.conn.delete.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_clear(self, redis):
         cache, pool = redis
-        pool.client.keys.return_value = ["nm:a", "nm:b"]
+        pool.conn.keys.return_value = ["nm:a", "nm:b"]
         await cache._clear("nm")
-        pool.client.delete.assert_called_with("nm:a", "nm:b")
+        pool.conn.delete.assert_called_with("nm:a", "nm:b")
 
     @pytest.mark.asyncio
     async def test_clear_no_namespace(self, redis):
         cache, pool = redis
         await cache._clear()
-        assert pool.client.flushdb.call_count == 1
+        assert pool.conn.flushdb.call_count == 1
 
     @pytest.mark.asyncio
     async def test_raw(self, redis):
         cache, pool = redis
         await cache._raw("get", pytest.KEY)
         await cache._raw("set", pytest.KEY, 1)
-        pool.client.get.assert_called_with(pytest.KEY, encoding=ANY)
-        pool.client.set.assert_called_with(pytest.KEY, 1)
+        pool.conn.get.assert_called_with(pytest.KEY, encoding=ANY)
+        pool.conn.set.assert_called_with(pytest.KEY, 1)
+
+
+class TestConn:
+
+    async def dummy(self, *args, _conn=None, **kwargs):
+        pass
+
+    @pytest.mark.asyncio
+    async def test_conn_no_pool(self, redis, mocker):
+        mocker.spy(self, "dummy")
+        cache, pool = redis
+        cache._pool = pool
+        d = conn(self.dummy)
+        await d(cache, "a", _conn=None)
+        d.assert_called_with(cache, "a", _conn=pool.conn)
+        pool.conn = "another_connection"
+        await d(cache, "a", _conn=None)
+        d.assert_called_with(cache, "a", _conn="another_connection")
+
+    @pytest.mark.asyncio
+    async def test_conn_reuses(self, redis, mocker):
+        mocker.spy(self, "dummy")
+        cache, pool = redis
+        cache._pool = pool
+        d = conn(self.dummy)
+        first_conn = pool.conn
+        await d(cache, "a", _conn=first_conn)
+        d.assert_called_with(cache, "a", _conn=first_conn)
+        pool.conn = "another_connection"
+        await d(cache, "a", _conn=first_conn)
+        d.assert_called_with(cache, "a", _conn=first_conn)
+
+
+class TestRedisCache:
+
+    @pytest.fixture
+    def set_test_namespace(self, redis_cache):
+        redis_cache.namespace = "test"
+        yield
+        redis_cache.namespace = None
+
+    def test_inheritance(self):
+        assert isinstance(RedisCache(), BaseCache)
+
+    @pytest.mark.parametrize("namespace, expected", (
+        [None, "test:" + pytest.KEY],
+        ["", pytest.KEY],
+        ["my_ns", "my_ns:" + pytest.KEY],)
+    )
+    def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
+        assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
+
+    def test_build_key_no_namespace(self, redis_cache):
+        assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY

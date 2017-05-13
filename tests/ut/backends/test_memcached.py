@@ -3,6 +3,8 @@ import aiomcache
 
 from asynctest import MagicMock, patch, ANY
 
+from aiocache import MemcachedCache
+from aiocache.base import BaseCache
 from aiocache.backends.memcached import MemcachedBackend
 
 
@@ -183,3 +185,26 @@ class TestMemcachedBackend:
         await memcached._raw("get", pytest.KEY, encoding=None)
         memcached.client.get.assert_called_with(pytest.KEY)
         memcached.client.set.assert_called_with(pytest.KEY, "asd")
+
+
+class TestMemcachedCache:
+
+    @pytest.fixture
+    def set_test_namespace(self, memcached_cache):
+        memcached_cache.namespace = "test"
+        yield
+        memcached_cache.namespace = None
+
+    def test_inheritance(self):
+        assert isinstance(MemcachedCache(), BaseCache)
+
+    @pytest.mark.parametrize("namespace, expected", (
+        [None, "test" + pytest.KEY],
+        ["", pytest.KEY],
+        ["my_ns", "my_ns" + pytest.KEY],)
+    )
+    def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
+        assert memcached_cache._build_key(pytest.KEY, namespace=namespace) == expected.encode()
+
+    def test_build_key_no_namespace(self, memcached_cache):
+        assert memcached_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
