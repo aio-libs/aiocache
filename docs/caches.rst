@@ -45,7 +45,7 @@ If you feel a command is missing here do not hesitate to `open an issue <https:/
 BaseCache
 ---------
 
-.. autoclass:: aiocache.cache.BaseCache
+.. autoclass:: aiocache.base.BaseCache
   :members:
 
 

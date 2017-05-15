@@ -45,46 +45,18 @@ class RedisBackend:
 
     @conn
     async def _get(self, key, encoding="utf-8", _conn=None):
-        """
-        Get a value from the cache
-
-        :param key: str
-        :returns: obj in key if found else None
-        """
-
         return await _conn.get(key, encoding=encoding)
 
     @conn
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
-        """
-        Get multi values from the cache. For each key not found it returns a None
-
-        :param key: str
-        :returns: list of obj for each key found, else if not found
-        """
         return await _conn.mget(*keys, encoding=encoding)
 
     @conn
     async def _set(self, key, value, ttl=None, _conn=None):
-        """
-        Stores the value in the given key.
-
-        :param key: str
-        :param value: obj
-        :param ttl: int
-        :returns: True
-        """
         return await _conn.set(key, value, expire=ttl)
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):
-        """
-        Stores multiple values in the given keys.
-
-        :param pairs: list of two element iterables. First is key and second is value
-        :param ttl: int
-        :returns: True
-        """
         ttl = ttl or 0
 
         flattened = list(itertools.chain.from_iterable(
@@ -106,17 +78,6 @@ class RedisBackend:
 
     @conn
     async def _add(self, key, value, ttl=None, _conn=None):
-        """
-        Stores the value in the given key. Raises an error if the
-        key already exists.
-
-        :param key: str
-        :param value: obj
-        :param ttl: int
-        :returns: True if key is inserted
-        :raises: Value error if key already exists
-        """
-
         was_set = await _conn.set(key, value, expire=ttl, exist=_conn.SET_IF_NOT_EXIST)
         if not was_set:
             raise ValueError(
@@ -125,12 +86,6 @@ class RedisBackend:
 
     @conn
     async def _exists(self, key, _conn=None):
-        """
-        Check key exists in the cache.
-
-        :param key: str key to check
-        :returns: True if key exists otherwise False
-        """
         exists = await _conn.exists(key)
         return True if exists > 0 else False
 
@@ -143,35 +98,16 @@ class RedisBackend:
 
     @conn
     async def _expire(self, key, ttl, _conn=None):
-        """
-        Expire the given key in ttl seconds. If ttl is 0, remove the expiration
-
-        :param key: str key to expire
-        :param ttl: int number of seconds for expiration. If 0, ttl is disabled
-        :returns: True if set, False if key is not found
-        """
         if ttl == 0:
             return await _conn.persist(key)
         return await _conn.expire(key, ttl)
 
     @conn
     async def _delete(self, key, _conn=None):
-        """
-        Deletes the given key.
-
-        :param key: Key to be deleted
-        :returns: int number of deleted keys
-        """
         return await _conn.delete(key)
 
     @conn
     async def _clear(self, namespace=None, _conn=None):
-        """
-        Deletes the given key.
-
-        :param namespace:
-        :returns: True
-        """
         if namespace:
             keys = await _conn.keys("{}:*".format(namespace))
             await _conn.delete(*keys)
@@ -181,12 +117,6 @@ class RedisBackend:
 
     @conn
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
-        """
-        Executes a raw command using the underlying client of aioredis. It's under
-        the developer responsibility to send the needed args and kwargs.
-
-        :param command: str command to execute
-        """
         if command in ["get", "mget"]:
             kwargs["encoding"] = encoding
         return await getattr(_conn, command)(*args, **kwargs)
@@ -208,10 +138,9 @@ class RedisBackend:
 
 class RedisCache(RedisBackend, BaseCache):
     """
-    Redis cache implementation with the
-    following components as defaults:
-      - serializer: :class:`aiocache.serializers.DefaultSerializer`
-      - plugins: []
+    Redis cache implementation with the following components as defaults:
+        - serializer: :class:`aiocache.serializers.DefaultSerializer`
+        - plugins: []
 
     Config options are:
 
