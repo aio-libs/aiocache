@@ -15,7 +15,6 @@ script:
   - python setup.py develop
   - pytest --cov-report term-missing --cov=aiocache -sv tests/ut
   - pytest -sv tests/acceptance
-  - pytest -sv tests/performance/test_footprint.py
   - bash examples/run_all.sh
 
 services:
