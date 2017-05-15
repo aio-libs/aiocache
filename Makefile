@@ -34,7 +34,7 @@ _performance:
 
 performance: dockerup _performance dockerdown
 
-test: syntax ut dockerup _acceptance _functional _performance dockerdown
+test: syntax ut dockerup _acceptance _functional dockerdown
 
 _release:
 	scripts/make_release

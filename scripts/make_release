@@ -26,7 +26,7 @@ if echo "$answer" | grep -iq "^y" ;then
 
   if echo "$answer" | grep -iq "^y" ;then
     python setup.py sdist
-    twine upload "aiocache-$new_version.tar.gz"
+    twine upload "dist/aiocache-$new_version.tar.gz"
   else
     exit 1
   fi
