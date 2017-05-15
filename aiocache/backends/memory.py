@@ -14,7 +14,7 @@ class SimpleMemoryBackend:
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def _get(self, key, encoding="utf-8"):
+    async def _get(self, key, encoding="utf-8", _conn=None):
         """
         Get a value from the cache
 
@@ -23,7 +23,7 @@ class SimpleMemoryBackend:
         """
         return SimpleMemoryBackend._cache.get(key)
 
-    async def _multi_get(self, keys, encoding="utf-8"):
+    async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -32,7 +32,7 @@ class SimpleMemoryBackend:
         """
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
-    async def _set(self, key, value, ttl=None):
+    async def _set(self, key, value, ttl=None, _conn=None):
         """
         Stores the value in the given key.
 
@@ -47,7 +47,7 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
-    async def _multi_set(self, pairs, ttl=None):
+    async def _multi_set(self, pairs, ttl=None, _conn=None):
         """
         Stores multiple values in the given keys.
 
@@ -59,7 +59,7 @@ class SimpleMemoryBackend:
             await self._set(key, value, ttl=ttl)
         return True
 
-    async def _add(self, key, value, ttl=None):
+    async def _add(self, key, value, ttl=None, _conn=None):
         """
         Stores the value in the given key. Raises an error if the
         key already exists.
@@ -77,7 +77,7 @@ class SimpleMemoryBackend:
         await self._set(key, value, ttl=ttl)
         return True
 
-    async def _exists(self, key):
+    async def _exists(self, key, _conn=None):
         """
         Check key exists in the cache.
 
@@ -86,7 +86,7 @@ class SimpleMemoryBackend:
         """
         return key in SimpleMemoryBackend._cache
 
-    async def _increment(self, key, delta):
+    async def _increment(self, key, delta, _conn=None):
         if key not in SimpleMemoryBackend._cache:
             SimpleMemoryBackend._cache[key] = delta
         else:
@@ -96,7 +96,7 @@ class SimpleMemoryBackend:
                 raise TypeError("Value is not an integer") from None
         return SimpleMemoryBackend._cache[key]
 
-    async def _expire(self, key, ttl):
+    async def _expire(self, key, ttl, _conn=None):
         """
         Expire the given key in ttl seconds. If ttl is 0, remove the expiration
 
@@ -115,7 +115,7 @@ class SimpleMemoryBackend:
 
         return False
 
-    async def _delete(self, key):
+    async def _delete(self, key, _conn=None):
         """
         Deletes the given key.
 
@@ -124,7 +124,7 @@ class SimpleMemoryBackend:
         """
         return self.__delete(key)
 
-    async def _clear(self, namespace=None):
+    async def _clear(self, namespace=None, _conn=None):
         """
         Deletes the given key.
 
@@ -140,7 +140,7 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._handlers = {}
         return True
 
-    async def _raw(self, command, *args, encoding="utf-8", **kwargs):
+    async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         """
         Executes a raw command using the underlying dict structure. It's under
         the developer responsibility to send the needed args and kwargs.

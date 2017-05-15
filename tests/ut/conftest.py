@@ -32,17 +32,22 @@ def disable_logs(mocker):
 
 
 class MockCache(BaseCache):
-    _add = asynctest.CoroutineMock()
-    _get = asynctest.CoroutineMock()
-    _set = asynctest.CoroutineMock()
-    _multi_get = asynctest.CoroutineMock(return_value=['a', 'b'])
-    _multi_set = asynctest.CoroutineMock()
-    _delete = asynctest.CoroutineMock()
-    _exists = asynctest.CoroutineMock()
-    _increment = asynctest.CoroutineMock()
-    _expire = asynctest.CoroutineMock()
-    _clear = asynctest.CoroutineMock()
-    _raw = asynctest.CoroutineMock()
+
+    def __init__(self):
+        super().__init__()
+        self._add = asynctest.CoroutineMock()
+        self._get = asynctest.CoroutineMock()
+        self._set = asynctest.CoroutineMock()
+        self._multi_get = asynctest.CoroutineMock(return_value=['a', 'b'])
+        self._multi_set = asynctest.CoroutineMock()
+        self._delete = asynctest.CoroutineMock()
+        self._exists = asynctest.CoroutineMock()
+        self._increment = asynctest.CoroutineMock()
+        self._expire = asynctest.CoroutineMock()
+        self._clear = asynctest.CoroutineMock()
+        self._raw = asynctest.CoroutineMock()
+        self.acquire = asynctest.CoroutineMock()
+        self.release = asynctest.CoroutineMock()
 
 
 @pytest.fixture

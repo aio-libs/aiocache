@@ -17,7 +17,7 @@ class MemcachedBackend:
         self.client = aiomcache.Client(
             self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size)
 
-    async def _get(self, key, encoding="utf-8"):
+    async def _get(self, key, encoding="utf-8", _conn=None):
         """
         Get a value from the cache. Returns default if not found.
 
@@ -29,7 +29,7 @@ class MemcachedBackend:
             return value
         return value.decode(encoding)
 
-    async def _multi_get(self, keys, encoding="utf-8"):
+    async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         """
         Get multi values from the cache. For each key not found it returns a None
 
@@ -44,7 +44,7 @@ class MemcachedBackend:
                 values.append(value.decode(encoding))
         return values
 
-    async def _set(self, key, value, ttl=0):
+    async def _set(self, key, value, ttl=0, _conn=None):
         """
         Stores the value in the given key.
 
@@ -56,7 +56,7 @@ class MemcachedBackend:
         value = str.encode(value) if isinstance(value, str) else value
         return await self.client.set(key, value, exptime=ttl or 0)
 
-    async def _multi_set(self, pairs, ttl=0):
+    async def _multi_set(self, pairs, ttl=0, _conn=None):
         """
         Stores multiple values in the given keys.
 
@@ -73,7 +73,7 @@ class MemcachedBackend:
 
         return True
 
-    async def _add(self, key, value, ttl=0):
+    async def _add(self, key, value, ttl=0, _conn=None):
         """
         Stores the value in the given key. Raises an error if the
         key already exists.
@@ -92,7 +92,7 @@ class MemcachedBackend:
 
         return True
 
-    async def _exists(self, key):
+    async def _exists(self, key, _conn=None):
         """
         Check key exists in the cache.
 
@@ -101,7 +101,7 @@ class MemcachedBackend:
         """
         return await self.client.append(key, b'')
 
-    async def _increment(self, key, delta):
+    async def _increment(self, key, delta, _conn=None):
         incremented = None
         try:
             if delta > 0:
@@ -116,7 +116,7 @@ class MemcachedBackend:
 
         return incremented or delta
 
-    async def _expire(self, key, ttl):
+    async def _expire(self, key, ttl, _conn=None):
         """
         Expire the given key in ttl seconds. If ttl is 0, remove the expiration
 
@@ -126,7 +126,7 @@ class MemcachedBackend:
         """
         return await self.client.touch(key, ttl)
 
-    async def _delete(self, key):
+    async def _delete(self, key, _conn=None):
         """
         Deletes the given key.
 
@@ -135,7 +135,7 @@ class MemcachedBackend:
         """
         return 1 if await self.client.delete(key) else 0
 
-    async def _clear(self, namespace=None):
+    async def _clear(self, namespace=None, _conn=None):
         """
         Deletes the given key.
 
@@ -148,7 +148,7 @@ class MemcachedBackend:
             await self.client.flush_all()
         return True
 
-    async def _raw(self, command, *args, encoding="utf-8", **kwargs):
+    async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         """
         Executes a raw command using the underlying client of memcached. It's under
         the developer responsibility to send the needed args and kwargs.

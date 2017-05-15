@@ -2,6 +2,7 @@ import pytest
 import asyncio
 
 from aiocache import serializers, RedisCache, SimpleMemoryCache, MemcachedCache
+from aiocache.base import _Conn
 
 
 class TestCache:
@@ -127,6 +128,13 @@ class TestCache:
         await cache.clear()
 
         assert await cache.exists(pytest.KEY) is False
+
+    @pytest.mark.asyncio
+    async def test_single_connection(self, cache):
+        async with cache.get_connection() as conn:
+            assert isinstance(conn, _Conn)
+            assert await conn.set(pytest.KEY, "value") is True
+            assert await conn.get(pytest.KEY) == "value"
 
 
 class TestMemoryCache:

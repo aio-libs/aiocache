@@ -5,8 +5,7 @@ import asynctest
 
 from unittest.mock import patch, MagicMock, ANY
 
-from aiocache import SimpleMemoryCache, MemcachedCache, RedisCache, settings
-from aiocache.base import BaseCache, API
+from aiocache.base import API, _Conn
 
 
 class TestAPI:
@@ -197,6 +196,14 @@ class TestBaseCache:
         with pytest.raises(NotImplementedError):
             await base_cache._raw("get", pytest.KEY)
 
+    @pytest.mark.asyncio
+    async def test_acquire(self, base_cache):
+        assert await base_cache.acquire() == base_cache
+
+    @pytest.mark.asyncio
+    async def test_release(self, base_cache):
+        await base_cache.release("mock") is None
+
     @pytest.fixture
     def set_test_namespace(self, base_cache):
         base_cache.namespace = "test"
@@ -228,7 +235,8 @@ class TestCache:
     async def test_get(self, mock_cache):
         await mock_cache.get(pytest.KEY)
 
-        mock_cache._get.assert_called_with(mock_cache._build_key(pytest.KEY), encoding=ANY)
+        mock_cache._get.assert_called_with(
+            mock_cache._build_key(pytest.KEY), encoding=ANY, _conn=ANY)
         assert mock_cache.plugins[0].pre_get.call_count == 1
         assert mock_cache.plugins[0].post_get.call_count == 1
 
@@ -243,7 +251,8 @@ class TestCache:
     async def test_set(self, mock_cache):
         await mock_cache.set(pytest.KEY, "value", ttl=2)
 
-        mock_cache._set.assert_called_with(mock_cache._build_key(pytest.KEY), asynctest.ANY, 2)
+        mock_cache._set.assert_called_with(
+            mock_cache._build_key(pytest.KEY), asynctest.ANY, 2, _conn=ANY)
         assert mock_cache.plugins[0].pre_set.call_count == 1
         assert mock_cache.plugins[0].post_set.call_count == 1
 
@@ -259,7 +268,8 @@ class TestCache:
         mock_cache._exists = asynctest.CoroutineMock(return_value=False)
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
-        mock_cache._add.assert_called_with(mock_cache._build_key(pytest.KEY), asynctest.ANY, 2)
+        mock_cache._add.assert_called_with(
+            mock_cache._build_key(pytest.KEY), asynctest.ANY, 2, _conn=ANY)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
@@ -275,7 +285,8 @@ class TestCache:
         await mock_cache.multi_get([pytest.KEY, pytest.KEY_1])
 
         mock_cache._multi_get.assert_called_with([
-            mock_cache._build_key(pytest.KEY), mock_cache._build_key(pytest.KEY_1)], encoding=ANY)
+            mock_cache._build_key(pytest.KEY), mock_cache._build_key(pytest.KEY_1)],
+            encoding=ANY, _conn=ANY)
         assert mock_cache.plugins[0].pre_multi_get.call_count == 1
         assert mock_cache.plugins[0].post_multi_get.call_count == 1
 
@@ -292,7 +303,7 @@ class TestCache:
 
         mock_cache._multi_set.assert_called_with([
             (mock_cache._build_key(pytest.KEY), asynctest.ANY),
-            (mock_cache._build_key(pytest.KEY_1), asynctest.ANY)], 2)
+            (mock_cache._build_key(pytest.KEY_1), asynctest.ANY)], 2, _conn=ANY)
         assert mock_cache.plugins[0].pre_multi_set.call_count == 1
         assert mock_cache.plugins[0].post_multi_set.call_count == 1
 
@@ -307,7 +318,7 @@ class TestCache:
     async def test_exists(self, mock_cache):
         await mock_cache.exists(pytest.KEY)
 
-        mock_cache._exists.assert_called_with(mock_cache._build_key(pytest.KEY))
+        mock_cache._exists.assert_called_with(mock_cache._build_key(pytest.KEY), _conn=ANY)
         assert mock_cache.plugins[0].pre_exists.call_count == 1
         assert mock_cache.plugins[0].post_exists.call_count == 1
 
@@ -322,7 +333,7 @@ class TestCache:
     async def test_increment(self, mock_cache):
         await mock_cache.increment(pytest.KEY, 2)
 
-        mock_cache._increment.assert_called_with(mock_cache._build_key(pytest.KEY), 2)
+        mock_cache._increment.assert_called_with(mock_cache._build_key(pytest.KEY), 2, _conn=ANY)
         assert mock_cache.plugins[0].pre_increment.call_count == 1
         assert mock_cache.plugins[0].post_increment.call_count == 1
 
@@ -337,7 +348,7 @@ class TestCache:
     async def test_delete(self, mock_cache):
         await mock_cache.delete(pytest.KEY)
 
-        mock_cache._delete.assert_called_with(mock_cache._build_key(pytest.KEY))
+        mock_cache._delete.assert_called_with(mock_cache._build_key(pytest.KEY), _conn=ANY)
         assert mock_cache.plugins[0].pre_delete.call_count == 1
         assert mock_cache.plugins[0].post_delete.call_count == 1
 
@@ -351,7 +362,7 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_expire(self, mock_cache):
         await mock_cache.expire(pytest.KEY, 1)
-        mock_cache._expire.assert_called_with(mock_cache._build_key(pytest.KEY), 1)
+        mock_cache._expire.assert_called_with(mock_cache._build_key(pytest.KEY), 1, _conn=ANY)
         assert mock_cache.plugins[0].pre_expire.call_count == 1
         assert mock_cache.plugins[0].post_expire.call_count == 1
 
@@ -365,7 +376,7 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_clear(self, mock_cache):
         await mock_cache.clear(pytest.KEY)
-        mock_cache._clear.assert_called_with(mock_cache._build_key(pytest.KEY))
+        mock_cache._clear.assert_called_with(mock_cache._build_key(pytest.KEY), _conn=ANY)
         assert mock_cache.plugins[0].pre_clear.call_count == 1
         assert mock_cache.plugins[0].post_clear.call_count == 1
 
@@ -380,7 +391,7 @@ class TestCache:
     async def test_raw(self, mock_cache):
         await mock_cache.raw("get", pytest.KEY)
         mock_cache._raw.assert_called_with(
-            "get", mock_cache._build_key(pytest.KEY), encoding=ANY)
+            "get", mock_cache._build_key(pytest.KEY), encoding=ANY, _conn=ANY)
         assert mock_cache.plugins[0].pre_raw.call_count == 1
         assert mock_cache.plugins[0].post_raw.call_count == 1
 
@@ -391,59 +402,39 @@ class TestCache:
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.raw("clear")
 
-
-class TestRedisCache:
-
-    @pytest.fixture
-    def set_test_namespace(self, redis_cache):
-        redis_cache.namespace = "test"
-        yield
-        redis_cache.namespace = None
-
-    def test_inheritance(self):
-        assert isinstance(RedisCache(), BaseCache)
-
-    @pytest.mark.parametrize("namespace, expected", (
-        [None, "test:" + pytest.KEY],
-        ["", pytest.KEY],
-        ["my_ns", "my_ns:" + pytest.KEY],)
-    )
-    def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
-        assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
-
-    def test_build_key_no_namespace(self, redis_cache):
-        assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
-
-
-class TestSimpleMemoryCache:
-
-    def test_inheritance(self):
-        assert isinstance(SimpleMemoryCache(), BaseCache)
-
-
-class TestMemcachedCache:
-
-    @pytest.fixture
-    def set_test_namespace(self, memcached_cache):
-        memcached_cache.namespace = "test"
-        yield
-        memcached_cache.namespace = None
-
-    def test_inheritance(self):
-        assert isinstance(MemcachedCache(), BaseCache)
-
-    @pytest.mark.parametrize("namespace, expected", (
-        [None, "test" + pytest.KEY],
-        ["", pytest.KEY],
-        ["my_ns", "my_ns" + pytest.KEY],)
-    )
-    def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
-        assert memcached_cache._build_key(pytest.KEY, namespace=namespace) == expected.encode()
-
-    def test_build_key_no_namespace(self, memcached_cache):
-        assert memcached_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
+    @pytest.mark.asyncio
+    async def test_get_connection(self, mock_cache):
+        async with mock_cache.get_connection():
+            pass
+        assert mock_cache.acquire.call_count == 1
+        assert mock_cache.release.call_count == 1
 
 
 @pytest.fixture
-def set_test_namespace():
-    settings._CACHE_KWARGS = {"namespace": "test"}
+def conn(mock_cache):
+    yield _Conn(mock_cache)
+
+
+class TestConn:
+
+    def test_conn(self, conn, mock_cache):
+        assert conn._cache == mock_cache
+
+    def test_conn_getattr(self, conn, mock_cache):
+        assert conn.timeout == mock_cache.timeout
+        assert conn.namespace == conn.namespace
+        assert conn.serializer is mock_cache.serializer
+
+    @pytest.mark.asyncio
+    async def test_conn_context_manager(self, conn):
+        async with conn:
+            assert conn._cache.acquire.call_count == 1
+        conn._cache.release.assert_called_with(conn._cache.acquire.return_value)
+
+    @pytest.mark.asyncio
+    async def test_inject_conn(self, conn):
+        conn._conn = "connection"
+        conn._cache.dummy = asynctest.CoroutineMock()
+
+        await _Conn._inject_conn("dummy")(conn, "a", b="b")
+        conn._cache.dummy.assert_called_with("a", _conn=conn._conn, b="b")

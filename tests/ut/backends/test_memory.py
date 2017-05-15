@@ -3,6 +3,8 @@ import asyncio
 
 from unittest.mock import MagicMock
 
+from aiocache import SimpleMemoryCache
+from aiocache.base import BaseCache
 from aiocache.backends.memory import SimpleMemoryBackend
 
 
@@ -153,3 +155,9 @@ class TestSimpleMemoryBackend:
 
         await memory._set(pytest.KEY, "value")
         SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, "value")
+
+
+class TestSimpleMemoryCache:
+
+    def test_inheritance(self):
+        assert isinstance(SimpleMemoryCache(), BaseCache)
