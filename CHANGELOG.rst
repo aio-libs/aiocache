@@ -2,6 +2,20 @@ Changelog
 =========
 
 
+0.5.2 (2017-05-15)
+------------------
+- Reuse connection context manager `#225
+  <https://github.com/argaen/issues/#225>`_ [Manuel Miranda]
+- Add performance footprint tests `#228
+  <https://github.com/argaen/issues/#228>`_ [Manuel Miranda]
+- Timeout=0 takes precedence over self.timeout `#227
+  <https://github.com/argaen/issues/#227>`_ [Manuel Miranda]
+- Lock when acquiring redis connection `#224
+  <https://github.com/argaen/issues/#224>`_ [Manuel Miranda]
+- Added performance concurrency tests `#216
+  <https://github.com/argaen/issues/#216>`_ [Manuel Miranda]
+
+
 0.5.1
 ----------
 - Deprecate settings module `#215
