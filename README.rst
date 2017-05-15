@@ -1,6 +1,8 @@
 aiocache
 ########
 
+Asyncio cache supporting multiple backends (memory, redis and memcached).
+
 .. image:: https://travis-ci.org/argaen/aiocache.svg?branch=master
   :target: https://travis-ci.org/argaen/aiocache
 
@@ -15,8 +17,6 @@ aiocache
 
 .. image:: https://api.codacy.com/project/badge/Grade/96f772e38e63489ca884dbaf6e9fb7fd
   :target: https://www.codacy.com/app/argaen/aiocache
-
-The asyncio cache that implements multiple backends.
 
 This library aims for simplicity over specialization. All caches contain the same minimum interface which consists on the following functions:
 
@@ -44,7 +44,7 @@ This library aims for simplicity over specialization. All caches contain the sam
 Installing
 ==========
 
-Do ``pip install aiocache``.
+Do ``pip install aiocache``
 
 
 Usage
@@ -56,12 +56,47 @@ Using a cache is as simple as
 
     >>> import asyncio
     >>> loop = asyncio.get_event_loop()
-    >>> from aiocache import SimpleMemoryCache
+    >>> from aiocache import SimpleMemoryCache  # Here you can also use RedisCache and MemcachedCache
     >>> cache = SimpleMemoryCache()
     >>> loop.run_until_complete(cache.set('key', 'value'))
     True
     >>> loop.run_until_complete(cache.get('key'))
     'value'
+
+Or as a decorator
+
+.. code-block:: python
+
+    import asyncio
+
+    from collections import namedtuple
+
+    from aiocache import cached, RedisCache
+    from aiocache.serializers import PickleSerializer
+    # With this we can store python objects in backends like Redis!
+
+    Result = namedtuple('Result', "content, status")
+    cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
+
+
+    @cached(
+        ttl=10, cache=RedisCache, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
+    async def cached_call():
+        print("Sleeping for three seconds zzzz.....")
+        await asyncio.sleep(3)
+        return Result("content", 200)
+
+
+    def run():
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(cached_call())
+        loop.run_until_complete(cached_call())
+        loop.run_until_complete(cached_call())
+        loop.run_until_complete(cache.delete("key"))
+
+    if __name__ == "__main__":
+        run()
+
 
 You can also setup cache aliases like in Django settings:
 
