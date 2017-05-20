@@ -54,8 +54,9 @@ def cached(
                     args[1:] if noself else args) + str(kwargs))
 
             try:
-                if await cache_instance.exists(cache_key):
-                    return await cache_instance.get(cache_key)
+                value = await cache_instance.get(cache_key)
+                if value is not None:
+                    return value
 
             except Exception:
                 logger.exception("Unexpected error with %s", cache_instance)
