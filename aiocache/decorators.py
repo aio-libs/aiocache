@@ -148,6 +148,7 @@ def multi_cached(
                     except Exception:
                         logger.exception("Unexpected error with %s", cache_instance)
 
+            await cache_instance.close()
             return partial_result
 
         return wrapper
