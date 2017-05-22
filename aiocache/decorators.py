@@ -55,7 +55,9 @@ def cached(
 
             try:
                 if await cache_instance.exists(cache_key):
-                    return await cache_instance.get(cache_key)
+                    result = await cache_instance.get(cache_key)
+                    await cache_instance.close()
+                    return result
 
             except Exception:
                 logger.exception("Unexpected error with %s", cache_instance)
@@ -67,6 +69,7 @@ def cached(
             except Exception:
                 logger.exception("Unexpected error with %s", cache_instance)
 
+            await cache_instance.close()
             return result
 
         return wrapper

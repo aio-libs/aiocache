@@ -123,8 +123,10 @@ class RedisBackend:
 
     @conn
     async def _close(self, *args, _conn=None, **kwargs):
-        _conn.close()
-        await conn.close()
+        async with self._lock:
+            if self._pool is not None:
+                self._pool.close()
+                await self._pool.wait_closed()
 
     async def _connect(self):
         async with self._lock:
