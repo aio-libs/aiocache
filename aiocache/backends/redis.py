@@ -121,6 +121,11 @@ class RedisBackend:
             kwargs["encoding"] = encoding
         return await getattr(_conn, command)(*args, **kwargs)
 
+    @conn
+    async def _close(self, *args, _conn=None, **kwargs):
+        _conn.close()
+        await conn.close()
+
     async def _connect(self):
         async with self._lock:
             if self._pool is None:
