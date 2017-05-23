@@ -40,6 +40,7 @@ def redis_cache(event_loop):
     for _, pool in RedisBackend.pools.items():
         pool.close()
         event_loop.run_until_complete(pool.wait_closed())
+    await cache.close()
 
 
 @pytest.fixture
@@ -49,6 +50,7 @@ def memory_cache(event_loop):
 
     event_loop.run_until_complete(cache.delete(pytest.KEY))
     event_loop.run_until_complete(cache.delete(pytest.KEY_1))
+    await cache.close()
 
 
 @pytest.fixture
@@ -58,7 +60,7 @@ def memcached_cache(event_loop):
 
     event_loop.run_until_complete(cache.delete(pytest.KEY))
     event_loop.run_until_complete(cache.delete(pytest.KEY_1))
-
+    await cache.close()
 
 @pytest.fixture(params=[
     'redis_cache',

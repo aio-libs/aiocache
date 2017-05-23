@@ -33,7 +33,7 @@ async def default_cache():
     assert await cache.get("key") == "value"
     assert isinstance(cache, SimpleMemoryCache)
     assert isinstance(cache.serializer, DefaultSerializer)
-
+    await cache.close()
 
 async def alt_cache():
     cache = caches.create('redis_alt')   # This generates a new instance every time!
@@ -46,6 +46,7 @@ async def alt_cache():
     assert cache.endpoint == "127.0.0.1"
     assert cache.timeout == 1
     assert cache.port == 6379
+    await cache.close()
 
 
 def test_alias():
@@ -53,8 +54,9 @@ def test_alias():
     loop.run_until_complete(default_cache())
     loop.run_until_complete(alt_cache())
 
-    loop.run_until_complete(RedisCache().delete("key"))
-
+    cache = RedisCache()
+    loop.run_until_complete(cache.delete("key"))
+    loop.run_until_complete(cache.close())
 
 if __name__ == "__main__":
     test_alias()

@@ -50,6 +50,7 @@ class MockCache(BaseCache):
         self.acquire = asynctest.CoroutineMock()
         self.release = asynctest.CoroutineMock()
 
+
 @pytest.fixture
 def mock_cache(mocker):
     cache = MockCache()

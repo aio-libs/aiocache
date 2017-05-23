@@ -20,7 +20,7 @@ def test_redis():
     loop.run_until_complete(redis())
     loop.run_until_complete(cache.delete("key"))
     loop.run_until_complete(cache.delete("expire_me"))
-
+    loop.run_until_complete(cache.close())
 
 if __name__ == "__main__":
     test_redis()
