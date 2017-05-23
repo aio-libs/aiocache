@@ -4,6 +4,7 @@ import functools
 import asyncio
 
 from aiocache import serializers
+from aiocache._lock import _Lock
 from aiocache.log import logger
 
 
@@ -436,13 +437,19 @@ class BaseCache:
             return "{}{}".format(self.namespace, key)
         return key
 
+    def _lock(self, key, lease):
+        return _Lock(self, key, lease)
+
+    async def _redlock_release(self, key, value):
+        raise NotImplementedError()
+
     def get_connection(self):
         return _Conn(self)
 
-    async def acquire(self):
+    async def acquire_conn(self):
         return self
 
-    async def release(self, conn):
+    async def release_conn(self, conn):
         pass
 
 
@@ -453,11 +460,11 @@ class _Conn:
         self._conn = None
 
     async def __aenter__(self):
-        self._conn = await self._cache.acquire()
+        self._conn = await self._cache.acquire_conn()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self._cache.release(self._conn)
+        await self._cache.release_conn(self._conn)
 
     def __getattr__(self, name):
         return self._cache.__getattribute__(name)
