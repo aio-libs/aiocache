@@ -51,5 +51,6 @@ def test_serializer():
     loop.run_until_complete(cache.delete("key"))
     loop.run_until_complete(cache.close())
 
+
 if __name__ == "__main__":
     test_serializer()

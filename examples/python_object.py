@@ -24,5 +24,6 @@ def test_python_object():
     loop.run_until_complete(cache.delete("key"))
     loop.run_until_complete(cache.close())
 
+
 if __name__ == "__main__":
     test_python_object()

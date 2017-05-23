@@ -35,6 +35,7 @@ async def default_cache():
     assert isinstance(cache.serializer, DefaultSerializer)
     await cache.close()
 
+
 async def alt_cache():
     cache = caches.create('redis_alt')   # This generates a new instance every time!
     await cache.set("key", "value")

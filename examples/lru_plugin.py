@@ -75,5 +75,6 @@ def test_redis():
     loop.run_until_complete(cache.delete("key_2"))
     loop.run_until_complete(cache.close())
 
+
 if __name__ == "__main__":
     test_redis()
