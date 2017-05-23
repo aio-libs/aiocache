@@ -40,7 +40,7 @@ def redis_cache(event_loop):
     for _, pool in RedisBackend.pools.items():
         pool.close()
         event_loop.run_until_complete(pool.wait_closed())
-    await cache.close()
+    event_loop.run_until_complete(cache.close())
 
 
 @pytest.fixture
