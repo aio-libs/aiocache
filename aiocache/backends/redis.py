@@ -139,7 +139,7 @@ class RedisBackend:
             [value])
 
     async def _close(self, *args, **kwargs):
-        async with self._lock:
+        async with self._pool_lock:
             if self._pool is not None:
                 self._pool.close()
                 await self._pool.wait_closed()
