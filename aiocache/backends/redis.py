@@ -122,7 +122,7 @@ class RedisBackend:
         return await getattr(_conn, command)(*args, **kwargs)
 
     @conn
-    async def _close(self, *args, _conn=None, **kwargs):
+    async def _close(self, *args, **kwargs):
         async with self._lock:
             if self._pool is not None:
                 self._pool.close()

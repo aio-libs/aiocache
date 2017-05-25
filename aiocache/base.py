@@ -429,10 +429,7 @@ class BaseCache:
     async def _raw(self, command, *args, **kwargs):
         raise NotImplementedError()
 
-    @API.register
-    @API.aiocache_enabled()
     @API.timeout
-    @API.plugins
     async def close(self, *args, _conn=None, **kwargs):
         """
         Perform any resource clean up necessary when the cache is no longer
