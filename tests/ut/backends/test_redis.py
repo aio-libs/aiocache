@@ -254,6 +254,12 @@ class TestRedisBackend:
         pool.conn.get.assert_called_with(pytest.KEY, encoding=ANY)
         pool.conn.set.assert_called_with(pytest.KEY, 1)
 
+    @pytest.mark.asyncio
+    async def test_close(self):
+        redis = RedisBackend()
+        await redis.close()
+        assert redis._pool.closed
+
 
 class TestConn:
 
