@@ -255,11 +255,17 @@ class TestRedisBackend:
         pool.conn.set.assert_called_with(pytest.KEY, 1)
 
     @pytest.mark.asyncio
-    async def test_close(self):
+    async def test_close_when_connected(self):
         redis = RedisBackend()
         await redis._raw("set", pytest.KEY, 1)
         await redis._close()
         assert redis._pool.closed
+
+    @pytest.mark.asyncio
+    async def test_close_when_not_connected(self):
+        redis = RedisBackend()
+        await redis._close()
+        assert redis._pool is None
 
 
 class TestConn:
