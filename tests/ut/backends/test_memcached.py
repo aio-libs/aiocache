@@ -186,6 +186,12 @@ class TestMemcachedBackend:
         memcached.client.get.assert_called_with(pytest.KEY)
         memcached.client.set.assert_called_with(pytest.KEY, "asd")
 
+    @pytest.mark.asyncio
+    async def test_close(self):
+        memcached = MemcachedBackend()
+        await memcached._close()
+        assert memcached.client._pool._pool.empty()
+
 
 class TestMemcachedCache:
 

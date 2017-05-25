@@ -46,6 +46,7 @@ class MockCache(BaseCache):
         self._expire = asynctest.CoroutineMock()
         self._clear = asynctest.CoroutineMock()
         self._raw = asynctest.CoroutineMock()
+        self._close = asynctest.CoroutineMock()
         self.acquire = asynctest.CoroutineMock()
         self.release = asynctest.CoroutineMock()
 

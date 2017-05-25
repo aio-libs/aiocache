@@ -429,6 +429,22 @@ class BaseCache:
     async def _raw(self, command, *args, **kwargs):
         raise NotImplementedError()
 
+    @API.timeout
+    async def close(self, *args, _conn=None, **kwargs):
+        """
+        Perform any resource clean up necessary when the cache is no longer
+        needed (generally when the controlling program exits).
+
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
+        """
+        start = time.time()
+        ret = await self._close(*args, _conn=_conn, **kwargs)
+        logger.debug("CLOSE (%.4f)s", time.time() - start)
+        return ret
+
+    async def _close(self, *args, **kwargs):
+        raise NotImplementedError()
+
     def _build_key(self, key, namespace=None):
         if namespace is not None:
             return "{}{}".format(namespace, key)

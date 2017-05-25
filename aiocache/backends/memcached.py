@@ -93,6 +93,9 @@ class MemcachedBackend:
                 return value.decode(encoding)
         return value
 
+    async def _close(self, *args, _conn=None, **kwargs):
+        await self.client.close()
+
 
 class MemcachedCache(MemcachedBackend, BaseCache):
     """

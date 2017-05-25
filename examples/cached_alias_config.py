@@ -46,6 +46,7 @@ async def alt_cache():
     assert cache.endpoint == "127.0.0.1"
     assert cache.timeout == 1
     assert cache.port == 6379
+    await cache.close()
 
 
 def test_alias():
@@ -53,7 +54,11 @@ def test_alias():
     loop.run_until_complete(default_cache())
     loop.run_until_complete(alt_cache())
 
-    loop.run_until_complete(RedisCache().delete("key"))
+    cache = RedisCache()
+    loop.run_until_complete(cache.delete("key"))
+    loop.run_until_complete(cache.close())
+
+    loop.run_until_complete(caches.get('default').close())
 
 
 if __name__ == "__main__":

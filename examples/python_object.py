@@ -22,6 +22,7 @@ def test_python_object():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(complex_object())
     loop.run_until_complete(cache.delete("key"))
+    loop.run_until_complete(cache.close())
 
 
 if __name__ == "__main__":
