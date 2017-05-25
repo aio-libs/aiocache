@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import functools
 
@@ -56,7 +57,7 @@ def cached(
             try:
                 if await cache_instance.exists(cache_key):
                     result = await cache_instance.get(cache_key)
-                    await cache_instance.close()
+                    asyncio.ensure_future(cache_instance.close())
                     return result
 
             except Exception:
@@ -69,7 +70,7 @@ def cached(
             except Exception:
                 logger.exception("Unexpected error with %s", cache_instance)
 
-            await cache_instance.close()
+            asyncio.ensure_future(cache_instance.close())
             return result
 
         return wrapper
@@ -148,7 +149,7 @@ def multi_cached(
                     except Exception:
                         logger.exception("Unexpected error with %s", cache_instance)
 
-            await cache_instance.close()
+            asyncio.ensure_future(cache_instance.close())
             return partial_result
 
         return wrapper

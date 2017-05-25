@@ -33,7 +33,6 @@ async def default_cache():
     assert await cache.get("key") == "value"
     assert isinstance(cache, SimpleMemoryCache)
     assert isinstance(cache.serializer, DefaultSerializer)
-    await cache.close()
 
 
 async def alt_cache():
@@ -58,6 +57,8 @@ def test_alias():
     cache = RedisCache()
     loop.run_until_complete(cache.delete("key"))
     loop.run_until_complete(cache.close())
+
+    loop.run_until_complete(caches.get('default').close())
 
 
 if __name__ == "__main__":
