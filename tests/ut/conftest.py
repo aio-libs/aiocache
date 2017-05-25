@@ -49,6 +49,7 @@ class MockCache(BaseCache):
         self._redlock_release = asynctest.CoroutineMock()
         self.acquire_conn = asynctest.CoroutineMock()
         self.release_conn = asynctest.CoroutineMock()
+        self._close = asynctest.CoroutineMock()
 
 
 @pytest.fixture

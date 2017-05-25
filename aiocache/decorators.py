@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import functools
 
@@ -56,6 +57,7 @@ def cached(
             try:
                 value = await cache_instance.get(cache_key)
                 if value is not None:
+                    asyncio.ensure_future(cache_instance.close())
                     return value
 
             except Exception:
@@ -68,6 +70,7 @@ def cached(
             except Exception:
                 logger.exception("Unexpected error with %s", cache_instance)
 
+            asyncio.ensure_future(cache_instance.close())
             return result
 
         return wrapper
@@ -146,6 +149,7 @@ def multi_cached(
                     except Exception:
                         logger.exception("Unexpected error with %s", cache_instance)
 
+            asyncio.ensure_future(cache_instance.close())
             return partial_result
 
         return wrapper

@@ -210,6 +210,10 @@ class TestBaseCache:
     async def test_release_conn(self, base_cache):
         await base_cache.release_conn("mock") is None
 
+    async def test_close(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache._close()
+
     @pytest.fixture
     def set_test_namespace(self, base_cache):
         base_cache.namespace = "test"
@@ -417,6 +421,10 @@ class TestCache:
 
     def test_lock(self, mock_cache):
         assert isinstance(mock_cache._lock(pytest.KEY, 20), _DistributedLock)
+
+    @pytest.mark.asyncio
+    async def test_close(self, mock_cache):
+        await mock_cache.close()
 
 
 @pytest.fixture

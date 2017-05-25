@@ -6,7 +6,6 @@ from aiocache import cached, RedisCache
 from aiocache.serializers import PickleSerializer
 
 Result = namedtuple('Result', "content, status")
-cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
 
 
 @cached(
@@ -16,10 +15,12 @@ async def cached_call():
 
 
 def test_cached():
+    cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
     loop = asyncio.get_event_loop()
     loop.run_until_complete(cached_call())
     assert loop.run_until_complete(cache.exists("key")) is True
     loop.run_until_complete(cache.delete("key"))
+    loop.run_until_complete(cache.close())
 
 
 if __name__ == "__main__":

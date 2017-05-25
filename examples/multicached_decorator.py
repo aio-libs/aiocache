@@ -38,6 +38,7 @@ def test_multi_cached():
     loop.run_until_complete(cache.delete("b"))
     loop.run_until_complete(cache.delete("c"))
     loop.run_until_complete(cache.delete("d"))
+    loop.run_until_complete(cache.close())
 
 
 if __name__ == "__main__":
