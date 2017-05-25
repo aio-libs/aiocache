@@ -257,6 +257,7 @@ class TestRedisBackend:
     @pytest.mark.asyncio
     async def test_close(self):
         redis = RedisBackend()
+        await redis._raw("set", pytest.KEY, 1)
         await redis._close()
         assert redis._pool.closed
 
