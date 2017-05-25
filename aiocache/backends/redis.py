@@ -61,7 +61,9 @@ class RedisBackend:
 
     @conn
     async def _set(self, key, value, ttl=None, _conn=None):
-        return await _conn.set(key, value, expire=ttl)
+        if ttl is None:
+            return await _conn.set(key, value)
+        return await _conn.setex(key, ttl, value)
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):

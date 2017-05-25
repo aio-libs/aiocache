@@ -154,10 +154,10 @@ class TestRedisBackend:
     async def test_set(self, redis):
         cache, pool = redis
         await cache._set(pytest.KEY, "value")
-        pool.conn.set.assert_called_with(pytest.KEY, "value", expire=None)
+        pool.conn.set.assert_called_with(pytest.KEY, "value")
 
         await cache._set(pytest.KEY, "value", ttl=1)
-        pool.conn.set.assert_called_with(pytest.KEY, "value", expire=1)
+        pool.conn.setex.assert_called_with(pytest.KEY, 1, "value")
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):

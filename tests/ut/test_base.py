@@ -6,7 +6,7 @@ import asynctest
 from unittest.mock import patch, MagicMock, ANY
 
 from aiocache.base import API, _Conn
-from aiocache._lock import _Lock
+from aiocache._lock import _DistributedLock
 
 
 class TestAPI:
@@ -416,7 +416,7 @@ class TestCache:
         assert mock_cache.release_conn.call_count == 1
 
     def test_lock(self, mock_cache):
-        assert isinstance(mock_cache._lock(pytest.KEY, 20), _Lock)
+        assert isinstance(mock_cache._lock(pytest.KEY, 20), _DistributedLock)
 
 
 @pytest.fixture

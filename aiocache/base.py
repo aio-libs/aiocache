@@ -4,7 +4,7 @@ import functools
 import asyncio
 
 from aiocache import serializers
-from aiocache._lock import _Lock
+from aiocache._lock import _DistributedLock
 from aiocache.log import logger
 
 
@@ -225,7 +225,9 @@ class BaseCache:
 
         :param key: str
         :param value: obj
-        :param ttl: int the expiration time in seconds
+        :param ttl: int the expiration time in seconds. Due to memcached
+            restrictions if you want compatibility use int. In case you
+            need miliseconds, redis and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -254,7 +256,9 @@ class BaseCache:
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
-        :param ttl: int the expiration time of the keys in seconds
+        :param ttl: int the expiration time in seconds. Due to memcached
+            restrictions if you want compatibility use int. In case you
+            need miliseconds, redis and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -438,7 +442,7 @@ class BaseCache:
         return key
 
     def _lock(self, key, lease):
-        return _Lock(self, key, lease)
+        return _DistributedLock(self, key, lease)
 
     async def _redlock_release(self, key, value):
         raise NotImplementedError()

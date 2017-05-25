@@ -54,7 +54,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, cache):
-        pairs = [(pytest.KEY, b"value"), [pytest.KEY_1, b"random_value"]]
+        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs, ttl=1) is True
         await asyncio.sleep(1.1)
 
@@ -145,6 +145,21 @@ class TestMemoryCache:
             SimpleMemoryCache(random_attr="wtf")
 
     @pytest.mark.asyncio
+    async def test_set_float_ttl(self, memory_cache):
+        await memory_cache.set(pytest.KEY, "value", ttl=0.1)
+        await asyncio.sleep(0.15)
+
+        assert await memory_cache.get(pytest.KEY) is None
+
+    @pytest.mark.asyncio
+    async def test_multi_set_float_ttl(self, memory_cache):
+        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
+        assert await memory_cache.multi_set(pairs, ttl=0.1) is True
+        await asyncio.sleep(0.15)
+
+        assert await memory_cache.multi_get([pytest.KEY, pytest.KEY_1]) == [None, None]
+
+    @pytest.mark.asyncio
     async def test_raw(self, memory_cache):
         await memory_cache.raw("setdefault", "key", "value")
         assert await memory_cache.raw("get", "key") == "value"
@@ -152,7 +167,7 @@ class TestMemoryCache:
 
     @pytest.mark.asyncio
     async def test_clear_with_namespace_memory(self, memory_cache):
-        await memory_cache.set(pytest.KEY, b"value", namespace="test")
+        await memory_cache.set(pytest.KEY, "value", namespace="test")
         await memory_cache.clear(namespace="test")
 
         assert await memory_cache.exists(pytest.KEY, namespace="test") is False
@@ -164,6 +179,17 @@ class TestMemcachedCache:
     async def test_accept_explicit_args(self):
         with pytest.raises(TypeError):
             MemcachedCache(random_attr="wtf")
+
+    @pytest.mark.asyncio
+    async def test_set_float_ttl_fails(self, memcached_cache):
+        with pytest.raises(TypeError):
+            await memcached_cache.set(pytest.KEY, "value", ttl=0.1)
+
+    @pytest.mark.asyncio
+    async def test_multi_set_float_ttl(self, memcached_cache):
+        with pytest.raises(TypeError):
+            pairs = [(pytest.KEY, b"value"), [pytest.KEY_1, b"random_value"]]
+            assert await memcached_cache.multi_set(pairs, ttl=0.1) is True
 
     @pytest.mark.asyncio
     async def test_raw(self, memcached_cache):
@@ -188,6 +214,21 @@ class TestRedisCache:
     async def test_accept_explicit_args(self):
         with pytest.raises(TypeError):
             RedisCache(random_attr="wtf")
+
+    @pytest.mark.asyncio
+    async def test_float_ttl(self, redis_cache):
+        await redis_cache.set(pytest.KEY, "value", ttl=0.1)
+        await asyncio.sleep(0.15)
+
+        assert await redis_cache.get(pytest.KEY) is None
+
+    @pytest.mark.asyncio
+    async def test_multi_set_float_ttl(self, redis_cache):
+        pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
+        assert await redis_cache.multi_set(pairs, ttl=0.1) is True
+        await asyncio.sleep(0.15)
+
+        assert await redis_cache.multi_get([pytest.KEY, pytest.KEY_1]) == [None, None]
 
     @pytest.mark.asyncio
     async def test_raw(self, redis_cache):

@@ -1,11 +1,11 @@
 import pytest
 
-from aiocache._lock import _Lock
+from aiocache._lock import _DistributedLock
 
 
 @pytest.fixture
 def lock(redis_cache):
-    return _Lock(redis_cache, pytest.KEY, 20)
+    return _DistributedLock(redis_cache, pytest.KEY, 20)
 
 
 class TestLock:
