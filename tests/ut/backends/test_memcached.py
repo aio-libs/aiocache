@@ -189,7 +189,7 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_close(self):
         memcached = MemcachedBackend()
-        await memcached.close()
+        await memcached._close()
         assert memcached.client._pool._pool.empty()
 
 
