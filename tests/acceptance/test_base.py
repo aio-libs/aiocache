@@ -124,10 +124,17 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_clear(self, cache):
-        await cache.set(pytest.KEY, b"value")
+        await cache.set(pytest.KEY, "value")
         await cache.clear()
 
         assert await cache.exists(pytest.KEY) is False
+
+    @pytest.mark.asyncio
+    async def test_close_pool_only_clears_resources(self, cache):
+        await cache.set(pytest.KEY, "value")
+        await cache.close()
+        assert await cache.set(pytest.KEY, "value") is True
+        assert await cache.get(pytest.KEY) == "value"
 
     @pytest.mark.asyncio
     async def test_single_connection(self, cache):
@@ -207,6 +214,12 @@ class TestMemcachedCache:
 
         assert await memcached_cache.exists(pytest.KEY, namespace="test") is True
 
+    @pytest.mark.asyncio
+    async def test_close(self, memcached_cache):
+        await memcached_cache.set(pytest.KEY, "value")
+        await memcached_cache._close()
+        assert memcached_cache.client._pool._pool.qsize() == 0
+
 
 class TestRedisCache:
 
@@ -284,3 +297,8 @@ class TestRedisCache:
         await asyncio.gather(dummy(), dummy(), dummy(), dummy())
         assert redis_cache.get.call_count == 8
         assert redis_cache.set.call_count == 4
+
+    async def test_close(self, redis_cache):
+        await redis_cache.set(pytest.KEY, "value")
+        await redis_cache._close()
+        assert redis_cache._pool.size == 0

@@ -437,8 +437,9 @@ class BaseCache:
     @API.timeout
     async def close(self, *args, _conn=None, **kwargs):
         """
-        Perform any resource clean up necessary when the cache is no longer
-        needed (generally when the controlling program exits).
+        Perform any resource clean up necessary to exit the program safely.
+        After closing, cmd execution is still possible but you will have to
+        close again before exiting.
 
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
@@ -448,7 +449,7 @@ class BaseCache:
         return ret
 
     async def _close(self, *args, **kwargs):
-        raise NotImplementedError()
+        pass
 
     def _build_key(self, key, namespace=None):
         if namespace is not None:
