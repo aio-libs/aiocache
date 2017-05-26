@@ -20,6 +20,7 @@ class FakePool:
         self.release = CoroutineMock()
         self.conn.multi_exec = MagicMock(return_value=self.transaction)
         self.conn.multi_exec.return_value.execute = CoroutineMock()
+        self.clear = CoroutineMock()
 
     def __await__(self):
         yield
@@ -255,17 +256,18 @@ class TestRedisBackend:
         pool.conn.set.assert_called_with(pytest.KEY, 1)
 
     @pytest.mark.asyncio
-    async def test_close_when_connected(self):
-        redis = RedisBackend()
-        await redis._raw("set", pytest.KEY, 1)
-        await redis._close()
-        assert redis._pool.closed
+    async def test_close_when_connected(self, redis):
+        cache, pool = redis
+        cache._pool = pool
+        await cache._raw("set", pytest.KEY, 1)
+        await cache._close()
+        assert pool.clear.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_close_when_not_connected(self):
-        redis = RedisBackend()
-        await redis._close()
-        assert redis._pool is None
+    async def test_close_when_not_connected(self, redis):
+        cache, pool = redis
+        await cache._close()
+        assert pool.clear.call_count == 0
 
 
 class TestConn:
