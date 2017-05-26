@@ -34,7 +34,10 @@ class MemcachedBackend:
 
     async def _set(self, key, value, ttl=0, _conn=None):
         value = str.encode(value) if isinstance(value, str) else value
-        return await self.client.set(key, value, exptime=ttl or 0)
+        try:
+            return await self.client.set(key, value, exptime=ttl or 0)
+        except aiomcache.exceptions.ValidationException:
+            raise TypeError("memcached doesn't support float ttl")
 
     async def _multi_set(self, pairs, ttl=0, _conn=None):
         tasks = []
@@ -42,7 +45,10 @@ class MemcachedBackend:
             value = str.encode(value) if isinstance(value, str) else value
             tasks.append(self.client.set(key, value, exptime=ttl or 0))
 
-        await asyncio.gather(*tasks)
+        try:
+            await asyncio.gather(*tasks)
+        except aiomcache.exceptions.ValidationException:
+            raise TypeError("memcached doesn't support float ttl")
 
         return True
 

@@ -6,6 +6,7 @@ import asynctest
 from unittest.mock import patch, MagicMock, ANY
 
 from aiocache.base import API, _Conn
+from aiocache._lock import _DistributedLock
 
 
 class TestAPI:
@@ -197,16 +198,20 @@ class TestBaseCache:
             await base_cache._raw("get", pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_redlock_release(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache._redlock_release(pytest.KEY, 20)
+
     async def test_close(self, base_cache):
         assert await base_cache._close() is None
 
     @pytest.mark.asyncio
-    async def test_acquire(self, base_cache):
-        assert await base_cache.acquire() == base_cache
+    async def test_acquire_conn(self, base_cache):
+        assert await base_cache.acquire_conn() == base_cache
 
     @pytest.mark.asyncio
-    async def test_release(self, base_cache):
-        await base_cache.release("mock") is None
+    async def test_release_conn(self, base_cache):
+        await base_cache.release_conn("mock") is None
 
     @pytest.fixture
     def set_test_namespace(self, base_cache):
@@ -410,8 +415,11 @@ class TestCache:
     async def test_get_connection(self, mock_cache):
         async with mock_cache.get_connection():
             pass
-        assert mock_cache.acquire.call_count == 1
-        assert mock_cache.release.call_count == 1
+        assert mock_cache.acquire_conn.call_count == 1
+        assert mock_cache.release_conn.call_count == 1
+
+    def test_lock(self, mock_cache):
+        assert isinstance(mock_cache._lock(pytest.KEY, 20), _DistributedLock)
 
 
 @pytest.fixture
@@ -432,8 +440,8 @@ class TestConn:
     @pytest.mark.asyncio
     async def test_conn_context_manager(self, conn):
         async with conn:
-            assert conn._cache.acquire.call_count == 1
-        conn._cache.release.assert_called_with(conn._cache.acquire.return_value)
+            assert conn._cache.acquire_conn.call_count == 1
+        conn._cache.release_conn.assert_called_with(conn._cache.acquire_conn.return_value)
 
     @pytest.mark.asyncio
     async def test_inject_conn(self, conn):

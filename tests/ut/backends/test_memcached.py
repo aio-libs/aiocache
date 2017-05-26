@@ -67,6 +67,12 @@ class TestMemcachedBackend:
         memcached.client.set.assert_called_with(pytest.KEY, b"value", exptime=1)
 
     @pytest.mark.asyncio
+    async def test_set_float_ttl(self, memcached):
+        memcached.client.set.side_effect = aiomcache.exceptions.ValidationException("msg")
+        with pytest.raises(TypeError):
+            await memcached._set(pytest.KEY, "value", ttl=0.1)
+
+    @pytest.mark.asyncio
     async def test_multi_get(self, memcached):
         memcached.client.multi_get.return_value = [b"value", b"random"]
         assert await memcached._multi_get([pytest.KEY, pytest.KEY_1]) == ["value", "random"]
@@ -96,6 +102,12 @@ class TestMemcachedBackend:
         memcached.client.set.assert_any_call(pytest.KEY, b"value", exptime=1)
         memcached.client.set.assert_any_call(pytest.KEY_1, b"random", exptime=1)
         assert memcached.client.set.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_multi_set_float_ttl(self, memcached):
+        memcached.client.set.side_effect = aiomcache.exceptions.ValidationException("msg")
+        with pytest.raises(TypeError):
+            await memcached._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=0.1)
 
     @pytest.mark.asyncio
     async def test_add(self, memcached):

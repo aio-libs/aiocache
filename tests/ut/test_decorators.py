@@ -65,8 +65,7 @@ class TestCachedDecorator:
         assert resp1 is resp2
 
         memory_mock_cache.get.assert_called_with('stubstub(1,){}')
-        assert memory_mock_cache.get.call_count == 1
-        assert memory_mock_cache.exists.call_count == 2
+        assert memory_mock_cache.get.call_count == 2
         memory_mock_cache.set.assert_called_with('stubstub(1,){}', mock.ANY, ttl=10)
         assert memory_mock_cache.set.call_count == 1
 
@@ -111,12 +110,12 @@ class TestCachedDecorator:
         assert await memory_mock_cache.get("key") is not None
 
     @pytest.mark.asyncio
-    async def test_cached_with_cache_exception_exists(self, mocker, memory_mock_cache):
+    async def test_cached_with_cache_exception_get(self, mocker, memory_mock_cache):
         module = sys.modules[globals()['__name__']]
         mocker.spy(module, 'stub')
         cached_decorator = cached(key="key")
 
-        memory_mock_cache.exists = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
+        memory_mock_cache.get = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
 
         await cached_decorator(stub)()
         assert stub.call_count == 1
@@ -172,14 +171,12 @@ class TestCachedDecorator:
         with asynctest.patch(
                 "aiocache.decorators.caches.create",
                 asynctest.MagicMock(return_value=mock_cache)) as mock_create:
-            mocker.spy(mock_cache, "exists")
             mocker.spy(mock_cache, "get")
 
             cached_decorator = cached(key="key", alias="whatever")
             await cached_decorator(stub)()
 
             mock_create.assert_called_with('whatever')
-            mock_cache.exists.assert_called_with('key')
             mock_cache.get.assert_called_with('key')
 
     @pytest.mark.asyncio
@@ -187,14 +184,12 @@ class TestCachedDecorator:
         with asynctest.patch(
                 "aiocache.decorators.caches.create",
                 asynctest.MagicMock(return_value=mock_cache)) as mock_create:
-            mocker.spy(mock_cache, "exists")
             mocker.spy(mock_cache, "get")
 
             cached_decorator = cached(key="key", alias="whatever")
             await cached_decorator(stub)()
 
             mock_create.assert_called_with('whatever')
-            assert memory_mock_cache.exists.call_count == 0
             assert memory_mock_cache.get.call_count == 0
             assert memory_mock_cache.set.call_count == 0
 

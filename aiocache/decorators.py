@@ -55,10 +55,10 @@ def cached(
                     args[1:] if noself else args) + str(kwargs))
 
             try:
-                if await cache_instance.exists(cache_key):
-                    result = await cache_instance.get(cache_key)
+                value = await cache_instance.get(cache_key)
+                if value is not None:
                     asyncio.ensure_future(cache_instance.close())
-                    return result
+                    return value
 
             except Exception:
                 logger.exception("Unexpected error with %s", cache_instance)

@@ -69,25 +69,25 @@ class TestRedisBackend:
         assert redis_backend.password == "pass"
 
     @pytest.mark.asyncio
-    async def test_acquire(self):
+    async def test_acquire_conn(self):
         redis = RedisBackend()
         pool = FakePool()
         redis._pool = pool
         with patch(
                 "aiocache.backends.redis.aioredis.create_pool",
                 MagicMock(return_value=pool)):
-            assert await redis.acquire() == pool.conn
+            assert await redis.acquire_conn() == pool.conn
 
     @pytest.mark.asyncio
-    async def test_release(self):
+    async def test_release_conn(self):
         redis = RedisBackend()
         pool = FakePool()
         redis._pool = pool
         with patch(
                 "aiocache.backends.redis.aioredis.create_pool",
                 MagicMock(return_value=pool)):
-            conn = await redis.acquire()
-            await redis.release(conn)
+            conn = await redis.acquire_conn()
+            await redis.release_conn(conn)
             redis._pool.release.assert_called_with(conn)
 
     @pytest.mark.asyncio
@@ -103,15 +103,15 @@ class TestRedisBackend:
     async def test_connect_locked(self, mocker):
         redis = RedisBackend()
         pool = FakePool()
-        mocker.spy(redis._lock, "acquire")
-        mocker.spy(redis._lock, "release")
+        mocker.spy(redis._pool_lock, "acquire")
+        mocker.spy(redis._pool_lock, "release")
 
         with patch(
                 "aiocache.backends.redis.aioredis.create_pool",
                 MagicMock(return_value=pool)):
             assert await redis._connect() == pool
-            assert redis._lock.acquire.call_count == 1
-            assert redis._lock.release.call_count == 1
+            assert redis._pool_lock.acquire.call_count == 1
+            assert redis._pool_lock.release.call_count == 1
 
     @pytest.mark.asyncio
     async def test_connect_calls_create_pool(self):
@@ -155,10 +155,10 @@ class TestRedisBackend:
     async def test_set(self, redis):
         cache, pool = redis
         await cache._set(pytest.KEY, "value")
-        pool.conn.set.assert_called_with(pytest.KEY, "value", expire=None)
+        pool.conn.set.assert_called_with(pytest.KEY, "value")
 
         await cache._set(pytest.KEY, "value", ttl=1)
-        pool.conn.set.assert_called_with(pytest.KEY, "value", expire=1)
+        pool.conn.setex.assert_called_with(pytest.KEY, 1, "value")
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):
@@ -254,6 +254,15 @@ class TestRedisBackend:
         await cache._raw("set", pytest.KEY, 1)
         pool.conn.get.assert_called_with(pytest.KEY, encoding=ANY)
         pool.conn.set.assert_called_with(pytest.KEY, 1)
+
+    @pytest.mark.asyncio
+    async def test_redlock_release(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, "_raw")
+        await cache._redlock_release(pytest.KEY, "random")
+        cache._raw.assert_called_with(
+            "eval", cache.RELEASE_SCRIPT,
+            [pytest.KEY], ["random"])
 
     @pytest.mark.asyncio
     async def test_close_when_connected(self, redis):

@@ -19,6 +19,14 @@ def conn(func):
 
 class RedisBackend:
 
+    RELEASE_SCRIPT = (
+        "if redis.call('get',KEYS[1]) == ARGV[1] then"
+        " return redis.call('del',KEYS[1])"
+        " else"
+        " return 0"
+        " end"
+    )
+
     pools = {}
 
     def __init__(
@@ -31,16 +39,16 @@ class RedisBackend:
         self.password = password
         self.pool_min_size = pool_min_size
         self.pool_max_size = pool_max_size
-        self._lock = asyncio.Lock()
+        self._pool_lock = asyncio.Lock()
         self._loop = loop or asyncio.get_event_loop()
         self._pool = None
 
-    async def acquire(self):
+    async def acquire_conn(self):
         with await self._connect():
             pass
         return await self._pool.acquire()
 
-    async def release(self, conn):
+    async def release_conn(self, conn):
         self._pool.release(conn)
 
     @conn
@@ -53,7 +61,9 @@ class RedisBackend:
 
     @conn
     async def _set(self, key, value, ttl=None, _conn=None):
-        return await _conn.set(key, value, expire=ttl)
+        if ttl is None:
+            return await _conn.set(key, value)
+        return await _conn.setex(key, ttl, value)
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):
@@ -121,12 +131,19 @@ class RedisBackend:
             kwargs["encoding"] = encoding
         return await getattr(_conn, command)(*args, **kwargs)
 
+    async def _redlock_release(self, key, value):
+        return await self._raw(
+            "eval",
+            self.RELEASE_SCRIPT,
+            [key],
+            [value])
+
     async def _close(self, *args, **kwargs):
         if self._pool is not None:
             await self._pool.clear()
 
     async def _connect(self):
-        async with self._lock:
+        async with self._pool_lock:
             if self._pool is None:
                 self._pool = await aioredis.create_pool(
                     (self.endpoint, self.port),

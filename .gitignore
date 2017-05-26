@@ -91,3 +91,5 @@ ENV/
 
 dump.rdb
 _release_notes
+
+tags

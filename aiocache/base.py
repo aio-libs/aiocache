@@ -4,6 +4,7 @@ import functools
 import asyncio
 
 from aiocache import serializers
+from aiocache._lock import _DistributedLock
 from aiocache.log import logger
 
 
@@ -224,7 +225,9 @@ class BaseCache:
 
         :param key: str
         :param value: obj
-        :param ttl: int the expiration time in seconds
+        :param ttl: int the expiration time in seconds. Due to memcached
+            restrictions if you want compatibility use int. In case you
+            need miliseconds, redis and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -253,7 +256,9 @@ class BaseCache:
         Stores multiple values in the given keys.
 
         :param pairs: list of two element iterables. First is key and second is value
-        :param ttl: int the expiration time of the keys in seconds
+        :param ttl: int the expiration time in seconds. Due to memcached
+            restrictions if you want compatibility use int. In case you
+            need miliseconds, redis and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -453,13 +458,19 @@ class BaseCache:
             return "{}{}".format(self.namespace, key)
         return key
 
+    def _lock(self, key, lease):
+        return _DistributedLock(self, key, lease)
+
+    async def _redlock_release(self, key, value):
+        raise NotImplementedError()
+
     def get_connection(self):
         return _Conn(self)
 
-    async def acquire(self):
+    async def acquire_conn(self):
         return self
 
-    async def release(self, conn):
+    async def release_conn(self, conn):
         pass
 
 
@@ -470,11 +481,11 @@ class _Conn:
         self._conn = None
 
     async def __aenter__(self):
-        self._conn = await self._cache.acquire()
+        self._conn = await self._cache.acquire_conn()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        await self._cache.release(self._conn)
+        await self._cache.release_conn(self._conn)
 
     def __getattr__(self, name):
         return self._cache.__getattribute__(name)
