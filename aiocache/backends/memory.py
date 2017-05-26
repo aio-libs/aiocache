@@ -81,9 +81,6 @@ class SimpleMemoryBackend:
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
-    async def _close(self, *args, _con=None, **kwargs):
-        pass
-
     @classmethod
     def __delete(cls, key):
         if cls._cache.pop(key, None):

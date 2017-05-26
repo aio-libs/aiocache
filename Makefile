@@ -11,15 +11,12 @@ pylint:
 	pylint --disable=C0111 aiocache
 
 ut:
-	pytest -sv tests/ut
+	pytest --cov-report term-missing --cov=aiocache -sv tests/ut
 
 _acceptance:
 	pytest -sv tests/acceptance
 
 acceptance: dockerup _acceptance dockerdown
-
-cov:
-	pytest --cov-report term-missing --cov=aiocache -sv tests/ut
 
 doc:
 	make -C docs/ html

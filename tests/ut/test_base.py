@@ -198,8 +198,7 @@ class TestBaseCache:
 
     @pytest.mark.asyncio
     async def test_close(self, base_cache):
-        with pytest.raises(NotImplementedError):
-            await base_cache._close()
+        assert await base_cache._close() is None
 
     @pytest.mark.asyncio
     async def test_acquire(self, base_cache):
@@ -413,10 +412,6 @@ class TestCache:
             pass
         assert mock_cache.acquire.call_count == 1
         assert mock_cache.release.call_count == 1
-
-    @pytest.mark.asyncio
-    async def test_close(self, mock_cache):
-        await mock_cache.close()
 
 
 @pytest.fixture
