@@ -264,6 +264,7 @@ class TestRedisBackend:
             "eval", cache.RELEASE_SCRIPT,
             [pytest.KEY], ["random"])
 
+    @pytest.mark.asyncio
     async def test_close_when_connected(self, redis):
         cache, pool = redis
         cache._pool = pool

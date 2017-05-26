@@ -298,6 +298,7 @@ class TestRedisCache:
         assert redis_cache.get.call_count == 8
         assert redis_cache.set.call_count == 4
 
+    @pytest.mark.asyncio
     async def test_close(self, redis_cache):
         await redis_cache.set(pytest.KEY, "value")
         await redis_cache._close()
