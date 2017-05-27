@@ -88,7 +88,10 @@ class RedisBackend:
 
     @conn
     async def _add(self, key, value, ttl=None, _conn=None):
-        was_set = await _conn.set(key, value, expire=ttl, exist=_conn.SET_IF_NOT_EXIST)
+        expx = {"expire": ttl}
+        if isinstance(ttl, float):
+            expx = {"pexpire": int(ttl * 1000)}
+        was_set = await _conn.set(key, value, exist=_conn.SET_IF_NOT_EXIST, **expx)
         if not was_set:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))

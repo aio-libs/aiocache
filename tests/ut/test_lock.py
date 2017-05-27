@@ -2,13 +2,13 @@ import asyncio
 import pytest
 import asynctest
 
-from aiocache._lock import _DistributedLock
+from aiocache._lock import _RedLock
 
 
 @pytest.fixture
 def lock(mock_cache):
-    _DistributedLock._EVENTS = {}
-    yield _DistributedLock(mock_cache, pytest.KEY, 20)
+    _RedLock._EVENTS = {}
+    yield _RedLock(mock_cache, pytest.KEY, 20)
 
 
 class TestLock:
@@ -62,8 +62,8 @@ class TestLock:
 
     @pytest.mark.asyncio
     async def test_multiple_locks_lock(self, mock_cache, lock, event_loop):
-        lock_1 = _DistributedLock(mock_cache, pytest.KEY, 20)
-        lock_2 = _DistributedLock(mock_cache, pytest.KEY, 20)
+        lock_1 = _RedLock(mock_cache, pytest.KEY, 20)
+        lock_2 = _RedLock(mock_cache, pytest.KEY, 20)
         mock_cache._add.side_effect = [True, ValueError(), ValueError()]
         await lock._acquire()
         event = lock._EVENTS[pytest.KEY + '-lock']
