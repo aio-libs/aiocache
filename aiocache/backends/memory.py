@@ -81,6 +81,12 @@ class SimpleMemoryBackend:
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
+    async def _redlock_release(self, key, value):
+        if SimpleMemoryBackend._cache.get(key) == value:
+            SimpleMemoryBackend._cache.pop(key)
+            return 1
+        return 0
+
     @classmethod
     def __delete(cls, key):
         if cls._cache.pop(key, None):

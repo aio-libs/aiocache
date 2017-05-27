@@ -179,6 +179,52 @@ class TestMemoryCache:
 
         assert await memory_cache.exists(pytest.KEY, namespace="test") is False
 
+    @pytest.mark.asyncio
+    async def test_locking_dogpile(self, mocker, cache):
+        mocker.spy(cache, 'get')
+        mocker.spy(cache, 'set')
+        mocker.spy(cache, '_add')
+        mocker.spy(cache, '_redlock_release')
+
+        async def dummy():
+            res = await cache.get(pytest.KEY)
+            if res is not None:
+                return res
+
+            async with cache._lock(pytest.KEY, lease=5):
+                res = await cache.get(pytest.KEY)
+                if res is not None:
+                    return res
+                await asyncio.sleep(1)
+                await cache.set(pytest.KEY, "value")
+
+        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
+        assert cache._add.call_count == 4
+        assert cache._redlock_release.call_count == 4
+        assert cache.get.call_count == 8
+        assert cache.set.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_locking_dogpile_lease_expiration(self, mocker, cache):
+        mocker.spy(cache, 'get')
+        mocker.spy(cache, 'set')
+
+        async def dummy():
+            res = await cache.get(pytest.KEY)
+            if res is not None:
+                return res
+
+            async with cache._lock(pytest.KEY, lease=1):
+                res = await cache.get(pytest.KEY)
+                if res is not None:
+                    return res
+                await asyncio.sleep(1.1)
+                await cache.set(pytest.KEY, "value")
+
+        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
+        assert cache.get.call_count == 8
+        assert cache.set.call_count == 4
+
 
 class TestMemcachedCache:
 
@@ -220,52 +266,6 @@ class TestMemcachedCache:
         await memcached_cache._close()
         assert memcached_cache.client._pool._pool.qsize() == 0
 
-    @pytest.mark.asyncio
-    async def test_locking_dogpile(self, mocker, memcached_cache):
-        mocker.spy(memcached_cache, 'get')
-        mocker.spy(memcached_cache, 'set')
-        mocker.spy(memcached_cache, '_add')
-        mocker.spy(memcached_cache, '_redlock_release')
-
-        async def dummy():
-            res = await memcached_cache.get(pytest.KEY)
-            if res is not None:
-                return res
-
-            async with memcached_cache._lock(pytest.KEY, lease=5):
-                res = await memcached_cache.get(pytest.KEY)
-                if res is not None:
-                    return res
-                await asyncio.sleep(1)
-                await memcached_cache.set(pytest.KEY, "value")
-
-        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
-        assert memcached_cache._add.call_count == 4
-        assert memcached_cache._redlock_release.call_count == 4
-        assert memcached_cache.get.call_count == 8
-        assert memcached_cache.set.call_count == 1
-
-    @pytest.mark.asyncio
-    async def test_locking_dogpile_lease_expiration(self, mocker, memcached_cache):
-        mocker.spy(memcached_cache, 'get')
-        mocker.spy(memcached_cache, 'set')
-
-        async def dummy():
-            res = await memcached_cache.get(pytest.KEY)
-            if res is not None:
-                return res
-
-            async with memcached_cache._lock(pytest.KEY, lease=1):
-                res = await memcached_cache.get(pytest.KEY)
-                if res is not None:
-                    return res
-                await asyncio.sleep(2)
-                await memcached_cache.set(pytest.KEY, "value")
-
-        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
-        assert memcached_cache.get.call_count == 8
-        assert memcached_cache.set.call_count == 4
-
 
 class TestRedisCache:
 
@@ -301,52 +301,6 @@ class TestRedisCache:
         await redis_cache.clear(namespace="test")
 
         assert await redis_cache.exists(pytest.KEY, namespace="test") is False
-
-    @pytest.mark.asyncio
-    async def test_locking_dogpile(self, mocker, redis_cache):
-        mocker.spy(redis_cache, 'get')
-        mocker.spy(redis_cache, 'set')
-        mocker.spy(redis_cache, '_add')
-        mocker.spy(redis_cache, '_redlock_release')
-
-        async def dummy():
-            res = await redis_cache.get(pytest.KEY)
-            if res is not None:
-                return res
-
-            async with redis_cache._lock(pytest.KEY, lease=5):
-                res = await redis_cache.get(pytest.KEY)
-                if res is not None:
-                    return res
-                await asyncio.sleep(1)
-                await redis_cache.set(pytest.KEY, "value")
-
-        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
-        assert redis_cache._add.call_count == 4
-        assert redis_cache._redlock_release.call_count == 4
-        assert redis_cache.get.call_count == 8
-        assert redis_cache.set.call_count == 1
-
-    @pytest.mark.asyncio
-    async def test_locking_dogpile_lease_expiration(self, mocker, redis_cache):
-        mocker.spy(redis_cache, 'get')
-        mocker.spy(redis_cache, 'set')
-
-        async def dummy():
-            res = await redis_cache.get(pytest.KEY)
-            if res is not None:
-                return res
-
-            async with redis_cache._lock(pytest.KEY, lease=1):
-                res = await redis_cache.get(pytest.KEY)
-                if res is not None:
-                    return res
-                await asyncio.sleep(1)
-                await redis_cache.set(pytest.KEY, "value")
-
-        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
-        assert redis_cache.get.call_count == 8
-        assert redis_cache.set.call_count == 4
 
     @pytest.mark.asyncio
     async def test_close(self, redis_cache):

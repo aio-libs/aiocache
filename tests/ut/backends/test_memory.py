@@ -157,6 +157,20 @@ class TestSimpleMemoryBackend:
         await memory._set(pytest.KEY, "value")
         SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, "value")
 
+    @pytest.mark.asyncio
+    async def test_redlock_release(self, memory):
+        SimpleMemoryBackend._cache.get.return_value = "lock"
+        assert await memory._redlock_release(pytest.KEY, "lock") == 1
+        SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
+        SimpleMemoryBackend._cache.pop.assert_called_with(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_redlock_release_nokey(self, memory):
+        SimpleMemoryBackend._cache.get.return_value = None
+        assert await memory._redlock_release(pytest.KEY, "lock") == 0
+        SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
+        assert SimpleMemoryBackend._cache.pop.call_count == 0
+
 
 class TestSimpleMemoryCache:
 
