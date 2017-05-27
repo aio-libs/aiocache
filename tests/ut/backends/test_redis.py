@@ -187,7 +187,11 @@ class TestRedisBackend:
         cache, pool = redis
         await cache._add(pytest.KEY, "value")
         pool.conn.set.assert_called_with(
-            pytest.KEY, "value", expire=None, exist=pool.SET_IF_NOT_EXIST)
+            pytest.KEY, "value", exist=pool.SET_IF_NOT_EXIST, expire=None)
+
+        await cache._add(pytest.KEY, "value", 1)
+        pool.conn.set.assert_called_with(
+            pytest.KEY, "value", exist=pool.SET_IF_NOT_EXIST, expire=1)
 
     @pytest.mark.asyncio
     async def test_add_existing(self, redis):
@@ -195,6 +199,13 @@ class TestRedisBackend:
         pool.conn.set.return_value = False
         with pytest.raises(ValueError):
             await cache._add(pytest.KEY, "value")
+
+    @pytest.mark.asyncio
+    async def test_add_float_ttl(self, redis):
+        cache, pool = redis
+        await cache._add(pytest.KEY, "value", 0.1)
+        pool.conn.set.assert_called_with(
+            pytest.KEY, "value", exist=pool.SET_IF_NOT_EXIST, pexpire=100)
 
     @pytest.mark.asyncio
     async def test_exists(self, redis):

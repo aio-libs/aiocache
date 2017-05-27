@@ -54,7 +54,10 @@ class MemcachedBackend:
 
     async def _add(self, key, value, ttl=0, _conn=None):
         value = str.encode(value) if isinstance(value, str) else value
-        ret = await self.client.add(key, value, exptime=ttl or 0)
+        try:
+            ret = await self.client.add(key, value, exptime=ttl or 0)
+        except aiomcache.exceptions.ValidationException:
+            raise TypeError("memcached doesn't support float ttl")
         if not ret:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
@@ -98,6 +101,11 @@ class MemcachedBackend:
             if encoding is not None and value is not None:
                 return value.decode(encoding)
         return value
+
+    async def _redlock_release(self, key, _):
+        # Not ideal, should check the value coincides first but this would introduce
+        # race conditions
+        return await self._delete(key)
 
     async def _close(self, *args, _conn=None, **kwargs):
         await self.client.close()

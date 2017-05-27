@@ -55,9 +55,10 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.__setitem__.assert_any_call(pytest.KEY_1, "random")
 
     @pytest.mark.asyncio
-    async def test_add(self, memory):
+    async def test_add(self, memory, mocker):
+        mocker.spy(memory, "_set")
         await memory._add(pytest.KEY, "value")
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, "value")
+        memory._set.assert_called_with(pytest.KEY, "value", ttl=None)
 
     @pytest.mark.asyncio
     async def test_add_existing(self, memory):

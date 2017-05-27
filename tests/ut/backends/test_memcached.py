@@ -124,6 +124,12 @@ class TestMemcachedBackend:
             await memcached._add(pytest.KEY, "value")
 
     @pytest.mark.asyncio
+    async def test_add_float_ttl(self, memcached):
+        memcached.client.add.side_effect = aiomcache.exceptions.ValidationException("msg")
+        with pytest.raises(TypeError):
+            await memcached._add(pytest.KEY, "value", 0.1)
+
+    @pytest.mark.asyncio
     async def test_exists(self, memcached):
         await memcached._exists(pytest.KEY)
         memcached.client.append.assert_called_with(pytest.KEY, b'')
@@ -197,6 +203,12 @@ class TestMemcachedBackend:
         await memcached._raw("get", pytest.KEY, encoding=None)
         memcached.client.get.assert_called_with(pytest.KEY)
         memcached.client.set.assert_called_with(pytest.KEY, "asd")
+
+    @pytest.mark.asyncio
+    async def test_redlock_release(self, mocker, memcached):
+        mocker.spy(memcached, "_delete")
+        await memcached._redlock_release(pytest.KEY, "random")
+        memcached._delete.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_close(self, memcached):
