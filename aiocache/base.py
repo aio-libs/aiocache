@@ -460,7 +460,7 @@ class BaseCache:
             return "{}{}".format(self.namespace, key)
         return key
 
-    def _lock(self, key, lease):
+    def _redlock(self, key, lease):
         return _RedLock(self, key, lease)
 
     async def _redlock_release(self, key, value):

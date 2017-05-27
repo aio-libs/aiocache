@@ -1,7 +1,8 @@
 import asyncio
 import itertools
-import aioredis
 import functools
+
+import aioredis
 
 from aiocache.base import BaseCache
 
@@ -48,8 +49,8 @@ class RedisBackend:
             pass
         return await self._pool.acquire()
 
-    async def release_conn(self, conn):
-        self._pool.release(conn)
+    async def release_conn(self, _conn):
+        self._pool.release(_conn)
 
     @conn
     async def _get(self, key, encoding="utf-8", _conn=None):

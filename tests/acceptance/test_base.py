@@ -191,7 +191,7 @@ class TestMemoryCache:
             if res is not None:
                 return res
 
-            async with cache._lock(pytest.KEY, lease=5):
+            async with cache._redlock(pytest.KEY, lease=5):
                 res = await cache.get(pytest.KEY)
                 if res is not None:
                     return res
@@ -214,7 +214,7 @@ class TestMemoryCache:
             if res is not None:
                 return res
 
-            async with cache._lock(pytest.KEY, lease=1):
+            async with cache._redlock(pytest.KEY, lease=1):
                 res = await cache.get(pytest.KEY)
                 if res is not None:
                     return res
