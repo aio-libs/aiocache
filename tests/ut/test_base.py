@@ -418,8 +418,8 @@ class TestCache:
         assert mock_cache.acquire_conn.call_count == 1
         assert mock_cache.release_conn.call_count == 1
 
-    def test_lock(self, mock_cache):
-        assert isinstance(mock_cache._lock(pytest.KEY, 20), _RedLock)
+    def test_redlock(self, mock_cache):
+        assert isinstance(mock_cache._redlock(pytest.KEY, 20), _RedLock)
 
 
 @pytest.fixture
