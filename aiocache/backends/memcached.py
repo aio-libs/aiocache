@@ -133,7 +133,7 @@ class MemcachedCache(MemcachedBackend, BaseCache):
         super().__init__(**kwargs)
 
     def _build_key(self, key, namespace=None):
-        ns_key = super()._build_key(key, namespace=namespace)
+        ns_key = super()._build_key(key, namespace=namespace).replace(' ', '_')
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover

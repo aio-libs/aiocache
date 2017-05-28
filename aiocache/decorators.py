@@ -12,8 +12,9 @@ def _get_cache(
 
 
 def cached(
-        ttl=0, key=None, key_from_attr=None, cache=SimpleMemoryCache,
-        serializer=None, plugins=None, alias=None, noself=False, **kwargs):
+        ttl=None, key=None, key_from_attr=None, cache=SimpleMemoryCache,
+        serializer=None, plugins=None, alias=None, noself=False, stampede_lease=None,
+        **kwargs):
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -21,22 +22,24 @@ def cached(
     An example would be endpoint and port for the RedisCache. You can send those args as
     kwargs and they will be propagated accordingly.
 
-    :param ttl: int seconds to store the function call. Default is 0 which means no expiration.
+    :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
         key_from_attr param. If key and key_from_attr are not passed, it will use module_name
         + function_name + args + kwargs
-    :param key_from_attr: arg or kwarg name from the function to use as a key.
+    :param key_from_attr: str arg or kwarg name from the function to use as a key.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
         Default is pulled from the cache class being used.
-    :param plugins: plugins to use when calling the cmd hooks
+    :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
         parameters are ignored. New cache is created every time.
-    :param noself: if you are decorating a class function, by default self is also used to generate
-        the key. This will result in same function calls done by different class instances to use
-        different cache keys. Use noself=True if you want to ignore it.
+    :param noself: bool if you are decorating a class function, by default self is also used to
+        generate the key. This will result in same function calls done by different class instances
+        to use different cache keys. Use noself=True if you want to ignore it.
+    :param stampede_lease: int seconds to lock function call to avoid cache stampede effects.
+        If 0 or None, (default) no locking happens.
     """
     cache_kwargs = kwargs
 
@@ -61,7 +64,12 @@ def cached(
                     return value
 
             except Exception:
-                logger.exception("Unexpected error with %s", cache_instance)
+                logger.exception("Unexpected error with %s", cache)
+
+            if stampede_lease:
+                async with cache_instance._redlock(cache_key, stampede_lease):
+                    return await _cache_or_func(
+                        cache_instance, cache_key, func(*args, **kwargs), ttl)
 
             result = await func(*args, **kwargs)
 
@@ -75,6 +83,27 @@ def cached(
 
         return wrapper
     return cached_decorator
+
+
+async def _cache_or_func(cache, key, func, ttl):
+    try:
+        value = await cache.get(key)
+        if value is not None:
+            asyncio.ensure_future(cache.close())
+            return value
+
+    except Exception:
+        logger.exception("Unexpected error with %s", cache)
+
+    result = await func
+
+    try:
+        await cache.set(key, result, ttl=ttl)
+    except Exception:
+        logger.exception("Unexpected error with %s", cache)
+
+    asyncio.ensure_future(cache.close())
+    return result
 
 
 def multi_cached(
