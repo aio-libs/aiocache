@@ -9,6 +9,7 @@ codecov==2.0.9
 sphinx==1.6.1
 marshmallow==2.13.5
 asynctest==0.10.0
+pystache==0.5.4
 
 aiohttp==2.1.0
 tornado==4.5.1

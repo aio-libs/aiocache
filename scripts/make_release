@@ -15,8 +15,8 @@ read answer
 if echo "$answer" | grep -iq "^y" ;then
   echo "Generating new release..."
   sed -i "s/$version/$new_version/" aiocache/_version.py
-  sed -i '1s/^/Changelog\n=========\n\n\n/' _release_notes && sed -i '1,4d' CHANGELOG.rst && cat CHANGELOG.rst >> _release_notes && mv _release_notes CHANGELOG.rst
-  git add CHANGELOG.rst aiocache/_version.py
+  sed -i '1s/^/# Changelog\n\n\n/' _release_notes && sed -i '1,4d' CHANGELOG.md && cat CHANGELOG.md >> _release_notes && mv _release_notes CHANGELOG.md
+  git add CHANGELOG.md aiocache/_version.py
   git commit -m "Bump version $new_version"
   git tag -a "$new_version" -m "$new_version"
   git push --follow-tags
