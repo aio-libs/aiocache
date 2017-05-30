@@ -202,6 +202,7 @@ class TestBaseCache:
         with pytest.raises(NotImplementedError):
             await base_cache._redlock_release(pytest.KEY, 20)
 
+    @pytest.mark.asyncio
     async def test_close(self, base_cache):
         assert await base_cache._close() is None
 

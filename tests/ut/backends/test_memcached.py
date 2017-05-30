@@ -237,3 +237,6 @@ class TestMemcachedCache:
 
     def test_build_key_no_namespace(self, memcached_cache):
         assert memcached_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
+
+    def test_build_key_no_spaces(self, memcached_cache):
+        assert memcached_cache._build_key('hello world') == b'hello_world'

@@ -195,7 +195,7 @@ class TestMemoryCache:
                 res = await cache.get(pytest.KEY)
                 if res is not None:
                     return res
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.1)
                 await cache.set(pytest.KEY, "value")
 
         await asyncio.gather(dummy(), dummy(), dummy(), dummy())
