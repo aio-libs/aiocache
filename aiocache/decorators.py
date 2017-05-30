@@ -6,15 +6,7 @@ from aiocache.log import logger
 from aiocache import SimpleMemoryCache, caches
 
 
-def _get_cache(
-        cache=SimpleMemoryCache, serializer=None, plugins=None, **cache_kwargs):
-    return cache(serializer=serializer, plugins=plugins, **cache_kwargs)
-
-
-def cached(
-        ttl=None, key=None, key_from_attr=None, cache=SimpleMemoryCache,
-        serializer=None, plugins=None, alias=None, noself=False, stampede_lease=None,
-        **kwargs):
+class cached:
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
 
@@ -38,72 +30,147 @@ def cached(
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
-    :param stampede_lease: int seconds to lock function call to avoid cache stampede effects.
-        If 0 or None, (default) no locking happens.
     """
-    cache_kwargs = kwargs
 
-    def cached_decorator(func):
-        @functools.wraps(func)
+    def __init__(
+            self, ttl=None, key=None, key_from_attr=None, cache=SimpleMemoryCache,
+            serializer=None, plugins=None, alias=None, noself=False, **kwargs):
+        self.ttl = ttl
+        self.key = key
+        self.key_from_attr = key_from_attr
+        self.noself = noself
+        self.alias = alias
+        self.cache = None
+
+        self._cache = cache
+        self._serializer = serializer
+        self._plugins = plugins
+        self._kwargs = kwargs
+
+    def __call__(self, f):
+
+        if self.alias:
+            self.cache = caches.create(self.alias)
+        else:
+            self.cache = _get_cache(
+                cache=self._cache, serializer=self._serializer,
+                plugins=self._plugins, **self._kwargs)
+
+        @functools.wraps(f)
         async def wrapper(*args, **kwargs):
-            if alias:
-                cache_instance = caches.create(alias)
-            else:
-                cache_instance = _get_cache(
-                    cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
-            args_dict = _get_args_dict(func, args, kwargs)
-            cache_key = key or args_dict.get(
-                key_from_attr,
-                (func.__module__ or 'stub') + func.__name__ + str(
-                    args[1:] if noself else args) + str(kwargs))
-
-            try:
-                value = await cache_instance.get(cache_key)
-                if value is not None:
-                    asyncio.ensure_future(cache_instance.close())
-                    return value
-
-            except Exception:
-                logger.exception("Unexpected error with %s", cache)
-
-            if stampede_lease:
-                async with cache_instance._redlock(cache_key, stampede_lease):
-                    return await _cache_or_func(
-                        cache_instance, cache_key, func(*args, **kwargs), ttl)
-
-            result = await func(*args, **kwargs)
-
-            try:
-                await cache_instance.set(cache_key, result, ttl=ttl)
-            except Exception:
-                logger.exception("Unexpected error with %s", cache_instance)
-
-            asyncio.ensure_future(cache_instance.close())
-            return result
-
+            return await self.decorator(f, *args, **kwargs)
         return wrapper
-    return cached_decorator
 
+    async def decorator(self, f, *args, **kwargs):
+        key = self.get_cache_key(f, args, kwargs)
 
-async def _cache_or_func(cache, key, func, ttl):
-    try:
-        value = await cache.get(key)
+        value = await self.get_from_cache(key)
         if value is not None:
-            asyncio.ensure_future(cache.close())
             return value
 
-    except Exception:
-        logger.exception("Unexpected error with %s", cache)
+        result = await f(*args, **kwargs)
 
-    result = await func
+        await self.set_in_cache(key, result)
+        asyncio.ensure_future(self.cache.close())
 
-    try:
-        await cache.set(key, result, ttl=ttl)
-    except Exception:
-        logger.exception("Unexpected error with %s", cache)
+        return result
 
-    asyncio.ensure_future(cache.close())
-    return result
+    def get_cache_key(self, f, args, kwargs):
+        if self.key:
+            return self.key
+
+        args_dict = _get_args_dict(f, args, kwargs)
+        cache_key = args_dict.get(
+            self.key_from_attr, self._key_from_args(f, args, kwargs))
+        return cache_key
+
+    def _key_from_args(self, func, args, kwargs):
+        ordered_kwargs = sorted(kwargs.items())
+        return (func.__module__ or '') + func.__name__ + str(
+            args[1:] if self.noself else args) + str(ordered_kwargs)
+
+    async def get_from_cache(self, key):
+        try:
+            value = await self.cache.get(key)
+            if value is not None:
+                asyncio.ensure_future(self.cache.close())
+            return value
+        except Exception:
+            logger.exception("Couldn't retrieve %s, unexpected error", key)
+
+    async def set_in_cache(self, key, value):
+        try:
+            await self.cache.set(key, value, ttl=self.ttl)
+        except Exception:
+            logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
+
+
+class cached_stampede(cached):
+    """
+    Caches the functions return value into a key generated with module_name, function_name and args
+    while avoids for cache stampede effects.
+
+    In some cases you will need to send more args to configure the cache object.
+    An example would be endpoint and port for the RedisCache. You can send those args as
+    kwargs and they will be propagated accordingly.
+
+    :param lease: int seconds to lock function call to avoid cache stampede effects.
+        If 0 or None, no locking happens (default is 2). redis and memory backends support
+        float ttls
+    :param ttl: int seconds to store the function call. Default is None which means no expiration.
+    :param key: str value to set as key for the function return. Takes precedence over
+        key_from_attr param. If key and key_from_attr are not passed, it will use module_name
+        + function_name + args + kwargs
+    :param key_from_attr: str arg or kwarg name from the function to use as a key.
+    :param cache: cache class to use when calling the ``set``/``get`` operations.
+        Default is ``aiocache.SimpleMemoryCache``.
+    :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
+        Default is pulled from the cache class being used.
+    :param plugins: list plugins to use when calling the cmd hooks
+        Default is pulled from the cache class being used.
+    :param alias: str specifying the alias to load the config from. If alias is passed, other config
+        parameters are ignored. New cache is created every time.
+    :param noself: bool if you are decorating a class function, by default self is also used to
+        generate the key. This will result in same function calls done by different class instances
+        to use different cache keys. Use noself=True if you want to ignore it.
+    """
+    def __init__(
+            self, lease=2, **kwargs):
+        super().__init__(**kwargs)
+        self.lease = lease
+
+    async def decorator(self, f, *args, **kwargs):
+        key = self.get_cache_key(f, args, kwargs)
+
+        value = await self.get_from_cache(key)
+        if value is not None:
+            return value
+
+        async with self.cache._redlock(key, self.lease):
+            value = await self.get_from_cache(key)
+            if value is not None:
+                return value
+
+            result = await f(*args, **kwargs)
+
+            await self.set_in_cache(key, result)
+
+        asyncio.ensure_future(self.cache.close())
+        return result
+
+
+def _get_cache(
+        cache=SimpleMemoryCache, serializer=None, plugins=None, **cache_kwargs):
+    return cache(serializer=serializer, plugins=plugins, **cache_kwargs)
+
+
+def _get_args_dict(func, args, kwargs):
+    defaults = {
+        arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
+        if arg.default is not inspect._empty
+    }
+    args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
+    return {**defaults, **dict(zip(args_names, args)), **kwargs}
 
 
 def multi_cached(
@@ -183,12 +250,3 @@ def multi_cached(
 
         return wrapper
     return multi_cached_decorator
-
-
-def _get_args_dict(func, args, kwargs):
-    defaults = {
-        arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
-        if arg.default is not inspect._empty
-    }
-    args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
-    return {**defaults, **dict(zip(args_names, args)), **kwargs}

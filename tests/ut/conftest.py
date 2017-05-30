@@ -59,6 +59,8 @@ def mock_cache(mocker):
     mocker.spy(cache, '_build_key')
     for cmd in API.CMDS:
         mocker.spy(cache, cmd.__name__)
+    mocker.spy(cache, "close")
+    mocker.spy(cache, "_redlock")
     cache.serializer = asynctest.Mock(spec=DefaultSerializer)
     cache.plugins = [asynctest.Mock(spec=BasePlugin)]
     return cache
