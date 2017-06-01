@@ -5,11 +5,9 @@ import random
 import inspect
 import asynctest
 
-from asynctest import CoroutineMock
+from asynctest import MagicMock, CoroutineMock, ANY
 
-from aiocache import cached, multi_cached, SimpleMemoryCache
-from aiocache.decorators import _get_args_dict, _get_cache, cached_stampede
-from aiocache.serializers import DefaultSerializer
+from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -45,6 +43,7 @@ class TestCached:
         assert c.key_from_attr == "key_attr"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
+        assert c._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
@@ -55,7 +54,7 @@ class TestCached:
     def test_alias_takes_precedence(self, mock_cache):
         with asynctest.patch(
                 "aiocache.decorators.caches.create",
-                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
+                MagicMock(return_value=mock_cache)) as mock_create:
             c = cached(alias='default', cache=SimpleMemoryCache, namespace='test')
             c(stub)
 
@@ -108,14 +107,24 @@ class TestCached:
         assert decorator.cache.close.call_count == 0
 
     @pytest.mark.asyncio
-    async def test_calls_fn_set_when_get_none(self, decorator, decorator_call):
+    async def test_calls_fn_set_when_get_none(self, mocker, decorator, decorator_call):
+        mocker.spy(decorator, 'get_from_cache')
+        mocker.spy(decorator, 'set_in_cache')
         decorator.cache.get = CoroutineMock(return_value=None)
 
         await decorator_call(value="value")
 
-        assert decorator.cache.get.call_count == 1
-        decorator.cache.set.assert_called_with("stub()[('value', 'value')]", "value", ttl=None)
-        assert stub.call_count == 1
+        assert decorator.get_from_cache.call_count == 1
+        decorator.set_in_cache.assert_called_with("stub()[('value', 'value')]", "value")
+        stub.assert_called_once_with(value="value")
+        assert decorator.cache.close.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+        stub.side_effect = Exception()
+        with pytest.raises(Exception):
+            assert await decorator_call()
 
     @pytest.mark.asyncio
     async def test_set_calls_set(self, decorator, decorator_call):
@@ -126,7 +135,7 @@ class TestCached:
     async def test_set_calls_set_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
         await decorator.set_in_cache("key", "value")
-        decorator.cache.set.assert_called_with("key", "value", ttl=10)
+        decorator.cache.set.assert_called_with("key", "value", ttl=decorator.ttl)
 
     @pytest.mark.asyncio
     async def test_set_catches_exception(self, decorator, decorator_call):
@@ -134,24 +143,26 @@ class TestCached:
         assert await decorator.set_in_cache("key", "value") is None
 
     @pytest.mark.asyncio
-    async def test_decorate(self):
+    async def test_decorate(self, mock_cache):
+        mock_cache.get = CoroutineMock(return_value=None)
+        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+            @cached()
+            async def fn(n):
+                return n
 
-        @cached()
-        async def fn(n):
-            return n
-
-        assert await fn(1) == 1
-        assert await fn(2) == 2
+            assert await fn(1) == 1
+            assert await fn(2) == 2
 
     @pytest.mark.asyncio
-    async def test_cached_keeps_signature(self):
-        @cached()
-        async def what(self, a, b):
-            return "1"
+    async def test_cached_keeps_signature(self, mock_cache):
+        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+            @cached()
+            async def what(self, a, b):
+                return "1"
 
-        assert what.__name__ == "what"
-        assert str(inspect.signature(what)) == '(self, a, b)'
-        assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'a', 'b']
+            assert what.__name__ == "what"
+            assert str(inspect.signature(what)) == '(self, a, b)'
+            assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'a', 'b']
 
 
 class TestCachedStampede:
@@ -183,6 +194,7 @@ class TestCachedStampede:
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c.lease == 3
+        assert c._kwargs == {'namespace': 'test'}
 
     @pytest.mark.asyncio
     async def test_calls_get_and_returns(self, decorator, decorator_call):
@@ -195,6 +207,13 @@ class TestCachedStampede:
         assert stub.call_count == 0
 
     @pytest.mark.asyncio
+    async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+        stub.side_effect = Exception()
+        with pytest.raises(Exception):
+            assert await decorator_call()
+
+    @pytest.mark.asyncio
     async def test_calls_redlock(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(return_value=None)
 
@@ -203,7 +222,7 @@ class TestCachedStampede:
         assert decorator.cache.get.call_count == 2
         assert decorator.cache._redlock.call_count == 1
         decorator.cache.set.assert_called_with("stub()[('value', 'value')]", "value", ttl=None)
-        assert stub.call_count == 1
+        stub.assert_called_once_with(value="value")
 
     @pytest.mark.asyncio
     async def test_calls_locked_client(self, decorator, decorator_call):
@@ -219,174 +238,194 @@ class TestCachedStampede:
         assert stub.call_count == 1
 
 
-async def return_dict(keys=None):
-    ret = {}
-    for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
-        ret[key] = str(value)
-    return ret
+async def stub_dict(*args, keys=None, **kwargs):
+    values = {
+        'a': random.randint(1, 50),
+        'b': random.randint(1, 50),
+        'c': random.randint(1, 50)
+    }
+    return {k: values.get(k) for k in keys}
 
 
-async def empty_return(keys):
-    return {}
+class TestMultiCached:
 
+    @pytest.fixture
+    def decorator(self, mocker, mock_cache):
+        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+            yield multi_cached(keys_from_attr="keys")
 
-async def raise_exception(*args, **kwargs):
-    raise ValueError
-
-
-class TestMultiCachedDecorator:
+    @pytest.fixture
+    def decorator_call(self, decorator):
+        yield decorator(stub_dict)
 
     @pytest.fixture(autouse=True)
-    def default_cache(self, mocker, mock_cache):
-        mocker.patch("aiocache.decorators._get_cache", return_value=mock_cache)
-
-    @pytest.mark.asyncio
-    async def test_multi_cached(self, mocker, mock_cache):
+    def spy_stub_dict(self, mocker):
         module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'return_dict')
-        multi_cached_decorator = multi_cached('keys')
+        mocker.spy(module, 'stub_dict')
 
-        default_keys = {'a', 'd', 'z', 'y'}
-        mock_cache.multi_get = asynctest.CoroutineMock(return_value=[None, None, None, None])
-        resp_default = await multi_cached_decorator(return_dict)(keys=default_keys)
-        return_dict.assert_called_with(keys=list(default_keys))
-        assert len(mock_cache.multi_set.call_args[0][0]) == len(default_keys)
-        assert default_keys == set(resp_default.keys())
+    def test_init(self):
+        mc = multi_cached(
+            keys_from_attr="keys", key_builder=None, ttl=1, cache=SimpleMemoryCache,
+            serializer=None, plugins=None, alias=None, namespace="test")
 
-        keys1 = ['a', 'b', 'c']
-        mock_cache.multi_get = asynctest.CoroutineMock(return_value=['a', None, None])
-        resp1 = await multi_cached_decorator(return_dict)(keys=keys1)
-        assert set(keys1) - default_keys == set(return_dict.call_args[1]['keys'])
-        assert len(mock_cache.multi_set.call_args[0][0]) == len(set(keys1) - default_keys)
-        assert set(keys1) == set(resp1.keys())
+        assert mc.ttl == 1
+        assert mc.key_builder is None
+        assert mc.keys_from_attr == "keys"
+        assert mc.cache is None
+        assert mc._cache == SimpleMemoryCache
+        assert mc._kwargs == {'namespace': 'test'}
 
-    @pytest.mark.asyncio
-    async def test_multi_cached_keys_from_attr(self, mock_cache):
-        keys1 = {'a', 'b'}
-        mock_cache.multi_get = asynctest.CoroutineMock(return_value=[None, None])
+    def test_fails_at_instantiation(self):
+        with pytest.raises(TypeError):
+            @multi_cached(wrong_param=1)
+            async def fn(n):
+                return n
 
-        multi_cached_decorator = multi_cached(keys_from_attr='keys')
-        await multi_cached_decorator(return_dict)(keys=keys1)
+    def test_alias_takes_precedence(self, mock_cache):
+        with asynctest.patch(
+                "aiocache.decorators.caches.create",
+                MagicMock(return_value=mock_cache)) as mock_create:
+            mc = multi_cached(
+                keys_from_attr="keys", alias='default', cache=SimpleMemoryCache, namespace='test')
+            mc(stub_dict)
 
-        mock_cache.multi_get.assert_called_with(list(keys1))
-        assert mock_cache.multi_get.call_count == 1
-        assert mock_cache.multi_set.call_count == 1
+            mock_create.assert_called_with('default')
+            assert mc.cache is mock_cache
 
-    @pytest.mark.asyncio
-    async def test_multi_cached_empty_keys(self, mock_cache):
-        multi_cached_decorator = multi_cached(keys_from_attr='keys')
-        await multi_cached_decorator(return_dict)([])
+    def test_get_cache_keys(self, decorator):
+        assert decorator.get_cache_keys(stub_dict, (), {'keys': ['a', 'b']}) == ['a', 'b']
 
-        assert mock_cache.multi_get.call_count == 0
-        assert mock_cache.multi_set.call_count == 1
+    def test_get_cache_keys_empty_list(self, decorator):
+        assert decorator.get_cache_keys(stub_dict, (), {'keys': []}) == []
 
-    @pytest.mark.asyncio
-    async def test_multi_cached_no_results(self, mock_cache):
-        multi_cached_decorator = multi_cached(keys_from_attr='keys')
-        resp = await multi_cached_decorator(empty_return)([])
-
-        assert resp == {}
-
-        assert mock_cache.multi_get.call_count == 0
-        assert mock_cache.multi_set.call_count == 0
-
-    @pytest.mark.asyncio
-    async def test_multi_cached_no_keys_from_attr(self, mocker):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'return_dict')
-        multi_cached_decorator = multi_cached("keys")
-
+    def test_get_cache_keys_missing_kwarg(self, decorator):
         with pytest.raises(KeyError):
-            await multi_cached_decorator(return_dict)()
+            assert decorator.get_cache_keys(stub_dict, (), {})
+
+    def test_get_cache_keys_with_key_builder(self, decorator):
+        decorator._key_builder = lambda x, y: y['market'] + '_' + x.upper()
+        assert decorator.get_cache_keys(
+            stub_dict, (), {'keys': ['a', 'b'], 'market': 'ES'}) == ['ES_A', 'ES_B']
 
     @pytest.mark.asyncio
-    async def test_multi_cached_with_cache_exception_get(self, mocker, mock_cache):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'return_dict')
-        multi_cached_decorator = multi_cached(keys_from_attr='keys')
+    async def test_get_from_cache(self, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[1, 2, 3])
 
-        mock_cache.multi_get = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
-
-        await multi_cached_decorator(return_dict)(keys=['a', 'b'])
-        assert return_dict.call_count == 1
+        assert await decorator.get_from_cache('a', 'b', 'c') == [1, 2, 3]
+        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'))
+        assert decorator.cache.close.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_multi_cached_with_cache_exception_set(self, mocker, mock_cache):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'return_dict')
-        multi_cached_decorator = multi_cached(keys_from_attr='keys')
-
-        mock_cache.multi_set = asynctest.CoroutineMock(side_effect=ConnectionRefusedError())
-
-        await multi_cached_decorator(return_dict)(keys=[])
-        assert return_dict.call_count == 1
+    async def test_get_from_cache_no_keys(self, decorator, decorator_call):
+        assert await decorator.get_from_cache() == []
+        assert decorator.cache.multi_get.call_count == 0
+        assert decorator.cache.close.call_count == 0
 
     @pytest.mark.asyncio
-    async def test_multi_cached_func_exception(self, mocker):
-        cached_decorator = multi_cached(keys_from_attr="keys")
+    async def test_get_from_cache_with_nones_no_close(self, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[1, None, 3])
 
-        with pytest.raises(ValueError):
-            await cached_decorator(raise_exception)(keys=[])
-
-    @pytest.mark.asyncio
-    async def test_multi_cached_from_alias(self, mocker, mock_cache):
-        with asynctest.patch(
-                "aiocache.decorators.caches.create",
-                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
-
-            multi_cached_decorator = multi_cached(keys_from_attr='keys', alias="whatever")
-            await multi_cached_decorator(return_dict)(keys=['key'])
-            mock_create.assert_called_with('whatever')
-            assert mock_cache.multi_get.call_count == 1
-            assert mock_cache.multi_set.call_count == 0
+        assert await decorator.get_from_cache('a', 'b', 'c') == [1, None, 3]
+        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'))
+        assert decorator.cache.close.call_count == 0
 
     @pytest.mark.asyncio
-    async def test_multi_cached_alias_takes_precedence(self, mocker, mock_cache):
-        with asynctest.patch(
-                "aiocache.decorators.caches.create",
-                asynctest.MagicMock(return_value=mock_cache)) as mock_create:
+    async def test_get_from_cache_exception(self, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(side_effect=Exception)
 
-            multi_cached_decorator = multi_cached(
-                keys_from_attr='keys', alias="whatever", cache=SimpleMemoryCache)
-            await multi_cached_decorator(return_dict)(keys=['key'])
-            mock_create.assert_called_with('whatever')
-            assert mock_cache.multi_get.call_count == 1
+        assert await decorator.get_from_cache('a', 'b', 'c') == [None, None, None]
+        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'))
+        assert decorator.cache.close.call_count == 0
 
     @pytest.mark.asyncio
-    async def test_multi_cached_keeps_signature(self):
-        @multi_cached('keys')
-        async def what(self, keys, a, b):
+    async def test_calls_no_keys(self, decorator, decorator_call):
+        await decorator_call(keys=[])
+        assert decorator.cache.multi_get.call_count == 0
+        assert decorator.cache.close.call_count == 1
+        assert stub_dict.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_returns_from_multi_set(self, mocker, decorator, decorator_call):
+        mocker.spy(decorator, 'get_from_cache')
+        mocker.spy(decorator, 'set_in_cache')
+        decorator.cache.multi_get = CoroutineMock(return_value=[1, 2])
+
+        assert await decorator_call(1, keys=['a', 'b']) == {'a': 1, 'b': 2}
+        decorator.get_from_cache.assert_called_once_with('a', 'b')
+        assert decorator.set_in_cache.call_count == 0
+        assert stub_dict.call_count == 0
+        assert decorator.cache.close.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_calls_fn_multi_set_when_multi_get_none(self, mocker, decorator, decorator_call):
+        mocker.spy(decorator, 'get_from_cache')
+        mocker.spy(decorator, 'set_in_cache')
+        decorator.cache.multi_get = CoroutineMock(return_value=[None, None])
+
+        ret = await decorator_call(1, keys=['a', 'b'], value='value')
+
+        decorator.get_from_cache.assert_called_once_with('a', 'b')
+        decorator.set_in_cache.assert_called_with(ret)
+        stub_dict.assert_called_once_with(1, keys=['a', 'b'], value="value")
+        assert decorator.cache.close.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_calls_fn_with_only_missing_keys(self, mocker, decorator, decorator_call):
+        mocker.spy(decorator, 'set_in_cache')
+        decorator.cache.multi_get = CoroutineMock(return_value=[1, None])
+
+        assert await decorator_call(1, keys=['a', 'b'], value='value') == {'a': ANY, 'b': ANY}
+
+        decorator.set_in_cache.assert_called_once_with({'a': ANY, 'b': ANY})
+        stub_dict.assert_called_once_with(1, keys=['b'], value="value")
+
+    @pytest.mark.asyncio
+    async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[None])
+        stub_dict.side_effect = Exception()
+        with pytest.raises(Exception):
+            assert await decorator_call(keys=[])
+
+    @pytest.mark.asyncio
+    async def test_set_in_cache(self, decorator, decorator_call):
+        await decorator.set_in_cache({'a': 1, 'b': 2})
+
+        call_args = decorator.cache.multi_set.call_args[0][0]
+        assert ('a', 1) in call_args
+        assert ('b', 2) in call_args
+        call_args = decorator.cache.multi_set.call_args[1]['ttl'] is None
+
+    @pytest.mark.asyncio
+    async def test_set_in_cache_with_ttl(self, decorator, decorator_call):
+        decorator.ttl = 10
+        await decorator.set_in_cache({'a': 1, 'b': 2})
+
+        assert decorator.cache.multi_set.call_args[1]['ttl'] == decorator.ttl
+
+    @pytest.mark.asyncio
+    async def test_set_in_cache_exception(self, decorator, decorator_call):
+        decorator.cache.multi_set = CoroutineMock(side_effect=Exception)
+
+        assert await decorator.set_in_cache({'a': 1, 'b': 2}) is None
+
+    @pytest.mark.asyncio
+    async def test_decorate(self, mock_cache):
+        mock_cache.multi_get = CoroutineMock(return_value=[None])
+        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+
+            @multi_cached(keys_from_attr="keys")
+            async def fn(keys=None):
+                return {'test': 1}
+
+            assert await fn(keys=['test']) == {'test': 1}
+            assert await fn(keys=['test']) == {'test': 1}
+
+    @pytest.mark.asyncio
+    async def test_cached_keeps_signature(self):
+        @multi_cached(keys_from_attr="keys")
+        async def what(self, keys=None, what=1):
             return "1"
 
         assert what.__name__ == "what"
-        assert str(inspect.signature(what)) == '(self, keys, a, b)'
-        assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'keys', 'a', 'b']
-
-
-def test_get_args_dict():
-
-    async def arg_return_dict(keys, dummy=None):
-        ret = {}
-        for value, key in enumerate(keys or ['a', 'd', 'z', 'y']):
-            ret[key] = value
-        return ret
-
-    args = ({'b', 'a'},)
-
-    assert _get_args_dict(arg_return_dict, args, {}) == {'dummy': None, 'keys': {'a', 'b'}}
-    assert _get_args_dict(arg_return_dict, args, {'dummy': 'dummy'}) == \
-        {'dummy': 'dummy', 'keys': {'a', 'b'}}
-    assert _get_args_dict(arg_return_dict, [], {'dummy': 'dummy'}) == {'dummy': 'dummy'}
-
-
-def test_get_cache():
-
-    cache = _get_cache(SimpleMemoryCache, serializer=DefaultSerializer())
-
-    assert isinstance(cache, SimpleMemoryCache)
-    assert isinstance(cache.serializer, DefaultSerializer)
-
-
-def test_get_cache_fails_on_wrong_arg():
-    with pytest.raises(TypeError):
-        _get_cache(SimpleMemoryCache, wrong_arg=1)
+        assert str(inspect.signature(what)) == '(self, keys=None, what=1)'
+        assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'keys', 'what']

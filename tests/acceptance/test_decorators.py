@@ -21,7 +21,7 @@ async def stub(*args, key=None, seconds=0, **kwargs):
     return str(random.randint(1, 50))
 
 
-class TestCachedDecorator:
+class TestCached:
 
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, cache):

@@ -173,9 +173,7 @@ def _get_args_dict(func, args, kwargs):
     return {**defaults, **dict(zip(args_names, args)), **kwargs}
 
 
-def multi_cached(
-        keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
-        serializer=None, plugins=None, alias=None, **kwargs):
+class multi_cached:
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
@@ -200,53 +198,77 @@ def multi_cached(
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
         parameters are ignored. New cache is created every time.
     """
-    key_builder = key_builder or (lambda x, args_dict: x)
-    cache_kwargs = kwargs
 
-    def multi_cached_decorator(func):
-        @functools.wraps(func)
+    def __init__(
+            self, keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
+            serializer=None, plugins=None, alias=None, **kwargs):
+        self.keys_from_attr = keys_from_attr
+        self.key_builder = key_builder
+        self.ttl = ttl
+        self.alias = alias
+        self.cache = None
+
+        self._cache = cache
+        self._serializer = serializer
+        self._plugins = plugins
+        self._kwargs = kwargs
+        self._key_builder = key_builder or (lambda x, args_dict: x)
+
+    def __call__(self, f):
+        if self.alias:
+            self.cache = caches.create(self.alias)
+        else:
+            self.cache = _get_cache(
+                cache=self._cache, serializer=self._serializer,
+                plugins=self._plugins, **self._kwargs)
+
+        @functools.wraps(f)
         async def wrapper(*args, **kwargs):
-            if alias:
-                cache_instance = caches.create(alias)
-            else:
-                cache_instance = _get_cache(
-                    cache=cache, serializer=serializer, plugins=plugins, **cache_kwargs)
-            partial_result = {}
-            args_dict = _get_args_dict(func, args, kwargs)
-            keys = args_dict[keys_from_attr]
-            cache_keys = [key_builder(key, args_dict) for key in keys]
-
-            result = None
-            missing_keys = "all"
-            if len(keys) > 0:
-                missing_keys = []
-                try:
-                    values = await cache_instance.multi_get(cache_keys)
-                    for key, value in zip(keys, values):
-                        if value is not None:
-                            partial_result[key] = value
-                        else:
-                            missing_keys.append(key)
-                    args_dict[keys_from_attr] = missing_keys
-
-                except Exception:
-                    logger.exception("Unexpected error with %s", cache_instance)
-                    missing_keys = "all"
-
-            if missing_keys:
-                result = await func(**args_dict)
-                if result:
-                    partial_result.update(result)
-                    try:
-                        await cache_instance.multi_set(
-                            [(key_builder(
-                                key, args_dict), value) for key, value in result.items()],
-                            ttl=ttl)
-                    except Exception:
-                        logger.exception("Unexpected error with %s", cache_instance)
-
-            asyncio.ensure_future(cache_instance.close())
-            return partial_result
-
+            return await self.decorator(f, *args, **kwargs)
         return wrapper
-    return multi_cached_decorator
+
+    async def decorator(self, f, *args, **kwargs):
+        missing_keys = []
+        partial = {}
+        keys = self.get_cache_keys(f, args, kwargs)
+
+        values = await self.get_from_cache(*keys)
+        for key, value in zip(keys, values):
+            if value is None:
+                missing_keys.append(key)
+            else:
+                partial[key] = value
+        kwargs[self.keys_from_attr] = missing_keys
+        if values and None not in values:
+            return partial
+
+        result = await f(*args, **kwargs)
+        result.update(partial)
+
+        await self.set_in_cache(result)
+        asyncio.ensure_future(self.cache.close())
+
+        return result
+
+    def get_cache_keys(self, f, args, kwargs):
+        args_dict = _get_args_dict(f, args, kwargs)
+        keys = args_dict[self.keys_from_attr]
+        return [self._key_builder(key, args_dict) for key in keys]
+
+    async def get_from_cache(self, *keys):
+        if not keys:
+            return []
+        try:
+            values = await self.cache.multi_get(keys)
+            if None not in values:
+                asyncio.ensure_future(self.cache.close())
+            return values
+        except Exception:
+            logger.exception("Couldn't retrieve %s, unexpected error", keys)
+            return [None] * len(keys)
+
+    async def set_in_cache(self, result):
+        try:
+            await self.cache.multi_set([(k, v) for k, v in result.items()], ttl=self.ttl)
+        except Exception:
+            logger.exception("Couldn't set %s, unexpected error", result)
