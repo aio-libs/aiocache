@@ -28,7 +28,7 @@ class TestCached:
         mocker.patch("aiocache.decorators._get_cache", return_value=cache)
 
     @pytest.mark.asyncio
-    async def test_cached_ttl(self, mocker, cache):
+    async def test_cached_ttl(self, cache):
 
         @cached(ttl=1, key=pytest.KEY)
         async def fn():
@@ -84,7 +84,7 @@ class TestMultiCachedDecorator:
         mocker.patch("aiocache.decorators._get_cache", return_value=cache)
 
     @pytest.mark.asyncio
-    async def test_multi_cached(self, mocker, cache):
+    async def test_multi_cached(self, cache):
         multi_cached_decorator = multi_cached('keys')
 
         default_keys = {'a', 'd', 'z', 'y'}
