@@ -1,11 +1,10 @@
 import asyncio
-import sys
 import pytest
 import random
 
 from unittest import mock
 
-from aiocache import cached, multi_cached
+from aiocache import cached, cached_stampede, multi_cached
 
 
 async def return_dict(keys=None):
@@ -22,7 +21,7 @@ async def stub(*args, key=None, seconds=0, **kwargs):
     return str(random.randint(1, 50))
 
 
-class TestCachedDecorator:
+class TestCached:
 
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, cache):
@@ -30,65 +29,49 @@ class TestCachedDecorator:
 
     @pytest.mark.asyncio
     async def test_cached_ttl(self, mocker, cache):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'stub')
-        cached_decorator = cached(ttl=1)
 
-        resp1 = await cached_decorator(stub)(1)
-        resp2 = await cached_decorator(stub)(1)
+        @cached(ttl=1, key=pytest.KEY)
+        async def fn():
+            return str(random.randint(1, 50))
 
-        assert await cache.get('stubstub(1,){}') == resp1 == resp2
+        resp1 = await fn()
+        resp2 = await fn()
+
+        assert await cache.get(pytest.KEY) == resp1 == resp2
         await asyncio.sleep(1)
-        assert await cache.get('stubstub(1,){}') is None
+        assert await cache.get(pytest.KEY) is None
 
-    @pytest.mark.asyncio
-    async def test_cached_key_from_attr(self, mocker, cache):
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'stub')
-        cached_decorator = cached(key_from_attr="key")
 
-        resp1 = await cached_decorator(stub)(key='key')
-        resp2 = await cached_decorator(stub)(key='key')
+class TestCachedStampede:
 
-        assert await cache.get('key') == resp1 == resp2
-
-    @pytest.mark.asyncio
-    async def test_cached_key(self, mocker, cache):
-        cached_decorator = cached(key="key")
-
-        resp1 = await cached_decorator(stub)()
-        resp2 = await cached_decorator(stub)()
-
-        assert await cache.get('key') == resp1 == resp2
+    @pytest.fixture(autouse=True)
+    def default_cache(self, mocker, cache):
+        mocker.patch("aiocache.decorators._get_cache", return_value=cache)
 
     @pytest.mark.asyncio
     async def test_cached_stampede(self, mocker, cache):
         mocker.spy(cache, 'get')
         mocker.spy(cache, 'set')
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'stub')
-        cached_decorator = cached(ttl=10, stampede_lease=2)
+        decorator = cached_stampede(ttl=10, lease=2)
 
         await asyncio.gather(
-            cached_decorator(stub)(1),
-            cached_decorator(stub)(1))
+            decorator(stub)(1),
+            decorator(stub)(1))
 
-        cache.get.assert_called_with('stubstub(1,){}')
+        cache.get.assert_called_with('acceptance.test_decoratorsstub(1,)[]')
         assert cache.get.call_count == 4
-        cache.set.assert_called_with('stubstub(1,){}', mock.ANY, ttl=10)
+        cache.set.assert_called_with('acceptance.test_decoratorsstub(1,)[]', mock.ANY, ttl=10)
         assert cache.set.call_count == 1
 
     @pytest.mark.asyncio
     async def test_locking_dogpile_lease_expiration(self, mocker, cache):
         mocker.spy(cache, 'get')
         mocker.spy(cache, 'set')
-        module = sys.modules[globals()['__name__']]
-        mocker.spy(module, 'stub')
-        cached_decorator = cached(ttl=10, stampede_lease=1)
+        decorator = cached_stampede(ttl=10, lease=1)
 
         await asyncio.gather(
-            cached_decorator(stub)(1, seconds=2),
-            cached_decorator(stub)(1, seconds=2))
+            decorator(stub)(1, seconds=2),
+            decorator(stub)(1, seconds=2))
 
         assert cache.get.call_count == 4
         assert cache.set.call_count == 2
