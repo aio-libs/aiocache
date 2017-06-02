@@ -44,6 +44,12 @@ class CacheHandler:
         self._caches = {}
 
     def get(self, alias):
+        """
+        Retrieve cache identified by alias. Will return always the same instance
+
+        :param alias: str cache alias
+        :return: cache instance
+        """
         try:
             return self._caches[alias]
         except KeyError:
@@ -54,8 +60,22 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias, **kwargs):
-        config = self.get_alias_config(alias)
+    def create(self, alias=None, cache=None, **kwargs):
+        """
+        Create a new cache. Either alias or cache params are required. You can use
+        kwargs to pass extra parameters to configure the cache.
+
+        :param alias: str alias to pull configuration from
+        :param cache: str or class cache class to use for creating the
+            new cache (when no alias is used)
+        :return: New cache instance
+        """
+        if alias:
+            config = self.get_alias_config(alias)
+        elif cache:
+            config = {'cache': cache}
+        else:
+            raise TypeError("create call needs to receive an alias or a cache")
         cache = _create_cache(**{**config, **kwargs})
         return cache
 

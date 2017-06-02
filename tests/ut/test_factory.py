@@ -3,7 +3,7 @@ import pytest
 from aiocache import SimpleMemoryCache, RedisCache, caches
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.serializers import PickleSerializer
-from aiocache.plugins import TimingPlugin
+from aiocache.plugins import TimingPlugin, HitMissRatioPlugin
 
 
 def test_class_from_string():
@@ -107,6 +107,54 @@ class TestCacheHandler:
         assert isinstance(cache.serializer, PickleSerializer)
         assert len(cache.plugins) == 2
 
+    def test_create_cache_str_no_alias(self):
+        cache = caches.create(cache="aiocache.RedisCache")
+
+        assert isinstance(cache, RedisCache)
+        assert cache.endpoint == '127.0.0.1'
+        assert cache.port == 6379
+
+    def test_create_cache_class_no_alias(self):
+        cache = caches.create(cache=RedisCache)
+
+        assert isinstance(cache, RedisCache)
+        assert cache.endpoint == '127.0.0.1'
+        assert cache.port == 6379
+
+    def test_create_cache_ensure_alias_or_cache(self):
+        with pytest.raises(TypeError):
+            caches.create()
+
+    def test_alias_config_is_reusable(self):
+        caches.set_config({
+            'default': {
+                'cache': "aiocache.RedisCache",
+                'endpoint': "127.0.0.10",
+                'port': 6378,
+                'serializer': {
+                    'class': "aiocache.serializers.PickleSerializer"
+                },
+                'plugins': [
+                    {'class': "aiocache.plugins.HitMissRatioPlugin"},
+                    {'class': "aiocache.plugins.TimingPlugin"}
+                ]
+            },
+            'alt': {
+                'cache': "aiocache.SimpleMemoryCache",
+            }
+        })
+
+        default = caches.create(**caches.get_alias_config('default'))
+        alt = caches.create(**caches.get_alias_config('alt'))
+
+        assert isinstance(default, RedisCache)
+        assert default.endpoint == "127.0.0.10"
+        assert default.port == 6378
+        assert isinstance(default.serializer, PickleSerializer)
+        assert len(default.plugins) == 2
+
+        assert isinstance(alt, SimpleMemoryCache)
+
     def test_multiple_caches(self):
         caches.set_config({
             'default': {
@@ -175,3 +223,20 @@ class TestCacheHandler:
                     ]
                 }
             })
+
+    def test_ensure_plugins_order(self):
+        caches.set_config({
+            'default': {
+                'cache': "aiocache.RedisCache",
+                'plugins': [
+                    {'class': "aiocache.plugins.HitMissRatioPlugin"},
+                    {'class': "aiocache.plugins.TimingPlugin"}
+                ]
+            }
+        })
+
+        cache = caches.get('default')
+        assert isinstance(cache.plugins[0], HitMissRatioPlugin)
+
+        cache = caches.create('default')
+        assert isinstance(cache.plugins[0], HitMissRatioPlugin)
