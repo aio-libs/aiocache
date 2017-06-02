@@ -21,16 +21,6 @@ if echo "$answer" | grep -iq "^y" ;then
   git tag -a "$new_version" -m "$new_version"
   git push --follow-tags
 
-  echo -n "Tag generated and pushed. Do you wish to publish the new version? (y/n) "
-  read answer
-
-  if echo "$answer" | grep -iq "^y" ;then
-    python setup.py sdist
-    twine upload "dist/aiocache-$new_version.tar.gz"
-  else
-    exit 1
-  fi
-
 else
   exit 1
 fi
