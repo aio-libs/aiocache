@@ -14,6 +14,10 @@ class cached:
     An example would be endpoint and port for the RedisCache. You can send those args as
     kwargs and they will be propagated accordingly.
 
+    Each call will use the same connection through all the cache calls. If you expect high
+    concurrency for the function you are decorating, it will be safer if you set high pool sizes
+    (in case of using memcached or redis).
+
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
         key_from_attr param. If key and key_from_attr are not passed, it will use module_name
@@ -41,11 +45,16 @@ class cached:
         self.noself = noself
         self.alias = alias
         self.cache = None
+        self._conn = None
 
         self._cache = cache
         self._serializer = serializer
         self._plugins = plugins
         self._kwargs = kwargs
+
+    @property
+    def conn(self):
+        return self._conn
 
     def __call__(self, f):
 
@@ -62,16 +71,18 @@ class cached:
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
-        key = self.get_cache_key(f, args, kwargs)
+        self._conn = self.cache.get_connection()
 
-        value = await self.get_from_cache(key)
-        if value is not None:
-            return value
+        async with self._conn:
+            key = self.get_cache_key(f, args, kwargs)
 
-        result = await f(*args, **kwargs)
+            value = await self.get_from_cache(key)
+            if value is not None:
+                return value
 
-        await self.set_in_cache(key, result)
-        asyncio.ensure_future(self.cache.close())
+            result = await f(*args, **kwargs)
+
+            await self.set_in_cache(key, result)
 
         return result
 
@@ -91,7 +102,7 @@ class cached:
 
     async def get_from_cache(self, key):
         try:
-            value = await self.cache.get(key)
+            value = await self.conn.get(key)
             if value is not None:
                 asyncio.ensure_future(self.cache.close())
             return value
@@ -100,7 +111,7 @@ class cached:
 
     async def set_in_cache(self, key, value):
         try:
-            await self.cache.set(key, value, ttl=self.ttl)
+            await self.conn.set(key, value, ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
@@ -113,6 +124,9 @@ class cached_stampede(cached):
     In some cases you will need to send more args to configure the cache object.
     An example would be endpoint and port for the RedisCache. You can send those args as
     kwargs and they will be propagated accordingly.
+
+    This decorator doesn't reuse connections because it would lock the connection while its
+    locked waiting for the first call to finish calculating and this is counterproductive.
 
     :param lease: int seconds to lock function call to avoid cache stampede effects.
         If 0 or None, no locking happens (default is 2). redis and memory backends support
@@ -139,6 +153,10 @@ class cached_stampede(cached):
         super().__init__(**kwargs)
         self.lease = lease
 
+    @property
+    def conn(self):
+        return self.cache
+
     async def decorator(self, f, *args, **kwargs):
         key = self.get_cache_key(f, args, kwargs)
 
@@ -146,7 +164,7 @@ class cached_stampede(cached):
         if value is not None:
             return value
 
-        async with self.cache._redlock(key, self.lease):
+        async with self.conn._redlock(key, self.lease):
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
@@ -155,7 +173,6 @@ class cached_stampede(cached):
 
             await self.set_in_cache(key, result)
 
-        asyncio.ensure_future(self.cache.close())
         return result
 
 
@@ -184,6 +201,10 @@ class multi_cached:
     If the attribute specified to be the key is an empty list, the cache will be ignored and
     the function will be called as expected.
 
+    Each call will use the same connection through all the cache calls. If you expect high
+    concurrency for the function you are decorating, it will be safer if you set high pool sizes
+    (in case of using memcached or redis).
+
     :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
         as keys to index in the cache.
     :param key_builder: Callable that allows to change the format of the keys before storing.
@@ -207,6 +228,7 @@ class multi_cached:
         self.ttl = ttl
         self.alias = alias
         self.cache = None
+        self._conn = None
 
         self._cache = cache
         self._serializer = serializer
@@ -228,25 +250,26 @@ class multi_cached:
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
-        missing_keys = []
-        partial = {}
-        keys = self.get_cache_keys(f, args, kwargs)
+        self._conn = self.cache.get_connection()
+        async with self._conn:
+            missing_keys = []
+            partial = {}
+            keys = self.get_cache_keys(f, args, kwargs)
 
-        values = await self.get_from_cache(*keys)
-        for key, value in zip(keys, values):
-            if value is None:
-                missing_keys.append(key)
-            else:
-                partial[key] = value
-        kwargs[self.keys_from_attr] = missing_keys
-        if values and None not in values:
-            return partial
+            values = await self.get_from_cache(*keys)
+            for key, value in zip(keys, values):
+                if value is None:
+                    missing_keys.append(key)
+                else:
+                    partial[key] = value
+            kwargs[self.keys_from_attr] = missing_keys
+            if values and None not in values:
+                return partial
 
-        result = await f(*args, **kwargs)
-        result.update(partial)
+            result = await f(*args, **kwargs)
+            result.update(partial)
 
-        await self.set_in_cache(result)
-        asyncio.ensure_future(self.cache.close())
+            await self.set_in_cache(result)
 
         return result
 
@@ -259,7 +282,7 @@ class multi_cached:
         if not keys:
             return []
         try:
-            values = await self.cache.multi_get(keys)
+            values = await self._conn.multi_get(keys)
             if None not in values:
                 asyncio.ensure_future(self.cache.close())
             return values
@@ -269,6 +292,6 @@ class multi_cached:
 
     async def set_in_cache(self, result):
         try:
-            await self.cache.multi_set([(k, v) for k, v in result.items()], ttl=self.ttl)
+            await self._conn.multi_set([(k, v) for k, v in result.items()], ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)

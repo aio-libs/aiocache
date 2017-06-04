@@ -5,9 +5,10 @@ import random
 import inspect
 import asynctest
 
-from asynctest import MagicMock, CoroutineMock, ANY
+from asynctest import Mock, CoroutineMock, ANY
 
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
+from aiocache.base import _Conn
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -26,7 +27,9 @@ class TestCached:
 
     @pytest.fixture
     def decorator_call(self, decorator):
-        yield decorator(stub)
+        d = decorator(stub)
+        decorator._conn = decorator.cache.get_connection()
+        yield d
 
     @pytest.fixture(autouse=True)
     def spy_stub(self, mocker):
@@ -42,6 +45,7 @@ class TestCached:
         assert c.key == "key"
         assert c.key_from_attr == "key_attr"
         assert c.cache is None
+        assert c._conn is None
         assert c._cache == SimpleMemoryCache
         assert c._kwargs == {'namespace': 'test'}
 
@@ -54,7 +58,7 @@ class TestCached:
     def test_alias_takes_precedence(self, mock_cache):
         with asynctest.patch(
                 "aiocache.decorators.caches.create",
-                MagicMock(return_value=mock_cache)) as mock_create:
+                Mock(return_value=mock_cache)) as mock_create:
             c = cached(alias='default', cache=SimpleMemoryCache, namespace='test')
             c(stub)
 
@@ -85,7 +89,7 @@ class TestCached:
 
         await decorator_call()
 
-        decorator.cache.get.assert_called_with('stub()[]')
+        decorator.cache.get.assert_called_with('stub()[]', _conn=ANY)
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
@@ -93,7 +97,6 @@ class TestCached:
     async def test_get_from_cache_returns(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(return_value=1)
         assert await decorator.get_from_cache("key") == 1
-        assert decorator.cache.close.call_count == 1
 
     @pytest.mark.asyncio
     async def test_get_from_cache_exception(self, decorator, decorator_call):
@@ -104,7 +107,13 @@ class TestCached:
     async def test_get_from_cache_none(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(return_value=None)
         assert await decorator.get_from_cache("key") is None
-        assert decorator.cache.close.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_get_from_cache_conn(self, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=1)
+        decorator._conn._conn = Mock()
+        await decorator.get_from_cache("key")
+        decorator.cache.get.assert_called_with(pytest.KEY, _conn=decorator._conn._conn)
 
     @pytest.mark.asyncio
     async def test_calls_fn_set_when_get_none(self, mocker, decorator, decorator_call):
@@ -117,7 +126,6 @@ class TestCached:
         assert decorator.get_from_cache.call_count == 1
         decorator.set_in_cache.assert_called_with("stub()[('value', 'value')]", "value")
         stub.assert_called_once_with(value="value")
-        assert decorator.cache.close.call_count == 1
 
     @pytest.mark.asyncio
     async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
@@ -129,18 +137,25 @@ class TestCached:
     @pytest.mark.asyncio
     async def test_set_calls_set(self, decorator, decorator_call):
         await decorator.set_in_cache("key", "value")
-        decorator.cache.set.assert_called_with("key", "value", ttl=None)
+        decorator.cache.set.assert_called_with("key", "value", _conn=ANY, ttl=None)
 
     @pytest.mark.asyncio
     async def test_set_calls_set_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
         await decorator.set_in_cache("key", "value")
-        decorator.cache.set.assert_called_with("key", "value", ttl=decorator.ttl)
+        decorator.cache.set.assert_called_with("key", "value", _conn=ANY, ttl=decorator.ttl)
 
     @pytest.mark.asyncio
     async def test_set_catches_exception(self, decorator, decorator_call):
         decorator.cache.set = CoroutineMock(side_effect=Exception)
         assert await decorator.set_in_cache("key", "value") is None
+
+    @pytest.mark.asyncio
+    async def test_set_with_conn(self, decorator, decorator_call):
+        decorator._conn._conn = Mock()
+        await decorator.set_in_cache("key", "value")
+        decorator.cache.set.assert_called_with(
+            "key", "value", _conn=decorator._conn._conn, ttl=None)
 
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
@@ -163,6 +178,34 @@ class TestCached:
             assert what.__name__ == "what"
             assert str(inspect.signature(what)) == '(self, a, b)'
             assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'a', 'b']
+
+    @pytest.mark.asyncio
+    async def test_reuses_connection(self, mocker, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+        await decorator_call(value="value")
+
+        assert decorator._conn._conn is not None
+        decorator.cache.get.assert_called_with(
+            "stub()[('value', 'value')]", _conn=decorator._conn._conn)
+        decorator.cache.set.assert_called_with(
+            "stub()[('value', 'value')]", 'value',  _conn=decorator._conn._conn, ttl=None)
+
+    @pytest.mark.asyncio
+    async def test_different_connection_per_call(self, mocker, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+        conn1, conn2 = _Conn(decorator.cache), _Conn(decorator.cache)
+        mocker.spy(conn1, 'get')
+        mocker.spy(conn1, 'set')
+        mocker.spy(conn2, 'get')
+        mocker.spy(conn2, 'set')
+        decorator.cache.get_connection = Mock(side_effect=[conn1, conn2])
+        await decorator_call(value="value")
+        await decorator_call(value="value")
+
+        conn1.get.call_count = 1
+        conn1.set.call_count = 1
+        conn2.get.call_count = 1
+        conn2.set.call_count = 1
 
 
 class TestCachedStampede:
@@ -221,7 +264,8 @@ class TestCachedStampede:
 
         assert decorator.cache.get.call_count == 2
         assert decorator.cache._redlock.call_count == 1
-        decorator.cache.set.assert_called_with("stub()[('value', 'value')]", "value", ttl=None)
+        decorator.cache.set.assert_called_with(
+            "stub()[('value', 'value')]", "value", ttl=None)
         stub.assert_called_once_with(value="value")
 
     @pytest.mark.asyncio
@@ -234,8 +278,20 @@ class TestCachedStampede:
 
         assert decorator.cache.get.call_count == 4
         assert decorator.cache._redlock.call_count == 2
-        decorator.cache.set.assert_called_with("stub()[('value', 'value')]", "value", ttl=None)
+        decorator.cache.set.assert_called_with(
+            "stub()[('value', 'value')]", "value", ttl=None)
         assert stub.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_doesnt_reuse_connection(self, mocker, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+        await decorator_call(value="value")
+
+        assert decorator._conn is None
+        decorator.cache.get.assert_called_with(
+            "stub()[('value', 'value')]")
+        decorator.cache.set.assert_called_with(
+            "stub()[('value', 'value')]", 'value', ttl=None)
 
 
 async def stub_dict(*args, keys=None, **kwargs):
@@ -256,7 +312,9 @@ class TestMultiCached:
 
     @pytest.fixture
     def decorator_call(self, decorator):
-        yield decorator(stub_dict)
+        d = decorator(stub_dict)
+        decorator._conn = decorator.cache.get_connection()
+        yield d
 
     @pytest.fixture(autouse=True)
     def spy_stub_dict(self, mocker):
@@ -284,7 +342,7 @@ class TestMultiCached:
     def test_alias_takes_precedence(self, mock_cache):
         with asynctest.patch(
                 "aiocache.decorators.caches.create",
-                MagicMock(return_value=mock_cache)) as mock_create:
+                Mock(return_value=mock_cache)) as mock_create:
             mc = multi_cached(
                 keys_from_attr="keys", alias='default', cache=SimpleMemoryCache, namespace='test')
             mc(stub_dict)
@@ -312,36 +370,32 @@ class TestMultiCached:
         decorator.cache.multi_get = CoroutineMock(return_value=[1, 2, 3])
 
         assert await decorator.get_from_cache('a', 'b', 'c') == [1, 2, 3]
-        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'))
-        assert decorator.cache.close.call_count == 1
+        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'), _conn=ANY)
 
     @pytest.mark.asyncio
     async def test_get_from_cache_no_keys(self, decorator, decorator_call):
         assert await decorator.get_from_cache() == []
         assert decorator.cache.multi_get.call_count == 0
-        assert decorator.cache.close.call_count == 0
-
-    @pytest.mark.asyncio
-    async def test_get_from_cache_with_nones_no_close(self, decorator, decorator_call):
-        decorator.cache.multi_get = CoroutineMock(return_value=[1, None, 3])
-
-        assert await decorator.get_from_cache('a', 'b', 'c') == [1, None, 3]
-        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'))
-        assert decorator.cache.close.call_count == 0
 
     @pytest.mark.asyncio
     async def test_get_from_cache_exception(self, decorator, decorator_call):
         decorator.cache.multi_get = CoroutineMock(side_effect=Exception)
 
         assert await decorator.get_from_cache('a', 'b', 'c') == [None, None, None]
-        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'))
-        assert decorator.cache.close.call_count == 0
+        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'), _conn=ANY)
+
+    @pytest.mark.asyncio
+    async def test_get_from_cache_conn(self, decorator, decorator_call):
+        decorator._conn._conn = Mock()
+        decorator.cache.multi_get = CoroutineMock(return_value=[1, 2, 3])
+
+        assert await decorator.get_from_cache('a', 'b', 'c') == [1, 2, 3]
+        decorator.cache.multi_get.assert_called_with(('a', 'b', 'c'), _conn=decorator._conn._conn)
 
     @pytest.mark.asyncio
     async def test_calls_no_keys(self, decorator, decorator_call):
         await decorator_call(keys=[])
         assert decorator.cache.multi_get.call_count == 0
-        assert decorator.cache.close.call_count == 1
         assert stub_dict.call_count == 1
 
     @pytest.mark.asyncio
@@ -354,7 +408,6 @@ class TestMultiCached:
         decorator.get_from_cache.assert_called_once_with('a', 'b')
         assert decorator.set_in_cache.call_count == 0
         assert stub_dict.call_count == 0
-        assert decorator.cache.close.call_count == 1
 
     @pytest.mark.asyncio
     async def test_calls_fn_multi_set_when_multi_get_none(self, mocker, decorator, decorator_call):
@@ -367,7 +420,6 @@ class TestMultiCached:
         decorator.get_from_cache.assert_called_once_with('a', 'b')
         decorator.set_in_cache.assert_called_with(ret)
         stub_dict.assert_called_once_with(1, keys=['a', 'b'], value="value")
-        assert decorator.cache.close.call_count == 1
 
     @pytest.mark.asyncio
     async def test_calls_fn_with_only_missing_keys(self, mocker, decorator, decorator_call):
@@ -429,3 +481,31 @@ class TestMultiCached:
         assert what.__name__ == "what"
         assert str(inspect.signature(what)) == '(self, keys=None, what=1)'
         assert inspect.getfullargspec(what.__wrapped__).args == ['self', 'keys', 'what']
+
+    @pytest.mark.asyncio
+    async def test_reuses_connection(self, mocker, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[None])
+        await decorator_call(keys=[pytest.KEY])
+
+        assert decorator._conn._conn is not None
+        decorator.cache.multi_get.assert_called_with(
+            ('key',), _conn=decorator._conn._conn)
+        decorator.cache.multi_set.assert_called_with(
+            [('key', None)],  _conn=decorator._conn._conn, ttl=0)
+
+    @pytest.mark.asyncio
+    async def test_different_connection_per_call(self, mocker, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+        conn1, conn2 = _Conn(decorator.cache), _Conn(decorator.cache)
+        mocker.spy(conn1, 'multi_get')
+        mocker.spy(conn1, 'multi_set')
+        mocker.spy(conn2, 'multi_get')
+        mocker.spy(conn2, 'multi_set')
+        decorator.cache.get_connection = Mock(side_effect=[conn1, conn2])
+        await decorator_call(keys=[pytest.KEY])
+        await decorator_call(keys=[pytest.KEY])
+
+        conn1.multi_get.call_count = 1
+        conn1.multi_set.call_count = 1
+        conn2.multi_get.call_count = 1
+        conn2.multi_set.call_count = 1

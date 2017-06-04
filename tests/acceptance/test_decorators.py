@@ -60,7 +60,8 @@ class TestCachedStampede:
 
         cache.get.assert_called_with('acceptance.test_decoratorsstub(1,)[]')
         assert cache.get.call_count == 4
-        cache.set.assert_called_with('acceptance.test_decoratorsstub(1,)[]', mock.ANY, ttl=10)
+        cache.set.assert_called_with(
+            'acceptance.test_decoratorsstub(1,)[]', mock.ANY, ttl=10)
         assert cache.set.call_count == 1
 
     @pytest.mark.asyncio
