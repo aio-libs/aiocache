@@ -41,6 +41,7 @@ class cached:
         self.noself = noself
         self.alias = alias
         self.cache = None
+        self._conn = None
 
         self._cache = cache
         self._serializer = serializer
@@ -55,6 +56,7 @@ class cached:
             self.cache = _get_cache(
                 cache=self._cache, serializer=self._serializer,
                 plugins=self._plugins, **self._kwargs)
+            self._conn = self.cache.get_connection()
 
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
@@ -62,15 +64,16 @@ class cached:
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
-        key = self.get_cache_key(f, args, kwargs)
+        async with self._conn:
+            key = self.get_cache_key(f, args, kwargs)
 
-        value = await self.get_from_cache(key)
-        if value is not None:
-            return value
+            value = await self.get_from_cache(key)
+            if value is not None:
+                return value
 
-        result = await f(*args, **kwargs)
+            result = await f(*args, **kwargs)
 
-        await self.set_in_cache(key, result)
+            await self.set_in_cache(key, result)
         asyncio.ensure_future(self.cache.close())
 
         return result
@@ -91,7 +94,7 @@ class cached:
 
     async def get_from_cache(self, key):
         try:
-            value = await self.cache.get(key)
+            value = await self._conn.get(key)
             if value is not None:
                 asyncio.ensure_future(self.cache.close())
             return value
@@ -100,7 +103,7 @@ class cached:
 
     async def set_in_cache(self, key, value):
         try:
-            await self.cache.set(key, value, ttl=self.ttl)
+            await self._conn.set(key, value, ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
@@ -140,20 +143,21 @@ class cached_stampede(cached):
         self.lease = lease
 
     async def decorator(self, f, *args, **kwargs):
-        key = self.get_cache_key(f, args, kwargs)
+        async with self._conn:
+            key = self.get_cache_key(f, args, kwargs)
 
-        value = await self.get_from_cache(key)
-        if value is not None:
-            return value
-
-        async with self.cache._redlock(key, self.lease):
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
 
-            result = await f(*args, **kwargs)
+            async with self.cache._redlock(key, self.lease):
+                value = await self.get_from_cache(key)
+                if value is not None:
+                    return value
 
-            await self.set_in_cache(key, result)
+                result = await f(*args, **kwargs)
+
+                await self.set_in_cache(key, result)
 
         asyncio.ensure_future(self.cache.close())
         return result
