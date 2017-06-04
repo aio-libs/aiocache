@@ -11,7 +11,7 @@ except ImportError:
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache.serializers import DefaultSerializer, PickleSerializer, JsonSerializer
+from aiocache.serializers import StringSerializer, PickleSerializer, JsonSerializer
 
 
 class MyType:
@@ -24,7 +24,7 @@ class MyType:
         return self.__dict__ == obj.__dict__
 
 
-class MyTypeSchema(Schema, DefaultSerializer):
+class MyTypeSchema(Schema, StringSerializer):
     r = fields.Integer()
 
     def dumps(self, *args, **kwargs):
@@ -56,26 +56,26 @@ def loads(x):
 TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
 
 
-class TestDefaultSerializer:
+class TestStringSerializer:
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_set_get_types(self, cache, obj):
-        cache.serializer = DefaultSerializer()
+        cache.serializer = StringSerializer()
         assert await cache.set(pytest.KEY, obj) is True
         assert await cache.get(pytest.KEY) == str(obj)
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_add_get_types(self, cache, obj):
-        cache.serializer = DefaultSerializer()
+        cache.serializer = StringSerializer()
         assert await cache.add(pytest.KEY, obj) is True
         assert await cache.get(pytest.KEY) == str(obj)
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_multi_set_multi_get_types(self, cache, obj):
-        cache.serializer = DefaultSerializer()
+        cache.serializer = StringSerializer()
         assert await cache.multi_set([(pytest.KEY, obj)]) is True
         assert await cache.multi_get([pytest.KEY]) == [str(obj)]
 

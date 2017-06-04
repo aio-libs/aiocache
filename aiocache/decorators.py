@@ -4,6 +4,7 @@ import functools
 
 from aiocache.log import logger
 from aiocache import SimpleMemoryCache, caches
+from aiocache.serializers import JsonSerializer
 
 
 class cached:
@@ -26,7 +27,7 @@ class cached:
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is pulled from the cache class being used.
+        Default is JsonSerializer.
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
@@ -38,7 +39,7 @@ class cached:
 
     def __init__(
             self, ttl=None, key=None, key_from_attr=None, cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, noself=False, **kwargs):
+            serializer=JsonSerializer, plugins=None, alias=None, noself=False, **kwargs):
         self.ttl = ttl
         self.key = key
         self.key_from_attr = key_from_attr
@@ -139,7 +140,7 @@ class cached_stampede(cached):
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is pulled from the cache class being used.
+        Default is JsonSerializer.
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
@@ -213,7 +214,7 @@ class multi_cached:
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is pulled from the cache class being used.
+        Default is JsonSerializer.
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
@@ -222,7 +223,7 @@ class multi_cached:
 
     def __init__(
             self, keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, **kwargs):
+            serializer=JsonSerializer, plugins=None, alias=None, **kwargs):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder
         self.ttl = ttl

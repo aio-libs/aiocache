@@ -10,7 +10,7 @@ except ImportError:
 import pickle
 
 
-class DefaultSerializer:
+class StringSerializer:
     """
     Converts all input values to str. All return values are also str. Be
     careful because this means that if you store an ``int(1)``, you will get
@@ -44,7 +44,7 @@ class DefaultSerializer:
         return value
 
 
-class PickleSerializer(DefaultSerializer):
+class PickleSerializer(StringSerializer):
     """
     Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
     """
@@ -73,7 +73,7 @@ class PickleSerializer(DefaultSerializer):
         return pickle.loads(value)
 
 
-class JsonSerializer(DefaultSerializer):
+class JsonSerializer(StringSerializer):
     """
     Transform data to json string with json.dumps and json.loads to retrieve it back. Check
     https://docs.python.org/3/library/json.html#py-to-json-table for how types are converted.

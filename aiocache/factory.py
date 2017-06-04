@@ -35,7 +35,7 @@ class CacheHandler:
         'default': {
             'cache': "aiocache.SimpleMemoryCache",
             'serializer': {
-                'class': "aiocache.serializers.DefaultSerializer"
+                'class': "aiocache.serializers.StringSerializer"
             }
         }
     }
@@ -103,7 +103,7 @@ class CacheHandler:
                 'default': {
                     'cache': "aiocache.SimpleMemoryCache",
                     'serializer': {
-                        'class': "aiocache.serializers.DefaultSerializer"
+                        'class': "aiocache.serializers.StringSerializer"
                     }
                 },
                 'redis_alt': {
@@ -127,7 +127,7 @@ class CacheHandler:
                 'default': {
                     'cache': "aiocache.SimpleMemoryCache",
                     'serializer': {
-                        'class': "aiocache.serializers.DefaultSerializer"
+                        'class': "aiocache.serializers.StringSerializer"
                     }
                 }
             }

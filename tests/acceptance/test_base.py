@@ -14,7 +14,7 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_setup(self, cache):
         assert cache.namespace == "test"
-        assert isinstance(cache.serializer, serializers.DefaultSerializer)
+        assert isinstance(cache.serializer, serializers.StringSerializer)
 
     @pytest.mark.asyncio
     async def test_get_missing(self, cache):

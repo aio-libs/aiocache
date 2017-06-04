@@ -101,12 +101,12 @@ class SimpleMemoryBackend:
 class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     """
     Memory cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.DefaultSerializer`
+        - serializer: :class:`aiocache.serializers.StringSerializer`
         - plugins: None
 
     Config options are:
 
-    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`.
+    :param serializer: obj derived from :class:`aiocache.serializers.StringSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None.

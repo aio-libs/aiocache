@@ -6,21 +6,21 @@ except ImportError:
 
 from collections import namedtuple
 
-from aiocache.serializers import DefaultSerializer, PickleSerializer, JsonSerializer
+from aiocache.serializers import StringSerializer, PickleSerializer, JsonSerializer
 
 
 Dummy = namedtuple("Dummy", "a, b")
 
 
-class TestDefaultSerializer:
+class TestStringSerializer:
 
     @pytest.mark.parametrize("obj", [
         1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
     def test_set_types(self, obj):
-        assert DefaultSerializer().dumps(obj) == str(obj)
+        assert StringSerializer().dumps(obj) == str(obj)
 
     def test_loads(self):
-        assert DefaultSerializer().loads("hi") == "hi"
+        assert StringSerializer().loads("hi") == "hi"
 
 
 class TestPickleSerializer:
