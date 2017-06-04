@@ -82,8 +82,8 @@ class BaseCache:
     Base class that agregates the common logic for the different caches that may exist. Cache
     related available options are:
 
-    :param serializer: obj derived from :class:`aiocache.serializers.DefaultSerializer`. Default is
-        :class:`aiocache.serializers.DefaultSerializer`.
+    :param serializer: obj derived from :class:`aiocache.serializers.StringSerializer`. Default is
+        :class:`aiocache.serializers.StringSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes. Default is empty
         list.
     :param namespace: string to use as default prefix for the key used in all operations of
@@ -99,7 +99,7 @@ class BaseCache:
         self.namespace = namespace
 
         self._serializer = None
-        self.serializer = serializer or serializers.DefaultSerializer()
+        self.serializer = serializer or serializers.StringSerializer()
 
         self._plugins = None
         self.plugins = plugins or []

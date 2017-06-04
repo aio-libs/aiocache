@@ -1,13 +1,13 @@
 import asyncio
 
 from aiocache import caches, SimpleMemoryCache, RedisCache
-from aiocache.serializers import DefaultSerializer, PickleSerializer
+from aiocache.serializers import StringSerializer, PickleSerializer
 
 caches.set_config({
     'default': {
         'cache': "aiocache.SimpleMemoryCache",
         'serializer': {
-            'class': "aiocache.serializers.DefaultSerializer"
+            'class': "aiocache.serializers.StringSerializer"
         }
     },
     'redis_alt': {
@@ -32,7 +32,7 @@ async def default_cache():
 
     assert await cache.get("key") == "value"
     assert isinstance(cache, SimpleMemoryCache)
-    assert isinstance(cache.serializer, DefaultSerializer)
+    assert isinstance(cache.serializer, StringSerializer)
 
 
 async def alt_cache():

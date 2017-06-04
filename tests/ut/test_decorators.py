@@ -9,6 +9,7 @@ from asynctest import Mock, CoroutineMock, ANY
 
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
 from aiocache.base import _Conn
+from aiocache.serializers import JsonSerializer
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -39,7 +40,7 @@ class TestCached:
     def test_init(self):
         c = cached(
             ttl=1, key="key", key_from_attr="key_attr", cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, noself=False, namespace="test")
+            plugins=None, alias=None, noself=False, namespace="test")
 
         assert c.ttl == 1
         assert c.key == "key"
@@ -47,6 +48,7 @@ class TestCached:
         assert c.cache is None
         assert c._conn is None
         assert c._cache == SimpleMemoryCache
+        assert c._serializer == JsonSerializer
         assert c._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):
@@ -229,13 +231,14 @@ class TestCachedStampede:
     def test_init(self):
         c = cached_stampede(
             lease=3, ttl=1, key="key", key_from_attr="key_attr", cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, noself=False, namespace="test")
+            plugins=None, alias=None, noself=False, namespace="test")
 
         assert c.ttl == 1
         assert c.key == "key"
         assert c.key_from_attr == "key_attr"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
+        assert c._serializer == JsonSerializer
         assert c.lease == 3
         assert c._kwargs == {'namespace': 'test'}
 
@@ -324,13 +327,14 @@ class TestMultiCached:
     def test_init(self):
         mc = multi_cached(
             keys_from_attr="keys", key_builder=None, ttl=1, cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, namespace="test")
+            plugins=None, alias=None, namespace="test")
 
         assert mc.ttl == 1
         assert mc.key_builder is None
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
+        assert mc._serializer == JsonSerializer
         assert mc._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):

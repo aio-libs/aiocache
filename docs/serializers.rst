@@ -13,7 +13,7 @@ To use a specific serializer::
 
 Currently the following are built in:
 
-- DefaultSerializer: stores data casting it to str. Won't return the same type if the data stored is not a str.
+- StringSerializer: stores data casting it to str. Won't return the same type if the data stored is not a str.
 - PickleSerializer: ideal for storing any Python object or keeping types.
 - JsonSerializer: ideal for storing in json format.
 
@@ -34,10 +34,10 @@ By default cache backends assume they are working with ``str`` types. If your cu
 
 ..  _defaultserializer:
 
-DefaultSerializer
------------------
+StringSerializer
+----------------
 
-.. autoclass:: aiocache.serializers.DefaultSerializer
+.. autoclass:: aiocache.serializers.StringSerializer
   :members:
   :undoc-members: serialize, deserialize
 

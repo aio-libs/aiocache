@@ -190,7 +190,7 @@ class TestCacheHandler:
             'default': {
                 'cache': "aiocache.SimpleMemoryCache",
                 'serializer': {
-                    'class': "aiocache.serializers.DefaultSerializer"
+                    'class': "aiocache.serializers.StringSerializer"
                 }
             }
         }
@@ -199,7 +199,7 @@ class TestCacheHandler:
         assert caches.get_alias_config("default") == {
             'cache': "aiocache.SimpleMemoryCache",
             'serializer': {
-                'class': "aiocache.serializers.DefaultSerializer"
+                'class': "aiocache.serializers.StringSerializer"
             }
         }
 
