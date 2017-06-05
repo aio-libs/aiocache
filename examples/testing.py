@@ -1,16 +1,16 @@
 import asyncio
 
-from asynctest import Mock
+from asynctest import MagicMock
 
 from aiocache.base import BaseCache
 
 
 async def async_main():
-    mocked_cache = Mock(spec=BaseCache)
-    mocked_cache.get.return_value = "World"
+    mocked_cache = MagicMock(spec=BaseCache)
+    mocked_cache.get.return_value = "world"
     print(await mocked_cache.get("hello"))
 
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    print(loop.run_until_complete(async_main()))
+    loop.run_until_complete(async_main())
