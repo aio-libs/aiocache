@@ -134,9 +134,8 @@ section_regexps = [
 ##     whatever given ``msg`` if the current text is empty.
 ##
 ## Additionally, you can `pipe` the provided filters, for instance:
-#body_process = Wrap(regexp=r'\n(?=\w+\s*:)') | Indent(chars="  ")
-#body_process = Wrap(regexp=r'\n(?=\w+\s*:)')
-body_process = ReSub(r'.*', r'') | strip
+body_process = Wrap(regexp=r'\n(?=\w+\s*:)')
+# body_process = ReSub(r'.*', r'') | strip
 
 
 ## ``subject_process`` is a callable
@@ -149,7 +148,7 @@ body_process = ReSub(r'.*', r'') | strip
 ##     ReSub(r'^([cC]hg|[fF]ix|[nN]ew)\s*:\s*((dev|use?r|pkg|test|doc)\s*:\s*)?([^\n@]*)(@[a-z]+\s+)*$', r'\4') |
 ##     SetIfEmpty("No commit message.") | ucfirst | final_dot)
 subject_process = (strip |
-  ReSub(r'\(#([0-9]+)\)', r'[\1](https://github.com/argaen/aiocache/issues/\1)') |
+  ReSub(r'\(#([0-9]+)\)', r'[#\1](https://github.com/argaen/aiocache/issues/\1)') |
   ReSub(r'^[nN]ew\s*:\s*|^[cC]hg\s*:\s*|^[fF]ix\s*:\s*', r'') |
   ucfirst | final_dot)
 
@@ -196,7 +195,7 @@ unreleased_version_label = "Unreleased"
 ##        Examples:
 ##           - makotemplate("restructuredtext")
 ##
-output_engine = mustache("markdown")
+output_engine = mustache(".release_notes.tpl")
 #output_engine = mustache("restructuredtext")
 #output_engine = mustache("markdown")
 #output_engine = makotemplate("restructuredtext")
