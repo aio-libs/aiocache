@@ -35,8 +35,12 @@ class TestRedis:
             await redis_cache.delete("hi", timeout=0)
             aiocache_total_time += time.time() - start
 
-        print("{:0.2f}/{:0.2f}: {:0.2f}".format(
+        print("\n{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aioredis_total_time, aiocache_total_time/aioredis_total_time))
+        print("aiocache avg call: {:0.5f}s".format(
+            aiocache_total_time/N))
+        print("aioredis avg call: {:0.5f}s".format(
+            aioredis_total_time/N))
         assert aiocache_total_time/aioredis_total_time < 1.30
 
     @pytest.mark.asyncio
@@ -64,8 +68,12 @@ class TestRedis:
                 await redis_cache.delete(k, timeout=0)
             aiocache_total_time += time.time() - start
 
-        print("{:0.2f}/{:0.2f}: {:0.2f}".format(
+        print("\n{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aioredis_total_time, aiocache_total_time/aioredis_total_time))
+        print("aiocache avg call: {:0.5f}s".format(
+            aiocache_total_time/N))
+        print("aioredis avg call: {:0.5f}s".format(
+            aioredis_total_time/N))
         assert aiocache_total_time/aioredis_total_time < 1.35
 
 
@@ -95,8 +103,12 @@ class TestMemcached:
             await memcached_cache.delete("hi", timeout=0)
             aiocache_total_time += time.time() - start
 
-        print("{:0.2f}/{:0.2f}: {:0.2f}".format(
+        print("\n{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aiomcache_total_time, aiocache_total_time/aiomcache_total_time))
+        print("aiocache avg call: {:0.5f}s".format(
+            aiocache_total_time/N))
+        print("aiomcache avg call: {:0.5f}s".format(
+            aiomcache_total_time/N))
         assert aiocache_total_time/aiomcache_total_time < 1.30
 
     @pytest.mark.asyncio
@@ -117,18 +129,16 @@ class TestMemcached:
         values = [b"a", b"b", b"c", b"d", b"e", b"f"]
         for n in range(N):
             start = time.time()
-            # TODO: aiomcache pool behaves really BAD with concurrent requests so multi_set
-            # is not ideal. With the new MR I've submitted aiomcache/#46 it will improve
-            # although its not ideal...
-            # Also, performance if fat worse in local because we don't get benefit from
-            # concurrency because latency is stable. In build and real environments, the
-            # number is better.
             await memcached_cache.multi_set([(x, x) for x in values], timeout=0)
             await memcached_cache.multi_get(values, timeout=0)
             for k in values:
                 await memcached_cache.delete(k, timeout=0)
             aiocache_total_time += time.time() - start
 
-        print("{:0.2f}/{:0.2f}: {:0.2f}".format(
+        print("\n{:0.2f}/{:0.2f}: {:0.2f}".format(
             aiocache_total_time, aiomcache_total_time, aiocache_total_time/aiomcache_total_time))
+        print("aiocache avg call: {:0.5f}s".format(
+            aiocache_total_time/N))
+        print("aiomcache avg call: {:0.5f}s".format(
+            aiomcache_total_time/N))
         assert aiocache_total_time/aiomcache_total_time < 1.90

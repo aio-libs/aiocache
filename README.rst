@@ -76,7 +76,6 @@ Or as a decorator
     # With this we can store python objects in backends like Redis!
 
     Result = namedtuple('Result', "content, status")
-    cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
 
 
     @cached(
@@ -92,13 +91,14 @@ Or as a decorator
         loop.run_until_complete(cached_call())
         loop.run_until_complete(cached_call())
         loop.run_until_complete(cached_call())
+        cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
         loop.run_until_complete(cache.delete("key"))
 
     if __name__ == "__main__":
         run()
 
 
-You can also setup cache aliases like in Django settings:
+You can also setup cache aliases so its easy to reuse configurations
 
 .. code-block:: python
 
