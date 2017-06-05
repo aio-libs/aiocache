@@ -7,7 +7,7 @@ cd ..
 version=$(grep -o -E "([0-9]+\.[0-9]+\.[0-9]+)" aiocache/_version.py)
 echo -n "New version number (current is $version): "
 read new_version
-gitchangelog ^$version HEAD | sed "s/Unreleased/$new_version/g" > _release_notes
+gitchangelog ^$version HEAD | sed "s/Unreleased/$new_version (`date +%Y-%m-%d`)/g" > _release_notes
 cat _release_notes
 echo -n "Are you happy with the release notes (if not, modify the ./_release_notes file manually)? (y/n) "
 read answer
@@ -15,7 +15,7 @@ read answer
 if echo "$answer" | grep -iq "^y" ;then
   echo "Generating new release..."
   sed -i "s/$version/$new_version/" aiocache/_version.py
-  sed -i '1s/^/# Changelog\n\n\n/' _release_notes && sed -i '1,4d' CHANGELOG.md && cat CHANGELOG.md >> _release_notes && mv _release_notes CHANGELOG.md
+  sed -i '1s/^/# Changelog\n\n\n/' _release_notes && sed -i '1,3d' CHANGELOG.md && cat CHANGELOG.md >> _release_notes && mv _release_notes CHANGELOG.md
   git add CHANGELOG.md aiocache/_version.py
   git commit -m "Bump version $new_version"
   git tag -a "$new_version" -m "$new_version"
