@@ -12,6 +12,7 @@
 {{#commits}}
 * {{{subject}}} - {{{author}}}
 {{#body}}
+
   _{{{body}}}_
 {{/body}}
 
