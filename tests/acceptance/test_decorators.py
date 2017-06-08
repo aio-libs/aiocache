@@ -41,6 +41,19 @@ class TestCached:
         await asyncio.sleep(1)
         assert await cache.get(pytest.KEY) is None
 
+    @pytest.mark.asyncio
+    async def test_cached_key_builder(self, cache):
+
+        def build_key(self, a, b):
+            return "{}_{}_{}".format(self, a, b)
+
+        @cached(key_builder=build_key)
+        async def fn(self, a, b=2):
+            return "1"
+
+        await fn('self', 1, 3)
+        assert await cache.exists(build_key('self', 1, 3)) is True
+
 
 class TestCachedStampede:
 
@@ -93,3 +106,17 @@ class TestMultiCachedDecorator:
 
         for key in default_keys:
             assert await cache.get(key) is not None
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_key_builder(self, cache):
+
+        def build_key(key, self, keys, market='ES'):
+            return "{}_{}".format(key, market)
+
+        @multi_cached(keys_from_attr='keys', key_builder=build_key)
+        async def fn(self, keys, market='ES'):
+            return {'a': 1, 'b': 2}
+
+        await fn('self', keys=['a', 'b'])
+        assert await cache.exists('a_ES') is True
+        assert await cache.exists('b_ES') is True
