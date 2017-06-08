@@ -44,6 +44,7 @@ class TestCached:
 
         assert c.ttl == 1
         assert c.key == "key"
+        assert c.key_builder is None
         assert c.key_from_attr == "key_attr"
         assert c.cache is None
         assert c._conn is None
@@ -84,6 +85,11 @@ class TestCached:
         decorator.noself = True
         assert decorator.get_cache_key(
             stub, ('self', 1, 2), {'a': 1, 'b': 2}) == "stub(1, 2)[('a', 1), ('b', 2)]"
+
+    def test_get_cache_keys_with_key_builder(self, decorator):
+        decorator.key_builder = lambda *args, **kwargs: kwargs['market'].upper()
+        assert decorator.get_cache_key(
+            stub, (), {'market': 'es'}) == 'ES'
 
     @pytest.mark.asyncio
     async def test_calls_get_and_returns(self, decorator, decorator_call):
@@ -330,7 +336,7 @@ class TestMultiCached:
             plugins=None, alias=None, namespace="test")
 
         assert mc.ttl == 1
-        assert mc.key_builder is None
+        assert mc.key_builder('key') == 'key'
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
@@ -365,7 +371,7 @@ class TestMultiCached:
             assert decorator.get_cache_keys(stub_dict, (), {})
 
     def test_get_cache_keys_with_key_builder(self, decorator):
-        decorator._key_builder = lambda x, y: y['market'] + '_' + x.upper()
+        decorator.key_builder = lambda key, *args, **kwargs: kwargs['market'] + '_' + key.upper()
         assert decorator.get_cache_keys(
             stub_dict, (), {'keys': ['a', 'b'], 'market': 'ES'}) == ['ES_A', 'ES_B']
 
@@ -422,7 +428,7 @@ class TestMultiCached:
         ret = await decorator_call(1, keys=['a', 'b'], value='value')
 
         decorator.get_from_cache.assert_called_once_with('a', 'b')
-        decorator.set_in_cache.assert_called_with(ret)
+        decorator.set_in_cache.assert_called_with(ret, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=['a', 'b'], value="value")
 
     @pytest.mark.asyncio
@@ -432,7 +438,7 @@ class TestMultiCached:
 
         assert await decorator_call(1, keys=['a', 'b'], value='value') == {'a': ANY, 'b': ANY}
 
-        decorator.set_in_cache.assert_called_once_with({'a': ANY, 'b': ANY})
+        decorator.set_in_cache.assert_called_once_with({'a': ANY, 'b': ANY}, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=['b'], value="value")
 
     @pytest.mark.asyncio
@@ -444,7 +450,7 @@ class TestMultiCached:
 
     @pytest.mark.asyncio
     async def test_set_in_cache(self, decorator, decorator_call):
-        await decorator.set_in_cache({'a': 1, 'b': 2})
+        await decorator.set_in_cache({'a': 1, 'b': 2}, (), {})
 
         call_args = decorator.cache.multi_set.call_args[0][0]
         assert ('a', 1) in call_args
@@ -454,7 +460,7 @@ class TestMultiCached:
     @pytest.mark.asyncio
     async def test_set_in_cache_with_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
-        await decorator.set_in_cache({'a': 1, 'b': 2})
+        await decorator.set_in_cache({'a': 1, 'b': 2}, (), {})
 
         assert decorator.cache.multi_set.call_args[1]['ttl'] == decorator.ttl
 
@@ -462,7 +468,7 @@ class TestMultiCached:
     async def test_set_in_cache_exception(self, decorator, decorator_call):
         decorator.cache.multi_set = CoroutineMock(side_effect=Exception)
 
-        assert await decorator.set_in_cache({'a': 1, 'b': 2}) is None
+        assert await decorator.set_in_cache({'a': 1, 'b': 2}, (), {}) is None
 
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):

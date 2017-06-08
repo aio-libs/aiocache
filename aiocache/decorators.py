@@ -23,7 +23,8 @@ class cached:
     :param key: str value to set as key for the function return. Takes precedence over
         key_from_attr param. If key and key_from_attr are not passed, it will use module_name
         + function_name + args + kwargs
-    :param key_from_attr: str arg or kwarg name from the function to use as a key.
+    :param key_builder: Callable that allows to build the function dynamically. It receives
+        same args and kwargs as the called function.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -38,11 +39,14 @@ class cached:
     """
 
     def __init__(
-            self, ttl=None, key=None, key_from_attr=None, cache=SimpleMemoryCache,
+            self, ttl=None, key=None, key_from_attr=None, key_builder=None, cache=SimpleMemoryCache,
             serializer=JsonSerializer, plugins=None, alias=None, noself=False, **kwargs):
         self.ttl = ttl
         self.key = key
+        if key_from_attr is not None:
+            logger.warning("'key_from_attr' is deprecated, please use 'key_builder' instead")
         self.key_from_attr = key_from_attr
+        self.key_builder = key_builder
         self.noself = noself
         self.alias = alias
         self.cache = None
@@ -97,9 +101,12 @@ class cached:
         return cache_key
 
     def _key_from_args(self, func, args, kwargs):
-        ordered_kwargs = sorted(kwargs.items())
-        return (func.__module__ or '') + func.__name__ + str(
-            args[1:] if self.noself else args) + str(ordered_kwargs)
+        if self.key_builder is None:
+            ordered_kwargs = sorted(kwargs.items())
+            return (func.__module__ or '') + func.__name__ + str(
+                args[1:] if self.noself else args) + str(ordered_kwargs)
+
+        return self.key_builder(*args, **kwargs)
 
     async def get_from_cache(self, key):
         try:
@@ -209,7 +216,7 @@ class multi_cached:
     :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
         as keys to index in the cache.
     :param key_builder: Callable that allows to change the format of the keys before storing.
-        Receives a dict with all the args of the function.
+        Receives the key and same args and kwargs as the called function.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
@@ -225,7 +232,7 @@ class multi_cached:
             self, keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
             serializer=JsonSerializer, plugins=None, alias=None, **kwargs):
         self.keys_from_attr = keys_from_attr
-        self.key_builder = key_builder
+        self.key_builder = key_builder or (lambda key, *args, **kwargs: key)
         self.ttl = ttl
         self.alias = alias
         self.cache = None
@@ -235,7 +242,6 @@ class multi_cached:
         self._serializer = serializer
         self._plugins = plugins
         self._kwargs = kwargs
-        self._key_builder = key_builder or (lambda x, args_dict: x)
 
     def __call__(self, f):
         if self.alias:
@@ -270,14 +276,14 @@ class multi_cached:
             result = await f(*args, **kwargs)
             result.update(partial)
 
-            await self.set_in_cache(result)
+            await self.set_in_cache(result, args, kwargs)
 
         return result
 
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
         keys = args_dict[self.keys_from_attr]
-        return [self._key_builder(key, args_dict) for key in keys]
+        return [self.key_builder(key, *args, **kwargs) for key in keys]
 
     async def get_from_cache(self, *keys):
         if not keys:
@@ -291,8 +297,10 @@ class multi_cached:
             logger.exception("Couldn't retrieve %s, unexpected error", keys)
             return [None] * len(keys)
 
-    async def set_in_cache(self, result):
+    async def set_in_cache(self, result, fn_args, fn_kwargs):
         try:
-            await self._conn.multi_set([(k, v) for k, v in result.items()], ttl=self.ttl)
+            await self._conn.multi_set(
+                [(self.key_builder(k, *fn_args, **fn_kwargs), v) for k, v in result.items()],
+                ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)
