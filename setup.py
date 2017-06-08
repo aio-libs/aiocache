@@ -15,8 +15,8 @@ with open(
         raise RuntimeError('Unable to determine version.')
 
 
-aioredis = "aioredis==0.3.0"
-aiomcache = "aiomcache==0.5.1"
+aioredis = "aioredis==0.3.1"
+aiomcache = "aiomcache==0.5.2"
 
 install_requires = set((aioredis, aiomcache))
 
