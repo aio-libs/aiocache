@@ -1,6 +1,23 @@
 # Changelog
 
 
+## 0.6.1 (2017-06-12)
+
+#### Other
+
+* Removed connection reusage for decorators [#267](https://github.com/argaen/aiocache/issues/267)- Manuel Miranda (thanks @dmzkrsk)
+  _when decorated function is costly connections where being kept while
+being iddle. This is a bad scenario and this reverts back to using a
+connection from the cache pool for every cache operation_
+
+* Key_builder for cached [#265](https://github.com/argaen/aiocache/issues/265) - Manuel Miranda
+  _Also fixed a bug with multi_cached where key_builder wasn't  applied
+when saving the keys_
+
+* Updated aioredis (0.3.1) and aiomcache (0.5.2) versions - Manuel Miranda
+
+
+
 ## 0.6.0 (2017-06-05)
 
 #### New
