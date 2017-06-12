@@ -413,6 +413,11 @@ class TestCache:
             await mock_cache.raw("clear")
 
     @pytest.mark.asyncio
+    async def test_close(self, mock_cache):
+        await mock_cache.close()
+        assert mock_cache._close.call_count == 1
+
+    @pytest.mark.asyncio
     async def test_get_connection(self, mock_cache):
         async with mock_cache.get_connection():
             pass
