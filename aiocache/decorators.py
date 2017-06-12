@@ -50,16 +50,11 @@ class cached:
         self.noself = noself
         self.alias = alias
         self.cache = None
-        self._conn = None
 
         self._cache = cache
         self._serializer = serializer
         self._plugins = plugins
         self._kwargs = kwargs
-
-    @property
-    def conn(self):
-        return self._conn
 
     def __call__(self, f):
 
@@ -76,18 +71,21 @@ class cached:
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
-        self._conn = self.cache.get_connection()
+        key = self.get_cache_key(f, args, kwargs)
 
-        async with self._conn:
-            key = self.get_cache_key(f, args, kwargs)
-
-            value = await self.get_from_cache(key)
+        try:
+            value = await self.cache.get(key)
             if value is not None:
                 return value
+        except Exception:
+            logger.exception("Couldn't retrieve %s, unexpected error", key)
 
-            result = await f(*args, **kwargs)
+        result = await f(*args, **kwargs)
 
-            await self.set_in_cache(key, result)
+        try:
+            await self.cache.set(key, result, ttl=self.ttl)
+        except Exception:
+            logger.exception("Couldn't set %s in key %s, unexpected error", result, key)
 
         return result
 
@@ -107,21 +105,6 @@ class cached:
                 args[1:] if self.noself else args) + str(ordered_kwargs)
 
         return self.key_builder(*args, **kwargs)
-
-    async def get_from_cache(self, key):
-        try:
-            value = await self.conn.get(key)
-            if value is not None:
-                asyncio.ensure_future(self.cache.close())
-            return value
-        except Exception:
-            logger.exception("Couldn't retrieve %s, unexpected error", key)
-
-    async def set_in_cache(self, key, value):
-        try:
-            await self.conn.set(key, value, ttl=self.ttl)
-        except Exception:
-            logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
 
 class cached_stampede(cached):
@@ -182,6 +165,18 @@ class cached_stampede(cached):
             await self.set_in_cache(key, result)
 
         return result
+
+    async def get_from_cache(self, key):
+        try:
+            return await self.conn.get(key)
+        except Exception:
+            logger.exception("Couldn't retrieve %s, unexpected error", key)
+
+    async def set_in_cache(self, key, value):
+        try:
+            await self.conn.set(key, value, ttl=self.ttl)
+        except Exception:
+            logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
 
 def _get_cache(
