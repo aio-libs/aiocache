@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 
-from aiocache._lock import _RedLock
+from aiocache._lock import _RedLock, _OptimisticLock
 
 
 @pytest.fixture
@@ -13,8 +13,8 @@ class TestRedLock:
 
     @pytest.mark.asyncio
     async def test_acquire(self, cache, lock):
-        await lock.__aenter__()
-        assert await cache.get(pytest.KEY + '-lock') == lock._value
+        async with lock:
+            assert await cache.get(pytest.KEY + '-lock') == lock._value
 
     @pytest.mark.asyncio
     async def test_release_does_nothing_when_no_lock(self, lock):
@@ -22,8 +22,8 @@ class TestRedLock:
 
     @pytest.mark.asyncio
     async def test_acquire_release(self, cache, lock):
-        await lock.__aenter__()
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 1
+        async with lock:
+            pass
         assert await cache.get(pytest.KEY + '-lock') is None
 
 
@@ -102,3 +102,27 @@ class TestMemcachedRedLock:
         lock = _RedLock(memcached_cache, pytest.KEY, 0.1)
         with pytest.raises(TypeError):
             await lock.__aenter__()
+
+
+class TestOptimisticLock:
+
+    @pytest.fixture
+    def lock(self, cache):
+        return _OptimisticLock(cache, pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_acquire(self, cache, lock):
+        await cache.set(pytest.KEY, 'value')
+        async with lock:
+            assert lock._token == 'value'
+
+    @pytest.mark.asyncio
+    async def test_release_does_nothing(self, lock):
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
+
+    @pytest.mark.asyncio
+    async def test_check_and_set(self, cache, lock):
+        async with lock as locked:
+            await locked.cas(pytest.KEY, 'value')
+
+        assert await cache.get(pytest.KEY) == 'value'

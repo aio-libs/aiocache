@@ -221,7 +221,8 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def set(self, key, value, ttl=None, dumps_fn=None, namespace=None, _conn=None):
+    async def set(
+            self, key, value, ttl=None, dumps_fn=None, namespace=None, _cas_token=None, _conn=None):
         """
         Stores the value in the given key with ttl if specified
 

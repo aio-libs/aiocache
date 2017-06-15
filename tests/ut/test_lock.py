@@ -2,16 +2,15 @@ import asyncio
 import pytest
 import asynctest
 
-from aiocache._lock import _RedLock
+from aiocache._lock import _RedLock, _OptimisticLock
 
 
-@pytest.fixture
-def lock(mock_cache):
-    _RedLock._EVENTS = {}
-    yield _RedLock(mock_cache, pytest.KEY, 20)
+class TestRedLock:
 
-
-class TestLock:
+    @pytest.fixture
+    def lock(self, mock_cache):
+        _RedLock._EVENTS = {}
+        yield _RedLock(mock_cache, pytest.KEY, 20)
 
     @pytest.mark.asyncio
     async def test_acquire(self, mock_cache, lock):
@@ -79,3 +78,30 @@ class TestLock:
         assert pytest.KEY + '-lock' not in lock_1._EVENTS
         assert pytest.KEY + '-lock' not in lock_2._EVENTS
         assert event.is_set()
+
+
+class TestOptimisticLock:
+    @pytest.fixture
+    def lock(self, mock_cache):
+        yield _OptimisticLock(mock_cache, pytest.KEY)
+
+    def test_init(self, mock_cache, lock):
+        assert lock.client == mock_cache
+        assert lock._token is None
+        assert lock.key == mock_cache._build_key(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_aenter_returns_lock(self, lock):
+        assert await lock.__aenter__() is lock
+
+    @pytest.mark.asyncio
+    async def test_acquire_calls_get(self, lock):
+        await lock._acquire()
+        lock.client._get.assert_called_with(pytest.KEY)
+        assert lock._token == lock.client._get.return_value
+
+    @pytest.mark.asyncio
+    async def test_cas_calls_set_with_token(self, lock):
+        await lock._acquire()
+        await lock.cas(pytest.KEY, "value")
+        lock.client.set.assert_called_with(pytest.KEY, "value", _cas_token=lock._token)
