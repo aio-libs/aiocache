@@ -4,7 +4,7 @@ import asynctest
 from aiocache.base import BaseCache, API
 from aiocache import caches, RedisCache, MemcachedCache
 from aiocache.plugins import BasePlugin
-from aiocache.serializers import StringSerializer
+from aiocache.serializers import NullSerializer
 
 
 def pytest_namespace():
@@ -20,7 +20,7 @@ def reset_caches():
         'default': {
             'cache': "aiocache.SimpleMemoryCache",
             'serializer': {
-                'class': "aiocache.serializers.StringSerializer"
+                'class': "aiocache.serializers.NullSerializer"
             }
         }
     })
@@ -61,7 +61,7 @@ def mock_cache(mocker):
         mocker.spy(cache, cmd.__name__)
     mocker.spy(cache, "close")
     mocker.spy(cache, "_redlock")
-    cache.serializer = asynctest.Mock(spec=StringSerializer)
+    cache.serializer = asynctest.Mock(spec=NullSerializer)
     cache.plugins = [asynctest.Mock(spec=BasePlugin)]
     return cache
 

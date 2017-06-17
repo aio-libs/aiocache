@@ -2,6 +2,7 @@ import asyncio
 import aiomcache
 
 from aiocache.base import BaseCache
+from aiocache.serializers import JsonSerializer
 
 
 class MemcachedBackend:
@@ -114,7 +115,7 @@ class MemcachedBackend:
 class MemcachedCache(MemcachedBackend, BaseCache):
     """
     Memcached cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.StringSerializer`
+        - serializer: :class:`aiocache.serializers.JsonSerializer`
         - plugins: []
 
     Config options are:
@@ -129,8 +130,9 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     :param port: int with the port to connect to. Default is 11211.
     :param pool_size: int size for memcached connections pool. Default is 2.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
+        self.serializer = serializer or JsonSerializer()
 
     def _build_key(self, key, namespace=None):
         ns_key = super()._build_key(key, namespace=namespace).replace(' ', '_')

@@ -18,7 +18,7 @@ def reset_caches():
         'default': {
             'cache': "aiocache.SimpleMemoryCache",
             'serializer': {
-                'class': "aiocache.serializers.StringSerializer"
+                'class': "aiocache.serializers.NullSerializer"
             }
         }
     })

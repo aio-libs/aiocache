@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from aiocache import serializers, RedisCache, SimpleMemoryCache, MemcachedCache
+from aiocache import RedisCache, SimpleMemoryCache, MemcachedCache
 from aiocache.base import _Conn
 
 
@@ -14,7 +14,6 @@ class TestCache:
     @pytest.mark.asyncio
     async def test_setup(self, cache):
         assert cache.namespace == "test"
-        assert isinstance(cache.serializer, serializers.StringSerializer)
 
     @pytest.mark.asyncio
     async def test_get_missing(self, cache):
@@ -93,7 +92,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_increment_existing(self, cache):
-        await cache.set(pytest.KEY, "2")
+        await cache.set(pytest.KEY, 2)
         assert await cache.increment(pytest.KEY, delta=2) == 4
         assert await cache.increment(pytest.KEY, delta=1) == 5
         assert await cache.increment(pytest.KEY, delta=-3) == 2

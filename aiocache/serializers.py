@@ -10,6 +10,38 @@ except ImportError:
 import pickle
 
 
+class NullSerializer:
+    """
+    This serializer does nothing. Its only recommended to be used by
+    :class:`aiocache.SimpleMemoryCache` because for other backends it will
+    produce incompatible data unless you work only with str types.
+
+    DISCLAIMER: Be careful with mutable types and memory storage. The following
+    behavior is considered normal (same as ``functools.lru_cache``)::
+
+        cache = SimpleMemoryCache()
+        my_list = [1]
+        await cache.set("key", my_list)
+        my_list.append(2)
+        await cache.get("key")  # Will return [1, 2]
+    """
+    encoding = 'utf-8'
+
+    @classmethod
+    def dumps(cls, value):
+        """
+        Returns the same value
+        """
+        return value
+
+    @classmethod
+    def loads(cls, value):
+        """
+        Returns the same value
+        """
+        return value
+
+
 class StringSerializer:
     """
     Converts all input values to str. All return values are also str. Be

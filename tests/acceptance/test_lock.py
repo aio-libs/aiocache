@@ -2,6 +2,7 @@ import asyncio
 import pytest
 
 from aiocache._lock import _RedLock
+from aiocache.serializers import StringSerializer
 
 
 @pytest.fixture
@@ -14,6 +15,7 @@ class TestRedLock:
     @pytest.mark.asyncio
     async def test_acquire(self, cache, lock):
         await lock.__aenter__()
+        cache.serializer = StringSerializer()
         assert await cache.get(pytest.KEY + '-lock') == lock._value
 
     @pytest.mark.asyncio
