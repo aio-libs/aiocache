@@ -13,7 +13,7 @@ class TestSettings:
             'default': {
                 'cache': "aiocache.SimpleMemoryCache",
                 'serializer': {
-                    'class': "aiocache.serializers.StringSerializer"
+                    'class': "aiocache.serializers.NullSerializer"
                 }
             }
         }
@@ -22,7 +22,7 @@ class TestSettings:
         assert settings.get_alias("default") == {
             'cache': "aiocache.SimpleMemoryCache",
             'serializer': {
-                'class': "aiocache.serializers.StringSerializer"
+                'class': "aiocache.serializers.NullSerializer"
             }
         }
 

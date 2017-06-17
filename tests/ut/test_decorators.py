@@ -10,7 +10,6 @@ from asynctest import MagicMock, CoroutineMock, ANY
 from aiocache.base import BaseCache
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
 from aiocache.decorators import _get_args_dict
-from aiocache.serializers import JsonSerializer
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -48,7 +47,7 @@ class TestCached:
         assert c.key_from_attr == "key_attr"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
-        assert c._serializer == JsonSerializer
+        assert c._serializer is None
         assert c._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):
@@ -217,7 +216,7 @@ class TestCachedStampede:
         assert c.key_from_attr == "key_attr"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
-        assert c._serializer == JsonSerializer
+        assert c._serializer is None
         assert c.lease == 3
         assert c._kwargs == {'namespace': 'test'}
 
@@ -302,7 +301,7 @@ class TestMultiCached:
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
-        assert mc._serializer == JsonSerializer
+        assert mc._serializer is None
         assert mc._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):

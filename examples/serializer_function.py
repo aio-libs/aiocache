@@ -38,7 +38,7 @@ async def serializer_function():
 
     assert obj.x == 1
     assert obj.y == 2
-    assert json.loads((await cache.get("key"))) == json.loads(('{"y": 2.0, "x": 1.0}'))
+    assert await cache.get("key") == json.loads(('{"y": 2.0, "x": 1.0}'))
     assert json.loads(await cache.raw("get", "main:key")) == {"y": 2.0, "x": 1.0}
 
 

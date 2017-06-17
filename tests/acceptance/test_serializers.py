@@ -11,7 +11,7 @@ except ImportError:
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache.serializers import StringSerializer, PickleSerializer, JsonSerializer
+from aiocache.serializers import NullSerializer, StringSerializer, PickleSerializer, JsonSerializer
 
 
 class MyType:
@@ -54,6 +54,30 @@ def loads(x):
 
 
 TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
+
+
+class TestNullSerializer:
+
+    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.asyncio
+    async def test_set_get_types(self, memory_cache, obj):
+        memory_cache.serializer = NullSerializer()
+        assert await memory_cache.set(pytest.KEY, obj) is True
+        assert await memory_cache.get(pytest.KEY) is obj
+
+    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.asyncio
+    async def test_add_get_types(self, memory_cache, obj):
+        memory_cache.serializer = NullSerializer()
+        assert await memory_cache.add(pytest.KEY, obj) is True
+        assert await memory_cache.get(pytest.KEY) is obj
+
+    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.asyncio
+    async def test_multi_set_multi_get_types(self, memory_cache, obj):
+        memory_cache.serializer = NullSerializer()
+        assert await memory_cache.multi_set([(pytest.KEY, obj)]) is True
+        assert (await memory_cache.multi_get([pytest.KEY]))[0] is obj
 
 
 class TestStringSerializer:
@@ -132,6 +156,7 @@ class TestAltSerializers:
 
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer_functions(self, cache):
+        cache.serializer = StringSerializer
         await cache.set(pytest.KEY, "value", dumps_fn=dumps)
         assert await cache.get(pytest.KEY) == "v4lu3"
         assert await cache.get(pytest.KEY, loads_fn=loads) == "value"
