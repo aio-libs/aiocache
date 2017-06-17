@@ -174,7 +174,7 @@ def _get_cache(
 def _get_args_dict(func, args, kwargs):
     defaults = {
         arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
-        if arg.default is not inspect._empty
+        if arg.default is not inspect._empty   # TODO: bug prone..
     }
     args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
     return {**defaults, **dict(zip(args_names, args)), **kwargs}
@@ -239,7 +239,7 @@ class multi_cached:
     async def decorator(self, f, *args, **kwargs):
         missing_keys = []
         partial = {}
-        keys = self.get_cache_keys(f, args, kwargs)
+        keys, new_args = self.get_cache_keys(f, args, kwargs)
 
         values = await self.get_from_cache(*keys)
         for key, value in zip(keys, values):
@@ -251,7 +251,7 @@ class multi_cached:
         if values and None not in values:
             return partial
 
-        result = await f(*args, **kwargs)
+        result = await f(*new_args, **kwargs)
         result.update(partial)
         await self.set_in_cache(result, args, kwargs)
 
@@ -260,7 +260,14 @@ class multi_cached:
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
         keys = args_dict[self.keys_from_attr] or []
-        return [self.key_builder(key, *args, **kwargs) for key in keys]
+        keys = [self.key_builder(key, *args, **kwargs) for key in keys]
+
+        args_names = f.__code__.co_varnames[:f.__code__.co_argcount]
+        new_args = list(args)
+        if self.keys_from_attr in args_names and self.keys_from_attr not in kwargs:
+            new_args[args_names.index(self.keys_from_attr)] = keys
+
+        return keys, tuple(new_args)
 
     async def get_from_cache(self, *keys):
         if not keys:
