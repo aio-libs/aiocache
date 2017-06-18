@@ -5,6 +5,7 @@ from asynctest import CoroutineMock, MagicMock, patch, ANY
 
 from aiocache import RedisCache
 from aiocache.base import BaseCache
+from aiocache.serializers import JsonSerializer
 from aiocache.backends.redis import RedisBackend, conn
 
 
@@ -355,6 +356,9 @@ class TestRedisCache:
 
     def test_inheritance(self):
         assert isinstance(RedisCache(), BaseCache)
+
+    def test_default_serializer(self):
+        assert isinstance(RedisCache().serializer, JsonSerializer)
 
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test:" + pytest.KEY],

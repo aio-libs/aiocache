@@ -5,6 +5,7 @@ from asynctest import MagicMock, patch, ANY
 
 from aiocache import MemcachedCache
 from aiocache.base import BaseCache
+from aiocache.serializers import JsonSerializer
 from aiocache.backends.memcached import MemcachedBackend
 
 
@@ -251,6 +252,9 @@ class TestMemcachedCache:
 
     def test_inheritance(self):
         assert isinstance(MemcachedCache(), BaseCache)
+
+    def test_default_serializer(self):
+        assert isinstance(MemcachedCache().serializer, JsonSerializer)
 
     @pytest.mark.parametrize("namespace, expected", (
         [None, "test" + pytest.KEY],

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, ANY
 
 from aiocache import SimpleMemoryCache
 from aiocache.base import BaseCache
+from aiocache.serializers import NullSerializer
 from aiocache.backends.memory import SimpleMemoryBackend
 
 
@@ -194,3 +195,6 @@ class TestSimpleMemoryCache:
 
     def test_inheritance(self):
         assert isinstance(SimpleMemoryCache(), BaseCache)
+
+    def test_default_serializer(self):
+        assert isinstance(SimpleMemoryCache().serializer, NullSerializer)

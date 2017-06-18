@@ -5,6 +5,7 @@ import functools
 import aioredis
 
 from aiocache.base import BaseCache
+from aiocache.serializers import JsonSerializer
 
 
 def conn(func):
@@ -190,7 +191,7 @@ class RedisBackend:
 class RedisCache(RedisBackend, BaseCache):
     """
     Redis cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.StringSerializer`
+        - serializer: :class:`aiocache.serializers.JsonSerializer`
         - plugins: []
 
     Config options are:
@@ -208,8 +209,9 @@ class RedisCache(RedisBackend, BaseCache):
     :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
     :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
     """
-    def __init__(self, **kwargs):
+    def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
+        self.serializer = serializer or JsonSerializer()
 
     def _build_key(self, key, namespace=None):
         if namespace is not None:

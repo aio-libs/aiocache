@@ -1,7 +1,6 @@
 from .log import logger
 from .backends.memory import SimpleMemoryCache
 from .factory import caches
-from .settings import settings
 from .decorators import cached, cached_stampede, multi_cached
 from ._version import __version__
 
@@ -29,7 +28,6 @@ else:
 
 __all__ = (
     'caches',
-    'settings',
     'cached',
     'cached_stampede',
     'multi_cached',

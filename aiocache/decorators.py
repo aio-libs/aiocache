@@ -3,7 +3,6 @@ import functools
 
 from aiocache.log import logger
 from aiocache import SimpleMemoryCache, caches
-from aiocache.serializers import JsonSerializer
 
 
 class cached:
@@ -19,14 +18,14 @@ class cached:
 
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
-        key_from_attr param. If key and key_from_attr are not passed, it will use module_name
+        key_builder param. If key and key_builder are not passed, it will use module_name
         + function_name + args + kwargs
     :param key_builder: Callable that allows to build the function dynamically. It receives
         same args and kwargs as the called function.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is JsonSerializer.
+        If its None, default one from the cache backend is used.
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
@@ -37,13 +36,10 @@ class cached:
     """
 
     def __init__(
-            self, ttl=None, key=None, key_from_attr=None, key_builder=None, cache=SimpleMemoryCache,
-            serializer=JsonSerializer, plugins=None, alias=None, noself=False, **kwargs):
+            self, ttl=None, key=None, key_builder=None, cache=SimpleMemoryCache,
+            serializer=None, plugins=None, alias=None, noself=False, **kwargs):
         self.ttl = ttl
         self.key = key
-        if key_from_attr is not None:
-            logger.warning("'key_from_attr' is deprecated, please use 'key_builder' instead")
-        self.key_from_attr = key_from_attr
         self.key_builder = key_builder
         self.noself = noself
         self.alias = alias
@@ -82,19 +78,15 @@ class cached:
     def get_cache_key(self, f, args, kwargs):
         if self.key:
             return self.key
+        if self.key_builder:
+            return self.key_builder(*args, **kwargs)
 
-        args_dict = _get_args_dict(f, args, kwargs)
-        cache_key = args_dict.get(
-            self.key_from_attr, self._key_from_args(f, args, kwargs))
-        return cache_key
+        return self._key_from_args(f, args, kwargs)
 
     def _key_from_args(self, func, args, kwargs):
-        if self.key_builder is None:
-            ordered_kwargs = sorted(kwargs.items())
-            return (func.__module__ or '') + func.__name__ + str(
-                args[1:] if self.noself else args) + str(ordered_kwargs)
-
-        return self.key_builder(*args, **kwargs)
+        ordered_kwargs = sorted(kwargs.items())
+        return (func.__module__ or '') + func.__name__ + str(
+            args[1:] if self.noself else args) + str(ordered_kwargs)
 
     async def get_from_cache(self, key):
         try:
@@ -174,7 +166,7 @@ def _get_cache(
 def _get_args_dict(func, args, kwargs):
     defaults = {
         arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
-        if arg.default is not inspect._empty
+        if arg.default is not inspect._empty   # TODO: bug prone..
     }
     args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
     return {**defaults, **dict(zip(args_names, args)), **kwargs}
@@ -202,7 +194,7 @@ class multi_cached:
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        Default is JsonSerializer.
+        If its None, default one from the cache backend is used.
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
@@ -211,7 +203,7 @@ class multi_cached:
 
     def __init__(
             self, keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
-            serializer=JsonSerializer, plugins=None, alias=None, **kwargs):
+            serializer=None, plugins=None, alias=None, **kwargs):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, *args, **kwargs: key)
         self.ttl = ttl
@@ -239,7 +231,7 @@ class multi_cached:
     async def decorator(self, f, *args, **kwargs):
         missing_keys = []
         partial = {}
-        keys = self.get_cache_keys(f, args, kwargs)
+        keys, new_args = self.get_cache_keys(f, args, kwargs)
 
         values = await self.get_from_cache(*keys)
         for key, value in zip(keys, values):
@@ -251,7 +243,7 @@ class multi_cached:
         if values and None not in values:
             return partial
 
-        result = await f(*args, **kwargs)
+        result = await f(*new_args, **kwargs)
         result.update(partial)
         await self.set_in_cache(result, args, kwargs)
 
@@ -260,7 +252,14 @@ class multi_cached:
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
         keys = args_dict[self.keys_from_attr] or []
-        return [self.key_builder(key, *args, **kwargs) for key in keys]
+        keys = [self.key_builder(key, *args, **kwargs) for key in keys]
+
+        args_names = f.__code__.co_varnames[:f.__code__.co_argcount]
+        new_args = list(args)
+        if self.keys_from_attr in args_names and self.keys_from_attr not in kwargs:
+            new_args[args_names.index(self.keys_from_attr)] = keys
+
+        return keys, tuple(new_args)
 
     async def get_from_cache(self, *keys):
         if not keys:

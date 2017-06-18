@@ -9,7 +9,7 @@ from asynctest import MagicMock, CoroutineMock, ANY
 
 from aiocache.base import BaseCache
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
-from aiocache.serializers import JsonSerializer
+from aiocache.decorators import _get_args_dict
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -38,16 +38,15 @@ class TestCached:
 
     def test_init(self):
         c = cached(
-            ttl=1, key="key", key_from_attr="key_attr", cache=SimpleMemoryCache,
+            ttl=1, key="key", key_builder="fn", cache=SimpleMemoryCache,
             plugins=None, alias=None, noself=False, namespace="test")
 
         assert c.ttl == 1
         assert c.key == "key"
-        assert c.key_builder is None
-        assert c.key_from_attr == "key_attr"
+        assert c.key_builder == "fn"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
-        assert c._serializer == JsonSerializer
+        assert c._serializer is None
         assert c._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):
@@ -68,12 +67,8 @@ class TestCached:
 
     def test_get_cache_key_with_key(self, decorator):
         decorator.key = "key"
-        decorator.key_from_attr = "ignore_me"
+        decorator.key_builder = "fn"
         assert decorator.get_cache_key(stub, (1, 2), {'a': 1, 'b': 2}) == 'key'
-
-    def test_get_cache_key_with_key_attr(self, decorator):
-        decorator.key_from_attr = "pick_me"
-        assert decorator.get_cache_key(stub, (1, 2), {'pick_me': "key"}) == 'key'
 
     def test_get_cache_key_without_key_and_attr(self, decorator):
         assert decorator.get_cache_key(
@@ -208,15 +203,15 @@ class TestCachedStampede:
 
     def test_init(self):
         c = cached_stampede(
-            lease=3, ttl=1, key="key", key_from_attr="key_attr", cache=SimpleMemoryCache,
+            lease=3, ttl=1, key="key", key_builder="fn", cache=SimpleMemoryCache,
             plugins=None, alias=None, noself=False, namespace="test")
 
         assert c.ttl == 1
         assert c.key == "key"
-        assert c.key_from_attr == "key_attr"
+        assert c.key_builder == "fn"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
-        assert c._serializer == JsonSerializer
+        assert c._serializer is None
         assert c.lease == 3
         assert c._kwargs == {'namespace': 'test'}
 
@@ -301,7 +296,7 @@ class TestMultiCached:
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
-        assert mc._serializer == JsonSerializer
+        assert mc._serializer is None
         assert mc._kwargs == {'namespace': 'test'}
 
     def test_fails_at_instantiation(self):
@@ -322,22 +317,28 @@ class TestMultiCached:
             assert mc.cache is mock_cache
 
     def test_get_cache_keys(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {'keys': ['a', 'b']}) == ['a', 'b']
+        assert decorator.get_cache_keys(
+            stub_dict, (), {'keys': ['a', 'b']}) == (['a', 'b'], ())
 
     def test_get_cache_keys_empty_list(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {'keys': []}) == []
+        assert decorator.get_cache_keys(stub_dict, (), {'keys': []}) == ([], ())
 
     def test_get_cache_keys_missing_kwarg(self, decorator):
         with pytest.raises(KeyError):
             assert decorator.get_cache_keys(stub_dict, (), {})
 
+    def test_get_cache_keys_arg_key_from_attr(self, decorator):
+        def fake(keys, a=1, b=2):
+            pass
+        assert decorator.get_cache_keys(fake, (['a']), {}) == (['a'], (['a'],))
+
     def test_get_cache_keys_with_none(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {'keys': None}) == []
+        assert decorator.get_cache_keys(stub_dict, (), {'keys': None}) == ([], ())
 
     def test_get_cache_keys_with_key_builder(self, decorator):
         decorator.key_builder = lambda key, *args, **kwargs: kwargs['market'] + '_' + key.upper()
         assert decorator.get_cache_keys(
-            stub_dict, (), {'keys': ['a', 'b'], 'market': 'ES'}) == ['ES_A', 'ES_B']
+            stub_dict, (), {'keys': ['a', 'b'], 'market': 'ES'}) == (['ES_A', 'ES_B'], ())
 
     @pytest.mark.asyncio
     async def test_get_from_cache(self, decorator, decorator_call):
@@ -472,3 +473,11 @@ class TestMultiCached:
 
             assert get_c.call_count == 1
             assert cache.multi_get.call_count == 2
+
+
+def test_get_args_dict():
+    def fn(a, b, *args, keys=None, **kwargs):
+        pass
+
+    args_dict = _get_args_dict(fn, ('a', 'b', 'c', 'd'), {'what': 'what'})
+    assert args_dict == {'a': 'a', 'b': 'b', 'keys': None, 'what': 'what'}
