@@ -32,7 +32,7 @@ class MemcachedBackend:
                 values.append(value.decode(encoding))
         return values
 
-    async def _set(self, key, value, ttl=0, _conn=None):
+    async def _set(self, key, value, ttl=0, _cas_token=None, _conn=None):
         value = str.encode(value) if isinstance(value, str) else value
         try:
             return await self.client.set(key, value, exptime=ttl or 0)

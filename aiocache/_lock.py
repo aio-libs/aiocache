@@ -109,5 +109,18 @@ class _OptimisticLock:
     async def __aexit__(self, exc_type, exc_value, traceback):
         pass
 
-    async def cas(self, *args, **kwargs):
-        return await self.client.set(*args, _cas_token=self._token, **kwargs)
+    async def cas(self, value, **kwargs):
+        """
+        Checks and sets the specified value for the locked key. If the value has changed
+        since the lock was created, it will raise an OptimisticLockError exception.
+        """
+        success = await self.client.set(self.key, value, _cas_token=self._token, **kwargs)
+        if not success:
+            raise OptimisticLockError("Value has changed since the lock started")
+        return True
+
+
+class OptimisticLockError(Exception):
+    """
+    Raised when a conflict is found during an optimistic lock
+    """

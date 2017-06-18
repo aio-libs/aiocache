@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 
-from aiocache._lock import _RedLock, _OptimisticLock
+from aiocache._lock import _RedLock, _OptimisticLock, OptimisticLockError
 
 
 @pytest.fixture
@@ -122,7 +122,16 @@ class TestOptimisticLock:
 
     @pytest.mark.asyncio
     async def test_check_and_set(self, cache, lock):
+        await cache.set(pytest.KEY, 'previous_value')
         async with lock as locked:
-            await locked.cas(pytest.KEY, 'value')
+            await locked.cas('value')
 
         assert await cache.get(pytest.KEY) == 'value'
+
+    @pytest.mark.asyncio
+    async def test_check_and_set_fail(self, cache, lock):
+        await cache.set(pytest.KEY, 'previous_value')
+        with pytest.raises(OptimisticLockError):
+            async with lock as locked:
+                await cache.set(pytest.KEY, 'conflicting_value')
+                await locked.cas('value')

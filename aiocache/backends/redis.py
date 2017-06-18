@@ -28,6 +28,14 @@ class RedisBackend:
         " end"
     )
 
+    CAS_SCRIPT = (
+        "if redis.call('get',KEYS[1]) == ARGV[2] then"
+        " return redis.call('set', KEYS[1], ARGV[1], EX, ARGV[3])"
+        " else"
+        " return 0"
+        " end"
+    )
+
     pools = {}
 
     def __init__(
@@ -61,10 +69,23 @@ class RedisBackend:
         return await _conn.mget(*keys, encoding=encoding)
 
     @conn
-    async def _set(self, key, value, ttl=None, _conn=None):
+    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+        if _cas_token is not None:
+            return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         if ttl is None:
             return await _conn.set(key, value)
         return await _conn.setex(key, ttl, value)
+
+    @conn
+    async def _cas(self, key, value, token, ttl=None, _conn=None):
+        args = [value, token]
+        if ttl is not None:
+            args.append(ttl)
+        return await self._raw(
+            "eval",
+            self.CAS_SCRIPT,
+            [key],
+            args, _conn=_conn)
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):

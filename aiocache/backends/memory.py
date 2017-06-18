@@ -20,7 +20,7 @@ class SimpleMemoryBackend:
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
-    async def _set(self, key, value, ttl=None, _conn=None):
+    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()

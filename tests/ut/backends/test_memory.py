@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 
 from aiocache import SimpleMemoryCache
 from aiocache.base import BaseCache
