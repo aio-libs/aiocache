@@ -96,14 +96,15 @@ class _OptimisticLock:
 
     def __init__(self, client, key):
         self.client = client
-        self.key = self.client._build_key(key)
+        self.key = key
+        self.ns_key = self.client._build_key(key)
         self._token = None
 
     async def __aenter__(self):
         return await self._acquire()
 
     async def _acquire(self):
-        self._token = await self.client._get(self.key)
+        self._token = await self.client._get(self.ns_key)
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):

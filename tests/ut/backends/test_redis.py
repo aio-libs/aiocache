@@ -175,7 +175,7 @@ class TestRedisBackend:
         await cache._cas(pytest.KEY, 'value', 'old_value', ttl=10, _conn=pool.conn)
         cache._raw.assert_called_with(
             'eval', cache.CAS_SCRIPT,
-            [pytest.KEY], ['value', 'old_value', 10], _conn=pool.conn)
+            [pytest.KEY], ['value', 'old_value'], _conn=pool.conn)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):

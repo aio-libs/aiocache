@@ -30,7 +30,7 @@ class RedisBackend:
 
     CAS_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[2] then"
-        " return redis.call('set', KEYS[1], ARGV[1], EX, ARGV[3])"
+        " return redis.call('set', KEYS[1], ARGV[1])"
         " else"
         " return 0"
         " end"
@@ -79,13 +79,14 @@ class RedisBackend:
     @conn
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         args = [value, token]
-        if ttl is not None:
-            args.append(ttl)
-        return await self._raw(
+        # if ttl is not None:
+        #     args += ['EX', ttl]
+        res = await self._raw(
             "eval",
             self.CAS_SCRIPT,
             [key],
             args, _conn=_conn)
+        return res
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):

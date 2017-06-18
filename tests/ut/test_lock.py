@@ -88,7 +88,8 @@ class TestOptimisticLock:
     def test_init(self, mock_cache, lock):
         assert lock.client == mock_cache
         assert lock._token is None
-        assert lock.key == mock_cache._build_key(pytest.KEY)
+        assert lock.key == pytest.KEY
+        assert lock.ns_key == mock_cache._build_key(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_aenter_returns_lock(self, lock):

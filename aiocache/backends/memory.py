@@ -21,6 +21,8 @@ class SimpleMemoryBackend:
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+        if _cas_token is not None and _cas_token != SimpleMemoryBackend._cache.get(key):
+            return 0
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()
