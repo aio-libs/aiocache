@@ -25,7 +25,7 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
-    async def test_get(self, mocker, memory):
+    async def test_gets(self, mocker, memory):
         mocker.spy(memory, '_get')
         await memory._gets(pytest.KEY)
         memory._get.assert_called_with(pytest.KEY, encoding='utf-8', _conn=ANY)
