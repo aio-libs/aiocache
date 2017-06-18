@@ -103,8 +103,8 @@ class TestOptimisticLock:
     @pytest.mark.asyncio
     async def test_acquire_calls_get(self, lock):
         await lock._acquire()
-        lock.client._get.assert_called_with(pytest.KEY)
-        assert lock._token == lock.client._get.return_value
+        lock.client._gets.assert_called_with(pytest.KEY)
+        assert lock._token == lock.client._gets.return_value
 
     @pytest.mark.asyncio
     async def test_cas_calls_set_with_token(self, lock):

@@ -65,6 +65,10 @@ class RedisBackend:
         return await _conn.get(key, encoding=encoding)
 
     @conn
+    async def _gets(self, key, encoding="utf-8", _conn=None):
+        return await self._get(key, encoding=encoding, _conn=_conn)
+
+    @conn
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         return await _conn.mget(*keys, encoding=encoding)
 

@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 
 from aiocache import SimpleMemoryCache
 from aiocache.base import BaseCache
@@ -22,6 +22,12 @@ class TestSimpleMemoryBackend:
     async def test_get(self, memory):
         await memory._get(pytest.KEY)
         SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
+
+    @pytest.mark.asyncio
+    async def test_get(self, mocker, memory):
+        mocker.spy(memory, '_get')
+        await memory._gets(pytest.KEY)
+        memory._get.assert_called_with(pytest.KEY, encoding='utf-8', _conn=ANY)
 
     @pytest.mark.asyncio
     async def test_set(self, memory):

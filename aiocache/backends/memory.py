@@ -17,6 +17,9 @@ class SimpleMemoryBackend:
     async def _get(self, key, encoding="utf-8", _conn=None):
         return SimpleMemoryBackend._cache.get(key)
 
+    async def _gets(self, key, encoding="utf-8", _conn=None):
+        return await self._get(key, encoding=encoding, _conn=_conn)
+
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 

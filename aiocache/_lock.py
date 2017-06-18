@@ -104,7 +104,7 @@ class _OptimisticLock:
         return await self._acquire()
 
     async def _acquire(self):
-        self._token = await self.client._get(self.ns_key)
+        self._token = await self.client._gets(self.ns_key)
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):

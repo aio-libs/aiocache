@@ -37,6 +37,7 @@ class MockCache(BaseCache):
         super().__init__()
         self._add = asynctest.CoroutineMock()
         self._get = asynctest.CoroutineMock()
+        self._gets = asynctest.CoroutineMock()
         self._set = asynctest.CoroutineMock()
         self._multi_get = asynctest.CoroutineMock(return_value=['a', 'b'])
         self._multi_set = asynctest.CoroutineMock()

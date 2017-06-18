@@ -114,11 +114,18 @@ class TestOptimisticLock:
     async def test_acquire(self, cache, lock):
         await cache.set(pytest.KEY, 'value')
         async with lock:
-            assert lock._token == 'value'
+            assert lock._token == await cache._gets(cache._build_key(pytest.KEY))
 
     @pytest.mark.asyncio
     async def test_release_does_nothing(self, lock):
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
+
+    @pytest.mark.asyncio
+    async def test_check_and_set_not_existing(self, cache, lock):
+        async with lock as locked:
+            await locked.cas('value')
+
+        assert await cache.get(pytest.KEY) == 'value'
 
     @pytest.mark.asyncio
     async def test_check_and_set(self, cache, lock):

@@ -152,6 +152,13 @@ class TestRedisBackend:
         pool.conn.get.assert_called_with(pytest.KEY, encoding="utf-8")
 
     @pytest.mark.asyncio
+    async def test_gets(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, '_get')
+        await cache._gets(pytest.KEY)
+        cache._get.assert_called_with(pytest.KEY, encoding="utf-8", _conn=ANY)
+
+    @pytest.mark.asyncio
     async def test_set(self, redis):
         cache, pool = redis
         await cache._set(pytest.KEY, "value")

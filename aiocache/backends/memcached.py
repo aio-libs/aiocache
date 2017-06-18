@@ -23,6 +23,11 @@ class MemcachedBackend:
             return value
         return value.decode(encoding)
 
+    async def _gets(self, key, encoding='utf-8', _conn=None):
+        key = key.encode() if isinstance(key, str) else key
+        _, token = await self.client.gets(key)
+        return token
+
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         values = []
         for value in await self.client.multi_get(*keys):
@@ -33,11 +38,16 @@ class MemcachedBackend:
         return values
 
     async def _set(self, key, value, ttl=0, _cas_token=None, _conn=None):
-        value = str.encode(value) if isinstance(value, str) else value
+        value = value.encode() if isinstance(value, str) else value
+        if _cas_token is not None:
+            return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         try:
             return await self.client.set(key, value, exptime=ttl or 0)
         except aiomcache.exceptions.ValidationException:
             raise TypeError("memcached doesn't support float ttl")
+
+    async def _cas(self, key, value, token, ttl=None, _conn=None):
+        return await self.client.cas(key, value, token, exptime=ttl or 0)
 
     async def _multi_set(self, pairs, ttl=0, _conn=None):
         tasks = []
