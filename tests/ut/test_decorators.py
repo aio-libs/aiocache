@@ -38,13 +38,12 @@ class TestCached:
 
     def test_init(self):
         c = cached(
-            ttl=1, key="key", key_from_attr="key_attr", cache=SimpleMemoryCache,
+            ttl=1, key="key", key_builder="fn", cache=SimpleMemoryCache,
             plugins=None, alias=None, noself=False, namespace="test")
 
         assert c.ttl == 1
         assert c.key == "key"
-        assert c.key_builder is None
-        assert c.key_from_attr == "key_attr"
+        assert c.key_builder == "fn"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
@@ -68,12 +67,8 @@ class TestCached:
 
     def test_get_cache_key_with_key(self, decorator):
         decorator.key = "key"
-        decorator.key_from_attr = "ignore_me"
+        decorator.key_builder = "fn"
         assert decorator.get_cache_key(stub, (1, 2), {'a': 1, 'b': 2}) == 'key'
-
-    def test_get_cache_key_with_key_attr(self, decorator):
-        decorator.key_from_attr = "pick_me"
-        assert decorator.get_cache_key(stub, (1, 2), {'pick_me': "key"}) == 'key'
 
     def test_get_cache_key_without_key_and_attr(self, decorator):
         assert decorator.get_cache_key(
@@ -208,12 +203,12 @@ class TestCachedStampede:
 
     def test_init(self):
         c = cached_stampede(
-            lease=3, ttl=1, key="key", key_from_attr="key_attr", cache=SimpleMemoryCache,
+            lease=3, ttl=1, key="key", key_builder="fn", cache=SimpleMemoryCache,
             plugins=None, alias=None, noself=False, namespace="test")
 
         assert c.ttl == 1
         assert c.key == "key"
-        assert c.key_from_attr == "key_attr"
+        assert c.key_builder == "fn"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None

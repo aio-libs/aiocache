@@ -18,7 +18,7 @@ class cached:
 
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
-        key_from_attr param. If key and key_from_attr are not passed, it will use module_name
+        key_builder param. If key and key_builder are not passed, it will use module_name
         + function_name + args + kwargs
     :param key_builder: Callable that allows to build the function dynamically. It receives
         same args and kwargs as the called function.
@@ -36,13 +36,10 @@ class cached:
     """
 
     def __init__(
-            self, ttl=None, key=None, key_from_attr=None, key_builder=None, cache=SimpleMemoryCache,
+            self, ttl=None, key=None, key_builder=None, cache=SimpleMemoryCache,
             serializer=None, plugins=None, alias=None, noself=False, **kwargs):
         self.ttl = ttl
         self.key = key
-        if key_from_attr is not None:
-            logger.warning("'key_from_attr' is deprecated, please use 'key_builder' instead")
-        self.key_from_attr = key_from_attr
         self.key_builder = key_builder
         self.noself = noself
         self.alias = alias
@@ -81,19 +78,15 @@ class cached:
     def get_cache_key(self, f, args, kwargs):
         if self.key:
             return self.key
+        if self.key_builder:
+            return self.key_builder(*args, **kwargs)
 
-        args_dict = _get_args_dict(f, args, kwargs)
-        cache_key = args_dict.get(
-            self.key_from_attr, self._key_from_args(f, args, kwargs))
-        return cache_key
+        return self._key_from_args(f, args, kwargs)
 
     def _key_from_args(self, func, args, kwargs):
-        if self.key_builder is None:
-            ordered_kwargs = sorted(kwargs.items())
-            return (func.__module__ or '') + func.__name__ + str(
-                args[1:] if self.noself else args) + str(ordered_kwargs)
-
-        return self.key_builder(*args, **kwargs)
+        ordered_kwargs = sorted(kwargs.items())
+        return (func.__module__ or '') + func.__name__ + str(
+            args[1:] if self.noself else args) + str(ordered_kwargs)
 
     async def get_from_cache(self, key):
         try:
