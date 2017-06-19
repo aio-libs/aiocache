@@ -144,3 +144,12 @@ class TestOptimisticLock:
             async with lock as locked:
                 await cache.set(pytest.KEY, 'conflicting_value')
                 await locked.cas('value')
+
+    @pytest.mark.asyncio
+    async def test_check_and_set_with_ttl(self, cache, lock):
+        await cache.set(pytest.KEY, 'previous_value')
+        async with lock as locked:
+            await locked.cas('value', ttl=1)
+
+        await asyncio.sleep(1)
+        assert await cache.get(pytest.KEY) is None
