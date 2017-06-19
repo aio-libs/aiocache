@@ -183,7 +183,16 @@ class TestRedisBackend:
         await cache._cas(pytest.KEY, 'value', 'old_value', ttl=10, _conn=pool.conn)
         cache._raw.assert_called_with(
             'eval', cache.CAS_SCRIPT,
-            [pytest.KEY], ['value', 'old_value'], _conn=pool.conn)
+            [pytest.KEY], ['value', 'old_value', 'EX', 10], _conn=pool.conn)
+
+    @pytest.mark.asyncio
+    async def test_cas_float_ttl(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, '_raw')
+        await cache._cas(pytest.KEY, 'value', 'old_value', ttl=0.1, _conn=pool.conn)
+        cache._raw.assert_called_with(
+            'eval', cache.CAS_SCRIPT,
+            [pytest.KEY], ['value', 'old_value', 'PX', 100], _conn=pool.conn)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):

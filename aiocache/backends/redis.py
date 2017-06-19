@@ -31,8 +31,8 @@ class RedisBackend:
 
     CAS_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[2] then"
-        "  if #ARGV == 3 then"
-        "   return redis.call('set', KEYS[1], ARGV[1], 'EX', ARGV[3])"
+        "  if #ARGV == 4 then"
+        "   return redis.call('set', KEYS[1], ARGV[1], ARGV[3], ARGV[4])"
         "  else"
         "   return redis.call('set', KEYS[1], ARGV[1])"
         "  end"
@@ -89,7 +89,10 @@ class RedisBackend:
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         args = [value, token]
         if ttl is not None:
-            args.append(ttl)
+            if isinstance(ttl, float):
+                args += ['PX', int(ttl * 1000)]
+            else:
+                args += ['EX', ttl]
         res = await self._raw(
             "eval",
             self.CAS_SCRIPT,
