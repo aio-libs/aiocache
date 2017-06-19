@@ -78,3 +78,50 @@ class _RedLock:
         if removed:
             _RedLock._EVENTS.pop(self.key).set()
         return removed
+
+
+class _OptimisticLock:
+    """
+    Implementation of
+    [optimistic lock](https://en.wikipedia.org/wiki/Optimistic_concurrency_control)
+
+    Optimistic locking assumes multiple transactions can happen at the same time
+    and they will only fail if before finish, conflicting modifications with other
+    transactions are found, producing a roll back.
+
+    Finding a conflict will end up raising an `aiocache.exceptions.OptimisticLockError`
+    exception. A conflict happens when the value at the storage is different from
+    the one we retrieved when the lock started.
+    """
+
+    def __init__(self, client, key):
+        self.client = client
+        self.key = key
+        self.ns_key = self.client._build_key(key)
+        self._token = None
+
+    async def __aenter__(self):
+        return await self._acquire()
+
+    async def _acquire(self):
+        self._token = await self.client._gets(self.ns_key)
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        pass
+
+    async def cas(self, value, **kwargs):
+        """
+        Checks and sets the specified value for the locked key. If the value has changed
+        since the lock was created, it will raise an OptimisticLockError exception.
+        """
+        success = await self.client.set(self.key, value, _cas_token=self._token, **kwargs)
+        if not success:
+            raise OptimisticLockError("Value has changed since the lock started")
+        return True
+
+
+class OptimisticLockError(Exception):
+    """
+    Raised when a conflict is found during an optimistic lock
+    """

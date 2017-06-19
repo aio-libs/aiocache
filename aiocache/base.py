@@ -221,7 +221,8 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def set(self, key, value, ttl=None, dumps_fn=None, namespace=None, _conn=None):
+    async def set(
+            self, key, value, ttl=None, dumps_fn=None, namespace=None, _cas_token=None, _conn=None):
         """
         Stores the value in the given key with ttl if specified
 
@@ -234,19 +235,19 @@ class BaseCache:
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
-        :returns: True
+        :returns: True if the value was set
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.time()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key, namespace=namespace)
 
-        await self._set(ns_key, dumps(value), ttl, _conn=_conn)
+        res = await self._set(ns_key, dumps(value), ttl=ttl, _cas_token=_cas_token, _conn=_conn)
 
         logger.debug("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
-        return True
+        return res
 
-    async def _set(self, key, value, ttl, _conn=None):
+    async def _set(self, key, value, ttl, _cas_token=None, _conn=None):
         raise NotImplementedError()
 
     @API.register

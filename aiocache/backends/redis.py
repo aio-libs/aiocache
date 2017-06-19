@@ -29,6 +29,18 @@ class RedisBackend:
         " end"
     )
 
+    CAS_SCRIPT = (
+        "if redis.call('get',KEYS[1]) == ARGV[2] then"
+        "  if #ARGV == 4 then"
+        "   return redis.call('set', KEYS[1], ARGV[1], ARGV[3], ARGV[4])"
+        "  else"
+        "   return redis.call('set', KEYS[1], ARGV[1])"
+        "  end"
+        " else"
+        " return 0"
+        " end"
+    )
+
     pools = {}
 
     def __init__(
@@ -58,14 +70,35 @@ class RedisBackend:
         return await _conn.get(key, encoding=encoding)
 
     @conn
+    async def _gets(self, key, encoding="utf-8", _conn=None):
+        return await self._get(key, encoding=encoding, _conn=_conn)
+
+    @conn
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         return await _conn.mget(*keys, encoding=encoding)
 
     @conn
-    async def _set(self, key, value, ttl=None, _conn=None):
+    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+        if _cas_token is not None:
+            return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         if ttl is None:
             return await _conn.set(key, value)
         return await _conn.setex(key, ttl, value)
+
+    @conn
+    async def _cas(self, key, value, token, ttl=None, _conn=None):
+        args = [value, token]
+        if ttl is not None:
+            if isinstance(ttl, float):
+                args += ['PX', int(ttl * 1000)]
+            else:
+                args += ['EX', ttl]
+        res = await self._raw(
+            "eval",
+            self.CAS_SCRIPT,
+            [key],
+            args, _conn=_conn)
+        return res
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):

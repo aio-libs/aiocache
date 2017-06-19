@@ -153,6 +153,13 @@ class TestRedisBackend:
         pool.conn.get.assert_called_with(pytest.KEY, encoding="utf-8")
 
     @pytest.mark.asyncio
+    async def test_gets(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, '_get')
+        await cache._gets(pytest.KEY)
+        cache._get.assert_called_with(pytest.KEY, encoding="utf-8", _conn=ANY)
+
+    @pytest.mark.asyncio
     async def test_set(self, redis):
         cache, pool = redis
         await cache._set(pytest.KEY, "value")
@@ -160,6 +167,32 @@ class TestRedisBackend:
 
         await cache._set(pytest.KEY, "value", ttl=1)
         pool.conn.setex.assert_called_with(pytest.KEY, 1, "value")
+
+    @pytest.mark.asyncio
+    async def test_set_cas_token(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, '_cas')
+        await cache._set(pytest.KEY, 'value', _cas_token='old_value', _conn=pool.conn)
+        cache._cas.assert_called_with(
+            pytest.KEY, 'value', 'old_value', ttl=None, _conn=pool.conn)
+
+    @pytest.mark.asyncio
+    async def test_cas(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, '_raw')
+        await cache._cas(pytest.KEY, 'value', 'old_value', ttl=10, _conn=pool.conn)
+        cache._raw.assert_called_with(
+            'eval', cache.CAS_SCRIPT,
+            [pytest.KEY], ['value', 'old_value', 'EX', 10], _conn=pool.conn)
+
+    @pytest.mark.asyncio
+    async def test_cas_float_ttl(self, mocker, redis):
+        cache, pool = redis
+        mocker.spy(cache, '_raw')
+        await cache._cas(pytest.KEY, 'value', 'old_value', ttl=0.1, _conn=pool.conn)
+        cache._raw.assert_called_with(
+            'eval', cache.CAS_SCRIPT,
+            [pytest.KEY], ['value', 'old_value', 'PX', 100], _conn=pool.conn)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis):

@@ -262,7 +262,7 @@ class TestCache:
         await mock_cache.set(pytest.KEY, "value", ttl=2)
 
         mock_cache._set.assert_called_with(
-            mock_cache._build_key(pytest.KEY), asynctest.ANY, 2, _conn=ANY)
+            mock_cache._build_key(pytest.KEY), asynctest.ANY, ttl=2, _cas_token=None, _conn=ANY)
         assert mock_cache.plugins[0].pre_set.call_count == 1
         assert mock_cache.plugins[0].post_set.call_count == 1
 
