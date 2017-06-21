@@ -1,13 +1,13 @@
 import asyncio
 import pytest
 
-from aiocache._lock import _RedLock, _OptimisticLock, OptimisticLockError
+from aiocache.lock import RedLock, OptimisticLock, OptimisticLockError
 from aiocache.serializers import StringSerializer
 
 
 @pytest.fixture
 def lock(cache):
-    return _RedLock(cache, pytest.KEY, 20)
+    return RedLock(cache, pytest.KEY, 20)
 
 
 class TestRedLock:
@@ -39,7 +39,7 @@ class TestRedLock:
             if res is not None:
                 return res
 
-            async with _RedLock(cache, pytest.KEY, lease=5):
+            async with RedLock(cache, pytest.KEY, lease=5):
                 res = await cache.get(pytest.KEY)
                 if res is not None:
                     return res
@@ -61,7 +61,7 @@ class TestRedLock:
             if res is not None:
                 return res
 
-            async with _RedLock(cache, pytest.KEY, lease=1):
+            async with RedLock(cache, pytest.KEY, lease=1):
                 res = await cache.get(pytest.KEY)
                 if res is not None:
                     return res
@@ -77,7 +77,7 @@ class TestMemoryRedLock:
 
     @pytest.fixture
     def lock(self, memory_cache):
-        return _RedLock(memory_cache, pytest.KEY, 20)
+        return RedLock(memory_cache, pytest.KEY, 20)
 
     @pytest.mark.asyncio
     async def test_release_wrong_token_fails(self, lock):
@@ -87,13 +87,13 @@ class TestMemoryRedLock:
 
     @pytest.mark.asyncio
     async def test_release_wrong_client_fails(self, memory_cache, lock):
-        wrong_lock = _RedLock(memory_cache, pytest.KEY, 20)
+        wrong_lock = RedLock(memory_cache, pytest.KEY, 20)
         await lock.__aenter__()
         assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") == 0
 
     @pytest.mark.asyncio
     async def test_float_lease(self, memory_cache):
-        lock = _RedLock(memory_cache, pytest.KEY, 0.1)
+        lock = RedLock(memory_cache, pytest.KEY, 0.1)
         await lock.__aenter__()
         await asyncio.sleep(0.2)
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
@@ -103,7 +103,7 @@ class TestRedisRedLock:
 
     @pytest.fixture
     def lock(self, redis_cache):
-        return _RedLock(redis_cache, pytest.KEY, 20)
+        return RedLock(redis_cache, pytest.KEY, 20)
 
     @pytest.mark.asyncio
     async def test_release_wrong_token_fails(self, lock):
@@ -113,13 +113,13 @@ class TestRedisRedLock:
 
     @pytest.mark.asyncio
     async def test_release_wrong_client_fails(self, redis_cache, lock):
-        wrong_lock = _RedLock(redis_cache, pytest.KEY, 20)
+        wrong_lock = RedLock(redis_cache, pytest.KEY, 20)
         await lock.__aenter__()
         assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") == 0
 
     @pytest.mark.asyncio
     async def test_float_lease(self, redis_cache):
-        lock = _RedLock(redis_cache, pytest.KEY, 0.1)
+        lock = RedLock(redis_cache, pytest.KEY, 0.1)
         await lock.__aenter__()
         await asyncio.sleep(0.2)
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
@@ -129,7 +129,7 @@ class TestMemcachedRedLock:
 
     @pytest.fixture
     def lock(self, memcached_cache):
-        return _RedLock(memcached_cache, pytest.KEY, 20)
+        return RedLock(memcached_cache, pytest.KEY, 20)
 
     @pytest.mark.asyncio
     async def test_release_wrong_token_succeeds_meh(self, lock):
@@ -139,13 +139,13 @@ class TestMemcachedRedLock:
 
     @pytest.mark.asyncio
     async def test_release_wrong_client_succeeds_meh(self, memcached_cache, lock):
-        wrong_lock = _RedLock(memcached_cache, pytest.KEY, 20)
+        wrong_lock = RedLock(memcached_cache, pytest.KEY, 20)
         await lock.__aenter__()
         assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") == 1
 
     @pytest.mark.asyncio
     async def test_float_lease(self, memcached_cache):
-        lock = _RedLock(memcached_cache, pytest.KEY, 0.1)
+        lock = RedLock(memcached_cache, pytest.KEY, 0.1)
         with pytest.raises(TypeError):
             await lock.__aenter__()
 
@@ -154,7 +154,7 @@ class TestOptimisticLock:
 
     @pytest.fixture
     def lock(self, cache):
-        return _OptimisticLock(cache, pytest.KEY)
+        return OptimisticLock(cache, pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_acquire(self, cache, lock):
@@ -203,7 +203,7 @@ class TestMemoryOptimisticLock:
 
     @pytest.fixture
     def lock(self, memory_cache):
-        return _OptimisticLock(memory_cache, pytest.KEY)
+        return OptimisticLock(memory_cache, pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_check_and_set_with_float_ttl(self, memory_cache, lock):
@@ -219,7 +219,7 @@ class TestRedisOptimisticLock:
 
     @pytest.fixture
     def lock(self, redis_cache):
-        return _OptimisticLock(redis_cache, pytest.KEY)
+        return OptimisticLock(redis_cache, pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_check_and_set_with_float_ttl(self, redis_cache, lock):

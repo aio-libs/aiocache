@@ -8,7 +8,7 @@ from asynctest import MagicMock, CoroutineMock, ANY, patch
 
 from aiocache.base import BaseCache
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
-from aiocache._lock import _RedLock
+from aiocache.lock import RedLock
 from aiocache.decorators import _get_args_dict
 
 
@@ -235,9 +235,9 @@ class TestCachedStampede:
     @pytest.mark.asyncio
     async def test_calls_redlock(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(return_value=None)
-        lock = MagicMock(spec=_RedLock)
+        lock = MagicMock(spec=RedLock)
 
-        with patch("aiocache.decorators._RedLock", return_value=lock):
+        with patch("aiocache.decorators.RedLock", return_value=lock):
             await decorator_call(value="value")
 
             assert decorator.cache.get.call_count == 2
@@ -251,10 +251,10 @@ class TestCachedStampede:
     async def test_calls_locked_client(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(side_effect=[None, None, None, "value"])
         decorator.cache._add = CoroutineMock(side_effect=[True, ValueError])
-        lock1 = MagicMock(spec=_RedLock)
-        lock2 = MagicMock(spec=_RedLock)
+        lock1 = MagicMock(spec=RedLock)
+        lock2 = MagicMock(spec=RedLock)
 
-        with patch("aiocache.decorators._RedLock", side_effect=[lock1, lock2]):
+        with patch("aiocache.decorators.RedLock", side_effect=[lock1, lock2]):
             await asyncio.gather(decorator_call(value="value"), decorator_call(value="value"))
 
             assert decorator.cache.get.call_count == 4

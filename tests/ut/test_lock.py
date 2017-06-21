@@ -2,15 +2,15 @@ import asyncio
 import pytest
 import asynctest
 
-from aiocache._lock import _RedLock, _OptimisticLock, OptimisticLockError
+from aiocache.lock import RedLock, OptimisticLock, OptimisticLockError
 
 
 class TestRedLock:
 
     @pytest.fixture
     def lock(self, mock_cache):
-        _RedLock._EVENTS = {}
-        yield _RedLock(mock_cache, pytest.KEY, 20)
+        RedLock._EVENTS = {}
+        yield RedLock(mock_cache, pytest.KEY, 20)
 
     @pytest.mark.asyncio
     async def test_acquire(self, mock_cache, lock):
@@ -61,8 +61,8 @@ class TestRedLock:
 
     @pytest.mark.asyncio
     async def test_multiple_locks_lock(self, mock_cache, lock, event_loop):
-        lock_1 = _RedLock(mock_cache, pytest.KEY, 20)
-        lock_2 = _RedLock(mock_cache, pytest.KEY, 20)
+        lock_1 = RedLock(mock_cache, pytest.KEY, 20)
+        lock_2 = RedLock(mock_cache, pytest.KEY, 20)
         mock_cache._add.side_effect = [True, ValueError(), ValueError()]
         await lock._acquire()
         event = lock._EVENTS[pytest.KEY + '-lock']
@@ -83,7 +83,7 @@ class TestRedLock:
 class TestOptimisticLock:
     @pytest.fixture
     def lock(self, mock_cache):
-        yield _OptimisticLock(mock_cache, pytest.KEY)
+        yield OptimisticLock(mock_cache, pytest.KEY)
 
     def test_init(self, mock_cache, lock):
         assert lock.client == mock_cache

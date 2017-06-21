@@ -81,6 +81,7 @@ Contents
   plugins
   configuration
   decorators
+  locking
   testing
 
 Indices and tables
