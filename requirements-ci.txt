@@ -8,7 +8,7 @@ pytest-mock==1.6.0
 codecov==2.0.9
 sphinx==1.6.2
 marshmallow==2.13.5
-asynctest==0.10.0
+git+https://github.com/MartiusWeb/asynctest@async_magic
 pystache==0.5.4
 
 aiohttp==2.1.0

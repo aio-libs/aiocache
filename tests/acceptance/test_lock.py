@@ -28,6 +28,50 @@ class TestRedLock:
             pass
         assert await cache.get(pytest.KEY + '-lock') is None
 
+    @pytest.mark.asyncio
+    async def test_locking_dogpile(self, mocker, cache):
+        mocker.spy(cache, 'get')
+        mocker.spy(cache, 'set')
+        mocker.spy(cache, '_add')
+
+        async def dummy():
+            res = await cache.get(pytest.KEY)
+            if res is not None:
+                return res
+
+            async with _RedLock(cache, pytest.KEY, lease=5):
+                res = await cache.get(pytest.KEY)
+                if res is not None:
+                    return res
+                await asyncio.sleep(0.1)
+                await cache.set(pytest.KEY, "value")
+
+        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
+        assert cache._add.call_count == 4
+        assert cache.get.call_count == 8
+        assert cache.set.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_locking_dogpile_lease_expiration(self, mocker, cache):
+        mocker.spy(cache, 'get')
+        mocker.spy(cache, 'set')
+
+        async def dummy():
+            res = await cache.get(pytest.KEY)
+            if res is not None:
+                return res
+
+            async with _RedLock(cache, pytest.KEY, lease=1):
+                res = await cache.get(pytest.KEY)
+                if res is not None:
+                    return res
+                await asyncio.sleep(1.1)
+                await cache.set(pytest.KEY, "value")
+
+        await asyncio.gather(dummy(), dummy(), dummy(), dummy())
+        assert cache.get.call_count == 8
+        assert cache.set.call_count == 4
+
 
 class TestMemoryRedLock:
 

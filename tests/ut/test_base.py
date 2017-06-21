@@ -1,12 +1,10 @@
 import os
 import pytest
 import asyncio
-import asynctest
 
-from unittest.mock import patch, MagicMock, ANY
+from asynctest import patch, MagicMock, ANY, CoroutineMock
 
 from aiocache.base import API, _Conn
-from aiocache._lock import _RedLock
 
 
 class TestAPI:
@@ -127,8 +125,12 @@ class TestAPI:
     @pytest.mark.asyncio
     async def test_plugins(self):
         self = MagicMock()
-        plugin1 = asynctest.CoroutineMock()
-        plugin2 = asynctest.CoroutineMock()
+        plugin1 = MagicMock()
+        plugin1.pre_dummy = CoroutineMock()
+        plugin1.post_dummy = CoroutineMock()
+        plugin2 = MagicMock()
+        plugin2.pre_dummy = CoroutineMock()
+        plugin2.post_dummy = CoroutineMock()
         self.plugins = [plugin1, plugin2]
 
         @API.plugins
@@ -138,6 +140,8 @@ class TestAPI:
         assert await dummy(self) is True
         plugin1.pre_dummy.assert_called_with(self)
         plugin1.post_dummy.assert_called_with(self, took=ANY, ret=True)
+        plugin2.pre_dummy.assert_called_with(self)
+        plugin2.post_dummy.assert_called_with(self, took=ANY, ret=True)
 
 
 class TestBaseCache:
@@ -196,11 +200,6 @@ class TestBaseCache:
     async def test_raw(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache._raw("get", pytest.KEY)
-
-    @pytest.mark.asyncio
-    async def test_redlock_release(self, base_cache):
-        with pytest.raises(NotImplementedError):
-            await base_cache._redlock_release(pytest.KEY, 20)
 
     @pytest.mark.asyncio
     async def test_close(self, base_cache):
@@ -262,7 +261,7 @@ class TestCache:
         await mock_cache.set(pytest.KEY, "value", ttl=2)
 
         mock_cache._set.assert_called_with(
-            mock_cache._build_key(pytest.KEY), asynctest.ANY, ttl=2, _cas_token=None, _conn=ANY)
+            mock_cache._build_key(pytest.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY)
         assert mock_cache.plugins[0].pre_set.call_count == 1
         assert mock_cache.plugins[0].post_set.call_count == 1
 
@@ -275,11 +274,11 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
-        mock_cache._exists = asynctest.CoroutineMock(return_value=False)
+        mock_cache._exists = CoroutineMock(return_value=False)
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
         mock_cache._add.assert_called_with(
-            mock_cache._build_key(pytest.KEY), asynctest.ANY, 2, _conn=ANY)
+            mock_cache._build_key(pytest.KEY), ANY, 2, _conn=ANY)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
@@ -312,8 +311,8 @@ class TestCache:
         await mock_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=2)
 
         mock_cache._multi_set.assert_called_with([
-            (mock_cache._build_key(pytest.KEY), asynctest.ANY),
-            (mock_cache._build_key(pytest.KEY_1), asynctest.ANY)], 2, _conn=ANY)
+            (mock_cache._build_key(pytest.KEY), ANY),
+            (mock_cache._build_key(pytest.KEY_1), ANY)], 2, _conn=ANY)
         assert mock_cache.plugins[0].pre_multi_set.call_count == 1
         assert mock_cache.plugins[0].post_multi_set.call_count == 1
 
@@ -424,9 +423,6 @@ class TestCache:
         assert mock_cache.acquire_conn.call_count == 1
         assert mock_cache.release_conn.call_count == 1
 
-    def test_redlock(self, mock_cache):
-        assert isinstance(mock_cache._redlock(pytest.KEY, 20), _RedLock)
-
 
 @pytest.fixture
 def conn(mock_cache):
@@ -452,7 +448,7 @@ class TestConn:
     @pytest.mark.asyncio
     async def test_inject_conn(self, conn):
         conn._conn = "connection"
-        conn._cache.dummy = asynctest.CoroutineMock()
+        conn._cache.dummy = CoroutineMock()
 
         await _Conn._inject_conn("dummy")(conn, "a", b="b")
         conn._cache.dummy.assert_called_with("a", _conn=conn._conn, b="b")

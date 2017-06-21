@@ -4,7 +4,6 @@ import functools
 import asyncio
 
 from aiocache import serializers
-from aiocache._lock import _RedLock
 from aiocache.log import logger
 
 
@@ -460,12 +459,6 @@ class BaseCache:
         if self.namespace is not None:
             return "{}{}".format(self.namespace, key)
         return key
-
-    def _redlock(self, key, lease):
-        return _RedLock(self, key, lease)
-
-    async def _redlock_release(self, key, value):
-        raise NotImplementedError()
 
     def get_connection(self):
         return _Conn(self)

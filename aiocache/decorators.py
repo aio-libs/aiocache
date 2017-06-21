@@ -3,6 +3,7 @@ import functools
 
 from aiocache.log import logger
 from aiocache import SimpleMemoryCache, caches
+from aiocache._lock import _RedLock
 
 
 class cached:
@@ -146,7 +147,7 @@ class cached_stampede(cached):
         if value is not None:
             return value
 
-        async with self.cache._redlock(key, self.lease):
+        async with _RedLock(self.cache, key, self.lease):
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
