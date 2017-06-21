@@ -167,8 +167,9 @@ class TestOptimisticLock:
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
-    async def test_check_and_set_not_existing(self, cache, lock):
+    async def test_check_and_set_not_existing_never_fails(self, cache, lock):
         async with lock as locked:
+            await cache.set(pytest.KEY, 'conflicting_value')
             await locked.cas('value')
 
         assert await cache.get(pytest.KEY) == 'value'

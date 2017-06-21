@@ -136,6 +136,8 @@ class OptimisticLock:
             result = await super_expensive_call()
             await cache.set('random_value')  # This will make the `lock.cas` call fail
             await lock.cas(result)
+
+    If the lock is created with an unexisting key, there will never be conflicts.
     """
 
     def __init__(self, client: Type[BaseCache], key: str):
