@@ -186,7 +186,7 @@ class BaseCache:
         value = loads(await self._get(ns_key))
 
         logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
-        return value or default
+        return value if value is not None else default
 
     async def _get(self, key):
         raise NotImplementedError()
