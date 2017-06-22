@@ -9,14 +9,32 @@ from aiocache.serializers import JsonSerializer
 from aiocache.backends.redis import RedisBackend, conn
 
 
+class FakeRedisConn:
+
+    SET_IF_NOT_EXIST = 'SET_IF_NOT_EXIST'
+
+    def __init__(self):
+        self.get = CoroutineMock()
+        self.mget = CoroutineMock()
+        self.set = CoroutineMock()
+        self.setex = CoroutineMock()
+        self.mset = CoroutineMock()
+        self.incrby = CoroutineMock()
+        self.exists = CoroutineMock()
+        self.persist = CoroutineMock()
+        self.expire = CoroutineMock()
+        self.delete = CoroutineMock()
+        self.flushdb = CoroutineMock()
+        self.eval = CoroutineMock()
+        self.keys = CoroutineMock()
+
+
 class FakePool:
 
     SET_IF_NOT_EXIST = 'SET_IF_NOT_EXIST'
 
     def __init__(self):
-        conn = CoroutineMock()
-        conn.SET_IF_NOT_EXIST = self.SET_IF_NOT_EXIST
-        self.conn = conn
+        self.conn = FakeRedisConn()
         self.transaction = MagicMock()
         self.release = CoroutineMock()
         self.conn.multi_exec = MagicMock(return_value=self.transaction)

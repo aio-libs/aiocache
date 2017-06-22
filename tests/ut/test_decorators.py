@@ -3,12 +3,12 @@ import sys
 import pytest
 import random
 import inspect
-import asynctest
 
-from asynctest import MagicMock, CoroutineMock, ANY
+from asynctest import MagicMock, CoroutineMock, ANY, patch
 
 from aiocache.base import BaseCache
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
+from aiocache.lock import RedLock
 from aiocache.decorators import _get_args_dict
 
 
@@ -23,7 +23,7 @@ class TestCached:
 
     @pytest.fixture
     def decorator(self, mocker, mock_cache):
-        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
             yield cached()
 
     @pytest.fixture
@@ -56,7 +56,7 @@ class TestCached:
                 return n
 
     def test_alias_takes_precedence(self, mock_cache):
-        with asynctest.patch(
+        with patch(
                 "aiocache.decorators.caches.create",
                 MagicMock(return_value=mock_cache)) as mock_create:
             c = cached(alias='default', cache=SimpleMemoryCache, namespace='test')
@@ -147,7 +147,7 @@ class TestCached:
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
         mock_cache.get = CoroutineMock(return_value=None)
-        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
             @cached()
             async def fn(n):
                 return n
@@ -157,7 +157,7 @@ class TestCached:
 
     @pytest.mark.asyncio
     async def test_keeps_signature(self, mock_cache):
-        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
             @cached()
             async def what(self, a, b):
                 return "1"
@@ -168,7 +168,7 @@ class TestCached:
 
     @pytest.mark.asyncio
     async def test_reuses_cache_instance(self):
-        with asynctest.patch("aiocache.decorators._get_cache") as get_c:
+        with patch("aiocache.decorators._get_cache") as get_c:
             cache = MagicMock(spec=BaseCache)
             get_c.side_effect = [cache, None]
 
@@ -186,7 +186,7 @@ class TestCached:
 class TestCachedStampede:
     @pytest.fixture
     def decorator(self, mocker, mock_cache):
-        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
             yield cached_stampede()
 
     @pytest.fixture
@@ -235,28 +235,36 @@ class TestCachedStampede:
     @pytest.mark.asyncio
     async def test_calls_redlock(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(return_value=None)
+        lock = MagicMock(spec=RedLock)
 
-        await decorator_call(value="value")
+        with patch("aiocache.decorators.RedLock", return_value=lock):
+            await decorator_call(value="value")
 
-        assert decorator.cache.get.call_count == 2
-        assert decorator.cache._redlock.call_count == 1
-        decorator.cache.set.assert_called_with(
-            "stub()[('value', 'value')]", "value", ttl=None)
-        stub.assert_called_once_with(value="value")
+            assert decorator.cache.get.call_count == 2
+            assert lock.__aenter__.call_count == 1
+            assert lock.__aexit__.call_count == 1
+            decorator.cache.set.assert_called_with(
+                "stub()[('value', 'value')]", "value", ttl=None)
+            stub.assert_called_once_with(value="value")
 
     @pytest.mark.asyncio
     async def test_calls_locked_client(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(side_effect=[None, None, None, "value"])
         decorator.cache._add = CoroutineMock(side_effect=[True, ValueError])
-        decorator.cache._redlock_release = CoroutineMock(side_effect=[1, 0])
+        lock1 = MagicMock(spec=RedLock)
+        lock2 = MagicMock(spec=RedLock)
 
-        await asyncio.gather(decorator_call(value="value"), decorator_call(value="value"))
+        with patch("aiocache.decorators.RedLock", side_effect=[lock1, lock2]):
+            await asyncio.gather(decorator_call(value="value"), decorator_call(value="value"))
 
-        assert decorator.cache.get.call_count == 4
-        assert decorator.cache._redlock.call_count == 2
-        decorator.cache.set.assert_called_with(
-            "stub()[('value', 'value')]", "value", ttl=None)
-        assert stub.call_count == 1
+            assert decorator.cache.get.call_count == 4
+            assert lock1.__aenter__.call_count == 1
+            assert lock1.__aexit__.call_count == 1
+            assert lock2.__aenter__.call_count == 1
+            assert lock2.__aexit__.call_count == 1
+            decorator.cache.set.assert_called_with(
+                "stub()[('value', 'value')]", "value", ttl=None)
+            assert stub.call_count == 1
 
 
 async def stub_dict(*args, keys=None, **kwargs):
@@ -272,7 +280,7 @@ class TestMultiCached:
 
     @pytest.fixture
     def decorator(self, mocker, mock_cache):
-        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
             yield multi_cached(keys_from_attr="keys")
 
     @pytest.fixture
@@ -306,7 +314,7 @@ class TestMultiCached:
                 return n
 
     def test_alias_takes_precedence(self, mock_cache):
-        with asynctest.patch(
+        with patch(
                 "aiocache.decorators.caches.create",
                 MagicMock(return_value=mock_cache)) as mock_create:
             mc = multi_cached(
@@ -438,7 +446,7 @@ class TestMultiCached:
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
         mock_cache.multi_get = CoroutineMock(return_value=[None])
-        with asynctest.patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
 
             @multi_cached(keys_from_attr="keys")
             async def fn(keys=None):
@@ -459,7 +467,7 @@ class TestMultiCached:
 
     @pytest.mark.asyncio
     async def test_reuses_cache_instance(self):
-        with asynctest.patch("aiocache.decorators._get_cache") as get_c:
+        with patch("aiocache.decorators._get_cache") as get_c:
             cache = MagicMock(spec=BaseCache)
             cache.multi_get.return_value = [None]
             get_c.side_effect = [cache, None]
