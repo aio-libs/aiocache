@@ -257,6 +257,18 @@ class TestCache:
             await mock_cache.get(pytest.KEY)
 
     @pytest.mark.asyncio
+    async def test_get_default(self, mock_cache):
+        mock_cache._serializer.loads.return_value = None
+
+        assert await mock_cache.get(pytest.KEY, default=1) == 1
+
+    @pytest.mark.asyncio
+    async def test_get_negative_default(self, mock_cache):
+        mock_cache._serializer.loads.return_value = False
+
+        assert await mock_cache.get(pytest.KEY) is False
+
+    @pytest.mark.asyncio
     async def test_set(self, mock_cache):
         await mock_cache.set(pytest.KEY, "value", ttl=2)
 
