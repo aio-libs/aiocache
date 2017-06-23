@@ -178,7 +178,7 @@ class BaseCache:
         value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
 
         logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
-        return value or default
+        return value if value is not None else default
 
     async def _get(self, key, encoding, _conn=None):
         raise NotImplementedError()
