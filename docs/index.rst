@@ -60,15 +60,13 @@ You can also setup cache aliases like in Django settings:
 
 In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ you can check different use cases:
 
+- `Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
+- `Python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
+- `Custom serializer for compressing data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
+- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
+- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
 - `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
 - `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
-- `Configuring cache class default args <https://github.com/argaen/aiocache/blob/master/examples/config_default_cache.py>`_
-- `Simple LRU plugin for memory <https://github.com/argaen/aiocache/blob/master/examples/lru_plugin.py>`_
-- `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
-- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
-- `Storing a python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
-- `Creating a custom serializer class that compresses data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
-- `Integrations with frameworks like Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
 
 
 Contents

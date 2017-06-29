@@ -187,7 +187,6 @@ In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ 
 - `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
 - `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
 - `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
-- `Simple LRU plugin for memory <https://github.com/argaen/aiocache/blob/master/examples/lru_plugin.py>`_
 
 
 
