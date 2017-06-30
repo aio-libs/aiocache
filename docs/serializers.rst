@@ -13,33 +13,22 @@ To use a specific serializer::
 
 Currently the following are built in:
 
-- StringSerializer: stores data casting it to str. Won't return the same type if the data stored is not a str.
-- PickleSerializer: ideal for storing any Python object or keeping types.
-- JsonSerializer: ideal for storing in json format.
 
-In case the current serializers are not covering your needs, you can always define your custom serializer as shown in ``examples/serializer_class.py``:
+..  _nullserializer:
 
-.. literalinclude:: ../examples/serializer_class.py
-  :language: python
-  :linenos:
-
-You can also use marshmallow as your serializer (``examples/marshmallow_serializer_class.py``):
-
-.. literalinclude:: ../examples/marshmallow_serializer_class.py
-  :language: python
-  :linenos:
+NullSerializer
+--------------
+.. autoclass:: aiocache.serializers.NullSerializer
+  :members:
 
 
-By default cache backends assume they are working with ``str`` types. If your custom implementation transform data to bytes, you will need to set the class attribute ``encoding`` to ``None``.
-
-..  _defaultserializer:
+..  _stringserializer:
 
 StringSerializer
 ----------------
 
 .. autoclass:: aiocache.serializers.StringSerializer
   :members:
-  :undoc-members: serialize, deserialize
 
 ..  _pickleserializer:
 
@@ -56,3 +45,18 @@ JsonSerializer
 
 .. autoclass:: aiocache.serializers.JsonSerializer
   :members:
+
+
+In case the current serializers are not covering your needs, you can always define your custom serializer as shown in ``examples/serializer_class.py``:
+
+.. literalinclude:: ../examples/serializer_class.py
+  :language: python
+  :linenos:
+
+You can also use marshmallow as your serializer (``examples/marshmallow_serializer_class.py``):
+
+.. literalinclude:: ../examples/marshmallow_serializer_class.py
+  :language: python
+  :linenos:
+
+By default cache backends assume they are working with ``str`` types. If your custom implementation transform data to bytes, you will need to set the class attribute ``encoding`` to ``None``.
