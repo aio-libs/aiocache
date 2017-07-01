@@ -61,7 +61,7 @@ class API:
     def plugins(cls, func):
         @functools.wraps(func)
         async def _plugins(self, *args, **kwargs):
-            start = time.time()
+            start = time.monotonic()
             for plugin in self.plugins:
                 await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
 
@@ -70,7 +70,7 @@ class API:
             for plugin in self.plugins:
                 await getattr(
                     plugin, "post_{}".format(func.__name__))(
-                        self, *args, took=time.time() - start, ret=ret, **kwargs)
+                        self, *args, took=time.monotonic() - start, ret=ret, **kwargs)
             return ret
 
         return _plugins
@@ -142,13 +142,13 @@ class BaseCache:
             - ValueError if key already exists
             - :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key, namespace=namespace)
 
         await self._add(ns_key, dumps(value), ttl, _conn=_conn)
 
-        logger.debug("ADD %s %s (%.4f)s", ns_key, True, time.time() - start)
+        logger.debug("ADD %s %s (%.4f)s", ns_key, True, time.monotonic() - start)
         return True
 
     async def _add(self, key, value, ttl, _conn=None):
@@ -171,13 +171,13 @@ class BaseCache:
         :returns: obj loaded
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         loads = loads_fn or self._serializer.loads
         ns_key = self._build_key(key, namespace=namespace)
 
         value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
 
-        logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.time() - start)
+        logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.monotonic() - start)
         return value if value is not None else default
 
     async def _get(self, key, encoding, _conn=None):
@@ -199,7 +199,7 @@ class BaseCache:
         :returns: list of objs
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         loads = loads_fn or self._serializer.loads
 
         ns_keys = [self._build_key(key, namespace=namespace) for key in keys]
@@ -210,7 +210,7 @@ class BaseCache:
             "MULTI_GET %s %d (%.4f)s",
             ns_keys,
             len([value for value in values if value is not None]),
-            time.time() - start)
+            time.monotonic() - start)
         return values
 
     async def _multi_get(self, keys, encoding, _conn=None):
@@ -237,13 +237,13 @@ class BaseCache:
         :returns: True if the value was set
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self._build_key(key, namespace=namespace)
 
         res = await self._set(ns_key, dumps(value), ttl=ttl, _cas_token=_cas_token, _conn=_conn)
 
-        logger.debug("SET %s %d (%.4f)s", ns_key, True, time.time() - start)
+        logger.debug("SET %s %d (%.4f)s", ns_key, True, time.monotonic() - start)
         return res
 
     async def _set(self, key, value, ttl, _cas_token=None, _conn=None):
@@ -268,7 +268,7 @@ class BaseCache:
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
 
         tmp_pairs = []
@@ -281,7 +281,7 @@ class BaseCache:
             "MULTI_SET %s %d (%.4f)s",
             [key for key, value in tmp_pairs],
             len(pairs),
-            time.time() - start)
+            time.monotonic() - start)
         return True
 
     async def _multi_set(self, pairs, ttl, _conn=None):
@@ -302,10 +302,10 @@ class BaseCache:
         :returns: int number of deleted keys
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         ns_key = self._build_key(key, namespace=namespace)
         ret = await self._delete(ns_key, _conn=_conn)
-        logger.debug("DELETE %s %d (%.4f)s", ns_key, ret, time.time() - start)
+        logger.debug("DELETE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
     async def _delete(self, key, _conn=None):
@@ -326,10 +326,10 @@ class BaseCache:
         :returns: True if key exists otherwise False
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         ns_key = self._build_key(key, namespace=namespace)
         ret = await self._exists(ns_key, _conn=_conn)
-        logger.debug("EXISTS %s %d (%.4f)s", ns_key, ret, time.time() - start)
+        logger.debug("EXISTS %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
     async def _exists(self, key, _conn=None):
@@ -353,10 +353,10 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         :raises: :class:`TypeError` if value is not incrementable
         """
-        start = time.time()
+        start = time.monotonic()
         ns_key = self._build_key(key, namespace=namespace)
         ret = await self._increment(ns_key, delta, _conn=_conn)
-        logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.time() - start)
+        logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
     async def _increment(self, key, delta, _conn=None):
@@ -376,11 +376,12 @@ class BaseCache:
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
         :returns: True if set, False if key is not found
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         ns_key = self._build_key(key, namespace=namespace)
         ret = await self._expire(ns_key, ttl, _conn=_conn)
-        logger.debug("EXPIRE %s %d (%.4f)s", ns_key, ret, time.time() - start)
+        logger.debug("EXPIRE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
     async def _expire(self, key, ttl, _conn=None):
@@ -401,9 +402,9 @@ class BaseCache:
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         ret = await self._clear(namespace, _conn=_conn)
-        logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.time() - start)
+        logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.monotonic() - start)
         return ret
 
     async def _clear(self, namespace, _conn=None):
@@ -427,10 +428,10 @@ class BaseCache:
         :returns: whatever the underlying client returns
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         ret = await self._raw(
             command, *args, encoding=self.serializer.encoding, _conn=_conn, **kwargs)
-        logger.debug("%s (%.4f)s", command, time.time() - start)
+        logger.debug("%s (%.4f)s", command, time.monotonic() - start)
         return ret
 
     async def _raw(self, command, *args, **kwargs):
@@ -445,9 +446,9 @@ class BaseCache:
 
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
-        start = time.time()
+        start = time.monotonic()
         ret = await self._close(*args, _conn=_conn, **kwargs)
-        logger.debug("CLOSE (%.4f)s", time.time() - start)
+        logger.debug("CLOSE (%.4f)s", time.monotonic() - start)
         return ret
 
     async def _close(self, *args, **kwargs):
