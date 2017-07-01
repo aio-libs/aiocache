@@ -1,5 +1,9 @@
 ..  _locking:
 
+.. WARNING::
+  This was added in version 0.6.2 and the API is new. This means its open to breaking changes in future versions until the API is considered stable.
+
+
 Locking
 =======
 
