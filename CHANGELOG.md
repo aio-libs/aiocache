@@ -1,6 +1,32 @@
 # Changelog
 
 
+## 0.7.0 (2017-07-01)
+
+* Upgrade to aioredis 0.3.3. - Manuel Miranda
+
+* Get CMD now returns values that evaluate to False correctly [#282](https://github.com/argaen/aiocache/issues/282) - Manuel Miranda
+
+* New locks public API exposed [#279](https://github.com/argaen/aiocache/issues/279) - Manuel Miranda
+  _Users can now use aiocache.lock.RedLock and
+aiocache.lock.OptimisticLock_
+
+* Memory now uses new NullSerializer [#273](https://github.com/argaen/aiocache/issues/273) - Manuel Miranda
+  _Memory is a special case and doesn't need a serializer  because
+anything can be stored in memory. Created a new  NullSerializer that
+does nothing which is the default  that SimpleMemoryCache will use
+now._
+
+* Multi_cached can use args for key_from_attr [#271](https://github.com/argaen/aiocache/issues/271) - Manuel Miranda
+  _before only params defined in kwargs where working due to the
+behavior defined in _get_args_dict function. This has now been  fixed
+and it behaves as expected._
+
+* Removed cached key_from_attr [#274](https://github.com/argaen/aiocache/issues/274) - Manuel Miranda
+  _To reproduce the same behavior, use the new `key_builder` attr_
+
+* Removed settings module. - Manuel Miranda
+
 ## 0.6.1 (2017-06-12)
 
 #### Other
