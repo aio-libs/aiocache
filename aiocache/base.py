@@ -67,10 +67,11 @@ class API:
 
             ret = await func(self, *args, **kwargs)
 
+            end = time.monotonic()
             for plugin in self.plugins:
                 await getattr(
                     plugin, "post_{}".format(func.__name__))(
-                        self, *args, took=time.monotonic() - start, ret=ret, **kwargs)
+                        self, *args, took=end - start, ret=ret, **kwargs)
             return ret
 
         return _plugins
