@@ -11,7 +11,7 @@ marshmallow==2.13.5
 git+https://github.com/MartiusWeb/asynctest@async_magic
 pystache==0.5.4
 
-aiohttp==2.2.0
+aiohttp==2.2.1
 tornado==4.5.1
 sanic==0.5.4
 
