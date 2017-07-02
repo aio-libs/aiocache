@@ -44,8 +44,8 @@ class RedisBackend:
     pools = {}
 
     def __init__(
-            self, endpoint="127.0.0.1", port=6379, db=0, password=None,
-            pool_min_size=1, pool_max_size=10, loop=None, **kwargs):
+            self, endpoint: str="127.0.0.1", port: int=6379, db: int=0, password: str=None,
+            pool_min_size: int=1, pool_max_size: int=10, loop=None, **kwargs) -> None:
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
@@ -66,19 +66,19 @@ class RedisBackend:
         self._pool.release(_conn)
 
     @conn
-    async def _get(self, key, encoding="utf-8", _conn=None):
+    async def _get(self, key: str, encoding: str="utf-8", _conn=None):
         return await _conn.get(key, encoding=encoding)
 
     @conn
-    async def _gets(self, key, encoding="utf-8", _conn=None):
+    async def _gets(self, key: str, encoding: str="utf-8", _conn=None):
         return await self._get(key, encoding=encoding, _conn=_conn)
 
     @conn
-    async def _multi_get(self, keys, encoding="utf-8", _conn=None):
+    async def _multi_get(self, keys, encoding: str="utf-8", _conn=None):
         return await _conn.mget(*keys, encoding=encoding)
 
     @conn
-    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+    async def _set(self, key: str, value, ttl=None, _cas_token=None, _conn=None):
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         if ttl is None:
@@ -86,7 +86,7 @@ class RedisBackend:
         return await _conn.setex(key, ttl, value)
 
     @conn
-    async def _cas(self, key, value, token, ttl=None, _conn=None):
+    async def _cas(self, key: str, value, token, ttl=None, _conn=None):
         args = [value, token]
         if ttl is not None:
             if isinstance(ttl, float):
@@ -122,7 +122,7 @@ class RedisBackend:
         await redis.execute()
 
     @conn
-    async def _add(self, key, value, ttl=None, _conn=None):
+    async def _add(self, key: str, value, ttl=None, _conn=None):
         expx = {"expire": ttl}
         if isinstance(ttl, float):
             expx = {"pexpire": int(ttl * 1000)}
@@ -133,29 +133,29 @@ class RedisBackend:
         return was_set
 
     @conn
-    async def _exists(self, key, _conn=None):
+    async def _exists(self, key: str, _conn=None):
         exists = await _conn.exists(key)
         return True if exists > 0 else False
 
     @conn
-    async def _increment(self, key, delta, _conn=None):
+    async def _increment(self, key: str, delta: int, _conn=None):
         try:
             return await _conn.incrby(key, delta)
         except aioredis.errors.ReplyError:
             raise TypeError("Value is not an integer") from None
 
     @conn
-    async def _expire(self, key, ttl, _conn=None):
+    async def _expire(self, key: str, ttl, _conn=None):
         if ttl == 0:
             return await _conn.persist(key)
         return await _conn.expire(key, ttl)
 
     @conn
-    async def _delete(self, key, _conn=None):
+    async def _delete(self, key: str, _conn=None):
         return await _conn.delete(key)
 
     @conn
-    async def _clear(self, namespace=None, _conn=None):
+    async def _clear(self, namespace: str=None, _conn=None):
         if namespace:
             keys = await _conn.keys("{}:*".format(namespace))
             await _conn.delete(*keys)
@@ -164,12 +164,12 @@ class RedisBackend:
         return True
 
     @conn
-    async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
+    async def _raw(self, command: str, *args, encoding: str="utf-8", _conn=None, **kwargs):
         if command in ["get", "mget"]:
             kwargs["encoding"] = encoding
         return await getattr(_conn, command)(*args, **kwargs)
 
-    async def _redlock_release(self, key, value):
+    async def _redlock_release(self, key: str, value):
         return await self._raw(
             "eval",
             self.RELEASE_SCRIPT,
@@ -216,11 +216,11 @@ class RedisCache(RedisBackend, BaseCache):
     :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
     :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
     """
-    def __init__(self, serializer=None, **kwargs):
+    def __init__(self, serializer=None, **kwargs) -> None:
         super().__init__(**kwargs)
         self.serializer = serializer or JsonSerializer()
 
-    def _build_key(self, key, namespace=None):
+    def _build_key(self, key: str, namespace: str=None):
         if namespace is not None:
             return "{}{}{}".format(namespace, ":" if namespace else "", key)
         if self.namespace is not None:

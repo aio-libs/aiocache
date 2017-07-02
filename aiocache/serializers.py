@@ -1,3 +1,5 @@
+from typing import Any
+
 from aiocache.log import logger
 
 
@@ -28,14 +30,14 @@ class NullSerializer:
     encoding = 'utf-8'
 
     @classmethod
-    def dumps(cls, value):
+    def dumps(cls, value: Any) -> Any:
         """
         Returns the same value
         """
         return value
 
     @classmethod
-    def loads(cls, value):
+    def loads(cls, value: Any) -> Any:
         """
         Returns the same value
         """
@@ -55,79 +57,62 @@ class StringSerializer:
     """
     encoding = 'utf-8'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @classmethod
-    def dumps(cls, value):
+    def dumps(cls, value: Any) -> str:
         """
         Serialize the received value casting it to str.
-
-        :param value: obj Anything support cast to str
-        :returns: str
         """
         return str(value)
 
     @classmethod
-    def loads(cls, value):
+    def loads(cls, value: Any) -> str:
         """
         Returns value back without transformations
         """
         return value
 
 
-class PickleSerializer(StringSerializer):
+class PickleSerializer:
     """
     Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
     """
     encoding = None
 
     @classmethod
-    def dumps(cls, value):
+    def dumps(cls, value: Any) -> bytes:
         """
         Serialize the received value using ``pickle.dumps``.
-
-        :param value: obj
-        :returns: bytes
         """
         return pickle.dumps(value)
 
     @classmethod
-    def loads(cls, value):
+    def loads(cls, value: bytes) -> Any:
         """
         Deserialize value using ``pickle.loads``.
-
-        :param value: bytes
-        :returns: obj
         """
         if value is None:
             return None
         return pickle.loads(value)
 
 
-class JsonSerializer(StringSerializer):
+class JsonSerializer:
     """
     Transform data to json string with json.dumps and json.loads to retrieve it back. Check
     https://docs.python.org/3/library/json.html#py-to-json-table for how types are converted.
     """
+    encoding = 'utf-8'
 
     @classmethod
-    def dumps(cls, value):
+    def dumps(cls, value: dict) -> str:
         """
         Serialize the received value using ``json.dumps``.
-
-        :param value: dict
-        :returns: str
         """
         return json.dumps(value)
 
     @classmethod
-    def loads(cls, value):
+    def loads(cls, value: str) -> Any:
         """
         Deserialize value using ``json.loads``.
-
-        :param value: str
-        :returns: output of ``json.loads``.
         """
         if value is None:
             return None

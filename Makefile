@@ -10,6 +10,9 @@ syntax:
 pylint:
 	pylint --disable=C0111 aiocache
 
+types:
+	mypy aiocache --disallow-untyped-defs
+
 ut:
 	pytest --cov-report term-missing --cov=aiocache -sv tests/ut
 

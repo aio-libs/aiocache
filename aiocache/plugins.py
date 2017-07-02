@@ -2,6 +2,7 @@
 This module implements different plugins you can attach to your cache instance. They
 are coded in a collaborative so you can use multiple inheritance.
 """
+from typing import Awaitable, Sequence
 
 from aiocache.base import API
 
@@ -9,7 +10,7 @@ from aiocache.base import API
 class BasePlugin:
 
     @classmethod
-    def add_hook(cls, func, hooks):
+    def add_hook(cls, func: Awaitable, hooks: Sequence[str]) -> None:
         for hook in hooks:
             setattr(cls, hook, func)
 
@@ -31,7 +32,7 @@ class TimingPlugin(BasePlugin):
     """
 
     @classmethod
-    def save_time(cls, method):
+    def save_time(cls, method: str) -> Awaitable:
 
         async def do_save_time(self, client, *args, took=0, **kwargs):
             if not hasattr(client, "profiling"):
@@ -64,7 +65,7 @@ class HitMissRatioPlugin(BasePlugin):
     you can do ``cache.hit_miss_ratio['hit_ratio']``. It also provides the "total" and "hits"
     keys.
     """
-    async def post_get(self, client, key, took=0, ret=None):
+    async def post_get(self, client, key: str, took: float = 0, ret=None) -> None:
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
             client.hit_miss_ratio["total"] = 0
@@ -77,7 +78,7 @@ class HitMissRatioPlugin(BasePlugin):
         client.hit_miss_ratio['hit_ratio'] = \
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
 
-    async def post_multi_get(self, client, keys, took=0, ret=None):
+    async def post_multi_get(self, client, keys: Sequence[str], took: float = 0, ret=None) -> None:
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
             client.hit_miss_ratio["total"] = 0

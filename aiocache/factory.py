@@ -1,7 +1,11 @@
 from copy import deepcopy
 
+from typing import Type
 
-def _class_from_string(class_path):
+from aiocache.base import BaseCache
+
+
+def _class_from_string(class_path: str):
     class_name = class_path.split('.')[-1]
     module_name = class_path.rstrip(class_name).rstrip(".")
     return getattr(__import__(module_name, fromlist=[class_name]), class_name)
@@ -40,14 +44,14 @@ class CacheHandler:
         }
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._caches = {}
 
-    def get(self, alias):
+    def get(self, alias: str) -> Type[BaseCache]:
         """
         Retrieve cache identified by alias. Will return always the same instance
 
-        :param alias: str cache alias
+        :param alias: cache alias
         :return: cache instance
         """
         try:
@@ -60,12 +64,12 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias=None, cache=None, **kwargs):
+    def create(self, alias: str=None, cache=None, **kwargs):
         """
         Create a new cache. Either alias or cache params are required. You can use
         kwargs to pass extra parameters to configure the cache.
 
-        :param alias: str alias to pull configuration from
+        :param alias: alias to pull configuration from
         :param cache: str or class cache class to use for creating the
             new cache (when no alias is used)
         :return: New cache instance
@@ -79,7 +83,7 @@ class CacheHandler:
         cache = _create_cache(**{**config, **kwargs})
         return cache
 
-    def get_alias_config(self, alias):
+    def get_alias_config(self, alias: str) -> dict:
         config = self.get_config()
         if alias not in config:
             raise KeyError(
@@ -88,13 +92,13 @@ class CacheHandler:
 
         return config[alias]
 
-    def get_config(self):
+    def get_config(self) -> dict:
         """
         Return copy of current stored config
         """
         return deepcopy(self._config)
 
-    def set_config(self, config):
+    def set_config(self, config: dict) -> None:
         """
         Set (override) the default config for cache aliases from a dict-like structure.
         The structure is the following::

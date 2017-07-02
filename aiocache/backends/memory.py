@@ -12,16 +12,16 @@ class SimpleMemoryBackend:
     _cache = {}
     _handlers = {}
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    async def _get(self, key, encoding="utf-8", _conn=None):
+    async def _get(self, key, encoding: str="utf-8", _conn=None):
         return SimpleMemoryBackend._cache.get(key)
 
-    async def _gets(self, key, encoding="utf-8", _conn=None):
+    async def _gets(self, key, encoding: str="utf-8", _conn=None):
         return await self._get(key, encoding=encoding, _conn=_conn)
 
-    async def _multi_get(self, keys, encoding="utf-8", _conn=None):
+    async def _multi_get(self, keys, encoding: str="utf-8", _conn=None):
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
@@ -49,7 +49,7 @@ class SimpleMemoryBackend:
     async def _exists(self, key, _conn=None):
         return key in SimpleMemoryBackend._cache
 
-    async def _increment(self, key, delta, _conn=None):
+    async def _increment(self, key, delta: int, _conn=None):
         if key not in SimpleMemoryBackend._cache:
             SimpleMemoryBackend._cache[key] = delta
         else:
@@ -84,7 +84,7 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._handlers = {}
         return True
 
-    async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
+    async def _raw(self, command, *args, encoding: str="utf-8", _conn=None, **kwargs):
         return getattr(SimpleMemoryBackend._cache, command)(*args, **kwargs)
 
     async def _redlock_release(self, key, value):
@@ -119,6 +119,5 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """
-    def __init__(self, serializer=None, **kwargs):
+    def __init__(self, serializer=None, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.serializer = serializer or NullSerializer()

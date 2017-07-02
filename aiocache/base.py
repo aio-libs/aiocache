@@ -3,6 +3,8 @@ import time
 import functools
 import asyncio
 
+from typing import Type, Awaitable, Any, Union, Callable
+
 from aiocache import serializers
 from aiocache.log import logger
 
@@ -12,16 +14,16 @@ class API:
     CMDS = set()
 
     @classmethod
-    def register(cls, func):
+    def register(cls, func: Awaitable[Any]) -> None:
         API.CMDS.add(func)
         return func
 
     @classmethod
-    def unregister(cls, func):
+    def unregister(cls, func: Awaitable[Any]) -> None:
         API.CMDS.discard(func)
 
     @classmethod
-    def timeout(cls, func):
+    def timeout(cls, func: Awaitable[Any]) -> None:
         """
         This decorator sets a maximum timeout for a coroutine to execute. The timeout can be both
         set in the ``self.timeout`` attribute or in the ``timeout`` kwarg of the function call.
@@ -42,7 +44,7 @@ class API:
         return _timeout
 
     @classmethod
-    def aiocache_enabled(cls, fake_return=None):
+    def aiocache_enabled(cls, fake_return: Any=None) -> None:
         """
         Use this decorator to be able to fake the return of the function by setting the
         ``AIOCACHE_DISABLE`` environment variable
@@ -58,7 +60,7 @@ class API:
         return enabled
 
     @classmethod
-    def plugins(cls, func):
+    def plugins(cls, func: Awaitable[Any]) -> None:
         @functools.wraps(func)
         async def _plugins(self, *args, **kwargs):
             start = time.monotonic()
@@ -93,23 +95,23 @@ class BaseCache:
     """
 
     def __init__(
-            self, serializer=None, plugins=None,
-            namespace=None, timeout=5):
+            self, serializer: Type[serializers.NullSerializer]=None, plugins=None,
+            namespace: str=None, timeout=5) -> None:
         self.timeout = timeout
         self.namespace = namespace
 
         self._serializer = None
-        self.serializer = serializer or serializers.StringSerializer()
+        self.serializer = serializer or serializers.NullSerializer()
 
         self._plugins = None
         self.plugins = plugins or []
 
     @property
-    def serializer(self):
+    def serializer(self) -> Type[serializers.NullSerializer]:
         return self._serializer
 
     @serializer.setter
-    def serializer(self, value):
+    def serializer(self, value: Type[serializers.NullSerializer]):
         self._serializer = value
 
     @property
@@ -124,7 +126,9 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def add(self, key, value, ttl=None, dumps_fn=None, namespace=None, _conn=None):
+    async def add(
+            self, key: str, value: Any, ttl: Union[int, float]=None,
+            dumps_fn=None, namespace=None, _conn=None):
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.

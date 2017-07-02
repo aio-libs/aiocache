@@ -2,7 +2,7 @@ import inspect
 import functools
 
 from aiocache.log import logger
-from aiocache import SimpleMemoryCache, caches
+from aiocache.base import SimpleMemoryCache, caches
 from aiocache.lock import RedLock
 
 
