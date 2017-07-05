@@ -15,6 +15,6 @@ aiohttp==2.2.0
 tornado==4.5.1
 sanic==0.5.4
 
-sphinx-autobuild==0.6.0
+sphinx-autobuild==0.7.0
 sphinx-rtd-theme==0.2.4
 gitchangelog==3.0.3
