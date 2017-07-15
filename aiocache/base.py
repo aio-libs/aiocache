@@ -1,10 +1,13 @@
 import os
 import time
 import functools
+import logging
 import asyncio
 
 from aiocache import serializers
-from aiocache.log import logger
+
+
+logger = logging.getLogger(__file__)
 
 
 class API:
