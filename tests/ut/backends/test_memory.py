@@ -10,7 +10,7 @@ from aiocache.backends.memory import SimpleMemoryBackend
 
 
 @pytest.fixture
-def memory(event_loop, mocker):
+def memory(mocker):
     SimpleMemoryBackend._handlers = {}
     SimpleMemoryBackend._cache = {}
     mocker.spy(SimpleMemoryBackend, "_cache")

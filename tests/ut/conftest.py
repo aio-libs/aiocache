@@ -72,12 +72,12 @@ def base_cache():
 
 
 @pytest.fixture
-def redis_cache(event_loop):
-    cache = RedisCache(loop=event_loop)
+def redis_cache():
+    cache = RedisCache()
     return cache
 
 
 @pytest.fixture
-def memcached_cache(event_loop):
-    cache = MemcachedCache(loop=event_loop)
+def memcached_cache():
+    cache = MemcachedCache()
     return cache

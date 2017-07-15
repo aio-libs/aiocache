@@ -10,8 +10,8 @@ from aiocache.backends.memcached import MemcachedBackend
 
 
 @pytest.fixture
-def memcached(event_loop):
-    memcached = MemcachedBackend(loop=event_loop)
+def memcached():
+    memcached = MemcachedBackend()
     memcached.client = MagicMock(spec=aiomcache.Client)
     yield memcached
 
