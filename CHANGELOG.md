@@ -1,6 +1,12 @@
 # Changelog
 
 
+## 0.7.1 (2017-07-15)
+
+
+* Remove explicit loop usages [#305](https://github.com/argaen/aiocache/issues/305) - Manuel Miranda
+
+* Remove bad logging configuration [#304](https://github.com/argaen/aiocache/issues/304) - Manuel Miranda
 ## 0.7.0 (2017-07-01)
 
 * Upgrade to aioredis 0.3.3. - Manuel Miranda
