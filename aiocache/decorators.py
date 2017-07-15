@@ -1,9 +1,12 @@
 import inspect
 import functools
+import logging
 
-from aiocache.log import logger
 from aiocache import SimpleMemoryCache, caches
 from aiocache.lock import RedLock
+
+
+logger = logging.getLogger(__file__)
 
 
 class cached:

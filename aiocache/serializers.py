@@ -1,13 +1,13 @@
-from aiocache.log import logger
+import logging
+import pickle
 
+logger = logging.getLogger(__file__)
 
 try:
     import ujson as json
 except ImportError:
     logger.warning("ujson module not found, usin json")
     import json
-
-import pickle
 
 
 class NullSerializer:
