@@ -54,7 +54,7 @@ class RedisBackend:
         self.pool_min_size = pool_min_size
         self.pool_max_size = pool_max_size
         self._pool_lock = asyncio.Lock()
-        self._loop = loop or asyncio.get_event_loop()
+        self._loop = loop
         self._pool = None
 
     async def acquire_conn(self):

@@ -60,7 +60,7 @@ class TestRedLock:
         assert await lock._acquire() is None
 
     @pytest.mark.asyncio
-    async def test_multiple_locks_lock(self, mock_cache, lock, event_loop):
+    async def test_multiple_locks_lock(self, mock_cache, lock):
         lock_1 = RedLock(mock_cache, pytest.KEY, 20)
         lock_2 = RedLock(mock_cache, pytest.KEY, 20)
         mock_cache._add.side_effect = [True, ValueError(), ValueError()]

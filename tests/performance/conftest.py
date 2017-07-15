@@ -7,7 +7,7 @@ from aiocache.backends.redis import RedisBackend
 @pytest.fixture
 def redis_cache(event_loop):
     cache = RedisCache(
-        namespace="test", loop=event_loop, pool_max_size=1)
+        namespace="test", pool_max_size=1)
     yield cache
 
     for _, pool in RedisBackend.pools.items():
@@ -16,6 +16,6 @@ def redis_cache(event_loop):
 
 
 @pytest.fixture
-def memcached_cache(event_loop):
-    cache = MemcachedCache(namespace="test", loop=event_loop, pool_size=1)
+def memcached_cache():
+    cache = MemcachedCache(namespace="test", pool_size=1)
     yield cache

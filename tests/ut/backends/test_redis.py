@@ -59,7 +59,7 @@ class FakePool:
 
 
 @pytest.fixture
-def redis(event_loop):
+def redis():
     redis = RedisBackend()
     pool = FakePool()
     redis._connect = pool
