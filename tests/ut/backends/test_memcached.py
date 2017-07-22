@@ -76,8 +76,9 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_set_float_ttl(self, memcached):
         memcached.client.set.side_effect = aiomcache.exceptions.ValidationException("msg")
-        with pytest.raises(TypeError):
-            await memcached._set(pytest.KEY, "value", ttl=0.1)
+        with pytest.raises(TypeError) as exc_info:
+            await memcached._set(pytest.KEY, 'value', ttl=0.1)
+        assert str(exc_info.value) == 'aiomcache error: msg'
 
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, memcached):
@@ -132,8 +133,9 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_multi_set_float_ttl(self, memcached):
         memcached.client.set.side_effect = aiomcache.exceptions.ValidationException("msg")
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exc_info:
             await memcached._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=0.1)
+        assert str(exc_info.value) == 'aiomcache error: msg'
 
     @pytest.mark.asyncio
     async def test_add(self, memcached):
@@ -152,8 +154,9 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_add_float_ttl(self, memcached):
         memcached.client.add.side_effect = aiomcache.exceptions.ValidationException("msg")
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError) as exc_info:
             await memcached._add(pytest.KEY, "value", 0.1)
+        assert str(exc_info.value) == 'aiomcache error: msg'
 
     @pytest.mark.asyncio
     async def test_exists(self, memcached):
@@ -186,9 +189,10 @@ class TestMemcachedBackend:
 
     @pytest.mark.asyncio
     async def test_increment_typerror(self, memcached):
-        memcached.client.incr.side_effect = aiomcache.exceptions.ClientException("")
-        with pytest.raises(TypeError):
+        memcached.client.incr.side_effect = aiomcache.exceptions.ClientException('msg')
+        with pytest.raises(TypeError) as exc_info:
             await memcached._increment(pytest.KEY, 2)
+        assert str(exc_info.value) == 'aiomcache error: msg'
 
     @pytest.mark.asyncio
     async def test_expire(self, memcached):

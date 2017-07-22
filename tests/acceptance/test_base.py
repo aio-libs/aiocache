@@ -187,15 +187,23 @@ class TestMemcachedCache:
             MemcachedCache(random_attr="wtf")
 
     @pytest.mark.asyncio
+    async def test_set_too_long_key(self, memcached_cache):
+        with pytest.raises(TypeError) as exc_info:
+            await memcached_cache.set('a' * 2000, 'value')
+        assert str(exc_info.value).startswith('aiomcache error: invalid key')
+
+    @pytest.mark.asyncio
     async def test_set_float_ttl_fails(self, memcached_cache):
-        with pytest.raises(TypeError):
-            await memcached_cache.set(pytest.KEY, "value", ttl=0.1)
+        with pytest.raises(TypeError) as exc_info:
+            await memcached_cache.set(pytest.KEY, 'value', ttl=0.1)
+        assert str(exc_info.value) == 'aiomcache error: exptime not int: 0.1'
 
     @pytest.mark.asyncio
     async def test_multi_set_float_ttl(self, memcached_cache):
-        with pytest.raises(TypeError):
-            pairs = [(pytest.KEY, b"value"), [pytest.KEY_1, b"random_value"]]
+        with pytest.raises(TypeError) as exc_info:
+            pairs = [(pytest.KEY, b'value'), [pytest.KEY_1, b'random_value']]
             assert await memcached_cache.multi_set(pairs, ttl=0.1) is True
+        assert str(exc_info.value) == 'aiomcache error: exptime not int: 0.1'
 
     @pytest.mark.asyncio
     async def test_raw(self, memcached_cache):
