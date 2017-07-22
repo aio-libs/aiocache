@@ -44,8 +44,8 @@ class MemcachedBackend:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         try:
             return await self.client.set(key, value, exptime=ttl or 0)
-        except aiomcache.exceptions.ValidationException:
-            raise TypeError("memcached doesn't support float ttl")
+        except aiomcache.exceptions.ValidationException as e:
+            raise TypeError('aiomcache error: {}'.format(str(e)))
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         return await self.client.cas(key, value, token, exptime=ttl or 0)
@@ -58,8 +58,8 @@ class MemcachedBackend:
 
         try:
             await asyncio.gather(*tasks)
-        except aiomcache.exceptions.ValidationException:
-            raise TypeError("memcached doesn't support float ttl")
+        except aiomcache.exceptions.ValidationException as e:
+            raise TypeError('aiomcache error: {}'.format(str(e)))
 
         return True
 
@@ -67,8 +67,8 @@ class MemcachedBackend:
         value = str.encode(value) if isinstance(value, str) else value
         try:
             ret = await self.client.add(key, value, exptime=ttl or 0)
-        except aiomcache.exceptions.ValidationException:
-            raise TypeError("memcached doesn't support float ttl")
+        except aiomcache.exceptions.ValidationException as e:
+            raise TypeError('aiomcache error: {}'.format(str(e)))
         if not ret:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
@@ -89,7 +89,7 @@ class MemcachedBackend:
             if "NOT_FOUND" in str(e):
                 await self._set(key, str(delta).encode())
             else:
-                raise TypeError("Value is not an integer") from None
+                raise TypeError('aiomcache error: {}'.format(str(e)))
 
         return incremented or delta
 

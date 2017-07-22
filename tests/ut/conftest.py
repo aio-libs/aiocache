@@ -26,11 +26,6 @@ def reset_caches():
     })
 
 
-@pytest.fixture(autouse=True)
-def disable_logs(mocker):
-    mocker.patch("logging.getLogger")
-
-
 class MockCache(BaseCache):
 
     def __init__(self):
