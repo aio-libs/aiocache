@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 0.7.2 (2017-07-23)
+
+#### Other
+
+* Add key_builder param to caches to customize keys [#310](https://github.com/argaen/aiocache/issues/310) - Manuel Miranda
+
+* Propagate correct message on memcached connector error [#309](https://github.com/argaen/aiocache/issues/309) - Manuel Miranda
+
+
+
 ## 0.7.1 (2017-07-15)
 
 
