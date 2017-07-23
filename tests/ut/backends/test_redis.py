@@ -393,7 +393,7 @@ class TestRedisCache:
         ["my_ns", "my_ns:" + pytest.KEY],)
     )
     def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
-        assert redis_cache._build_key(pytest.KEY, namespace=namespace) == expected
+        assert redis_cache.build_key(pytest.KEY, namespace=namespace) == expected
 
     def test_build_key_no_namespace(self, redis_cache):
-        assert redis_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY
+        assert redis_cache.build_key(pytest.KEY, namespace=None) == pytest.KEY
