@@ -266,10 +266,10 @@ class TestMemcachedCache:
         ["my_ns", "my_ns" + pytest.KEY],)
     )
     def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
-        assert memcached_cache._build_key(pytest.KEY, namespace=namespace) == expected.encode()
+        assert memcached_cache.build_key(pytest.KEY, namespace=namespace) == expected.encode()
 
     def test_build_key_no_namespace(self, memcached_cache):
-        assert memcached_cache._build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
+        assert memcached_cache.build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
 
     def test_build_key_no_spaces(self, memcached_cache):
-        assert memcached_cache._build_key('hello world') == b'hello_world'
+        assert memcached_cache.build_key('hello world') == b'hello_world'

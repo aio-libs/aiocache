@@ -68,13 +68,13 @@ class TestCachedStampede:
         decorator = cached_stampede(ttl=10, lease=2)
 
         await asyncio.gather(
-            decorator(stub)(1),
-            decorator(stub)(1))
+            decorator(stub)(0.5),
+            decorator(stub)(0.5))
 
-        cache.get.assert_called_with('acceptance.test_decoratorsstub(1,)[]')
+        cache.get.assert_called_with('acceptance.test_decoratorsstub(0.5,)[]')
         assert cache.get.call_count == 4
         cache.set.assert_called_with(
-            'acceptance.test_decoratorsstub(1,)[]', mock.ANY, ttl=10)
+            'acceptance.test_decoratorsstub(0.5,)[]', mock.ANY, ttl=10)
         assert cache.set.call_count == 1
 
     @pytest.mark.asyncio

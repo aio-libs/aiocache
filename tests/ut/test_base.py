@@ -4,7 +4,7 @@ import asyncio
 
 from asynctest import patch, MagicMock, ANY, CoroutineMock
 
-from aiocache.base import API, _Conn
+from aiocache.base import API, _Conn, BaseCache
 
 
 class TestAPI:
@@ -225,7 +225,11 @@ class TestBaseCache:
         ["my_ns", "my_ns" + pytest.KEY],)
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
-        assert base_cache._build_key(pytest.KEY, namespace=namespace) == expected
+        assert base_cache.build_key(pytest.KEY, namespace=namespace) == expected
+
+    def test_alt_build_key(self):
+        cache = BaseCache(key_builder=lambda key, namespace: 'x')
+        assert cache.build_key(pytest.KEY, 'namespace') == 'x'
 
 
 class TestCache:
