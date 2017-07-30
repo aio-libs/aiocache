@@ -1,5 +1,6 @@
 -r requirements.txt
 -e .
+
 flake8==3.4.1
 mypy==0.521
 pytest==3.1.3
