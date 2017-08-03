@@ -15,7 +15,7 @@ pystache==0.5.4
 
 aiohttp==2.2.3
 tornado==4.5.1
-sanic==0.5.4
+sanic==0.6.0
 
 sphinx-autobuild==0.7.1
 sphinx-rtd-theme==0.2.4
