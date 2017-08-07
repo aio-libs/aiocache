@@ -192,6 +192,11 @@ class TestBaseCache:
             await base_cache._expire(pytest.KEY, 0)
 
     @pytest.mark.asyncio
+    async def test_ttl(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache._ttl(pytest.KEY)
+
+    @pytest.mark.asyncio
     async def test_clear(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache._clear("namespace")

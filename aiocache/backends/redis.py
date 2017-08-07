@@ -151,6 +151,10 @@ class RedisBackend:
         return await _conn.expire(key, ttl)
 
     @conn
+    async def _ttl(self, key, _conn=None):
+        return await _conn.ttl(key)
+
+    @conn
     async def _delete(self, key, _conn=None):
         return await _conn.delete(key)
 
