@@ -273,6 +273,12 @@ class TestRedisBackend:
         pool.conn.expire.assert_called_with(pytest.KEY, 1)
 
     @pytest.mark.asyncio
+    async def test_ttl(self, redis):
+        cache, pool = redis
+        await cache._ttl(pytest.KEY)
+        pool.conn.ttl.assert_called_with(pytest.KEY)
+
+    @pytest.mark.asyncio
     async def test_increment(self, redis):
         cache, pool = redis
         await cache._increment(pytest.KEY, delta=2)
