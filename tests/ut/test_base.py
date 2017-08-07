@@ -192,6 +192,11 @@ class TestBaseCache:
             await base_cache._expire(pytest.KEY, 0)
 
     @pytest.mark.asyncio
+    async def test_ttl(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache._ttl(pytest.KEY)
+
+    @pytest.mark.asyncio
     async def test_clear(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache._clear("namespace")
@@ -397,6 +402,20 @@ class TestCache:
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_cache.expire(pytest.KEY, 0)
+
+    @pytest.mark.asyncio
+    async def test_ttl(self, mock_cache):
+        await mock_cache.ttl(pytest.KEY)
+        mock_cache._ttl.assert_called_with(mock_cache._build_key(pytest.KEY), _conn=ANY)
+        assert mock_cache.plugins[0].pre_ttl.call_count == 1
+        assert mock_cache.plugins[0].post_ttl.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_ttl_timeouts(self, mock_cache):
+        mock_cache._ttl = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_cache.ttl(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_clear(self, mock_cache):
