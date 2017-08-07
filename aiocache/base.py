@@ -395,6 +395,27 @@ class BaseCache:
         raise NotImplementedError()
 
     @API.register
+    @API.aiocache_enabled(fake_return=False)
+    @API.timeout
+    @API.plugins
+    async def ttl(self, key, namespace=None, _conn=None):
+        """
+        Get the ttl of the given key.
+
+        :param key: str key to get ttl
+        :param namespace: str alternative namespace to use
+        :returns: TTL of the given key
+        """
+        start = time.monotonic()
+        ns_key = self.build_key(key, namespace=namespace)
+        ret = await self._ttl(ns_key, _conn=_conn)
+        logger.debug("TTL %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
+        return ret
+
+    async def _ttl(self, key, namespace=None, _conn=None):
+        raise NotImplementedError()
+
+    @API.register
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins

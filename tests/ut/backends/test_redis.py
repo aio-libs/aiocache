@@ -23,6 +23,7 @@ class FakeRedisConn:
         self.exists = CoroutineMock()
         self.persist = CoroutineMock()
         self.expire = CoroutineMock()
+        self.ttl = CoroutineMock()
         self.delete = CoroutineMock()
         self.flushdb = CoroutineMock()
         self.eval = CoroutineMock()
@@ -271,6 +272,12 @@ class TestRedisBackend:
         cache, pool = redis
         await cache._expire(pytest.KEY, ttl=1)
         pool.conn.expire.assert_called_with(pytest.KEY, 1)
+
+    @pytest.mark.asyncio
+    async def test_ttl(self, redis):
+        cache, pool = redis
+        await cache._ttl(pytest.KEY)
+        pool.conn.ttl.assert_called_with(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_increment(self, redis):
