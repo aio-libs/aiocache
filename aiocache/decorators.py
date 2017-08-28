@@ -243,9 +243,11 @@ class multi_cached:
                 missing_keys.append(key)
             else:
                 partial[key] = value
-        kwargs[self.keys_from_attr] = missing_keys
         if values and None not in values:
             return partial
+
+        # update args or kwargs with missing_keys accordingly
+        kwargs[self.keys_from_attr] = missing_keys
 
         result = await f(*new_args, **kwargs)
         result.update(partial)
