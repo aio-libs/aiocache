@@ -4,7 +4,7 @@
 flake8==3.4.1
 mypy==0.521
 pytest==3.2.2
-pytest-asyncio==0.6.0
+pytest-asyncio==0.7.0
 pytest-cov==2.5.1
 pytest-mock==1.6.2
 codecov==2.0.9
