@@ -1,5 +1,4 @@
--r requirements.txt
--e .
+-e .[redis,memcached]
 
 flake8==3.4.1
 mypy==0.521

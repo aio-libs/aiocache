@@ -10,14 +10,10 @@ Welcome to aiocache's documentation!
 Installing
 ----------
 
-``pip install aiocache``
-
-If you don't need redis or memcached support, you can install as follows:
-
-.. code-block:: python
-
-    AIOCACHE_REDIS=no pip install aiocache       # Don't install redis client (aioredis)
-    AIOCACHE_MEMCACHED=no pip install aiocache   # Don't install memcached client (aiomcache)
+``pip install aiocache``                    # Memory only
+``pip install aiocache[redis]``             # Redis and Memory
+``pip install aiocache[memcached]``         # Memcached and Memory
+``pip install aiocache[redis,memcached]``   # All backends
 
 
 Usage
