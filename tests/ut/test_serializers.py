@@ -11,10 +11,11 @@ from aiocache.serializers import NullSerializer, StringSerializer, PickleSeriali
 
 Dummy = namedtuple("Dummy", "a, b")
 
+TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)]
+
 
 class TestNullSerializer:
-    @pytest.mark.parametrize("obj", [
-        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
         assert NullSerializer().dumps(obj) is obj
 
@@ -24,8 +25,7 @@ class TestNullSerializer:
 
 class TestStringSerializer:
 
-    @pytest.mark.parametrize("obj", [
-        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
         assert StringSerializer().dumps(obj) == str(obj)
 
@@ -35,8 +35,7 @@ class TestStringSerializer:
 
 class TestPickleSerializer:
 
-    @pytest.mark.parametrize("obj", [
-        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
         serializer = PickleSerializer()
         assert serializer.loads(serializer.dumps(obj)) == obj
@@ -61,8 +60,7 @@ class TestPickleSerializer:
 
 class TestJsonSerializer:
 
-    @pytest.mark.parametrize("obj", [
-        1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)])
+    @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
         assert JsonSerializer().dumps(obj) == json.dumps(obj)
 
