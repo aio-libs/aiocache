@@ -1,22 +1,23 @@
 language: python
+cache: pip
 python:
-- '3.5'
-- '3.6'
+  - '3.5'
+  - '3.6'
 before_install:
-- sudo apt-get install apache2-utils
+  - sudo apt-get install apache2-utils
 install:
-- pip install -r requirements-ci.txt
+  - pip install -r requirements-ci.txt
 script:
-- make syntax
-- python setup.py develop
-- pytest --cov-report term-missing --cov=aiocache -sv tests/ut
-- pytest -sv tests/acceptance
-- bash examples/run_all.sh
+  - make syntax
+  - python setup.py develop
+  - pytest --cov-report term-missing --cov=aiocache -sv tests/ut
+  - pytest -sv tests/acceptance
+  - bash examples/run_all.sh
 services:
-- redis-server
-- memcached
+  - redis-server
+  - memcached
 after_success:
-- codecov
+  - codecov
 deploy:
   provider: pypi
   user: blck
