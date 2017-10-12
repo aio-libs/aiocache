@@ -7,12 +7,18 @@ import aioredis
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
+def is_aioredis_before_major_one():
+    return aioredis.__version__.startswith('0.')
 
 def conn(func):
     @functools.wraps(func)
     async def wrapper(self, *args, _conn=None, **kwargs):
         if _conn is None:
-            with await self._connect() as _conn:
+            if is_aioredis_before_major_one():
+                with await self._connect() as _conn:
+                    return await func(self, *args, _conn=_conn, **kwargs)
+            else:
+                _conn = await self._connect()
                 return await func(self, *args, _conn=_conn, **kwargs)
 
         return await func(self, *args, _conn=_conn, **kwargs)
@@ -183,16 +189,26 @@ class RedisBackend:
     async def _connect(self):
         async with self._pool_lock:
             if self._pool is None:
-                self._pool = await aioredis.create_pool(
-                    (self.endpoint, self.port),
-                    db=self.db,
-                    password=self.password,
-                    loop=self._loop,
-                    encoding="utf-8",
-                    minsize=self.pool_min_size,
-                    maxsize=self.pool_max_size)
+                if is_aioredis_before_major_one():
+                    self._pool = await aioredis.create_pool(
+                        (self.endpoint, self.port),
+                        db=self.db,
+                        password=self.password,
+                        loop=self._loop,
+                        encoding="utf-8",
+                        minsize=self.pool_min_size,
+                        maxsize=self.pool_max_size)
+                else:
+                    self._pool = await aioredis.create_redis_pool(
+                        (self.endpoint, self.port),
+                        db=self.db,
+                        password=self.password,
+                        loop=self._loop,
+                        encoding="utf-8",
+                        minsize=self.pool_min_size,
+                        maxsize=self.pool_max_size)
 
-        return await self._pool
+            return await self._pool if is_aioredis_before_major_one() else self._pool
 
 
 class RedisCache(RedisBackend, BaseCache):
