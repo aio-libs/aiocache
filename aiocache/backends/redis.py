@@ -7,8 +7,10 @@ import aioredis
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
+
 def is_aioredis_before_major_one():
     return aioredis.__version__.startswith('0.')
+
 
 def conn(func):
     @functools.wraps(func)
@@ -190,23 +192,17 @@ class RedisBackend:
         async with self._pool_lock:
             if self._pool is None:
                 if is_aioredis_before_major_one():
-                    self._pool = await aioredis.create_pool(
-                        (self.endpoint, self.port),
-                        db=self.db,
-                        password=self.password,
-                        loop=self._loop,
-                        encoding="utf-8",
-                        minsize=self.pool_min_size,
-                        maxsize=self.pool_max_size)
+                    _create_pool = aioredis.create_pool
                 else:
-                    self._pool = await aioredis.create_redis_pool(
-                        (self.endpoint, self.port),
-                        db=self.db,
-                        password=self.password,
-                        loop=self._loop,
-                        encoding="utf-8",
-                        minsize=self.pool_min_size,
-                        maxsize=self.pool_max_size)
+                    _create_pool = aioredis.create_redis_pool
+
+                self._pool = await _create_pool((self.endpoint, self.port),
+                                                db=self.db,
+                                                password=self.password,
+                                                loop=self._loop,
+                                                encoding="utf-8",
+                                                minsize=self.pool_min_size,
+                                                maxsize=self.pool_max_size)
 
             return await self._pool if is_aioredis_before_major_one() else self._pool
 
