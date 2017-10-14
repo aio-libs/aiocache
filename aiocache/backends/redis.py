@@ -8,15 +8,14 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-def is_aioredis_before_major_one():
-    return aioredis.__version__.startswith('0.')
+is_aioredis_before_major_one = aioredis.__version__.startswith('0.')
 
 
 def conn(func):
     @functools.wraps(func)
     async def wrapper(self, *args, _conn=None, **kwargs):
         if _conn is None:
-            if is_aioredis_before_major_one():
+            if is_aioredis_before_major_one:
                 with await self._connect() as _conn:
                     return await func(self, *args, _conn=_conn, **kwargs)
             else:
@@ -191,7 +190,7 @@ class RedisBackend:
     async def _connect(self):
         async with self._pool_lock:
             if self._pool is None:
-                if is_aioredis_before_major_one():
+                if is_aioredis_before_major_one:
                     _create_pool = aioredis.create_pool
                 else:
                     _create_pool = aioredis.create_redis_pool
@@ -204,7 +203,7 @@ class RedisBackend:
                                                 minsize=self.pool_min_size,
                                                 maxsize=self.pool_max_size)
 
-            return await self._pool if is_aioredis_before_major_one() else self._pool
+            return await self._pool if is_aioredis_before_major_one else self._pool
 
 
 class RedisCache(RedisBackend, BaseCache):
