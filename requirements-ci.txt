@@ -1,7 +1,7 @@
 -e .[redis,memcached]
 
 flake8==3.4.1
-mypy==0.521
+mypy==0.530
 pytest==3.2.3
 pytest-asyncio==0.8.0
 pytest-cov==2.5.1
