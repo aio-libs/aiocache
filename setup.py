@@ -40,13 +40,16 @@ setup(
             'pytest-mock',
             'codecov',
             'marshmallow',
-            'asynctest',
             'mypy',
+            'asynctest==0',
 
             'sphinx',
             'sphinx-autobuild',
             'sphinx-rtd-theme',
             'gitchangelog',
         ]
-    }
+    },
+    dependency_links=[
+        'git+https://github.com/MartiusWeb/asynctest.git@async_magic#egg=asynctest-0'
+    ]
 )
