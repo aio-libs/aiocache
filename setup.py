@@ -31,6 +31,22 @@ setup(
     install_requires=None,
     extras_require={
         'redis': ['aioredis>=0.3.3,<1'],
-        'memcached': ['aiomcache>=0.5.2']
+        'memcached': ['aiomcache>=0.5.2'],
+        'dev': [
+            'flake8',
+            'pytest',
+            'pytest-asyncio',
+            'pytest-cov',
+            'pytest-mock',
+            'codecov',
+            'marshmallow',
+            'asynctest',
+            'mypy',
+
+            'sphinx',
+            'sphinx-autobuild',
+            'sphinx-rtd-theme',
+            'gitchangelog',
+        ]
     }
 )

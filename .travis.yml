@@ -6,7 +6,7 @@ python:
 before_install:
   - sudo apt-get install apache2-utils
 install:
-  - pip install -r requirements-ci.txt
+  - pip install -e .[dev]
 script:
   - make syntax
   - python setup.py develop
