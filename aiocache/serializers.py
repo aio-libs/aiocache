@@ -109,6 +109,11 @@ class JsonSerializer(StringSerializer):
     """
     Transform data to json string with json.dumps and json.loads to retrieve it back. Check
     https://docs.python.org/3/library/json.html#py-to-json-table for how types are converted.
+
+    ujson will be used by default if available. Be careful with differences between built in
+    json module and ujson:
+        - ujson dumps supports bytes while json doesn't
+        - ujson and json outputs may differ sometimes
     """
 
     @classmethod
