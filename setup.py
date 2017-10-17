@@ -47,6 +47,7 @@ setup(
             'sphinx-autobuild',
             'sphinx-rtd-theme',
             'gitchangelog',
+            'pystache',
         ]
     },
     dependency_links=[

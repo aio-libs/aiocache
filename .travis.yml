@@ -6,7 +6,7 @@ python:
 before_install:
   - sudo apt-get install apache2-utils
 install:
-  - pip install -e .[redis,memcached,dev] --process-dependency-links --no-cache-dir
+  - make install-dev
 script:
   - make syntax
   - python setup.py develop
