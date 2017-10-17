@@ -10,10 +10,10 @@ Welcome to aiocache's documentation!
 Installing
 ----------
 
-``pip install aiocache``                    # Memory only
-``pip install aiocache[redis]``             # Redis and Memory
-``pip install aiocache[memcached]``         # Memcached and Memory
-``pip install aiocache[redis,memcached]``   # All backends
+- ``pip install aiocache``
+- ``pip install aiocache[redis]``
+- ``pip install aiocache[memcached]``
+- ``pip install aiocache[redis,memcached]``
 
 
 Usage
