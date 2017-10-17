@@ -42,6 +42,7 @@ setup(
             'marshmallow',
             'mypy',
             'asynctest==0',
+            'ujson',    # this is a bug, need to fix
 
             'sphinx',
             'sphinx-autobuild',
