@@ -93,3 +93,4 @@ dump.rdb
 _release_notes
 
 tags
+.mypy_cache/

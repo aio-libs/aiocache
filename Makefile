@@ -7,6 +7,9 @@ dockerdown:
 syntax:
 	flake8
 
+install-dev:
+	pip install -e .[dev,redis,memcached] --process-dependency-links
+
 pylint:
 	pylint --disable=C0111 aiocache
 

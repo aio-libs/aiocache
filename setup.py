@@ -31,6 +31,27 @@ setup(
     install_requires=None,
     extras_require={
         'redis': ['aioredis>=0.3.3,<1'],
-        'memcached': ['aiomcache>=0.5.2']
-    }
+        'memcached': ['aiomcache>=0.5.2'],
+        'dev': [
+            'flake8',
+            'pytest',
+            'pytest-asyncio',
+            'pytest-cov',
+            'pytest-mock',
+            'codecov',
+            'marshmallow',
+            'mypy',
+            'asynctest==0',
+            'ujson',    # this is a bug, need to fix
+
+            'sphinx',
+            'sphinx-autobuild',
+            'sphinx-rtd-theme',
+            'gitchangelog',
+            'pystache',
+        ]
+    },
+    dependency_links=[
+        'git+https://github.com/MartiusWeb/asynctest.git@async_magic#egg=asynctest-0'
+    ]
 )
