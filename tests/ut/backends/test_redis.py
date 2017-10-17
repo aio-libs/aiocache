@@ -115,8 +115,20 @@ class TestRedisBackend:
         pool = FakePool()
         with patch(
                 "aiocache.backends.redis.aioredis.create_pool",
-                MagicMock(return_value=pool)):
+                MagicMock(return_value=pool)) as create_pool:
             assert await redis._connect() == pool
+            assert create_pool.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_connect_with_pool_aioredis_gt1(self):
+        from aiocache.backends import redis as mredis
+        with patch.object(mredis, 'AIOREDIS_BEFORE_ONE', False):
+            redis = RedisBackend()
+            pool = FakePool()
+            with patch('aiocache.backends.redis.aioredis') as mock_aioredis:
+                mock_aioredis.create_redis_pool = MagicMock(return_value=pool)
+                assert await redis._connect() == pool
+                assert mock_aioredis.create_redis_pool.call_count == 1
 
     @pytest.mark.asyncio
     async def test_connect_locked(self, mocker):
@@ -348,16 +360,28 @@ class TestConn:
         pass
 
     @pytest.mark.asyncio
-    async def test_conn_no_pool(self, redis, mocker):
+    async def test_conn(self, redis, mocker):
         mocker.spy(self, "dummy")
         cache, pool = redis
         cache._pool = pool
         d = conn(self.dummy)
         await d(cache, "a", _conn=None)
-        d.assert_called_with(cache, "a", _conn=pool.conn)
+        self.dummy.assert_called_with(cache, "a", _conn=pool.conn)
         pool.conn = "another_connection"
         await d(cache, "a", _conn=None)
-        d.assert_called_with(cache, "a", _conn="another_connection")
+        self.dummy.assert_called_with(cache, "a", _conn="another_connection")
+
+    @pytest.mark.asyncio
+    async def test_conn_aioredis_gt1(self, redis, mocker):
+        from aiocache.backends import redis as mredis
+        mocker.spy(self, "dummy")
+        with patch.object(mredis, 'AIOREDIS_BEFORE_ONE', False):
+            cache, pool = redis
+            mocker.spy(pool, '__await__')
+            cache._pool = pool
+            d = conn(self.dummy)
+            await d(cache, "a", _conn=None)
+            self.dummy.assert_called_with(cache, "a", _conn=pool)
 
     @pytest.mark.asyncio
     async def test_conn_reuses(self, redis, mocker):
@@ -367,10 +391,10 @@ class TestConn:
         d = conn(self.dummy)
         first_conn = pool.conn
         await d(cache, "a", _conn=first_conn)
-        d.assert_called_with(cache, "a", _conn=first_conn)
+        self.dummy.assert_called_with(cache, "a", _conn=first_conn)
         pool.conn = "another_connection"
         await d(cache, "a", _conn=first_conn)
-        d.assert_called_with(cache, "a", _conn=first_conn)
+        self.dummy.assert_called_with(cache, "a", _conn=first_conn)
 
 
 class TestRedisCache:
