@@ -53,8 +53,6 @@ def loads(x):
     return 200
 
 
-
-
 class TestNullSerializer:
 
     TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
