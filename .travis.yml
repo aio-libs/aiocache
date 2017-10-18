@@ -3,21 +3,20 @@ cache: pip
 python:
   - '3.5'
   - '3.6'
-before_install:
-  - sudo apt-get install apache2-utils
+
 install:
-  - make install-dev
+  - pip install tox
+
 script:
-  - make syntax
-  - python setup.py develop
-  - pytest --cov-report term-missing --cov=aiocache -sv tests/ut
-  - pytest -sv tests/acceptance
-  - bash examples/run_all.sh
+  - tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)
+
 services:
   - redis-server
   - memcached
+
 after_success:
   - codecov
+
 deploy:
   provider: pypi
   user: blck
