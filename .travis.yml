@@ -6,18 +6,11 @@ python:
 before_install:
   - sudo apt-get install apache2-utils
 install:
-  - make install-dev
-script:
-  - make syntax
-  - python setup.py develop
-  - pytest --cov-report term-missing --cov=aiocache -sv tests/ut
-  - pytest -sv tests/acceptance
-  - bash examples/run_all.sh
+  - pip install tox-travis
+script: tox
 services:
   - redis-server
   - memcached
-after_success:
-  - codecov
 deploy:
   provider: pypi
   user: blck
