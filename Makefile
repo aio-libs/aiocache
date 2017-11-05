@@ -14,27 +14,21 @@ pylint:
 	pylint --disable=C0111 aiocache
 
 ut:
-	pytest --cov-report term-missing --cov=aiocache -sv tests/ut
+	pytest --cov-report term-missing --cov aiocache -sv tests/ut
 
-_acceptance:
+acceptance:
 	pytest -sv tests/acceptance
-
-acceptance: dockerup _acceptance dockerdown
 
 doc:
 	make -C docs/ html
 
-_functional:
+functional:
 	bash examples/run_all.sh
 
-functional: dockerup _functional dockerdown
-
-_performance:
+performance:
 	pytest -sv tests/performance
 
-performance: dockerup _performance dockerdown
-
-test: syntax ut dockerup _acceptance _functional _performance dockerdown
+test: syntax ut acceptance functional performance
 
 _release:
 	scripts/make_release
