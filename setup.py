@@ -41,7 +41,7 @@ setup(
             'codecov',
             'marshmallow',
             'mypy',
-            'asynctest==0',
+            'asynctest==0.11.0',
 
             'sphinx',
             'sphinx-autobuild',
@@ -49,8 +49,5 @@ setup(
             'gitchangelog',
             'pystache',
         ]
-    },
-    dependency_links=[
-        'git+https://github.com/MartiusWeb/asynctest.git@async_magic#egg=asynctest-0'
-    ]
+    }
 )
