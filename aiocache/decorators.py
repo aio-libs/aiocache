@@ -12,6 +12,7 @@ logger = logging.getLogger(__file__)
 class cached:
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
+    The cache is available in the function object as ``<function_name>.cache``.
 
     In some cases you will need to send more args to configure the cache object.
     An example would be endpoint and port for the RedisCache. You can send those args as
@@ -65,6 +66,8 @@ class cached:
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
             return await self.decorator(f, *args, **kwargs)
+
+        wrapper.cache = self.cache
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
@@ -180,6 +183,7 @@ class multi_cached:
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
+    The cache is available in the function object as ``<function_name>.cache``.
 
     If key_builder is passed, before storing the key, it will be transformed according to the output
     of the function.
@@ -230,6 +234,8 @@ class multi_cached:
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
             return await self.decorator(f, *args, **kwargs)
+
+        wrapper.cache = self.cache
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
