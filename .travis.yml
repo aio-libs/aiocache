@@ -1,6 +1,10 @@
 language: python
 cache: pip
 
+branches:
+  only:
+    - "master"
+
 matrix:
   include:
     - python: 3.5
