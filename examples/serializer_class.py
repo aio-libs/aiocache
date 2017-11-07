@@ -1,4 +1,3 @@
-import sys
 import asyncio
 import zlib
 
@@ -40,9 +39,8 @@ async def serializer():
     await cache.set("key", text)
     print("-----------------------------------")
     real_value = await cache.get("key")
-
     compressed_value = await cache.raw("get", "main:key")
-    assert sys.getsizeof(compressed_value) < sys.getsizeof(real_value)
+    assert len(compressed_value) < len(real_value.encode())
 
 
 def test_serializer():
