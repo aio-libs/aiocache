@@ -243,7 +243,7 @@ class multi_cached:
     async def decorator(self, f, *args, **kwargs):
         missing_keys = []
         partial = {}
-        keys, new_args = self.get_cache_keys(f, args, kwargs)
+        keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
 
         values = await self.get_from_cache(*keys)
         for key, value in zip(keys, values):
@@ -254,8 +254,10 @@ class multi_cached:
         if values and None not in values:
             return partial
 
-        # update args or kwargs with missing_keys accordingly
-        kwargs[self.keys_from_attr] = missing_keys
+        if args_index > -1:
+            new_args[args_index] = missing_keys
+        else:
+            kwargs[self.keys_from_attr] = missing_keys
 
         result = await f(*new_args, **kwargs)
         result.update(partial)
@@ -270,10 +272,12 @@ class multi_cached:
 
         args_names = f.__code__.co_varnames[:f.__code__.co_argcount]
         new_args = list(args)
+        keys_index = -1
         if self.keys_from_attr in args_names and self.keys_from_attr not in kwargs:
-            new_args[args_names.index(self.keys_from_attr)] = keys
+            keys_index = args_names.index(self.keys_from_attr)
+            new_args[keys_index] = keys
 
-        return keys, tuple(new_args)
+        return keys, new_args, keys_index
 
     async def get_from_cache(self, *keys):
         if not keys:

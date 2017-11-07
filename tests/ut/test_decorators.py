@@ -339,10 +339,10 @@ class TestMultiCached:
 
     def test_get_cache_keys(self, decorator):
         assert decorator.get_cache_keys(
-            stub_dict, (), {'keys': ['a', 'b']}) == (['a', 'b'], ())
+            stub_dict, (), {'keys': ['a', 'b']}) == (['a', 'b'], [], -1)
 
     def test_get_cache_keys_empty_list(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {'keys': []}) == ([], ())
+        assert decorator.get_cache_keys(stub_dict, (), {'keys': []}) == ([], [], -1)
 
     def test_get_cache_keys_missing_kwarg(self, decorator):
         with pytest.raises(KeyError):
@@ -351,15 +351,15 @@ class TestMultiCached:
     def test_get_cache_keys_arg_key_from_attr(self, decorator):
         def fake(keys, a=1, b=2):
             pass
-        assert decorator.get_cache_keys(fake, (['a']), {}) == (['a'], (['a'],))
+        assert decorator.get_cache_keys(fake, (['a']), {}) == (['a'], [['a']], 0)
 
     def test_get_cache_keys_with_none(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {'keys': None}) == ([], ())
+        assert decorator.get_cache_keys(stub_dict, (), {'keys': None}) == ([], [], -1)
 
     def test_get_cache_keys_with_key_builder(self, decorator):
         decorator.key_builder = lambda key, *args, **kwargs: kwargs['market'] + '_' + key.upper()
         assert decorator.get_cache_keys(
-            stub_dict, (), {'keys': ['a', 'b'], 'market': 'ES'}) == (['ES_A', 'ES_B'], ())
+            stub_dict, (), {'keys': ['a', 'b'], 'market': 'ES'}) == (['ES_A', 'ES_B'], [], -1)
 
     @pytest.mark.asyncio
     async def test_get_from_cache(self, decorator, decorator_call):
@@ -466,7 +466,7 @@ class TestMultiCached:
                 return {'test': 1}
 
             assert await fn(keys=['test']) == {'test': 1}
-            assert await fn(keys=['test']) == {'test': 1}
+            assert await fn(['test']) == {'test': 1}
             assert fn.cache == mock_cache
 
     @pytest.mark.asyncio
