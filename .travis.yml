@@ -25,7 +25,7 @@ matrix:
     - python: 3.6
       env: TOXENV=py36-deps-devel
 
-    - python: pypy
+    - python: pypy3
       env: TOXENV=pypy
     - python: 3.6
       env: TOXENV=syntax
