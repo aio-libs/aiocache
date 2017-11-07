@@ -1,6 +1,24 @@
 # Changelog
 
 
+## 0.8.0 (2017-11-08)
+
+
+* Add pypy support in build pipeline [#359](https://github.com/argaen/aiocache/issues/359) - Manuel Miranda
+
+* Fix multicached bug when using keys as an arg rather than kwarg [#356](https://github.com/argaen/aiocache/issues/356) - Manuel Miranda
+
+* Reuse cache when using decorators with alias [#355](https://github.com/argaen/aiocache/issues/355) - Manuel Miranda
+
+* Cache available from function.cache object for decorated functions [#354](https://github.com/argaen/aiocache/issues/354) - Manuel Miranda
+
+* Improve travis setup [#340](https://github.com/argaen/aiocache/issues/340) - Jair Henrique
+
+* aioredis and aiomcache are now optional dependencies [#337](https://github.com/argaen/aiocache/issues/337) - Jair Henrique
+
+* Generate wheel package on release [#338](https://github.com/argaen/aiocache/issues/338) - Jair Henrique
+
+* Add key_builder param to caches to customize keys [#315](https://github.com/argaen/aiocache/issues/315) - Manuel Miranda
 ## 0.7.2 (2017-07-23)
 
 #### Other
