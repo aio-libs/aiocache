@@ -42,7 +42,6 @@ setup(
             'pytest-mock',
             'codecov',
             'marshmallow',
-            'mypy',
             'asynctest==0.11.0',
 
             'sphinx',
