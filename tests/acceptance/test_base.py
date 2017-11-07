@@ -36,14 +36,14 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_delete_existing(self, cache):
-        await cache.set(pytest.KEY, b"value")
+        await cache.set(pytest.KEY, 'value')
         assert await cache.delete(pytest.KEY) == 1
 
         assert await cache.get(pytest.KEY) is None
 
     @pytest.mark.asyncio
     async def test_set(self, cache):
-        assert await cache.set(pytest.KEY, b"value") is True
+        assert await cache.set(pytest.KEY, 'value') is True
 
     @pytest.mark.asyncio
     async def test_multi_set(self, cache):
@@ -61,20 +61,20 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_set_with_ttl(self, cache):
-        await cache.set(pytest.KEY, b"value", ttl=1)
+        await cache.set(pytest.KEY, 'value', ttl=1)
         await asyncio.sleep(1.1)
 
         assert await cache.get(pytest.KEY) is None
 
     @pytest.mark.asyncio
     async def test_add_missing(self, cache):
-        assert await cache.add(pytest.KEY, b"value", ttl=1) is True
+        assert await cache.add(pytest.KEY, 'value', ttl=1) is True
 
     @pytest.mark.asyncio
     async def test_add_existing(self, cache):
-        await cache.set(pytest.KEY, b"value") is True
+        await cache.set(pytest.KEY, 'value') is True
         with pytest.raises(ValueError):
-            await cache.add(pytest.KEY, b"value")
+            await cache.add(pytest.KEY, 'value')
 
     @pytest.mark.asyncio
     async def test_exists_missing(self, cache):
@@ -82,7 +82,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_exists_existing(self, cache):
-        await cache.set(pytest.KEY, b"value")
+        await cache.set(pytest.KEY, 'value')
         assert await cache.exists(pytest.KEY) is True
 
     @pytest.mark.asyncio
@@ -99,20 +99,20 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_increment_typeerror(self, cache):
-        await cache.set(pytest.KEY, b"value")
+        await cache.set(pytest.KEY, 'value')
         with pytest.raises(TypeError):
             assert await cache.increment(pytest.KEY)
 
     @pytest.mark.asyncio
     async def test_expire_existing(self, cache):
-        await cache.set(pytest.KEY, b"value")
+        await cache.set(pytest.KEY, 'value')
         assert await cache.expire(pytest.KEY, 1) is True
         await asyncio.sleep(1.1)
         assert await cache.exists(pytest.KEY) is False
 
     @pytest.mark.asyncio
     async def test_expire_with_0(self, cache):
-        await cache.set(pytest.KEY, b"value", 1)
+        await cache.set(pytest.KEY, 'value', 1)
         assert await cache.expire(pytest.KEY, 0) is True
         await asyncio.sleep(1.1)
         assert await cache.exists(pytest.KEY) is True
@@ -123,14 +123,14 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_clear(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, 'value')
         await cache.clear()
 
         assert await cache.exists(pytest.KEY) is False
 
     @pytest.mark.asyncio
     async def test_close_pool_only_clears_resources(self, cache):
-        await cache.set(pytest.KEY, "value")
+        await cache.set(pytest.KEY, 'value')
         await cache.close()
         assert await cache.set(pytest.KEY, "value") is True
         assert await cache.get(pytest.KEY) == "value"
@@ -201,7 +201,7 @@ class TestMemcachedCache:
     @pytest.mark.asyncio
     async def test_multi_set_float_ttl(self, memcached_cache):
         with pytest.raises(TypeError) as exc_info:
-            pairs = [(pytest.KEY, b'value'), [pytest.KEY_1, b'random_value']]
+            pairs = [(pytest.KEY, 'value'), [pytest.KEY_1, 'random_value']]
             assert await memcached_cache.multi_set(pairs, ttl=0.1) is True
         assert str(exc_info.value) == 'aiomcache error: exptime not int: 0.1'
 
@@ -214,7 +214,7 @@ class TestMemcachedCache:
 
     @pytest.mark.asyncio
     async def test_clear_with_namespace_memcached(self, memcached_cache):
-        await memcached_cache.set(pytest.KEY, b"value", namespace="test")
+        await memcached_cache.set(pytest.KEY, 'value', namespace='test')
 
         with pytest.raises(ValueError):
             await memcached_cache.clear(namespace="test")

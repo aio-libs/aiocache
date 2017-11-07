@@ -53,10 +53,9 @@ def loads(x):
     return 200
 
 
-TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
-
-
 class TestNullSerializer:
+
+    TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
@@ -82,6 +81,8 @@ class TestNullSerializer:
 
 class TestStringSerializer:
 
+    TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
+
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_set_get_types(self, cache, obj):
@@ -106,6 +107,8 @@ class TestStringSerializer:
 
 class TestJsonSerializer:
 
+    TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
+
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_set_get_types(self, cache, obj):
@@ -129,6 +132,8 @@ class TestJsonSerializer:
 
 
 class TestPickleSerializer:
+
+    TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, MyType()]
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio

@@ -2,7 +2,6 @@ import re
 import os
 
 from setuptools import setup, find_packages
-from distutils.util import strtobool
 
 with open(
         os.path.join(
@@ -15,36 +14,40 @@ with open(
         raise RuntimeError('Unable to determine version.')
 
 
-aioredis = "aioredis>=0.3.3,<1"
-aiomcache = "aiomcache>=0.5.2"
-
-install_requires = set((aioredis, aiomcache))
-
-setup_kwargs = {
-    'name': "aiocache",
-    'version': version,
-    'author': "Manuel Miranda",
-    'url': "https://github.com/argaen/aiocache",
-    'author_email': "manu.mirandad@gmail.com",
-    'description': "multi backend asyncio cache",
-    'classifiers': [
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Framework :: AsyncIO",
+setup(
+    name='aiocache',
+    version=version,
+    author='Manuel Miranda',
+    url='https://github.com/argaen/aiocache',
+    author_email='manu.mirandad@gmail.com',
+    description='multi backend asyncio cache',
+    classifiers=[
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Framework :: AsyncIO',
     ],
-    'packages': find_packages(),
-}
+    packages=find_packages(),
+    install_requires=None,
+    extras_require={
+        'redis': ['aioredis>=0.3.3,<1'],
+        'memcached': ['aiomcache>=0.5.2'],
+        'dev': [
+            'flake8',
+            'pytest',
+            'pytest-asyncio',
+            'pytest-cov',
+            'pytest-mock',
+            'codecov',
+            'marshmallow',
+            'mypy',
+            'asynctest==0.11.0',
 
-
-if not strtobool(os.environ.get("AIOCACHE_REDIS", "yes")):
-    print("Installing without aioredis")
-    install_requires.remove(aioredis)
-
-if not strtobool(os.environ.get("AIOCACHE_MEMCACHED", "yes")):
-    print("Installing without aiomcache")
-    install_requires.remove(aiomcache)
-
-
-setup_kwargs['install_requires'] = install_requires
-setup(**setup_kwargs)
+            'sphinx',
+            'sphinx-autobuild',
+            'sphinx-rtd-theme',
+            'gitchangelog',
+            'pystache',
+        ]
+    }
+)

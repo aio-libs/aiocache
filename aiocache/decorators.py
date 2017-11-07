@@ -12,6 +12,7 @@ logger = logging.getLogger(__file__)
 class cached:
     """
     Caches the functions return value into a key generated with module_name, function_name and args.
+    The cache is available in the function object as ``<function_name>.cache``.
 
     In some cases you will need to send more args to configure the cache object.
     An example would be endpoint and port for the RedisCache. You can send those args as
@@ -33,7 +34,8 @@ class cached:
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored. New cache is created every time.
+        parameters are ignored. Same cache identified by alias is used on every call. If you need
+        a per function cache, specify the parameters explicitly without using alias.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
@@ -56,7 +58,7 @@ class cached:
 
     def __call__(self, f):
         if self.alias:
-            self.cache = caches.create(self.alias)
+            self.cache = caches.get(self.alias)
         else:
             self.cache = _get_cache(
                 cache=self._cache, serializer=self._serializer,
@@ -65,6 +67,8 @@ class cached:
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
             return await self.decorator(f, *args, **kwargs)
+
+        wrapper.cache = self.cache
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
@@ -180,6 +184,7 @@ class multi_cached:
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
     of the dict-like object returned by the function.
+    The cache is available in the function object as ``<function_name>.cache``.
 
     If key_builder is passed, before storing the key, it will be transformed according to the output
     of the function.
@@ -202,7 +207,8 @@ class multi_cached:
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
     :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored. New cache is created every time.
+        parameters are ignored. Same cache identified by alias is used on every call. If you need
+        a per function cache, specify the parameters explicitly without using alias.
     """
 
     def __init__(
@@ -221,7 +227,7 @@ class multi_cached:
 
     def __call__(self, f):
         if self.alias:
-            self.cache = caches.create(self.alias)
+            self.cache = caches.get(self.alias)
         else:
             self.cache = _get_cache(
                 cache=self._cache, serializer=self._serializer,
@@ -230,6 +236,8 @@ class multi_cached:
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
             return await self.decorator(f, *args, **kwargs)
+
+        wrapper.cache = self.cache
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):

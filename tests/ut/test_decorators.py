@@ -57,12 +57,12 @@ class TestCached:
 
     def test_alias_takes_precedence(self, mock_cache):
         with patch(
-                "aiocache.decorators.caches.create",
-                MagicMock(return_value=mock_cache)) as mock_create:
+                "aiocache.decorators.caches.get",
+                MagicMock(return_value=mock_cache)) as mock_get:
             c = cached(alias='default', cache=SimpleMemoryCache, namespace='test')
             c(stub)
 
-            mock_create.assert_called_with('default')
+            mock_get.assert_called_with('default')
             assert c.cache is mock_cache
 
     def test_get_cache_key_with_key(self, decorator):
@@ -154,6 +154,7 @@ class TestCached:
 
             assert await fn(1) == 1
             assert await fn(2) == 2
+            assert fn.cache == mock_cache
 
     @pytest.mark.asyncio
     async def test_keeps_signature(self, mock_cache):
@@ -181,6 +182,18 @@ class TestCached:
 
             assert get_c.call_count == 1
             assert cache.get.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_cache_per_function(self):
+        @cached()
+        async def foo():
+            pass
+
+        @cached()
+        async def bar():
+            pass
+
+        assert foo.cache != bar.cache
 
 
 class TestCachedStampede:
@@ -315,13 +328,13 @@ class TestMultiCached:
 
     def test_alias_takes_precedence(self, mock_cache):
         with patch(
-                "aiocache.decorators.caches.create",
-                MagicMock(return_value=mock_cache)) as mock_create:
+                "aiocache.decorators.caches.get",
+                MagicMock(return_value=mock_cache)) as mock_get:
             mc = multi_cached(
                 keys_from_attr="keys", alias='default', cache=SimpleMemoryCache, namespace='test')
             mc(stub_dict)
 
-            mock_create.assert_called_with('default')
+            mock_get.assert_called_with('default')
             assert mc.cache is mock_cache
 
     def test_get_cache_keys(self, decorator):
@@ -454,6 +467,7 @@ class TestMultiCached:
 
             assert await fn(keys=['test']) == {'test': 1}
             assert await fn(keys=['test']) == {'test': 1}
+            assert fn.cache == mock_cache
 
     @pytest.mark.asyncio
     async def test_keeps_signature(self):
@@ -481,6 +495,18 @@ class TestMultiCached:
 
             assert get_c.call_count == 1
             assert cache.multi_get.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_cache_per_function(self):
+        @multi_cached('keys')
+        async def foo():
+            pass
+
+        @multi_cached('keys')
+        async def bar():
+            pass
+
+        assert foo.cache != bar.cache
 
 
 def test_get_args_dict():
