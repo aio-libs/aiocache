@@ -1,19 +1,13 @@
-dockerup:
-	docker-compose -f docker-compose.yml up -d
-
-dockerdown:
-	docker-compose -f docker-compose.yml stop
-
-syntax:
+lint:
 	flake8
 
 install-dev:
-	pip install -e .[dev,redis,memcached] --process-dependency-links
+	pip install -e .[dev,redis,memcached]
 
 pylint:
 	pylint --disable=C0111 aiocache
 
-ut:
+unit:
 	pytest --cov-report term-missing --cov aiocache -sv tests/ut
 
 acceptance:
@@ -28,7 +22,7 @@ functional:
 performance:
 	pytest -sv tests/performance
 
-test: syntax ut acceptance functional performance
+test: lint unit acceptance functional performance
 
 _release:
 	scripts/make_release
