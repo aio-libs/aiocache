@@ -3,7 +3,8 @@ cache: pip
 
 branches:
   only:
-    - "master"
+    - master
+    - \d+.\d+.\d+
 
 matrix:
   include:
