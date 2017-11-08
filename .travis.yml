@@ -1,11 +1,6 @@
 language: python
 cache: pip
 
-branches:
-  only:
-    - master
-    - \d+.\d+.\d+
-
 matrix:
   include:
     - python: 3.5
@@ -30,8 +25,6 @@ matrix:
       env: TOXENV=pypy
     - python: 3.6
       env: TOXENV=syntax
-
-
 
 install:
   - pip install tox
