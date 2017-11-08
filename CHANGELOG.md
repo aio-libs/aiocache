@@ -12,8 +12,6 @@
 
 * Cache available from function.cache object for decorated functions [#354](https://github.com/argaen/aiocache/issues/354) - Manuel Miranda
 
-* Improve travis setup [#340](https://github.com/argaen/aiocache/issues/340) - Jair Henrique
-
 * aioredis and aiomcache are now optional dependencies [#337](https://github.com/argaen/aiocache/issues/337) - Jair Henrique
 
 * Generate wheel package on release [#338](https://github.com/argaen/aiocache/issues/338) - Jair Henrique

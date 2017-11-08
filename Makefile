@@ -22,7 +22,7 @@ functional:
 performance:
 	pytest -sv tests/performance
 
-test: lint unit acceptance functional performance
+test: lint unit acceptance functional
 
 _release:
 	scripts/make_release
