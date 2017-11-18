@@ -30,7 +30,7 @@ setup(
     packages=find_packages(),
     install_requires=None,
     extras_require={
-        'redis': ['aioredis>=0.3.3,<1'],
+        'redis': ['aioredis>=0.3.3'],
         'memcached': ['aiomcache>=0.5.2'],
         'dev': [
             'flake8',

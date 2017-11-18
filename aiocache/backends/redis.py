@@ -65,12 +65,16 @@ class RedisBackend:
         self._pool = None
 
     async def acquire_conn(self):
-        with await self._connect():
-            pass
-        return await self._pool.acquire()
+        await self._connect()
+        if AIOREDIS_BEFORE_ONE:
+            return await self._pool.acquire()
+        return (await self._pool)
 
     async def release_conn(self, _conn):
-        self._pool.release(_conn)
+        if AIOREDIS_BEFORE_ONE:
+            self._pool.release(_conn)
+        else:
+            self._pool._pool_or_conn.release(_conn._pool_or_conn)
 
     @conn
     async def _get(self, key, encoding="utf-8", _conn=None):
@@ -185,7 +189,8 @@ class RedisBackend:
 
     async def _close(self, *args, **kwargs):
         if self._pool is not None:
-            await self._pool.clear()
+            if AIOREDIS_BEFORE_ONE:
+                await self._pool.clear()
 
     async def _connect(self):
         async with self._pool_lock:
