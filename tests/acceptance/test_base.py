@@ -3,7 +3,6 @@ import asyncio
 
 from aiocache import RedisCache, SimpleMemoryCache, MemcachedCache
 from aiocache.base import _Conn
-from aiocache.backends.redis import AIOREDIS_BEFORE_ONE
 
 
 class TestCache:
@@ -268,5 +267,4 @@ class TestRedisCache:
     async def test_close(self, redis_cache):
         await redis_cache.set(pytest.KEY, "value")
         await redis_cache._close()
-        if AIOREDIS_BEFORE_ONE:
-            assert redis_cache._pool.size == 0
+        assert redis_cache._pool.size == 0

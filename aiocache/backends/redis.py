@@ -15,11 +15,12 @@ def conn(func):
     @functools.wraps(func)
     async def wrapper(self, *args, _conn=None, **kwargs):
         if _conn is None:
-            if AIOREDIS_BEFORE_ONE:
-                with await self._connect() as _conn:
-                    return await func(self, *args, _conn=_conn, **kwargs)
-            else:
-                _conn = await self._connect()
+
+            pool = await self._get_pool()
+            conn_context = await pool
+            with conn_context as _conn:
+                if not AIOREDIS_BEFORE_ONE:
+                    _conn = aioredis.Redis(_conn)
                 return await func(self, *args, _conn=_conn, **kwargs)
 
         return await func(self, *args, _conn=_conn, **kwargs)
@@ -65,16 +66,17 @@ class RedisBackend:
         self._pool = None
 
     async def acquire_conn(self):
-        await self._connect()
-        if AIOREDIS_BEFORE_ONE:
-            return await self._pool.acquire()
-        return (await self._pool)
+        await self._get_pool()
+        conn = await self._pool.acquire()
+        if not AIOREDIS_BEFORE_ONE:
+            conn = aioredis.Redis(conn)
+        return conn
 
     async def release_conn(self, _conn):
         if AIOREDIS_BEFORE_ONE:
             self._pool.release(_conn)
         else:
-            self._pool._pool_or_conn.release(_conn._pool_or_conn)
+            self._pool.release(_conn.connection)
 
     @conn
     async def _get(self, key, encoding="utf-8", _conn=None):
@@ -189,26 +191,21 @@ class RedisBackend:
 
     async def _close(self, *args, **kwargs):
         if self._pool is not None:
-            if AIOREDIS_BEFORE_ONE:
-                await self._pool.clear()
+            await self._pool.clear()
 
-    async def _connect(self):
+    async def _get_pool(self):
         async with self._pool_lock:
             if self._pool is None:
-                if AIOREDIS_BEFORE_ONE:
-                    _create_pool = aioredis.create_pool
-                else:
-                    _create_pool = aioredis.create_redis_pool
+                self._pool = await aioredis.create_pool(
+                    (self.endpoint, self.port),
+                    db=self.db,
+                    password=self.password,
+                    loop=self._loop,
+                    encoding="utf-8",
+                    minsize=self.pool_min_size,
+                    maxsize=self.pool_max_size)
 
-                self._pool = await _create_pool((self.endpoint, self.port),
-                                                db=self.db,
-                                                password=self.password,
-                                                loop=self._loop,
-                                                encoding="utf-8",
-                                                minsize=self.pool_min_size,
-                                                maxsize=self.pool_max_size)
-
-            return await self._pool if AIOREDIS_BEFORE_ONE else self._pool
+            return self._pool
 
 
 class RedisCache(RedisBackend, BaseCache):
