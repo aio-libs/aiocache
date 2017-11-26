@@ -1,3 +1,6 @@
+cov-report = true
+
+
 lint:
 	flake8
 
@@ -8,7 +11,11 @@ pylint:
 	pylint --disable=C0111 aiocache
 
 unit:
-	pytest --cov-report term-missing --cov aiocache -sv tests/ut
+	coverage run -m pytest tests/ut
+	@if [ $(cov-report) = true ]; then\
+    coverage combine;\
+    coverage report;\
+	fi
 
 acceptance:
 	pytest -sv tests/acceptance
