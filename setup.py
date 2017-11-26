@@ -36,7 +36,6 @@ setup(
             'flake8',
             'pytest',
             'pytest-asyncio',
-            'pytest-cov',
             'pytest-mock',
             'codecov',
             'marshmallow',
