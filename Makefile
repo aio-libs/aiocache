@@ -11,7 +11,7 @@ pylint:
 	pylint --disable=C0111 aiocache
 
 unit:
-	coverage run -p -m pytest tests/ut
+	coverage run -m pytest tests/ut
 	@if [ $(cov-report) = true ]; then\
     coverage combine;\
     coverage report;\
