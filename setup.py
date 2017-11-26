@@ -39,7 +39,7 @@ setup(
             'pytest-mock',
             'codecov',
             'marshmallow',
-            'asynctest==0.11.0',
+            'asynctest>=0.11.0',
 
             'sphinx',
             'sphinx-autobuild',
