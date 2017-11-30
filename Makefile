@@ -5,7 +5,7 @@ lint:
 	flake8
 
 install-dev:
-	pip install -e .[dev,redis,memcached]
+	pipenv install --dev
 
 pylint:
 	pylint --disable=C0111 aiocache
