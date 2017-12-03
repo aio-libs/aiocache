@@ -33,7 +33,6 @@ setup(
         'redis': ['aioredis>=0.3.3'],
         'memcached': ['aiomcache>=0.5.2'],
         'dev': [
-            'tox',
             'flake8',
             'pytest',
             'pytest-asyncio',
