@@ -1,3 +1,4 @@
+import msgpack
 import pytest
 try:
     import ujson as json
@@ -81,4 +82,29 @@ class TestJsonSerializer:
     def test_dumps_and_loads(self):
         obj = {"hi": 1}
         serializer = JsonSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+
+class TestMessagePackSerializer:
+
+    @pytest.mark.parametrize("obj", TYPES)
+    def test_set_types(self, obj):
+        serializer = MessagePackSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+    def test_dumps(self):
+        assert MessagePackSerializer().dumps("hi") == b'\x80\x03X\x02\x00\x00\x00hiq\x00.'
+
+    def test_dumps_with_none(self):
+        assert isinstance(MessagePackSerializer().dumps(None), bytes)
+
+    def test_loads(self):
+        assert MessagePackSerializer().loads(b'\x80\x03X\x02\x00\x00\x00hiq\x00.') == "hi"
+
+    def test_loads_with_none(self):
+        assert MessagePackSerializer().loads(None) is None
+
+    def test_dumps_and_loads(self):
+        obj = Dummy(1, 2)
+        serializer = MessagePackSerializer()
         assert serializer.loads(serializer.dumps(obj)) == obj
