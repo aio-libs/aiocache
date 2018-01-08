@@ -4,7 +4,7 @@ cache: pip
 matrix:
   include:
     - python: 3.5
-      env: TOXENV=py35,codecov
+      env: TOXENV=py35
     - python: 3.5
       env: TOXENV=py35-ujson
     - python: 3.5
@@ -13,7 +13,7 @@ matrix:
       env: TOXENV=py35-deps-devel
 
     - python: 3.6
-      env: TOXENV=py36,codecov
+      env: TOXENV=py36
     - python: 3.6
       env: TOXENV=py36-ujson
     - python: 3.6
@@ -21,6 +21,8 @@ matrix:
     - python: 3.6
       env: TOXENV=py36-deps-devel
 
+    - python: 3.6
+      env: TOXENV=codecov
     - python: 3.6
       env: TOXENV=syntax
 
