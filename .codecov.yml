@@ -1,0 +1,13 @@
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
+coverage:
+  status:
+    patch: no
+    changes: no
+
+comment:
+  layout: "reach, diff, flags, files, footer"
+  behavior: default
+  require_changes: yes
