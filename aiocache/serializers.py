@@ -166,4 +166,4 @@ class MessagePackSerializer(StringSerializer):
         """
         if value is None:
             return None
-        return msgpack.loads(value)
+        return msgpack.loads(value, use_list=False)
