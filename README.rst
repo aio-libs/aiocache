@@ -32,7 +32,6 @@ This library aims for simplicity over specialization. All caches contain the sam
 - ``raw``: Executes the specified command using the underlying client.
 
 
-
 .. role:: python(code)
   :language: python
 
