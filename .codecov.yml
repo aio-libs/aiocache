@@ -4,8 +4,8 @@ codecov:
 
 coverage:
   status:
-    patch: no
-    changes: no
+    patch: yes
+    changes: yes
 
 comment:
   layout: "reach, diff, flags, files, footer"
