@@ -1,7 +1,6 @@
 aiocache
 ########
 
-
 Asyncio cache supporting multiple backends (memory, redis and memcached).
 
 .. image:: https://travis-ci.org/argaen/aiocache.svg?branch=master
