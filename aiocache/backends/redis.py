@@ -53,7 +53,7 @@ class RedisBackend:
 
     def __init__(
             self, endpoint="127.0.0.1", port=6379, db=0, password=None,
-            pool_min_size=1, pool_max_size=10, loop=None, **kwargs):
+            pool_min_size=1, pool_max_size=10, loop=None, create_connection_timeout=None, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
@@ -61,6 +61,7 @@ class RedisBackend:
         self.password = password
         self.pool_min_size = pool_min_size
         self.pool_max_size = pool_max_size
+        self.create_connection_timeout = create_connection_timeout
         self._pool_lock = asyncio.Lock()
         self._loop = loop
         self._pool = None
@@ -196,14 +197,18 @@ class RedisBackend:
     async def _get_pool(self):
         async with self._pool_lock:
             if self._pool is None:
-                self._pool = await aioredis.create_pool(
-                    (self.endpoint, self.port),
-                    db=self.db,
-                    password=self.password,
-                    loop=self._loop,
-                    encoding="utf-8",
-                    minsize=self.pool_min_size,
-                    maxsize=self.pool_max_size)
+                kwargs = {
+                    "db": self.db,
+                    "password": self.password,
+                    "loop": self._loop,
+                    "encoding": "utf-8",
+                    "minsize": self.pool_min_size,
+                    "maxsize": self.pool_max_size
+                }
+                if not AIOREDIS_BEFORE_ONE:
+                    kwargs["create_connection_timeout"] = self.create_connection_timeout
+
+                self._pool = await aioredis.create_pool((self.endpoint, self.port), **kwargs)
 
             return self._pool
 
@@ -228,6 +233,8 @@ class RedisCache(RedisBackend, BaseCache):
     :param password: str indicating password to use. Default is None.
     :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
     :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
+    :param create_connection_timeout: int timeout for the creation of connection,
+        only for aioredis>=1. Default is None
     """
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)

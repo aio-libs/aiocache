@@ -7,7 +7,7 @@ logger = logging.getLogger(__file__)
 try:
     import ujson as json
 except ImportError:
-    logger.warning("ujson module not found, usin json")
+    logger.warning("ujson module not found, using json")
     import json
 
 

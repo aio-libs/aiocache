@@ -127,14 +127,26 @@ class TestRedisBackend:
     async def test_get_pool_calls_create_pool(self, redis, create_pool):
         redis._pool = None
         await redis._get_pool()
-        create_pool.assert_called_with(
-            (redis.endpoint, redis.port),
-            db=redis.db,
-            password=redis.password,
-            loop=redis._loop,
-            encoding="utf-8",
-            minsize=redis.pool_min_size,
-            maxsize=redis.pool_max_size)
+        if AIOREDIS_BEFORE_ONE:
+            create_pool.assert_called_with(
+                (redis.endpoint, redis.port),
+                db=redis.db,
+                password=redis.password,
+                loop=redis._loop,
+                encoding="utf-8",
+                minsize=redis.pool_min_size,
+                maxsize=redis.pool_max_size)
+        else:
+            create_pool.assert_called_with(
+                (redis.endpoint, redis.port),
+                db=redis.db,
+                password=redis.password,
+                loop=redis._loop,
+                encoding="utf-8",
+                minsize=redis.pool_min_size,
+                maxsize=redis.pool_max_size,
+                create_connection_timeout=redis.create_connection_timeout
+            )
 
     @pytest.mark.asyncio
     async def test_get(self, redis, redis_connection):
