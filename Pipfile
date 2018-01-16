@@ -6,8 +6,11 @@ name = "pypi"
 
 
 [packages]
-"-e .[redis,memcached]" = "*"
+
+"-e .[redis,memcached,msgpack]" = "*"
 
 
 [dev-packages]
+
 "-e .[dev]" = "*"
+"e1839a8" = {path = ".", editable = true}

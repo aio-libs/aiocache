@@ -1,5 +1,6 @@
 import logging
 import pickle
+import msgpack
 
 logger = logging.getLogger(__file__)
 
@@ -137,3 +138,32 @@ class JsonSerializer(StringSerializer):
         if value is None:
             return None
         return json.loads(value)
+
+
+class MsgPackSerializer(StringSerializer):
+    """
+    Transform data to bytes using msgpack.dumps and msgpack.loads to retrieve it back. You need
+    to have ``msgpack`` installed in order to be able to use this serializer.
+    """
+
+    @classmethod
+    def dumps(cls, value):
+        """
+        Serialize the received value using ``msgpack.dumps``.
+
+        :param value: obj
+        :returns: bytes
+        """
+        return msgpack.dumps(value)
+
+    @classmethod
+    def loads(cls, value):
+        """
+        Deserialize value using ``msgpack.loads``.
+
+        :param value: bytes
+        :returns: obj
+        """
+        if value is None:
+            return None
+        return msgpack.loads(value, encoding=cls.encoding)

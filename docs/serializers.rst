@@ -46,6 +46,13 @@ JsonSerializer
 .. autoclass:: aiocache.serializers.JsonSerializer
   :members:
 
+..  _msgpackserializer:
+
+MessagePackSerializer
+--------------
+
+.. autoclass:: aiocache.serializers.MessagePackSerializer
+  :members:
 
 In case the current serializers are not covering your needs, you can always define your custom serializer as shown in ``examples/serializer_class.py``:
 

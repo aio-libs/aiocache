@@ -32,6 +32,7 @@ setup(
     extras_require={
         'redis': ['aioredis>=0.3.3'],
         'memcached': ['aiomcache>=0.5.2'],
+        'msgpack': ['msgpack'],
         'dev': [
             'flake8',
             'pytest',

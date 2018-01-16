@@ -1,17 +1,15 @@
 import pytest
-try:
-    import ujson as json
-except ImportError:
-    import json
 
 from collections import namedtuple
 
-from aiocache.serializers import NullSerializer, StringSerializer, PickleSerializer, JsonSerializer
+from aiocache.serializers import (
+    NullSerializer, StringSerializer, PickleSerializer, JsonSerializer, MsgPackSerializer)
 
 
 Dummy = namedtuple("Dummy", "a, b")
 
 TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)]
+JSON_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
 
 
 class TestNullSerializer:
@@ -60,9 +58,10 @@ class TestPickleSerializer:
 
 class TestJsonSerializer:
 
-    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.parametrize("obj", JSON_TYPES)
     def test_set_types(self, obj):
-        assert JsonSerializer().dumps(obj) == json.dumps(obj)
+        serializer = JsonSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
 
     def test_dumps(self):
         assert (
@@ -82,3 +81,41 @@ class TestJsonSerializer:
         obj = {"hi": 1}
         serializer = JsonSerializer()
         assert serializer.loads(serializer.dumps(obj)) == obj
+
+
+class TestMsgPackSerializer:
+
+    @pytest.mark.parametrize("obj", JSON_TYPES)
+    def test_set_types(self, obj):
+        serializer = MsgPackSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+    def test_dumps(self):
+        assert MsgPackSerializer().dumps('hi') == b'\xa2hi'
+
+    def test_dumps_with_none(self):
+        assert isinstance(MsgPackSerializer().dumps(None), bytes)
+
+    def test_loads(self):
+        assert MsgPackSerializer().loads(b'\xa2hi') == 'hi'
+
+    def test_loads_no_encoding(self):
+        MsgPackSerializer.encoding = None
+        assert MsgPackSerializer().loads(b'\xa2hi') == b'hi'
+        MsgPackSerializer.encoding = 'utf-8'
+
+    def test_loads_with_none(self):
+        assert MsgPackSerializer().loads(None) is None
+
+    def test_dumps_and_loads_tuple(self):
+        assert MsgPackSerializer.loads(MsgPackSerializer.dumps(Dummy(1, 2))) == [1, 2]
+
+    def test_dumps_and_loads_dict(self):
+        d = {
+            'a': [1, 2, ('1', 2)],
+            'b': {'b': 1, 'c': [1, 2]}
+        }
+        assert MsgPackSerializer.loads(MsgPackSerializer.dumps(d)) == {
+            'a': [1, 2, ['1', 2]],
+            'b': {'b': 1, 'c': [1, 2]}
+        }
