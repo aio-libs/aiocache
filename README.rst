@@ -48,6 +48,7 @@ Installing
 - ``pip install aiocache[redis]``
 - ``pip install aiocache[memcached]``
 - ``pip install aiocache[redis,memcached]``
+- ``pip install aiocache[msgpack]``
 
 
 Usage

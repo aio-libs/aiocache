@@ -142,7 +142,8 @@ class JsonSerializer(StringSerializer):
 
 class MessagePackSerializer(StringSerializer):
     """
-    Transform data to bytes using msgpack.dumps and msgpack.loads to retrieve it back.
+    Transform data to bytes using msgpack.dumps and msgpack.loads to retrieve it back. You need
+    to have ``msgpack`` installed in order to be able to use this serializer.
     """
     encoding = None
 
