@@ -3,7 +3,8 @@ import pytest
 from collections import namedtuple
 
 from aiocache.serializers import (
-    NullSerializer, StringSerializer, PickleSerializer, JsonSerializer, MsgPackSerializer)
+    BaseSerializer, NullSerializer, StringSerializer, PickleSerializer,
+    JsonSerializer, MsgPackSerializer)
 
 
 Dummy = namedtuple("Dummy", "a, b")
@@ -13,6 +14,18 @@ JSON_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
 
 
 class TestNullSerializer:
+
+    def test_init(self):
+        serializer = NullSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'utf-8'
+
+    def test_init_encoding(self):
+        serializer = NullSerializer(encoding='whatever')
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'whatever'
+
     @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
         assert NullSerializer().dumps(obj) is obj
@@ -23,6 +36,12 @@ class TestNullSerializer:
 
 class TestStringSerializer:
 
+    def test_init(self):
+        serializer = StringSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'utf-8'
+
     @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
         assert StringSerializer().dumps(obj) == str(obj)
@@ -32,6 +51,12 @@ class TestStringSerializer:
 
 
 class TestPickleSerializer:
+
+    def test_init(self):
+        serializer = PickleSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING is None
+        assert serializer.encoding is None
 
     @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
@@ -57,6 +82,12 @@ class TestPickleSerializer:
 
 
 class TestJsonSerializer:
+
+    def test_init(self):
+        serializer = JsonSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'utf-8'
 
     @pytest.mark.parametrize("obj", JSON_TYPES)
     def test_set_types(self, obj):
@@ -85,6 +116,16 @@ class TestJsonSerializer:
 
 class TestMsgPackSerializer:
 
+    def test_init(self):
+        serializer = MsgPackSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'utf-8'
+
+    def test_init_use_list(self):
+        serializer = MsgPackSerializer(use_list=True)
+        assert serializer.use_list is True
+
     @pytest.mark.parametrize("obj", JSON_TYPES)
     def test_set_types(self, obj):
         serializer = MsgPackSerializer()
@@ -100,22 +141,22 @@ class TestMsgPackSerializer:
         assert MsgPackSerializer().loads(b'\xa2hi') == 'hi'
 
     def test_loads_no_encoding(self):
-        MsgPackSerializer.encoding = None
-        assert MsgPackSerializer().loads(b'\xa2hi') == b'hi'
-        MsgPackSerializer.encoding = 'utf-8'
+        assert MsgPackSerializer(encoding=None).loads(b'\xa2hi') == b'hi'
 
     def test_loads_with_none(self):
         assert MsgPackSerializer().loads(None) is None
 
     def test_dumps_and_loads_tuple(self):
-        assert MsgPackSerializer.loads(MsgPackSerializer.dumps(Dummy(1, 2))) == [1, 2]
+        serializer = MsgPackSerializer()
+        assert serializer.loads(serializer.dumps(Dummy(1, 2))) == [1, 2]
 
     def test_dumps_and_loads_dict(self):
+        serializer = MsgPackSerializer()
         d = {
             'a': [1, 2, ('1', 2)],
             'b': {'b': 1, 'c': [1, 2]}
         }
-        assert MsgPackSerializer.loads(MsgPackSerializer.dumps(d)) == {
+        assert serializer.loads(serializer.dumps(d)) == {
             'a': [1, 2, ['1', 2]],
             'b': {'b': 1, 'c': [1, 2]}
         }

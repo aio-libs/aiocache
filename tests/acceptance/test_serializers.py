@@ -161,7 +161,7 @@ class TestAltSerializers:
 
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer_functions(self, cache):
-        cache.serializer = StringSerializer
+        cache.serializer = StringSerializer()
         await cache.set(pytest.KEY, "value", dumps_fn=dumps)
         assert await cache.get(pytest.KEY) == "v4lu3"
         assert await cache.get(pytest.KEY, loads_fn=loads) == "value"

@@ -2,15 +2,15 @@ import asyncio
 import zlib
 
 from aiocache import RedisCache
-from aiocache.serializers import StringSerializer
+from aiocache.serializers import BaseSerializer
 
 
-class CompressionSerializer(StringSerializer):
+class CompressionSerializer(BaseSerializer):
 
     # This is needed because zlib works with bytes.
     # this way the underlying backend knows how to
     # store/retrieve values
-    encoding = None
+    DEFAULT_ENCODING = None
 
     def dumps(self, value):
         print("I've received:\n{}".format(value))
