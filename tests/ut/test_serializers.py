@@ -1,8 +1,4 @@
 import pytest
-try:
-    import ujson as json
-except ImportError:
-    import json
 
 from collections import namedtuple
 
