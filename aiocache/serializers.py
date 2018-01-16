@@ -140,12 +140,11 @@ class JsonSerializer(StringSerializer):
         return json.loads(value)
 
 
-class MessagePackSerializer(StringSerializer):
+class MsgPackSerializer(StringSerializer):
     """
     Transform data to bytes using msgpack.dumps and msgpack.loads to retrieve it back. You need
     to have ``msgpack`` installed in order to be able to use this serializer.
     """
-    encoding = None
 
     @classmethod
     def dumps(cls, value):
@@ -167,4 +166,4 @@ class MessagePackSerializer(StringSerializer):
         """
         if value is None:
             return None
-        return msgpack.loads(value, use_list=False)
+        return msgpack.loads(value, encoding=cls.encoding)
