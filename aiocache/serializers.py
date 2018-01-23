@@ -23,10 +23,10 @@ class BaseSerializer:
         super().__init__(*args, **kwargs)
 
     def dumps(self, value):
-        pass
+        raise NotImplementedError('dumps method must be implemented')
 
     def loads(self, value):
-        pass
+        raise NotImplementedError('loads method must be implemented')
 
 
 class NullSerializer(BaseSerializer):

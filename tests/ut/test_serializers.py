@@ -25,6 +25,14 @@ class TestBaseSerializer:
         assert serializer.DEFAULT_ENCODING == 'utf-8'
         assert serializer.encoding == 'whatever'
 
+    def test_dumps(self):
+        with pytest.raises(NotImplementedError):
+            BaseSerializer().dumps('')
+
+    def test_loads(self):
+        with pytest.raises(NotImplementedError):
+            BaseSerializer().loads('')
+
 
 class TestNullSerializer:
 
