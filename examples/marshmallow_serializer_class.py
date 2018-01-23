@@ -27,6 +27,10 @@ class MarshmallowSerializer(Schema, BaseSerializer):
     dict_type = fields.Dict()
     list_type = fields.List(fields.Integer())
 
+    # marshmallow Schema class doesn't play nicely with multiple inheritance and won't call
+    # BaseSerializer.__init__
+    encoding = 'utf-8'
+
     def dumps(self, *args, **kwargs):
         # dumps returns (data, errors), we just want to save data
         return super().dumps(*args, **kwargs).data

@@ -11,7 +11,8 @@ except ImportError:
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache.serializers import NullSerializer, StringSerializer, PickleSerializer, JsonSerializer
+from aiocache.serializers import (
+    BaseSerializer, NullSerializer, StringSerializer, PickleSerializer, JsonSerializer)
 
 
 class MyType:
@@ -24,8 +25,9 @@ class MyType:
         return self.__dict__ == obj.__dict__
 
 
-class MyTypeSchema(Schema, StringSerializer):
+class MyTypeSchema(Schema, BaseSerializer):
     r = fields.Integer()
+    encoding = 'utf-8'
 
     def dumps(self, *args, **kwargs):
         return super().dumps(*args, **kwargs).data
