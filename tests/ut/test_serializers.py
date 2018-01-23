@@ -13,6 +13,19 @@ TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)]
 JSON_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
 
 
+class TestBaseSerializer:
+
+    def test_init(self):
+        serializer = BaseSerializer()
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'utf-8'
+
+    def test_init_encoding(self):
+        serializer = BaseSerializer(encoding='whatever')
+        assert serializer.DEFAULT_ENCODING == 'utf-8'
+        assert serializer.encoding == 'whatever'
+
+
 class TestNullSerializer:
 
     def test_init(self):
@@ -20,11 +33,6 @@ class TestNullSerializer:
         assert isinstance(serializer, BaseSerializer)
         assert serializer.DEFAULT_ENCODING == 'utf-8'
         assert serializer.encoding == 'utf-8'
-
-    def test_init_encoding(self):
-        serializer = NullSerializer(encoding='whatever')
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'whatever'
 
     @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):

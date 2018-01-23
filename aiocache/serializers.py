@@ -1,4 +1,3 @@
-import abc
 import logging
 import pickle
 import msgpack
@@ -15,7 +14,7 @@ except ImportError:
 _NOT_SET = object()
 
 
-class BaseSerializer(metaclass=abc.ABCMeta):
+class BaseSerializer:
 
     DEFAULT_ENCODING = 'utf-8'
 
@@ -23,11 +22,9 @@ class BaseSerializer(metaclass=abc.ABCMeta):
         self.encoding = self.DEFAULT_ENCODING if encoding is _NOT_SET else encoding
         super().__init__(*args, **kwargs)
 
-    @abc.abstractmethod
     def dumps(self, value):
         pass
 
-    @abc.abstractmethod
     def loads(self, value):
         pass
 
