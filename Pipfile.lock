@@ -5,15 +5,15 @@
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
-            "implementation_version": "3.6.0",
+            "implementation_version": "3.5.2",
             "os_name": "posix",
             "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
             "platform_release": "16.7.0",
             "platform_system": "Darwin",
             "platform_version": "Darwin Kernel Version 16.7.0: Thu Jun 15 17:36:27 PDT 2017; root:xnu-3789.70.16~2/RELEASE_X86_64",
-            "python_full_version": "3.6.0+",
-            "python_version": "3.6",
+            "python_full_version": "3.5.2",
+            "python_version": "3.5",
             "sys_platform": "darwin"
         },
         "pipfile-spec": 6,
@@ -89,6 +89,14 @@
                 "sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65"
             ],
             "version": "==0.26.2"
+        },
+        "async-generator": {
+            "hashes": [
+                "sha256:d9253336202cb9df50ba617893fe794c61394a7eb4b9054f285c860f395ac6ff",
+                "sha256:928b644cfc92be498f2d6c431e0082ae79ea736fbdf1ce4247881071dd525348"
+            ],
+            "markers": "python_version == '3.5'",
+            "version": "==1.8"
         },
         "asynctest": {
             "hashes": [

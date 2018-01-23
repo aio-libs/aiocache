@@ -21,10 +21,11 @@ def test_create_simple_cache():
 def test_create_cache_with_everything():
     redis = _create_cache(
             RedisCache,
-            serializer={'class': PickleSerializer},
+            serializer={'class': PickleSerializer, 'encoding': 'encoding'},
             plugins=[{'class': "aiocache.plugins.TimingPlugin"}])
 
     assert isinstance(redis.serializer, PickleSerializer)
+    assert redis.serializer.encoding == 'encoding'
     assert isinstance(redis.plugins[0], TimingPlugin)
 
 
@@ -68,7 +69,8 @@ class TestCacheHandler:
                 'endpoint': "127.0.0.10",
                 'port': 6378,
                 'serializer': {
-                    'class': "aiocache.serializers.PickleSerializer"
+                    'class': "aiocache.serializers.PickleSerializer",
+                    'encoding': 'encoding'
                 },
                 'plugins': [
                     {'class': "aiocache.plugins.HitMissRatioPlugin"},
@@ -82,6 +84,7 @@ class TestCacheHandler:
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
         assert isinstance(cache.serializer, PickleSerializer)
+        assert cache.serializer.encoding == 'encoding'
         assert len(cache.plugins) == 2
 
     def test_retrieve_cache_new_instance(self):
@@ -91,7 +94,8 @@ class TestCacheHandler:
                 'endpoint': "127.0.0.10",
                 'port': 6378,
                 'serializer': {
-                    'class': "aiocache.serializers.PickleSerializer"
+                    'class': "aiocache.serializers.PickleSerializer",
+                    'encoding': 'encoding'
                 },
                 'plugins': [
                     {'class': "aiocache.plugins.HitMissRatioPlugin"},
@@ -105,6 +109,7 @@ class TestCacheHandler:
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
         assert isinstance(cache.serializer, PickleSerializer)
+        assert cache.serializer.encoding == 'encoding'
         assert len(cache.plugins) == 2
 
     def test_create_cache_str_no_alias(self):

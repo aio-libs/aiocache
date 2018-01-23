@@ -4,7 +4,7 @@ import asynctest
 from aiocache.base import BaseCache, API
 from aiocache import caches, RedisCache, MemcachedCache
 from aiocache.plugins import BasePlugin
-from aiocache.serializers import NullSerializer
+from aiocache.serializers import BaseSerializer
 
 
 def pytest_namespace():
@@ -56,7 +56,8 @@ def mock_cache(mocker):
     for cmd in API.CMDS:
         mocker.spy(cache, cmd.__name__)
     mocker.spy(cache, "close")
-    cache.serializer = asynctest.Mock(spec=NullSerializer)
+    cache.serializer = asynctest.Mock(spec=BaseSerializer)
+    cache.serializer.encoding = 'utf-8'
     cache.plugins = [asynctest.Mock(spec=BasePlugin)]
     return cache
 

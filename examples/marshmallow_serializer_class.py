@@ -5,7 +5,7 @@ import asyncio
 from marshmallow import fields, Schema, post_load
 
 from aiocache import SimpleMemoryCache
-from aiocache.serializers import StringSerializer
+from aiocache.serializers import BaseSerializer
 
 
 class RandomModel:
@@ -21,11 +21,15 @@ class RandomModel:
         return self.__dict__ == obj.__dict__
 
 
-class MarshmallowSerializer(Schema, StringSerializer):
+class MarshmallowSerializer(Schema, BaseSerializer):
     int_type = fields.Integer()
     str_type = fields.String()
     dict_type = fields.Dict()
     list_type = fields.List(fields.Integer())
+
+    # marshmallow Schema class doesn't play nicely with multiple inheritance and won't call
+    # BaseSerializer.__init__
+    encoding = 'utf-8'
 
     def dumps(self, *args, **kwargs):
         # dumps returns (data, errors), we just want to save data

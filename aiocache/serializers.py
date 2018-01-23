@@ -11,7 +11,25 @@ except ImportError:
     import json
 
 
-class NullSerializer:
+_NOT_SET = object()
+
+
+class BaseSerializer:
+
+    DEFAULT_ENCODING = 'utf-8'
+
+    def __init__(self, *args, encoding=_NOT_SET, **kwargs):
+        self.encoding = self.DEFAULT_ENCODING if encoding is _NOT_SET else encoding
+        super().__init__(*args, **kwargs)
+
+    def dumps(self, value):
+        raise NotImplementedError('dumps method must be implemented')
+
+    def loads(self, value):
+        raise NotImplementedError('loads method must be implemented')
+
+
+class NullSerializer(BaseSerializer):
     """
     This serializer does nothing. Its only recommended to be used by
     :class:`aiocache.SimpleMemoryCache` because for other backends it will
@@ -26,24 +44,20 @@ class NullSerializer:
         my_list.append(2)
         await cache.get("key")  # Will return [1, 2]
     """
-    encoding = 'utf-8'
-
-    @classmethod
-    def dumps(cls, value):
+    def dumps(self, value):
         """
         Returns the same value
         """
         return value
 
-    @classmethod
-    def loads(cls, value):
+    def loads(self, value):
         """
         Returns the same value
         """
         return value
 
 
-class StringSerializer:
+class StringSerializer(BaseSerializer):
     """
     Converts all input values to str. All return values are also str. Be
     careful because this means that if you store an ``int(1)``, you will get
@@ -54,13 +68,7 @@ class StringSerializer:
     If you want to keep python types, use ``PickleSerializer``. ``JsonSerializer``
     may also be useful to keep type of symple python types.
     """
-    encoding = 'utf-8'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    @classmethod
-    def dumps(cls, value):
+    def dumps(self, value):
         """
         Serialize the received value casting it to str.
 
@@ -69,22 +77,20 @@ class StringSerializer:
         """
         return str(value)
 
-    @classmethod
-    def loads(cls, value):
+    def loads(self, value):
         """
         Returns value back without transformations
         """
         return value
 
 
-class PickleSerializer(StringSerializer):
+class PickleSerializer(BaseSerializer):
     """
     Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
     """
-    encoding = None
+    DEFAULT_ENCODING = None
 
-    @classmethod
-    def dumps(cls, value):
+    def dumps(self, value):
         """
         Serialize the received value using ``pickle.dumps``.
 
@@ -93,8 +99,7 @@ class PickleSerializer(StringSerializer):
         """
         return pickle.dumps(value)
 
-    @classmethod
-    def loads(cls, value):
+    def loads(self, value):
         """
         Deserialize value using ``pickle.loads``.
 
@@ -106,7 +111,7 @@ class PickleSerializer(StringSerializer):
         return pickle.loads(value)
 
 
-class JsonSerializer(StringSerializer):
+class JsonSerializer(BaseSerializer):
     """
     Transform data to json string with json.dumps and json.loads to retrieve it back. Check
     https://docs.python.org/3/library/json.html#py-to-json-table for how types are converted.
@@ -116,9 +121,7 @@ class JsonSerializer(StringSerializer):
         - ujson dumps supports bytes while json doesn't
         - ujson and json outputs may differ sometimes
     """
-
-    @classmethod
-    def dumps(cls, value):
+    def dumps(self, value):
         """
         Serialize the received value using ``json.dumps``.
 
@@ -127,8 +130,7 @@ class JsonSerializer(StringSerializer):
         """
         return json.dumps(value)
 
-    @classmethod
-    def loads(cls, value):
+    def loads(self, value):
         """
         Deserialize value using ``json.loads``.
 
@@ -140,14 +142,21 @@ class JsonSerializer(StringSerializer):
         return json.loads(value)
 
 
-class MsgPackSerializer(StringSerializer):
+class MsgPackSerializer(BaseSerializer):
     """
     Transform data to bytes using msgpack.dumps and msgpack.loads to retrieve it back. You need
     to have ``msgpack`` installed in order to be able to use this serializer.
-    """
 
-    @classmethod
-    def dumps(cls, value):
+    :param encoding: str. Can be used to change encoding param for ``msg.loads`` method.
+        Default is utf-8.
+    :param use_list: bool. Can be used to change use_list param for ``msgpack.loads`` method.
+        Default is True.
+    """
+    def __init__(self, *args, use_list=True, **kwargs):
+        self.use_list = use_list
+        super().__init__(*args, **kwargs)
+
+    def dumps(self, value):
         """
         Serialize the received value using ``msgpack.dumps``.
 
@@ -156,8 +165,7 @@ class MsgPackSerializer(StringSerializer):
         """
         return msgpack.dumps(value)
 
-    @classmethod
-    def loads(cls, value):
+    def loads(self, value):
         """
         Deserialize value using ``msgpack.loads``.
 
@@ -166,4 +174,4 @@ class MsgPackSerializer(StringSerializer):
         """
         if value is None:
             return None
-        return msgpack.loads(value, encoding=cls.encoding)
+        return msgpack.loads(value, encoding=self.encoding, use_list=self.use_list)
