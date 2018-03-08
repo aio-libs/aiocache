@@ -2,7 +2,7 @@ import pytest
 
 from aiocache import SimpleMemoryCache, RedisCache, caches
 from aiocache.factory import _class_from_string, _create_cache
-from aiocache.serializers import PickleSerializer
+from aiocache.serializers import JsonSerializer, PickleSerializer
 from aiocache.plugins import TimingPlugin, HitMissRatioPlugin
 
 
@@ -211,6 +211,18 @@ class TestCacheHandler:
     def test_set_empty_config(self):
         with pytest.raises(ValueError):
             caches.set_config({})
+
+    def test_set_config_updates_default(self):
+        assert not isinstance(caches.get('default').serializer, JsonSerializer)
+        caches.set_config({
+            'default': {
+                'cache': "aiocache.SimpleMemoryCache",
+                'serializer': {
+                    'class': "aiocache.serializers.JsonSerializer"
+                }
+            }
+        })
+        assert isinstance(caches.get('default').serializer, JsonSerializer)
 
     def test_set_config_no_default(self):
         with pytest.raises(ValueError):

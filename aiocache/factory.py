@@ -140,6 +140,8 @@ class CacheHandler:
         """
         if "default" not in config:
             raise ValueError("default config must be provided")
+        for config_name in config.keys():
+            self._caches.pop(config_name, None)
         self._config = config
 
 
