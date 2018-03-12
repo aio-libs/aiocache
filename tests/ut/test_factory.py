@@ -212,7 +212,7 @@ class TestCacheHandler:
         with pytest.raises(ValueError):
             caches.set_config({})
 
-    def test_set_config_updates_default(self):
+    def test_set_config_updates_existing_values(self):
         assert not isinstance(caches.get('default').serializer, JsonSerializer)
         caches.set_config({
             'default': {
@@ -223,6 +223,29 @@ class TestCacheHandler:
             }
         })
         assert isinstance(caches.get('default').serializer, JsonSerializer)
+
+    def test_set_config_removes_existing_caches(self):
+        caches.set_config({
+            'default': {
+                'cache': "aiocache.SimpleMemoryCache",
+            },
+            'alt': {
+                'cache': "aiocache.SimpleMemoryCache",
+            },
+        })
+        caches.get('default')
+        caches.get('alt')
+        assert len(caches._caches) == 2
+
+        caches.set_config({
+            'default': {
+                'cache': "aiocache.SimpleMemoryCache",
+            },
+            'alt': {
+                'cache': "aiocache.SimpleMemoryCache",
+            },
+        })
+        assert caches._caches == {}
 
     def test_set_config_no_default(self):
         with pytest.raises(ValueError):
