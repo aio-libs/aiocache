@@ -137,9 +137,13 @@ class CacheHandler:
 
         All keys in the config are optional, if they are not passed the defaults
         for the specified class will be used.
+
+        If a config key already exists, it will be updated with the new values.
         """
         if "default" not in config:
             raise ValueError("default config must be provided")
+        for config_name in config.keys():
+            self._caches.pop(config_name, None)
         self._config = config
 
 
