@@ -14,4 +14,5 @@ dependencies:
   - aioredis==0.2.8
   - aiomcache==0.4.0
   - async-timeout==1.1.0
+  - msgpack
 
