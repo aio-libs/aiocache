@@ -1,2 +1,13 @@
-conda:
-    file: conda_environment.yml
+formats:
+  - none
+
+build:
+  image: latest
+
+python:
+  version: 3.6
+  pip_install: true
+  extra_requirements:
+    - redis
+    - memcached
+    - msgpack
