@@ -21,7 +21,7 @@ acceptance:
 	pipenv run pytest -sv tests/acceptance
 
 doc:
-	make -C docs/ html
+	pipenv run make -C docs/ html
 
 functional:
 	pipenv run bash examples/run_all.sh
