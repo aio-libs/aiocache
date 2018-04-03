@@ -48,10 +48,10 @@ JsonSerializer
 
 ..  _msgpackserializer:
 
-MessagePackSerializer
---------------
+MsgPackSerializer
+-----------------
 
-.. autoclass:: aiocache.serializers.MessagePackSerializer
+.. autoclass:: aiocache.serializers.MsgPackSerializer
   :members:
 
 In case the current serializers are not covering your needs, you can always define your custom serializer as shown in ``examples/serializer_class.py``:

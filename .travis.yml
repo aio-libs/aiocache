@@ -23,6 +23,8 @@ matrix:
 
     - python: 3.6
       env: TOXENV=syntax
+    - python: 3.6
+      env: TOXENV=docs-html
 
 install:
   - pip install tox
