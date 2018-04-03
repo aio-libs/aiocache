@@ -64,6 +64,8 @@ class RedLock:
     _EVENTS = {}
 
     def __init__(self, client: Type[BaseCache], key: str, lease: Union[int, float]):
+        print(id(client._cache))
+        print(client._cache)
         self.client = client
         self.key = self.client._build_key(key + '-lock')
         self.lease = lease
@@ -88,9 +90,12 @@ class RedLock:
             await asyncio.wait_for(
                 RedLock._EVENTS[self.key].wait(),
                 self.lease)
+            print('done...')
         except asyncio.TimeoutError:
+            print('timeout...')
             pass
         except KeyError:  # lock was released when wait_for was rescheduled
+            print('keyerror...')
             pass
 
     async def __aexit__(self, exc_type, exc_value, traceback):

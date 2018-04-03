@@ -155,14 +155,21 @@ class cached_stampede(cached):
             return value
 
         async with RedLock(self.cache, key, self.lease):
+            print(self.cache._cache)
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
+            print('dafuq')
+            print(self.cache._cache)
 
             result = await f(*args, **kwargs)
+            print('hue')
+            print(self.cache._cache)
 
             await self.set_in_cache(key, result)
 
+        logger.info('lol')
+        logger.info(self.cache._cache)
         return result
 
 
