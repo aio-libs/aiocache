@@ -81,14 +81,24 @@ class TestCachedStampede:
     async def test_locking_dogpile_lease_expiration(self, mocker, cache):
         mocker.spy(cache, 'get')
         mocker.spy(cache, 'set')
-        decorator = cached_stampede(ttl=10, lease=1)
+        decorator = cached_stampede(ttl=10, lease=3)
 
         await asyncio.gather(
+            decorator(stub)(1, seconds=1),
             decorator(stub)(1, seconds=2),
-            decorator(stub)(1, seconds=2))
+            decorator(stub)(1, seconds=3))
 
-        assert cache.get.call_count == 4
-        assert cache.set.call_count == 2
+        assert cache.get.call_count == 6
+        assert cache.set.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_locking_dogpile_task_cancellation(self, mocker, cache):
+        @cached_stampede()
+        async def cancel_task():
+            raise asyncio.CancelledError()
+
+        with pytest.raises(asyncio.CancelledError):
+            await cancel_task()
 
 
 class TestMultiCachedDecorator:

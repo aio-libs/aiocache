@@ -39,15 +39,11 @@ class SimpleMemoryBackend:
         return True
 
     async def _add(self, key, value, ttl=None, _conn=None):
-        print(SimpleMemoryBackend._cache)
-        print(key in SimpleMemoryBackend._cache)
         if key in SimpleMemoryBackend._cache:
             raise ValueError(
                 "Key {} already exists, use .set to update the value".format(key))
 
         await self._set(key, value, ttl=ttl)
-        print(SimpleMemoryBackend._cache)
-        print('added')
         return True
 
     async def _exists(self, key, _conn=None):
