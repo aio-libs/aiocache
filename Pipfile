@@ -14,3 +14,4 @@ name = "pypi"
 
 "-e .[dev]" = "*"
 "e1839a8" = {path = ".", editable = true}
+ipdb = "*"

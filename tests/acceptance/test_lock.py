@@ -20,7 +20,7 @@ class TestRedLock:
 
     @pytest.mark.asyncio
     async def test_release_does_nothing_when_no_lock(self, lock):
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_acquire_release(self, cache, lock):
@@ -72,6 +72,15 @@ class TestRedLock:
         assert cache.get.call_count == 8
         assert cache.set.call_count == 4
 
+    @pytest.mark.asyncio
+    async def test_locking_dogpile_propagates_exceptions(self, cache):
+        async def dummy():
+            async with RedLock(cache, pytest.KEY, lease=1):
+                raise ValueError()
+
+        with pytest.raises(ValueError):
+            await dummy()
+
 
 class TestMemoryRedLock:
 
@@ -83,20 +92,20 @@ class TestMemoryRedLock:
     async def test_release_wrong_token_fails(self, lock):
         await lock.__aenter__()
         lock._value = "random"
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_release_wrong_client_fails(self, memory_cache, lock):
         wrong_lock = RedLock(memory_cache, pytest.KEY, 20)
         await lock.__aenter__()
-        assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_float_lease(self, memory_cache):
         lock = RedLock(memory_cache, pytest.KEY, 0.1)
         await lock.__aenter__()
         await asyncio.sleep(0.2)
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
 
 class TestRedisRedLock:
@@ -109,20 +118,20 @@ class TestRedisRedLock:
     async def test_release_wrong_token_fails(self, lock):
         await lock.__aenter__()
         lock._value = "random"
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_release_wrong_client_fails(self, redis_cache, lock):
         wrong_lock = RedLock(redis_cache, pytest.KEY, 20)
         await lock.__aenter__()
-        assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_float_lease(self, redis_cache):
         lock = RedLock(redis_cache, pytest.KEY, 0.1)
         await lock.__aenter__()
         await asyncio.sleep(0.2)
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 0
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
 
 class TestMemcachedRedLock:
@@ -135,13 +144,13 @@ class TestMemcachedRedLock:
     async def test_release_wrong_token_succeeds_meh(self, lock):
         await lock.__aenter__()
         lock._value = "random"
-        assert await lock.__aexit__("exc_type", "exc_value", "traceback") == 1
+        assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_release_wrong_client_succeeds_meh(self, memcached_cache, lock):
         wrong_lock = RedLock(memcached_cache, pytest.KEY, 20)
         await lock.__aenter__()
-        assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") == 1
+        assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
     @pytest.mark.asyncio
     async def test_float_lease(self, memcached_cache):

@@ -21,6 +21,7 @@ class TestRedLock:
 
     @pytest.mark.asyncio
     async def test_release(self, mock_cache, lock):
+        mock_cache._redlock_release.return_value = True
         await lock._acquire()
         await lock._release()
         mock_cache._redlock_release.assert_called_with(
@@ -29,13 +30,11 @@ class TestRedLock:
         assert pytest.KEY + '-lock' not in lock._EVENTS
 
     @pytest.mark.asyncio
-    async def test_second_release(self, mock_cache, lock):
-        await lock._acquire()
-        mock_cache._redlock_release.side_effect = [True, False]
-        assert pytest.KEY + '-lock' in lock._EVENTS
-        assert await lock._release() is True
+    async def test_release_no_acquire(self, mock_cache, lock):
+        mock_cache._redlock_release.return_value = False
         assert pytest.KEY + '-lock' not in lock._EVENTS
-        assert await lock._release() is False
+        await lock._release()
+        assert pytest.KEY + '-lock' not in lock._EVENTS
 
     @pytest.mark.asyncio
     async def test_context_manager(self, mock_cache, lock):
@@ -46,6 +45,13 @@ class TestRedLock:
         mock_cache._redlock_release.assert_called_with(
             pytest.KEY + '-lock',
             lock._value)
+
+    @pytest.mark.asyncio
+    async def test_raises_exceptions(self, mock_cache, lock):
+        mock_cache._redlock_release.return_value = True
+        with pytest.raises(ValueError):
+            async with lock:
+                raise ValueError
 
     @pytest.mark.asyncio
     async def test_acquire_block_timeouts(self, mock_cache, lock):

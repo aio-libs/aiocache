@@ -94,13 +94,12 @@ class RedLock:
             pass
 
     async def __aexit__(self, exc_type, exc_value, traceback):
-        return await self._release()
+        await self._release()
 
     async def _release(self):
         removed = await self.client._redlock_release(self.key, self._value)
         if removed:
             RedLock._EVENTS.pop(self.key).set()
-        return removed
 
 
 class OptimisticLock:
