@@ -36,10 +36,6 @@ services:
   - redis-server
   - memcached
 
-stages:
-  - script
-  - deploy
-
 jobs:
   include:
     - stage: deploy
