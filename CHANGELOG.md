@@ -1,6 +1,26 @@
 # Changelog
 
 
+## 0.9.0 (2018-04-24)
+
+* Bug #389/propagate redlock exceptions [#394](https://github.com/argaen/aiocache/issues/394) - Manuel Miranda
+  ___aexit__ was returning whether asyncio Event was removed or not. In
+some cases this was avoiding the context manager to propagate
+exceptions happening inside. Now its not returning anything and will
+raise always any exception raised from inside_
+
+* Fix sphinx build [#392](https://github.com/argaen/aiocache/issues/392) - Manuel Miranda
+  _Also add extra step in build pipeline to avoid future errors._
+
+* Update alias config when config already exists [#383](https://github.com/argaen/aiocache/issues/383) - Josep Cugat
+
+* Ensure serializers are instances [#379](https://github.com/argaen/aiocache/issues/379) - Manuel Miranda
+
+* Add MsgPackSerializer [#370](https://github.com/argaen/aiocache/issues/370) - Adam Hopkins
+
+* Add create_connection_timeout for redis>=1.0.0 when creating connections [#368](https://github.com/argaen/aiocache/issues/368) - tmarques82
+
+* Fixed spelling error in serializers.py [#371](https://github.com/argaen/aiocache/issues/371) - Jared Shields
 ## 0.8.0 (2017-11-08)
 
 
@@ -17,6 +37,8 @@
 * Generate wheel package on release [#338](https://github.com/argaen/aiocache/issues/338) - Jair Henrique
 
 * Add key_builder param to caches to customize keys [#315](https://github.com/argaen/aiocache/issues/315) - Manuel Miranda
+
+
 ## 0.7.2 (2017-07-23)
 
 #### Other
@@ -33,6 +55,8 @@
 * Remove explicit loop usages [#305](https://github.com/argaen/aiocache/issues/305) - Manuel Miranda
 
 * Remove bad logging configuration [#304](https://github.com/argaen/aiocache/issues/304) - Manuel Miranda
+
+
 ## 0.7.0 (2017-07-01)
 
 * Upgrade to aioredis 0.3.3. - Manuel Miranda
