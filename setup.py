@@ -45,8 +45,8 @@ setup(
             'sphinx',
             'sphinx-autobuild',
             'sphinx-rtd-theme',
-            'gitchangelog',
             'pystache',
+            'ipdb',
         ]
     }
 )
