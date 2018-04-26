@@ -1,31 +1,6 @@
 language: python
 cache: pip
 
-matrix:
-  include:
-    - python: 3.5
-      env: TOXENV=py35,codecov
-    - python: 3.5
-      env: TOXENV=py35-ujson,codecov
-    - python: 3.5
-      env: TOXENV=py35-deps-lowest,codecov
-    - python: 3.5
-      env: TOXENV=py35-deps-devel,codecov
-
-    - python: 3.6
-      env: TOXENV=py36,codecov
-    - python: 3.6
-      env: TOXENV=py36-ujson,codecov
-    - python: 3.6
-      env: TOXENV=py36-deps-lowest,codecov
-    - python: 3.6
-      env: TOXENV=py36-deps-devel,codecov
-
-    - python: 3.6
-      env: TOXENV=syntax
-    - python: 3.6
-      env: TOXENV=docs-html
-
 install:
   - pip install tox
 
@@ -35,7 +10,41 @@ services:
 
 jobs:
   include:
+    - stage: syntax
+      script: tox
+      python: 3.6
+      env: TOXENV=syntax
+    - stage: syntax
+      script: tox
+      python: 3.6
+      env: TOXENV=docs-html
+
     - script: tox
+      env: TOXENV=py35,codecov
+      python: 3.5
+    - script: tox
+      env: TOXENV=py35-ujson,codecov
+      python: 3.5
+    - script: tox
+      env: TOXENV=py35-deps-lowest,codecov
+      python: 3.5
+    - script: tox
+      env: TOXENV=TOXENV=py35-deps-devel,codecov
+      python: 3.5
+
+    - script: tox
+      env: TOXENV=py36,codecov
+      python: 3.6
+    - script: tox
+      env: TOXENV=py36-ujson,codecov
+      python: 3.6
+    - script: tox
+      env: TOXENV=py36-deps-lowest,codecov
+      python: 3.6
+    - script: tox
+      env: TOXENV=py36-deps-devel,codecov
+      python: 3.6
+
     - stage: deploy
       script: skip
       deploy: &pypi
