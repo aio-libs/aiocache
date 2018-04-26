@@ -34,7 +34,7 @@ jobs:
       language: python
       python: 3.5
     - script: tox
-      env: TOXENV=TOXENV=py35-deps-devel,codecov
+      env: TOXENV=py35-deps-devel,codecov
       language: python
       python: 3.5
 
