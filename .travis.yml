@@ -15,13 +15,13 @@ jobs:
       language: python
       python: 3.6
       env: TOXENV=syntax
-    - stage: syntax
-      script: tox
+    - script: tox
       language: python
       python: 3.6
       env: TOXENV=docs-html
 
-    - script: tox
+    - stage: test
+      script: tox
       env: TOXENV=py35,codecov
       language: python
       python: 3.5
