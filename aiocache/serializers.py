@@ -1,6 +1,5 @@
 import logging
 import pickle
-import msgpack
 
 logger = logging.getLogger(__file__)
 
@@ -9,6 +8,11 @@ try:
 except ImportError:
     logger.warning("ujson module not found, using json")
     import json
+
+try:
+    import msgpack
+except ImportError:
+    logger.warning("msgpack not installed, MsgPackSerializer unavailable")
 
 
 _NOT_SET = object()
