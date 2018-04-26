@@ -1,9 +1,5 @@
 # Changelog
 
-## 0.9.1 (2018-04-25)
-
-* Lazy load asyncio.Lock on redis backend. This fixes an issue with multiprocess
-apps like tornado that might fork after import time. - Jordi Soucheiron
 
 ## 0.9.0 (2018-04-24)
 
