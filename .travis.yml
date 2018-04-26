@@ -36,16 +36,16 @@ services:
   - redis-server
   - memcached
 
-jobs:
-  include:
-    - stage: deploy
-      script: skip
-      deploy: &pypi
-        provider: pypi
-        user: blck
-        password:
-          secure: 4pH7XRyROJao+IShvg+s0awD6jLdE3HyZtMOTRzCoWNRE+brEHBaJ68F1hxnKAO5mOmyT35vd4ywvdKZremmAqIVSrOJ0oifYhxmUWoww2SuX5CDXCkXCz8AJ8W2mK+t4Er2GRT6OYBaDBBHDOxz7KGcjtZrQj3pEPeI+nO+8YQJFzI2PkEb2BfVnvbqDyD6FIc6YaNWhoA/i00kSkiQ58ZFTgBmd8yLIobySifWOzVZqXh+SqqZSjeIXpbmuhxmXU73xwLYSEn/gXJhZB5x4IuYMWAsIqaDcg2lWRcXMxkjML03TsySSwExhfOFRxlJEC9mmxAJMVMt6WmRl13bY7CDlZc975EzgEH4fTh0LBuMlu2b3hE+l4gR54K8YDvx7OuDf9eIaAuEOL9Rx+TefG1PhfCx9Ipegxc9VboO1BaPTm3LQbMBzQgdhS5TrR9CugGZdqFSJzvzgi8Oo9GjIuH4MurLYZr6WAhjTp5dFFOKMyK3ElgFSgdSOTVfM4o72Burt/qYbrdk+GdKlzGTAMkcdW+D+JgmcTJD5rb8i8Z/ctfBRMhGPyZFWvvhkTIuMxkEO8iizo0V5Vv7uI8PGMlFjyZnhgHP/E5o8C1ZltfJjXcUiSVAzweGNV6612v5vlhLmIxC7w5UHlrQxoioFRSef1OFfWkhFikat+8yrFg=
-        distributions: "sdist bdist_wheel"
-        on:
-          tags: true
-          python: 3.6
+# jobs:
+#   include:
+#     - stage: deploy
+#       script: skip
+#       deploy: &pypi
+#         provider: pypi
+#         user: blck
+#         password:
+#           secure: 4pH7XRyROJao+IShvg+s0awD6jLdE3HyZtMOTRzCoWNRE+brEHBaJ68F1hxnKAO5mOmyT35vd4ywvdKZremmAqIVSrOJ0oifYhxmUWoww2SuX5CDXCkXCz8AJ8W2mK+t4Er2GRT6OYBaDBBHDOxz7KGcjtZrQj3pEPeI+nO+8YQJFzI2PkEb2BfVnvbqDyD6FIc6YaNWhoA/i00kSkiQ58ZFTgBmd8yLIobySifWOzVZqXh+SqqZSjeIXpbmuhxmXU73xwLYSEn/gXJhZB5x4IuYMWAsIqaDcg2lWRcXMxkjML03TsySSwExhfOFRxlJEC9mmxAJMVMt6WmRl13bY7CDlZc975EzgEH4fTh0LBuMlu2b3hE+l4gR54K8YDvx7OuDf9eIaAuEOL9Rx+TefG1PhfCx9Ipegxc9VboO1BaPTm3LQbMBzQgdhS5TrR9CugGZdqFSJzvzgi8Oo9GjIuH4MurLYZr6WAhjTp5dFFOKMyK3ElgFSgdSOTVfM4o72Burt/qYbrdk+GdKlzGTAMkcdW+D+JgmcTJD5rb8i8Z/ctfBRMhGPyZFWvvhkTIuMxkEO8iizo0V5Vv7uI8PGMlFjyZnhgHP/E5o8C1ZltfJjXcUiSVAzweGNV6612v5vlhLmIxC7w5UHlrQxoioFRSef1OFfWkhFikat+8yrFg=
+#         distributions: "sdist bdist_wheel"
+#         on:
+#           tags: true
+#           python: 3.6
