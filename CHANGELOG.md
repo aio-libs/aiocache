@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 0.9.1 (2018-04-27)
+
+* Single deploy step [#395](https://github.com/argaen/aiocache/issues/395) - Manuel Miranda
+
+* Catch ImportError when importing optional msgpack [#398](https://github.com/argaen/aiocache/issues/398) - Paweł Kowalski
+
+* Lazy load redis asyncio.Lock [#397](https://github.com/argaen/aiocache/issues/397) - Jordi Soucheiron
+
+
+
 ## 0.9.0 (2018-04-24)
 
 * Bug #389/propagate redlock exceptions [#394](https://github.com/argaen/aiocache/issues/394) - Manuel Miranda
