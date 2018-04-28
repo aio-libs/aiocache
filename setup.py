@@ -14,6 +14,10 @@ with open(
         raise RuntimeError('Unable to determine version.')
 
 
+with open('README.rst', 'rt', encoding='utf8') as f:
+    readme = f.read()
+
+
 setup(
     name='aiocache',
     version=version,
@@ -21,6 +25,7 @@ setup(
     url='https://github.com/argaen/aiocache',
     author_email='manu.mirandad@gmail.com',
     description='multi backend asyncio cache',
+    long_description=readme,
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.5',
