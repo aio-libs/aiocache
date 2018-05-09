@@ -36,7 +36,9 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
 
 
 class CacheHandler:
-
+    """
+    Cache handler.
+    """
     _config = {
         'default': {
             'cache': 'aiocache.SimpleMemoryCache',
@@ -99,11 +101,61 @@ class CacheHandler:
     @property
     def config(self) -> MappingProxyType:
         """
-        Return a proxy to current stored config
+        Current stored config.
+
+        :getter: Return mapping proxy to config
+        :setter:
+            Set (override) the default config for cache aliases
+            from a dict-like structure. The structure is the following::
+
+                {
+                    'default': {
+                        'cache': "aiocache.SimpleMemoryCache",
+                        'serializer': {
+                            'class': "aiocache.serializers.StringSerializer"
+                        }
+                    },
+                    'redis_alt': {
+                        'cache': "aiocache.RedisCache",
+                        'endpoint': "127.0.0.10",
+                        'port': 6378,
+                        'serializer': {
+                            'class': "aiocache.serializers.PickleSerializer"
+                        },
+                        'plugins': [
+                            {'class': "aiocache.plugins.HitMissRatioPlugin"},
+                            {'class': "aiocache.plugins.TimingPlugin"}
+                        ]
+                    }
+                }
+
+            'default' key must always exist when passing a new config.
+            Default configuration is::
+
+                {
+                    'default': {
+                        'cache': "aiocache.SimpleMemoryCache",
+                        'serializer': {
+                            'class': "aiocache.serializers.StringSerializer"
+                        }
+                    }
+                }
+
+            You can set your own classes there.
+            The class params accept both str and class types.
+
+            All keys in the config are optional, if they are not passed the defaults
+            for the specified class will be used.
+
+            If a config key already exists, it will be updated with the new values.
+        :type: MappingProxyType
         """
         return MappingProxyType(self._config)
 
     def get_config(self):
+        """
+        Return a proxy to current stored config
+        """
         warnings.warn(
             '"get_config" method is deprecated. Use "config" property instead.',
             DeprecationWarning
@@ -112,6 +164,13 @@ class CacheHandler:
 
     @config.setter
     def config(self, value: MutableMapping):
+        if 'default' not in value:
+            raise ValueError('default config must be provided')
+        for config_name in value.keys():
+            self._caches.pop(config_name, None)
+        self._config = value
+
+    def set_config(self, config: MutableMapping):
         """
         Set (override) the default config for cache aliases from a dict-like
         structure. The structure is the following::
@@ -157,13 +216,6 @@ class CacheHandler:
 
         If a config key already exists, it will be updated with the new values.
         """
-        if 'default' not in value:
-            raise ValueError('default config must be provided')
-        for config_name in value.keys():
-            self._caches.pop(config_name, None)
-        self._config = value
-
-    def set_config(self, config: MutableMapping):
         warnings.warn(
             '"set_config" method is deprecated. '
             'Use "config" property setter instead.',
@@ -172,4 +224,5 @@ class CacheHandler:
         self.config = config
 
 
+#: Initialized cache handler to use via direct importing
 caches = CacheHandler()
