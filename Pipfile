@@ -7,5 +7,5 @@ name = "pypi"
 "e1839a8" = {path = ".", extras = ["redis", "memcached", "msgpack"], editable = true}
 
 [dev-packages]
-"e1839a8" = {path = ".", extras = ["dev"], editable = true}
+"e1839a8" = {path = ".", extras = ["redis", "memcached", "msgpack", "dev"], editable = true}
 ipdb = "*"
