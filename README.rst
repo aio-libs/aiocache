@@ -111,7 +111,7 @@ You can also setup cache aliases so its easy to reuse configurations
   from aiocache.serializers import StringSerializer, PickleSerializer
 
   # You can use either classes or strings for referencing classes
-  caches.set_config({
+  caches.config = {
       'default': {
           'cache': "aiocache.SimpleMemoryCache",
           'serializer': {
@@ -131,7 +131,7 @@ You can also setup cache aliases so its easy to reuse configurations
               {'class': "aiocache.plugins.TimingPlugin"}
           ]
       }
-  })
+  }
 
 
   async def default_cache():

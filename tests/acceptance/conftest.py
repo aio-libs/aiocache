@@ -14,14 +14,14 @@ def pytest_namespace():
 @pytest.fixture(autouse=True)
 def reset_caches():
     caches._caches = {}
-    caches.set_config({
+    caches.config = {
         'default': {
             'cache': "aiocache.SimpleMemoryCache",
             'serializer': {
                 'class': "aiocache.serializers.NullSerializer"
             }
         }
-    })
+    }
 
 
 @pytest.fixture(autouse=True)

@@ -3,7 +3,7 @@ import asyncio
 from aiocache import caches, SimpleMemoryCache, RedisCache
 from aiocache.serializers import StringSerializer, PickleSerializer
 
-caches.set_config({
+caches.config = {
     'default': {
         'cache': "aiocache.SimpleMemoryCache",
         'serializer': {
@@ -23,7 +23,7 @@ caches.set_config({
             {'class': "aiocache.plugins.TimingPlugin"}
         ]
     }
-})
+}
 
 
 async def default_cache():

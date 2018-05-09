@@ -1,25 +1,31 @@
-from copy import deepcopy
+import importlib
+import warnings
+from types import MappingProxyType
+from typing import MutableMapping
 
 
 def _class_from_string(class_path):
     class_name = class_path.split('.')[-1]
     module_name = class_path.rstrip(class_name).rstrip(".")
-    return getattr(__import__(module_name, fromlist=[class_name]), class_name)
+    return getattr(importlib.import_module(module_name), class_name)
 
 
 def _create_cache(cache, serializer=None, plugins=None, **kwargs):
-
     if serializer is not None:
-        cls = serializer.pop("class")
+        cls = serializer['class']
         cls = _class_from_string(cls) if isinstance(cls, str) else cls
-        serializer = cls(**serializer)
+        serializer = cls(
+            **{k: v for k, v in serializer.items() if k != 'class'}
+        )
 
     plugins_instances = []
     if plugins is not None:
         for plugin in plugins:
-            cls = plugin.pop("class")
+            cls = plugin['class']
             cls = _class_from_string(cls) if isinstance(cls, str) else cls
-            plugins_instances.append(cls(**plugin))
+            plugins_instances.append(
+                cls(**{k: v for k, v in plugin.items() if k != 'class'})
+            )
 
     cache = _class_from_string(cache) if isinstance(cache, str) else cache
     instance = cache(
@@ -33,9 +39,9 @@ class CacheHandler:
 
     _config = {
         'default': {
-            'cache': "aiocache.SimpleMemoryCache",
+            'cache': 'aiocache.SimpleMemoryCache',
             'serializer': {
-                'class': "aiocache.serializers.StringSerializer"
+                'class': 'aiocache.serializers.StringSerializer'
             }
         }
     }
@@ -45,7 +51,8 @@ class CacheHandler:
 
     def get(self, alias):
         """
-        Retrieve cache identified by alias. Will return always the same instance
+        Retrieve cache identified by alias.
+        Will return always the same instance.
 
         :param alias: str cache alias
         :return: cache instance
@@ -56,14 +63,14 @@ class CacheHandler:
             pass
 
         config = self.get_alias_config(alias)
-        cache = _create_cache(**deepcopy(config))
+        cache = _create_cache(**config)
         self._caches[alias] = cache
         return cache
 
     def create(self, alias=None, cache=None, **kwargs):
         """
-        Create a new cache. Either alias or cache params are required. You can use
-        kwargs to pass extra parameters to configure the cache.
+        Create a new cache. Either alias or cache params are required.
+        You can use kwargs to pass extra parameters to configure the cache.
 
         :param alias: str alias to pull configuration from
         :param cache: str or class cache class to use for creating the
@@ -79,25 +86,35 @@ class CacheHandler:
         cache = _create_cache(**{**config, **kwargs})
         return cache
 
-    def get_alias_config(self, alias):
-        config = self.get_config()
-        if alias not in config:
+    def get_alias_config(self, alias) -> MappingProxyType:
+        if alias not in self._config:
             raise KeyError(
-                "Could not find config for '{0}', ensure you include {0} when calling"
-                "caches.set_config specifying the config for that cache".format(alias))
+                "Could not find config for '{0}', ensure you include {0} "
+                "when calling caches.config setter specifying the config "
+                "for that cache".format(alias)
+            )
 
-        return config[alias]
+        return MappingProxyType(self.config[alias])
+
+    @property
+    def config(self) -> MappingProxyType:
+        """
+        Return a proxy to current stored config
+        """
+        return MappingProxyType(self._config)
 
     def get_config(self):
-        """
-        Return copy of current stored config
-        """
-        return deepcopy(self._config)
+        warnings.warn(
+            '"get_config" method is deprecated. Use "config" property instead.',
+            DeprecationWarning
+        )
+        return self.config
 
-    def set_config(self, config):
+    @config.setter
+    def config(self, value: MutableMapping):
         """
-        Set (override) the default config for cache aliases from a dict-like structure.
-        The structure is the following::
+        Set (override) the default config for cache aliases from a dict-like
+        structure. The structure is the following::
 
             {
                 'default': {
@@ -120,8 +137,8 @@ class CacheHandler:
                 }
             }
 
-        'default' key must always exist when passing a new config. Default configuration
-        is::
+        'default' key must always exist when passing a new config.
+        Default configuration is::
 
             {
                 'default': {
@@ -140,11 +157,19 @@ class CacheHandler:
 
         If a config key already exists, it will be updated with the new values.
         """
-        if "default" not in config:
-            raise ValueError("default config must be provided")
-        for config_name in config.keys():
+        if 'default' not in value:
+            raise ValueError('default config must be provided')
+        for config_name in value.keys():
             self._caches.pop(config_name, None)
-        self._config = config
+        self._config = value
+
+    def set_config(self, config: MutableMapping):
+        warnings.warn(
+            '"set_config" method is deprecated. '
+            'Use "config" property setter instead.',
+            DeprecationWarning
+        )
+        self.config = config
 
 
 caches = CacheHandler()
