@@ -154,6 +154,9 @@ class CacheHandler:
 
     def get_config(self):
         """
+        .. deprecated:: 0.9.1
+            Use ``config`` property getter instead.
+
         Return a proxy to current stored config
         """
         warnings.warn(
@@ -172,6 +175,9 @@ class CacheHandler:
 
     def set_config(self, config: MutableMapping):
         """
+        .. deprecated:: 0.9.1
+            Use ``config`` property setter instead.
+
         Set (override) the default config for cache aliases from a dict-like
         structure. The structure is the following::
 
