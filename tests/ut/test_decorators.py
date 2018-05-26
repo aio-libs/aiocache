@@ -95,6 +95,37 @@ class TestCached:
         assert stub.call_count == 0
 
     @pytest.mark.asyncio
+    async def test_disable_read(self, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=1)
+
+        await decorator_call(aiocache_disable_read=True)
+
+        assert decorator.cache.get.call_count == 0
+        assert decorator.cache.set.call_count == 1
+        assert stub.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_disable_write(self, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+
+        await decorator_call(aiocache_disable_write=True)
+
+        assert decorator.cache.get.call_count == 1
+        assert decorator.cache.set.call_count == 0
+        assert stub.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_disable_params_not_propagated(self, decorator, decorator_call):
+        decorator.cache.get = CoroutineMock(return_value=None)
+
+        await decorator_call(
+            aiocache_disable_read=True,
+            aiocache_disable_write=True,
+        )
+
+        stub.assert_called_once_with()
+
+    @pytest.mark.asyncio
     async def test_get_from_cache_returns(self, decorator, decorator_call):
         decorator.cache.get = CoroutineMock(return_value=1)
         assert await decorator.get_from_cache("key") == 1
@@ -433,6 +464,38 @@ class TestMultiCached:
         stub_dict.side_effect = Exception()
         with pytest.raises(Exception):
             assert await decorator_call(keys=[])
+
+    @pytest.mark.asyncio
+    async def test_disable_read(self, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[1, 2])
+
+        await decorator_call(1, keys=['a', 'b'], aiocache_disable_read=True)
+
+        assert decorator.cache.multi_get.call_count == 0
+        assert decorator.cache.multi_set.call_count == 1
+        assert stub_dict.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_disable_write(self, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[None, None])
+
+        await decorator_call(1, keys=['a', 'b'], aiocache_disable_write=True)
+
+        assert decorator.cache.multi_get.call_count == 1
+        assert decorator.cache.multi_set.call_count == 0
+        assert stub_dict.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_disable_params_not_propagated(self, decorator, decorator_call):
+        decorator.cache.multi_get = CoroutineMock(return_value=[None, None])
+
+        await decorator_call(
+            1, keys=['a', 'b'],
+            aiocache_disable_read=True,
+            aiocache_disable_write=True,
+        )
+
+        stub_dict.assert_called_once_with(1, keys=['a', 'b'])
 
     @pytest.mark.asyncio
     async def test_set_in_cache(self, decorator, decorator_call):

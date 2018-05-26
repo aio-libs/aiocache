@@ -72,14 +72,19 @@ class cached:
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
+        disable_read = kwargs.pop('aiocache_disable_read', False)
+        disable_write = kwargs.pop('aiocache_disable_write', False)
         key = self.get_cache_key(f, args, kwargs)
 
-        value = await self.get_from_cache(key)
-        if value is not None:
-            return value
+        if not disable_read:
+            value = await self.get_from_cache(key)
+            if value is not None:
+                return value
 
         result = await f(*args, **kwargs)
-        await self.set_in_cache(key, result)
+
+        if not disable_write:
+            await self.set_in_cache(key, result)
 
         return result
 
@@ -241,18 +246,24 @@ class multi_cached:
         return wrapper
 
     async def decorator(self, f, *args, **kwargs):
+        disable_read = kwargs.pop('aiocache_disable_read', False)
+        disable_write = kwargs.pop('aiocache_disable_write', False)
+
         missing_keys = []
         partial = {}
         keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
 
-        values = await self.get_from_cache(*keys)
-        for key, value in zip(keys, values):
-            if value is None:
-                missing_keys.append(key)
-            else:
-                partial[key] = value
-        if values and None not in values:
-            return partial
+        if not disable_read:
+            values = await self.get_from_cache(*keys)
+            for key, value in zip(keys, values):
+                if value is None:
+                    missing_keys.append(key)
+                else:
+                    partial[key] = value
+            if values and None not in values:
+                return partial
+        else:
+            missing_keys = list(keys)
 
         if args_index > -1:
             new_args[args_index] = missing_keys
@@ -261,7 +272,9 @@ class multi_cached:
 
         result = await f(*new_args, **kwargs)
         result.update(partial)
-        await self.set_in_cache(result, args, kwargs)
+
+        if not disable_write:
+            await self.set_in_cache(result, args, kwargs)
 
         return result
 
