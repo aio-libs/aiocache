@@ -3,6 +3,7 @@ import functools
 import logging
 
 from aiocache import SimpleMemoryCache, caches
+from aiocache.base import sentinel
 from aiocache.lock import RedLock
 
 
@@ -42,7 +43,7 @@ class cached:
     """
 
     def __init__(
-            self, ttl=None, key=None, key_builder=None, cache=SimpleMemoryCache,
+            self, ttl=sentinel, key=None, key_builder=None, cache=SimpleMemoryCache,
             serializer=None, plugins=None, alias=None, noself=False, **kwargs):
         self.ttl = ttl
         self.key = key
@@ -105,7 +106,10 @@ class cached:
 
     async def set_in_cache(self, key, value):
         try:
-            await self.cache.set(key, value, ttl=self.ttl)
+            kwargs = {}
+            if self.ttl is not sentinel:
+                kwargs['ttl'] = self.ttl
+            await self.cache.set(key, value, **kwargs)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
@@ -212,7 +216,7 @@ class multi_cached:
     """
 
     def __init__(
-            self, keys_from_attr, key_builder=None, ttl=0, cache=SimpleMemoryCache,
+            self, keys_from_attr, key_builder=None, ttl=sentinel, cache=SimpleMemoryCache,
             serializer=None, plugins=None, alias=None, **kwargs):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, *args, **kwargs: key)
@@ -291,8 +295,11 @@ class multi_cached:
 
     async def set_in_cache(self, result, fn_args, fn_kwargs):
         try:
+            kwargs = {}
+            if self.ttl is not sentinel:
+                kwargs['ttl'] = self.ttl
             await self.cache.multi_set(
                 [(self.key_builder(k, *fn_args, **fn_kwargs), v) for k, v in result.items()],
-                ttl=self.ttl)
+                **kwargs)
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)
