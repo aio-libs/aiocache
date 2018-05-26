@@ -68,6 +68,7 @@ class TestCacheHandler:
                 'cache': "aiocache.RedisCache",
                 'endpoint': "127.0.0.10",
                 'port': 6378,
+                'ttl': 10,
                 'serializer': {
                     'class': "aiocache.serializers.PickleSerializer",
                     'encoding': 'encoding'
@@ -83,6 +84,7 @@ class TestCacheHandler:
         assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
+        assert cache.ttl == 10
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == 'encoding'
         assert len(cache.plugins) == 2

@@ -231,6 +231,93 @@ class TestBaseCache:
         cache = BaseCache(key_builder=lambda key, namespace: 'x')
         assert cache.build_key(pytest.KEY, 'namespace') == 'x'
 
+    @pytest.fixture
+    def set_test_ttl(self, base_cache):
+        base_cache.ttl = 10
+        yield
+        base_cache.ttl = None
+
+    @pytest.mark.asyncio
+    async def test_add_ttl_default(self, set_test_ttl, base_cache):
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value")
+
+        assert base_cache._add.call_count == 1
+        assert base_cache._add.call_args[1]['ttl'] == 10
+
+    @pytest.mark.asyncio
+    async def test_add_ttl_overriden(self, set_test_ttl, base_cache):
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value", ttl=20)
+
+        assert base_cache._add.call_count == 1
+        assert base_cache._add.call_args[1]['ttl'] == 20
+
+    @pytest.mark.asyncio
+    async def test_add_ttl_none(self, set_test_ttl, base_cache):
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value", ttl=None)
+
+        assert base_cache._add.call_count == 1
+        assert base_cache._add.call_args[1]['ttl'] is None
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_default(self, set_test_ttl, base_cache):
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value")
+
+        assert base_cache._set.call_count == 1
+        assert base_cache._set.call_args[1]['ttl'] == 10
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_overriden(self, set_test_ttl, base_cache):
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value", ttl=20)
+
+        assert base_cache._set.call_count == 1
+        assert base_cache._set.call_args[1]['ttl'] == 20
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_none(self, set_test_ttl, base_cache):
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value", ttl=None)
+
+        assert base_cache._set.call_count == 1
+        assert base_cache._set.call_args[1]['ttl'] is None
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_default(self, set_test_ttl, base_cache):
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
+
+        assert base_cache._multi_set.call_count == 1
+        assert base_cache._multi_set.call_args[1]['ttl'] == 10
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_overriden(self, set_test_ttl, base_cache):
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=20)
+
+        assert base_cache._multi_set.call_count == 1
+        assert base_cache._multi_set.call_args[1]['ttl'] == 20
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_none(self, set_test_ttl, base_cache):
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=None)
+
+        assert base_cache._multi_set.call_count == 1
+        assert base_cache._multi_set.call_args[1]['ttl'] is None
+
 
 class TestCache:
     """
@@ -294,7 +381,7 @@ class TestCache:
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
         mock_cache._add.assert_called_with(
-            mock_cache._build_key(pytest.KEY), ANY, 2, _conn=ANY)
+            mock_cache._build_key(pytest.KEY), ANY, ttl=2, _conn=ANY)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
@@ -328,7 +415,7 @@ class TestCache:
 
         mock_cache._multi_set.assert_called_with([
             (mock_cache._build_key(pytest.KEY), ANY),
-            (mock_cache._build_key(pytest.KEY_1), ANY)], 2, _conn=ANY)
+            (mock_cache._build_key(pytest.KEY_1), ANY)], ttl=2, _conn=ANY)
         assert mock_cache.plugins[0].pre_multi_set.call_count == 1
         assert mock_cache.plugins[0].post_multi_set.call_count == 1
 

@@ -9,6 +9,8 @@ from aiocache import serializers
 
 logger = logging.getLogger(__file__)
 
+sentinel = object()
+
 
 class API:
 
@@ -91,6 +93,8 @@ class BaseCache:
         list.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
+    :param ttl: int the expiration time in seconds to use as a default in all operations of
+        the backend. It can be overriden in the specific calls.
     :param key_builder: alternative callable to build the key. Receives the key and the namespace as
         params and should return something that can be used as key by the underlying backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
@@ -99,9 +103,10 @@ class BaseCache:
 
     def __init__(
             self, serializer=None, plugins=None,
-            namespace=None, key_builder=None, timeout=5):
+            namespace=None, ttl=None, key_builder=None, timeout=5):
         self.timeout = timeout
         self.namespace = namespace
+        self.ttl = ttl
         self.build_key = key_builder or self._build_key
 
         self._serializer = None
@@ -130,7 +135,7 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def add(self, key, value, ttl=None, dumps_fn=None, namespace=None, _conn=None):
+    async def add(self, key, value, ttl=sentinel, dumps_fn=None, namespace=None, _conn=None):
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
@@ -153,7 +158,7 @@ class BaseCache:
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self.build_key(key, namespace=namespace)
 
-        await self._add(ns_key, dumps(value), ttl, _conn=_conn)
+        await self._add(ns_key, dumps(value), ttl=self._get_ttl(ttl), _conn=_conn)
 
         logger.debug("ADD %s %s (%.4f)s", ns_key, True, time.monotonic() - start)
         return True
@@ -228,7 +233,8 @@ class BaseCache:
     @API.timeout
     @API.plugins
     async def set(
-            self, key, value, ttl=None, dumps_fn=None, namespace=None, _cas_token=None, _conn=None):
+            self, key, value, ttl=sentinel, dumps_fn=None, namespace=None, _cas_token=None,
+            _conn=None):
         """
         Stores the value in the given key with ttl if specified
 
@@ -248,7 +254,8 @@ class BaseCache:
         dumps = dumps_fn or self._serializer.dumps
         ns_key = self.build_key(key, namespace=namespace)
 
-        res = await self._set(ns_key, dumps(value), ttl=ttl, _cas_token=_cas_token, _conn=_conn)
+        res = await self._set(
+            ns_key, dumps(value), ttl=self._get_ttl(ttl), _cas_token=_cas_token, _conn=_conn)
 
         logger.debug("SET %s %d (%.4f)s", ns_key, True, time.monotonic() - start)
         return res
@@ -260,7 +267,7 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def multi_set(self, pairs, ttl=None, dumps_fn=None, namespace=None, _conn=None):
+    async def multi_set(self, pairs, ttl=sentinel, dumps_fn=None, namespace=None, _conn=None):
         """
         Stores multiple values in the given keys.
 
@@ -282,7 +289,7 @@ class BaseCache:
         for key, value in pairs:
             tmp_pairs.append((self.build_key(key, namespace=namespace), dumps(value)))
 
-        await self._multi_set(tmp_pairs, ttl, _conn=_conn)
+        await self._multi_set(tmp_pairs, ttl=self._get_ttl(ttl), _conn=_conn)
 
         logger.debug(
             "MULTI_SET %s %d (%.4f)s",
@@ -467,6 +474,9 @@ class BaseCache:
         if self.namespace is not None:
             return "{}{}".format(self.namespace, key)
         return key
+
+    def _get_ttl(self, ttl):
+        return ttl if ttl is not sentinel else self.ttl
 
     def get_connection(self):
         return _Conn(self)
