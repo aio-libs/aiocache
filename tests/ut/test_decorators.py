@@ -6,7 +6,7 @@ import inspect
 
 from asynctest import MagicMock, CoroutineMock, ANY, patch
 
-from aiocache.base import BaseCache
+from aiocache.base import BaseCache, SENTINEL
 from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
 from aiocache.lock import RedLock
 from aiocache.decorators import _get_args_dict
@@ -157,7 +157,7 @@ class TestCached:
     @pytest.mark.asyncio
     async def test_set_calls_set(self, decorator, decorator_call):
         await decorator.set_in_cache("key", "value")
-        decorator.cache.set.assert_called_with("key", "value", ttl=None)
+        decorator.cache.set.assert_called_with("key", "value", ttl=SENTINEL)
 
     @pytest.mark.asyncio
     async def test_set_calls_set_ttl(self, decorator, decorator_call):
@@ -283,7 +283,7 @@ class TestCachedStampede:
             assert lock.__aenter__.call_count == 1
             assert lock.__aexit__.call_count == 1
             decorator.cache.set.assert_called_with(
-                "stub()[('value', 'value')]", "value", ttl=None)
+                "stub()[('value', 'value')]", "value", ttl=SENTINEL)
             stub.assert_called_once_with(value="value")
 
     @pytest.mark.asyncio
@@ -302,7 +302,7 @@ class TestCachedStampede:
             assert lock2.__aenter__.call_count == 1
             assert lock2.__aexit__.call_count == 1
             decorator.cache.set.assert_called_with(
-                "stub()[('value', 'value')]", "value", ttl=None)
+                "stub()[('value', 'value')]", "value", ttl=SENTINEL)
             assert stub.call_count == 1
 
 
@@ -493,7 +493,7 @@ class TestMultiCached:
         call_args = decorator.cache.multi_set.call_args[0][0]
         assert ('a', 1) in call_args
         assert ('b', 2) in call_args
-        call_args = decorator.cache.multi_set.call_args[1]['ttl'] is None
+        assert decorator.cache.multi_set.call_args[1]['ttl'] is SENTINEL
 
     @pytest.mark.asyncio
     async def test_set_in_cache_with_ttl(self, decorator, decorator_call):
