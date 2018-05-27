@@ -9,7 +9,7 @@ from aiocache import serializers
 
 logger = logging.getLogger(__file__)
 
-sentinel = object()
+SENTINEL = object()
 
 
 class API:
@@ -93,17 +93,17 @@ class BaseCache:
         list.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
-    :param ttl: int the expiration time in seconds to use as a default in all operations of
-        the backend. It can be overriden in the specific calls.
     :param key_builder: alternative callable to build the key. Receives the key and the namespace as
         params and should return something that can be used as key by the underlying backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
+    :param ttl: int the expiration time in seconds to use as a default in all operations of
+        the backend. It can be overriden in the specific calls.
     """
 
     def __init__(
             self, serializer=None, plugins=None,
-            namespace=None, ttl=None, key_builder=None, timeout=5):
+            namespace=None, key_builder=None, timeout=5, ttl=None):
         self.timeout = timeout
         self.namespace = namespace
         self.ttl = ttl
@@ -135,7 +135,7 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def add(self, key, value, ttl=sentinel, dumps_fn=None, namespace=None, _conn=None):
+    async def add(self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None):
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
@@ -233,7 +233,7 @@ class BaseCache:
     @API.timeout
     @API.plugins
     async def set(
-            self, key, value, ttl=sentinel, dumps_fn=None, namespace=None, _cas_token=None,
+            self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _cas_token=None,
             _conn=None):
         """
         Stores the value in the given key with ttl if specified
@@ -267,7 +267,7 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def multi_set(self, pairs, ttl=sentinel, dumps_fn=None, namespace=None, _conn=None):
+    async def multi_set(self, pairs, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None):
         """
         Stores multiple values in the given keys.
 
@@ -476,7 +476,7 @@ class BaseCache:
         return key
 
     def _get_ttl(self, ttl):
-        return ttl if ttl is not sentinel else self.ttl
+        return ttl if ttl is not SENTINEL else self.ttl
 
     def get_connection(self):
         return _Conn(self)
