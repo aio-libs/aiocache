@@ -21,6 +21,9 @@ class cached:
     Only one cache instance is created per decorated call. If you expect high concurrency of calls
     to the same function, you should adapt the pool size as needed.
 
+    When calling the decorated function, the reads and writes from/to the cache can be controlled
+    with the parameters ``cache_read`` and ``cache_write`` (both are enabled by default).
+
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
         key_builder param. If key and key_builder are not passed, it will use module_name
@@ -71,19 +74,17 @@ class cached:
         wrapper.cache = self.cache
         return wrapper
 
-    async def decorator(self, f, *args, **kwargs):
-        disable_read = kwargs.pop('aiocache_disable_read', False)
-        disable_write = kwargs.pop('aiocache_disable_write', False)
+    async def decorator(self, f, *args, cache_read=True, cache_write=True, **kwargs):
         key = self.get_cache_key(f, args, kwargs)
 
-        if not disable_read:
+        if cache_read:
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
 
         result = await f(*args, **kwargs)
 
-        if not disable_write:
+        if cache_write:
             await self.set_in_cache(key, result)
 
         return result
@@ -200,6 +201,9 @@ class multi_cached:
     Only one cache instance is created per decorated function. If you expect high concurrency
     of calls to the same function, you should adapt the pool size as needed.
 
+    When calling the decorated function, the reads and writes from/to the cache can be controlled
+    with the parameters ``cache_read`` and ``cache_write`` (both are enabled by default).
+
     :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
         as keys to index in the cache.
     :param key_builder: Callable that allows to change the format of the keys before storing.
@@ -245,15 +249,12 @@ class multi_cached:
         wrapper.cache = self.cache
         return wrapper
 
-    async def decorator(self, f, *args, **kwargs):
-        disable_read = kwargs.pop('aiocache_disable_read', False)
-        disable_write = kwargs.pop('aiocache_disable_write', False)
-
+    async def decorator(self, f, *args, cache_read=True, cache_write=True, **kwargs):
         missing_keys = []
         partial = {}
         keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
 
-        if not disable_read:
+        if cache_read:
             values = await self.get_from_cache(*keys)
             for key, value in zip(keys, values):
                 if value is None:
@@ -273,7 +274,7 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
-        if not disable_write:
+        if cache_write:
             await self.set_in_cache(result, args, kwargs)
 
         return result
