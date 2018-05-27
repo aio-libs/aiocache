@@ -106,10 +106,7 @@ class cached:
 
     async def set_in_cache(self, key, value):
         try:
-            kwargs = {}
-            if self.ttl is not SENTINEL:
-                kwargs['ttl'] = self.ttl
-            await self.cache.set(key, value, **kwargs)
+            await self.cache.set(key, value, ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
@@ -295,11 +292,8 @@ class multi_cached:
 
     async def set_in_cache(self, result, fn_args, fn_kwargs):
         try:
-            kwargs = {}
-            if self.ttl is not SENTINEL:
-                kwargs['ttl'] = self.ttl
             await self.cache.multi_set(
                 [(self.key_builder(k, *fn_args, **fn_kwargs), v) for k, v in result.items()],
-                **kwargs)
+                ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)
