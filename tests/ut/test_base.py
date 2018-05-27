@@ -231,6 +231,119 @@ class TestBaseCache:
         cache = BaseCache(key_builder=lambda key, namespace: 'x')
         assert cache.build_key(pytest.KEY, 'namespace') == 'x'
 
+    @pytest.mark.asyncio
+    async def test_add_ttl_cache_default(self, base_cache):
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value")
+
+        base_cache._add.assert_called_once_with(pytest.KEY, "value", _conn=None, ttl=None)
+
+    @pytest.mark.asyncio
+    async def test_add_ttl_default(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value")
+
+        base_cache._add.assert_called_once_with(pytest.KEY, "value", _conn=None, ttl=10)
+
+    @pytest.mark.asyncio
+    async def test_add_ttl_overriden(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value", ttl=20)
+
+        base_cache._add.assert_called_once_with(pytest.KEY, "value", _conn=None, ttl=20)
+
+    @pytest.mark.asyncio
+    async def test_add_ttl_none(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._add = CoroutineMock()
+
+        await base_cache.add(pytest.KEY, "value", ttl=None)
+
+        base_cache._add.assert_called_once_with(pytest.KEY, "value", _conn=None, ttl=None)
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_cache_default(self, base_cache):
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value")
+
+        base_cache._set.assert_called_once_with(
+            pytest.KEY, "value", _cas_token=None, _conn=None, ttl=None)
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_default(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value")
+
+        base_cache._set.assert_called_once_with(
+            pytest.KEY, "value", _cas_token=None, _conn=None, ttl=10)
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_overriden(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value", ttl=20)
+
+        base_cache._set.assert_called_once_with(
+            pytest.KEY, "value", _cas_token=None, _conn=None, ttl=20)
+
+    @pytest.mark.asyncio
+    async def test_set_ttl_none(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._set = CoroutineMock()
+
+        await base_cache.set(pytest.KEY, "value", ttl=None)
+
+        base_cache._set.assert_called_once_with(
+            pytest.KEY, "value", _cas_token=None, _conn=None, ttl=None)
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_cache_default(self, base_cache):
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
+
+        base_cache._multi_set.assert_called_once_with(
+            [(pytest.KEY, "value"), (pytest.KEY_1, "value1")], _conn=None, ttl=None)
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_default(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
+
+        base_cache._multi_set.assert_called_once_with(
+            [(pytest.KEY, "value"), (pytest.KEY_1, "value1")], _conn=None, ttl=10)
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_overriden(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=20)
+
+        base_cache._multi_set.assert_called_once_with(
+            [(pytest.KEY, "value"), (pytest.KEY_1, "value1")], _conn=None, ttl=20)
+
+    @pytest.mark.asyncio
+    async def test_multi_set_ttl_none(self, base_cache):
+        base_cache.ttl = 10
+        base_cache._multi_set = CoroutineMock()
+
+        await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=None)
+
+        base_cache._multi_set.assert_called_once_with(
+            [(pytest.KEY, "value"), (pytest.KEY_1, "value1")], _conn=None, ttl=None)
+
 
 class TestCache:
     """
@@ -294,7 +407,7 @@ class TestCache:
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
         mock_cache._add.assert_called_with(
-            mock_cache._build_key(pytest.KEY), ANY, 2, _conn=ANY)
+            mock_cache._build_key(pytest.KEY), ANY, ttl=2, _conn=ANY)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
@@ -328,7 +441,7 @@ class TestCache:
 
         mock_cache._multi_set.assert_called_with([
             (mock_cache._build_key(pytest.KEY), ANY),
-            (mock_cache._build_key(pytest.KEY_1), ANY)], 2, _conn=ANY)
+            (mock_cache._build_key(pytest.KEY_1), ANY)], ttl=2, _conn=ANY)
         assert mock_cache.plugins[0].pre_multi_set.call_count == 1
         assert mock_cache.plugins[0].post_multi_set.call_count == 1
 
