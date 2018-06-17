@@ -1,6 +1,11 @@
 # Changelog
 
 
+## 0.10.0 (2018-06-17)
+
+* Cache can be disabled in decorated functions using `cache_read` and `cache_write` [#404](https://github.com/argaen/aiocache/issues/404) - Josep Cugat
+
+* Cache constructor can receive now default ttl [#405](https://github.com/argaen/aiocache/issues/405) - Josep Cugat
 ## 0.9.1 (2018-04-27)
 
 * Single deploy step [#395](https://github.com/argaen/aiocache/issues/395) - Manuel Miranda
