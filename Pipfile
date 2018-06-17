@@ -8,4 +8,17 @@ name = "pypi"
 
 [dev-packages]
 "e1839a8" = {path = ".", extras = ["dev"], editable = true}
+"flake8" = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-mock = "*"
+codecov = "*"
+marshmallow = "*"
+asynctest = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+sphinx-rtd-theme = "*"
+pystache = "*"
+coverage = "*"
+pylint = "*"
 ipdb = "*"
