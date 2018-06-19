@@ -5,7 +5,7 @@ lint:
 	pipenv run flake8
 
 install-dev:
-	pipenv install --dev
+	pipenv install --skip-lock -d
 
 pylint:
 	pipenv run pylint --disable=C0111 aiocache
