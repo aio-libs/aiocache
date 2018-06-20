@@ -2,7 +2,7 @@ from copy import deepcopy
 
 
 def _class_from_string(class_path):
-    class_name = class_path.split('.')[-1]
+    class_name = class_path.split(".")[-1]
     module_name = class_path.rstrip(class_name).rstrip(".")
     return getattr(__import__(module_name, fromlist=[class_name]), class_name)
 
@@ -22,21 +22,16 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
             plugins_instances.append(cls(**plugin))
 
     cache = _class_from_string(cache) if isinstance(cache, str) else cache
-    instance = cache(
-        serializer=serializer,
-        plugins=plugins_instances,
-        **kwargs)
+    instance = cache(serializer=serializer, plugins=plugins_instances, **kwargs)
     return instance
 
 
 class CacheHandler:
 
     _config = {
-        'default': {
-            'cache': "aiocache.SimpleMemoryCache",
-            'serializer': {
-                'class': "aiocache.serializers.StringSerializer"
-            }
+        "default": {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.StringSerializer"},
         }
     }
 
@@ -73,7 +68,7 @@ class CacheHandler:
         if alias:
             config = self.get_alias_config(alias)
         elif cache:
-            config = {'cache': cache}
+            config = {"cache": cache}
         else:
             raise TypeError("create call needs to receive an alias or a cache")
         cache = _create_cache(**{**config, **kwargs})
@@ -84,7 +79,8 @@ class CacheHandler:
         if alias not in config:
             raise KeyError(
                 "Could not find config for '{0}', ensure you include {0} when calling"
-                "caches.set_config specifying the config for that cache".format(alias))
+                "caches.set_config specifying the config for that cache".format(alias)
+            )
 
         return config[alias]
 

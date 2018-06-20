@@ -3,8 +3,13 @@ import pytest
 from collections import namedtuple
 
 from aiocache.serializers import (
-    BaseSerializer, NullSerializer, StringSerializer, PickleSerializer,
-    JsonSerializer, MsgPackSerializer)
+    BaseSerializer,
+    NullSerializer,
+    StringSerializer,
+    PickleSerializer,
+    JsonSerializer,
+    MsgPackSerializer,
+)
 
 
 Dummy = namedtuple("Dummy", "a, b")
@@ -14,33 +19,31 @@ JSON_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
 
 
 class TestBaseSerializer:
-
     def test_init(self):
         serializer = BaseSerializer()
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'utf-8'
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
 
     def test_init_encoding(self):
-        serializer = BaseSerializer(encoding='whatever')
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'whatever'
+        serializer = BaseSerializer(encoding="whatever")
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "whatever"
 
     def test_dumps(self):
         with pytest.raises(NotImplementedError):
-            BaseSerializer().dumps('')
+            BaseSerializer().dumps("")
 
     def test_loads(self):
         with pytest.raises(NotImplementedError):
-            BaseSerializer().loads('')
+            BaseSerializer().loads("")
 
 
 class TestNullSerializer:
-
     def test_init(self):
         serializer = NullSerializer()
         assert isinstance(serializer, BaseSerializer)
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'utf-8'
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
 
     @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
@@ -51,12 +54,11 @@ class TestNullSerializer:
 
 
 class TestStringSerializer:
-
     def test_init(self):
         serializer = StringSerializer()
         assert isinstance(serializer, BaseSerializer)
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'utf-8'
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
 
     @pytest.mark.parametrize("obj", TYPES)
     def test_set_types(self, obj):
@@ -67,7 +69,6 @@ class TestStringSerializer:
 
 
 class TestPickleSerializer:
-
     def test_init(self):
         serializer = PickleSerializer()
         assert isinstance(serializer, BaseSerializer)
@@ -80,13 +81,13 @@ class TestPickleSerializer:
         assert serializer.loads(serializer.dumps(obj)) == obj
 
     def test_dumps(self):
-        assert PickleSerializer().dumps("hi") == b'\x80\x03X\x02\x00\x00\x00hiq\x00.'
+        assert PickleSerializer().dumps("hi") == b"\x80\x03X\x02\x00\x00\x00hiq\x00."
 
     def test_dumps_with_none(self):
         assert isinstance(PickleSerializer().dumps(None), bytes)
 
     def test_loads(self):
-        assert PickleSerializer().loads(b'\x80\x03X\x02\x00\x00\x00hiq\x00.') == "hi"
+        assert PickleSerializer().loads(b"\x80\x03X\x02\x00\x00\x00hiq\x00.") == "hi"
 
     def test_loads_with_none(self):
         assert PickleSerializer().loads(None) is None
@@ -98,12 +99,11 @@ class TestPickleSerializer:
 
 
 class TestJsonSerializer:
-
     def test_init(self):
         serializer = JsonSerializer()
         assert isinstance(serializer, BaseSerializer)
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'utf-8'
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
 
     @pytest.mark.parametrize("obj", JSON_TYPES)
     def test_set_types(self, obj):
@@ -112,14 +112,15 @@ class TestJsonSerializer:
 
     def test_dumps(self):
         assert (
-            JsonSerializer().dumps({"hi": 1}) == '{"hi": 1}' or  # json
-            JsonSerializer().dumps({"hi": 1}) == '{"hi":1}')     # ujson
+            JsonSerializer().dumps({"hi": 1}) == '{"hi": 1}'
+            or JsonSerializer().dumps({"hi": 1}) == '{"hi":1}'  # json
+        )  # ujson
 
     def test_dumps_with_none(self):
-        assert JsonSerializer().dumps(None) == 'null'
+        assert JsonSerializer().dumps(None) == "null"
 
     def test_loads_with_null(self):
-        assert JsonSerializer().loads('null') is None
+        assert JsonSerializer().loads("null") is None
 
     def test_loads_with_none(self):
         assert JsonSerializer().loads(None) is None
@@ -131,12 +132,11 @@ class TestJsonSerializer:
 
 
 class TestMsgPackSerializer:
-
     def test_init(self):
         serializer = MsgPackSerializer()
         assert isinstance(serializer, BaseSerializer)
-        assert serializer.DEFAULT_ENCODING == 'utf-8'
-        assert serializer.encoding == 'utf-8'
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
 
     def test_init_use_list(self):
         serializer = MsgPackSerializer(use_list=True)
@@ -148,16 +148,16 @@ class TestMsgPackSerializer:
         assert serializer.loads(serializer.dumps(obj)) == obj
 
     def test_dumps(self):
-        assert MsgPackSerializer().dumps('hi') == b'\xa2hi'
+        assert MsgPackSerializer().dumps("hi") == b"\xa2hi"
 
     def test_dumps_with_none(self):
         assert isinstance(MsgPackSerializer().dumps(None), bytes)
 
     def test_loads(self):
-        assert MsgPackSerializer().loads(b'\xa2hi') == 'hi'
+        assert MsgPackSerializer().loads(b"\xa2hi") == "hi"
 
     def test_loads_no_encoding(self):
-        assert MsgPackSerializer(encoding=None).loads(b'\xa2hi') == b'hi'
+        assert MsgPackSerializer(encoding=None).loads(b"\xa2hi") == b"hi"
 
     def test_loads_with_none(self):
         assert MsgPackSerializer().loads(None) is None
@@ -168,11 +168,8 @@ class TestMsgPackSerializer:
 
     def test_dumps_and_loads_dict(self):
         serializer = MsgPackSerializer()
-        d = {
-            'a': [1, 2, ('1', 2)],
-            'b': {'b': 1, 'c': [1, 2]}
-        }
+        d = {"a": [1, 2, ("1", 2)], "b": {"b": 1, "c": [1, 2]}}
         assert serializer.loads(serializer.dumps(d)) == {
-            'a': [1, 2, ['1', 2]],
-            'b': {'b': 1, 'c': [1, 2]}
+            "a": [1, 2, ["1", 2]],
+            "b": {"b": 1, "c": [1, 2]},
         }

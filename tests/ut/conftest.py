@@ -8,33 +8,29 @@ from aiocache.serializers import BaseSerializer
 
 
 def pytest_namespace():
-    return {
-        'KEY': "key",
-        'KEY_1': "random"
-    }
+    return {"KEY": "key", "KEY_1": "random"}
 
 
 @pytest.fixture(autouse=True)
 def reset_caches():
-    caches.set_config({
-        'default': {
-            'cache': "aiocache.SimpleMemoryCache",
-            'serializer': {
-                'class': "aiocache.serializers.NullSerializer"
+    caches.set_config(
+        {
+            "default": {
+                "cache": "aiocache.SimpleMemoryCache",
+                "serializer": {"class": "aiocache.serializers.NullSerializer"},
             }
         }
-    })
+    )
 
 
 class MockCache(BaseCache):
-
     def __init__(self):
         super().__init__()
         self._add = asynctest.CoroutineMock()
         self._get = asynctest.CoroutineMock()
         self._gets = asynctest.CoroutineMock()
         self._set = asynctest.CoroutineMock()
-        self._multi_get = asynctest.CoroutineMock(return_value=['a', 'b'])
+        self._multi_get = asynctest.CoroutineMock(return_value=["a", "b"])
         self._multi_set = asynctest.CoroutineMock()
         self._delete = asynctest.CoroutineMock()
         self._exists = asynctest.CoroutineMock()
@@ -52,12 +48,12 @@ class MockCache(BaseCache):
 def mock_cache(mocker):
     cache = MockCache()
     cache.timeout = 0.002
-    mocker.spy(cache, '_build_key')
+    mocker.spy(cache, "_build_key")
     for cmd in API.CMDS:
         mocker.spy(cache, cmd.__name__)
     mocker.spy(cache, "close")
     cache.serializer = asynctest.Mock(spec=BaseSerializer)
-    cache.serializer.encoding = 'utf-8'
+    cache.serializer.encoding = "utf-8"
     cache.plugins = [asynctest.Mock(spec=BasePlugin)]
     return cache
 

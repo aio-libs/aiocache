@@ -18,7 +18,6 @@ def memory(mocker):
 
 
 class TestSimpleMemoryBackend:
-
     @pytest.mark.asyncio
     async def test_get(self, memory):
         await memory._get(pytest.KEY)
@@ -26,9 +25,9 @@ class TestSimpleMemoryBackend:
 
     @pytest.mark.asyncio
     async def test_gets(self, mocker, memory):
-        mocker.spy(memory, '_get')
+        mocker.spy(memory, "_get")
         await memory._gets(pytest.KEY)
-        memory._get.assert_called_with(pytest.KEY, encoding='utf-8', _conn=ANY)
+        memory._get.assert_called_with(pytest.KEY, encoding="utf-8", _conn=ANY)
 
     @pytest.mark.asyncio
     async def test_set(self, memory):
@@ -51,14 +50,14 @@ class TestSimpleMemoryBackend:
 
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, memory):
-        memory._cache.get.return_value = 'old_value'
-        assert await memory._set(pytest.KEY, "value", _cas_token='old_value') == 1
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, 'value')
+        memory._cache.get.return_value = "old_value"
+        assert await memory._set(pytest.KEY, "value", _cas_token="old_value") == 1
+        SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, "value")
 
     @pytest.mark.asyncio
     async def test_set_cas_fail(self, mocker, memory):
-        memory._cache.get.return_value = 'value'
-        assert await memory._set(pytest.KEY, "value", _cas_token='old_value') == 0
+        memory._cache.get.return_value = "value"
+        assert await memory._set(pytest.KEY, "value", _cas_token="old_value") == 0
         assert SimpleMemoryBackend._cache.__setitem__.call_count == 0
 
     @pytest.mark.asyncio
@@ -154,11 +153,11 @@ class TestSimpleMemoryBackend:
 
     @pytest.mark.asyncio
     async def test_clear_namespace(self, memory):
-        SimpleMemoryBackend._cache.__iter__.return_value = iter(['nma', 'nmb', 'no'])
+        SimpleMemoryBackend._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
         await memory._clear("nm")
         assert SimpleMemoryBackend._cache.pop.call_count == 2
-        SimpleMemoryBackend._cache.pop.assert_any_call('nma', None)
-        SimpleMemoryBackend._cache.pop.assert_any_call('nmb', None)
+        SimpleMemoryBackend._cache.pop.assert_any_call("nma", None)
+        SimpleMemoryBackend._cache.pop.assert_any_call("nmb", None)
 
     @pytest.mark.asyncio
     async def test_clear_no_namespace(self, memory):
@@ -192,7 +191,6 @@ class TestSimpleMemoryBackend:
 
 
 class TestSimpleMemoryCache:
-
     def test_inheritance(self):
         assert isinstance(SimpleMemoryCache(), BaseCache)
 

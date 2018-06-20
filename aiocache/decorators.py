@@ -46,8 +46,17 @@ class cached:
     """
 
     def __init__(
-            self, ttl=SENTINEL, key=None, key_builder=None, cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, noself=False, **kwargs):
+        self,
+        ttl=SENTINEL,
+        key=None,
+        key_builder=None,
+        cache=SimpleMemoryCache,
+        serializer=None,
+        plugins=None,
+        alias=None,
+        noself=False,
+        **kwargs
+    ):
         self.ttl = ttl
         self.key = key
         self.key_builder = key_builder
@@ -65,8 +74,11 @@ class cached:
             self.cache = caches.get(self.alias)
         else:
             self.cache = _get_cache(
-                cache=self._cache, serializer=self._serializer,
-                plugins=self._plugins, **self._kwargs)
+                cache=self._cache,
+                serializer=self._serializer,
+                plugins=self._plugins,
+                **self._kwargs
+            )
 
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
@@ -100,8 +112,12 @@ class cached:
 
     def _key_from_args(self, func, args, kwargs):
         ordered_kwargs = sorted(kwargs.items())
-        return (func.__module__ or '') + func.__name__ + str(
-            args[1:] if self.noself else args) + str(ordered_kwargs)
+        return (
+            (func.__module__ or "")
+            + func.__name__
+            + str(args[1:] if self.noself else args)
+            + str(ordered_kwargs)
+        )
 
     async def get_from_cache(self, key):
         try:
@@ -149,8 +165,8 @@ class cached_stampede(cached):
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
     """
-    def __init__(
-            self, lease=2, **kwargs):
+
+    def __init__(self, lease=2, **kwargs):
         super().__init__(**kwargs)
         self.lease = lease
 
@@ -173,17 +189,17 @@ class cached_stampede(cached):
         return result
 
 
-def _get_cache(
-        cache=SimpleMemoryCache, serializer=None, plugins=None, **cache_kwargs):
+def _get_cache(cache=SimpleMemoryCache, serializer=None, plugins=None, **cache_kwargs):
     return cache(serializer=serializer, plugins=plugins, **cache_kwargs)
 
 
 def _get_args_dict(func, args, kwargs):
     defaults = {
-        arg_name: arg.default for arg_name, arg in inspect.signature(func).parameters.items()
-        if arg.default is not inspect._empty   # TODO: bug prone..
+        arg_name: arg.default
+        for arg_name, arg in inspect.signature(func).parameters.items()
+        if arg.default is not inspect._empty  # TODO: bug prone..
     }
-    args_names = func.__code__.co_varnames[:func.__code__.co_argcount]
+    args_names = func.__code__.co_varnames[: func.__code__.co_argcount]
     return {**defaults, **dict(zip(args_names, args)), **kwargs}
 
 
@@ -222,8 +238,16 @@ class multi_cached:
     """
 
     def __init__(
-            self, keys_from_attr, key_builder=None, ttl=SENTINEL, cache=SimpleMemoryCache,
-            serializer=None, plugins=None, alias=None, **kwargs):
+        self,
+        keys_from_attr,
+        key_builder=None,
+        ttl=SENTINEL,
+        cache=SimpleMemoryCache,
+        serializer=None,
+        plugins=None,
+        alias=None,
+        **kwargs
+    ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, *args, **kwargs: key)
         self.ttl = ttl
@@ -240,8 +264,11 @@ class multi_cached:
             self.cache = caches.get(self.alias)
         else:
             self.cache = _get_cache(
-                cache=self._cache, serializer=self._serializer,
-                plugins=self._plugins, **self._kwargs)
+                cache=self._cache,
+                serializer=self._serializer,
+                plugins=self._plugins,
+                **self._kwargs
+            )
 
         @functools.wraps(f)
         async def wrapper(*args, **kwargs):
@@ -285,7 +312,7 @@ class multi_cached:
         keys = args_dict[self.keys_from_attr] or []
         keys = [self.key_builder(key, *args, **kwargs) for key in keys]
 
-        args_names = f.__code__.co_varnames[:f.__code__.co_argcount]
+        args_names = f.__code__.co_varnames[: f.__code__.co_argcount]
         new_args = list(args)
         keys_index = -1
         if self.keys_from_attr in args_names and self.keys_from_attr not in kwargs:
@@ -308,6 +335,7 @@ class multi_cached:
         try:
             await self.cache.multi_set(
                 [(self.key_builder(k, *fn_args, **fn_kwargs), v) for k, v in result.items()],
-                ttl=self.ttl)
+                ttl=self.ttl,
+            )
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)
