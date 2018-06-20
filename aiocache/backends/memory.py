@@ -30,9 +30,7 @@ class SimpleMemoryBackend:
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()
-            SimpleMemoryBackend._handlers[key] = loop.call_later(
-                ttl, self.__delete, key
-            )
+            SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
     async def _multi_set(self, pairs, ttl=None, _conn=None):
@@ -42,9 +40,7 @@ class SimpleMemoryBackend:
 
     async def _add(self, key, value, ttl=None, _conn=None):
         if key in SimpleMemoryBackend._cache:
-            raise ValueError(
-                "Key {} already exists, use .set to update the value".format(key)
-            )
+            raise ValueError("Key {} already exists, use .set to update the value".format(key))
 
         await self._set(key, value, ttl=ttl)
         return True
@@ -57,9 +53,7 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._cache[key] = delta
         else:
             try:
-                SimpleMemoryBackend._cache[key] = (
-                    int(SimpleMemoryBackend._cache[key]) + delta
-                )
+                SimpleMemoryBackend._cache[key] = int(SimpleMemoryBackend._cache[key]) + delta
             except ValueError:
                 raise TypeError("Value is not an integer") from None
         return SimpleMemoryBackend._cache[key]
@@ -71,9 +65,7 @@ class SimpleMemoryBackend:
                 handle.cancel()
             if ttl:
                 loop = asyncio.get_event_loop()
-                SimpleMemoryBackend._handlers[key] = loop.call_later(
-                    ttl, self.__delete, key
-                )
+                SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
             return True
 
         return False

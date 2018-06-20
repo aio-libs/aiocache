@@ -30,11 +30,4 @@ else:
     del aiomcache
 
 
-__all__ = (
-    "caches",
-    "cached",
-    "cached_stampede",
-    "multi_cached",
-    *__cache_types,
-    "__version__",
-)
+__all__ = ("caches", "cached", "cached_stampede", "multi_cached", *__cache_types, "__version__")

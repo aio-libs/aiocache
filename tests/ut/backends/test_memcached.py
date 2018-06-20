@@ -21,9 +21,7 @@ class TestMemcachedBackend:
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
             memcached = MemcachedBackend()
 
-            aiomcache_client.assert_called_with(
-                "127.0.0.1", 11211, loop=ANY, pool_size=2
-            )
+            aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=2)
 
         assert memcached.endpoint == "127.0.0.1"
         assert memcached.port == 11211
@@ -73,9 +71,7 @@ class TestMemcachedBackend:
 
     @pytest.mark.asyncio
     async def test_set_float_ttl(self, memcached):
-        memcached.client.set.side_effect = aiomcache.exceptions.ValidationException(
-            "msg"
-        )
+        memcached.client.set.side_effect = aiomcache.exceptions.ValidationException("msg")
         with pytest.raises(TypeError) as exc_info:
             await memcached._set(pytest.KEY, "value", ttl=0.1)
         assert str(exc_info.value) == "aiomcache error: msg"
@@ -84,33 +80,24 @@ class TestMemcachedBackend:
     async def test_set_cas_token(self, mocker, memcached):
         mocker.spy(memcached, "_cas")
         await memcached._set(pytest.KEY, "value", _cas_token="token")
-        memcached._cas.assert_called_with(
-            pytest.KEY, b"value", "token", ttl=0, _conn=None
-        )
+        memcached._cas.assert_called_with(pytest.KEY, b"value", "token", ttl=0, _conn=None)
 
     @pytest.mark.asyncio
     async def test_cas(self, mocker, memcached):
         memcached.client.cas.return_value = True
         assert await memcached._cas(pytest.KEY, b"value", "token", ttl=0) is True
-        memcached.client.cas.assert_called_with(
-            pytest.KEY, b"value", "token", exptime=0
-        )
+        memcached.client.cas.assert_called_with(pytest.KEY, b"value", "token", exptime=0)
 
     @pytest.mark.asyncio
     async def test_cas_fail(self, mocker, memcached):
         memcached.client.cas.return_value = False
         assert await memcached._cas(pytest.KEY, b"value", "token", ttl=0) is False
-        memcached.client.cas.assert_called_with(
-            pytest.KEY, b"value", "token", exptime=0
-        )
+        memcached.client.cas.assert_called_with(pytest.KEY, b"value", "token", exptime=0)
 
     @pytest.mark.asyncio
     async def test_multi_get(self, memcached):
         memcached.client.multi_get.return_value = [b"value", b"random"]
-        assert await memcached._multi_get([pytest.KEY, pytest.KEY_1]) == [
-            "value",
-            "random",
-        ]
+        assert await memcached._multi_get([pytest.KEY, pytest.KEY_1]) == ["value", "random"]
         memcached.client.multi_get.assert_called_with(pytest.KEY, pytest.KEY_1)
 
     @pytest.mark.asyncio
@@ -122,9 +109,10 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_multi_get_no_encoding(self, memcached):
         memcached.client.multi_get.return_value = [b"value", None]
-        assert await memcached._multi_get(
-            [pytest.KEY, pytest.KEY_1], encoding=None
-        ) == [b"value", None]
+        assert await memcached._multi_get([pytest.KEY, pytest.KEY_1], encoding=None) == [
+            b"value",
+            None,
+        ]
         memcached.client.multi_get.assert_called_with(pytest.KEY, pytest.KEY_1)
 
     @pytest.mark.asyncio
@@ -134,22 +122,16 @@ class TestMemcachedBackend:
         memcached.client.set.assert_any_call(pytest.KEY_1, b"random", exptime=0)
         assert memcached.client.set.call_count == 2
 
-        await memcached._multi_set(
-            [(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=1
-        )
+        await memcached._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=1)
         memcached.client.set.assert_any_call(pytest.KEY, b"value", exptime=1)
         memcached.client.set.assert_any_call(pytest.KEY_1, b"random", exptime=1)
         assert memcached.client.set.call_count == 4
 
     @pytest.mark.asyncio
     async def test_multi_set_float_ttl(self, memcached):
-        memcached.client.set.side_effect = aiomcache.exceptions.ValidationException(
-            "msg"
-        )
+        memcached.client.set.side_effect = aiomcache.exceptions.ValidationException("msg")
         with pytest.raises(TypeError) as exc_info:
-            await memcached._multi_set(
-                [(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=0.1
-            )
+            await memcached._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=0.1)
         assert str(exc_info.value) == "aiomcache error: msg"
 
     @pytest.mark.asyncio
@@ -168,9 +150,7 @@ class TestMemcachedBackend:
 
     @pytest.mark.asyncio
     async def test_add_float_ttl(self, memcached):
-        memcached.client.add.side_effect = aiomcache.exceptions.ValidationException(
-            "msg"
-        )
+        memcached.client.add.side_effect = aiomcache.exceptions.ValidationException("msg")
         with pytest.raises(TypeError) as exc_info:
             await memcached._add(pytest.KEY, "value", 0.1)
         assert str(exc_info.value) == "aiomcache error: msg"
@@ -192,18 +172,14 @@ class TestMemcachedBackend:
 
     @pytest.mark.asyncio
     async def test_increment_missing(self, memcached):
-        memcached.client.incr.side_effect = aiomcache.exceptions.ClientException(
-            "NOT_FOUND"
-        )
+        memcached.client.incr.side_effect = aiomcache.exceptions.ClientException("NOT_FOUND")
         await memcached._increment(pytest.KEY, 2)
         memcached.client.incr.assert_called_with(pytest.KEY, 2)
         memcached.client.set.assert_called_with(pytest.KEY, b"2", exptime=0)
 
     @pytest.mark.asyncio
     async def test_increment_missing_negative(self, memcached):
-        memcached.client.decr.side_effect = aiomcache.exceptions.ClientException(
-            "NOT_FOUND"
-        )
+        memcached.client.decr.side_effect = aiomcache.exceptions.ClientException("NOT_FOUND")
         await memcached._increment(pytest.KEY, -2)
         memcached.client.decr.assert_called_with(pytest.KEY, 2)
         memcached.client.set.assert_called_with(pytest.KEY, b"-2", exptime=0)
@@ -282,24 +258,13 @@ class TestMemcachedCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        (
-            [None, "test" + pytest.KEY],
-            ["", pytest.KEY],
-            ["my_ns", "my_ns" + pytest.KEY],
-        ),
+        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),
     )
-    def test_build_key_bytes(
-        self, set_test_namespace, memcached_cache, namespace, expected
-    ):
-        assert (
-            memcached_cache.build_key(pytest.KEY, namespace=namespace)
-            == expected.encode()
-        )
+    def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
+        assert memcached_cache.build_key(pytest.KEY, namespace=namespace) == expected.encode()
 
     def test_build_key_no_namespace(self, memcached_cache):
-        assert (
-            memcached_cache.build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
-        )
+        assert memcached_cache.build_key(pytest.KEY, namespace=None) == pytest.KEY.encode()
 
     def test_build_key_no_spaces(self, memcached_cache):
         assert memcached_cache.build_key("hello world") == b"hello_world"

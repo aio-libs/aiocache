@@ -334,10 +334,7 @@ class multi_cached:
     async def set_in_cache(self, result, fn_args, fn_kwargs):
         try:
             await self.cache.multi_set(
-                [
-                    (self.key_builder(k, *fn_args, **fn_kwargs), v)
-                    for k, v in result.items()
-                ],
+                [(self.key_builder(k, *fn_args, **fn_kwargs), v) for k, v in result.items()],
                 ttl=self.ttl,
             )
         except Exception:

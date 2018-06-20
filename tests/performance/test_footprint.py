@@ -7,9 +7,7 @@ import aiomcache
 
 @pytest.fixture
 def aioredis_pool(event_loop):
-    return event_loop.run_until_complete(
-        aioredis.create_pool(("127.0.0.1", 6379), maxsize=1)
-    )
+    return event_loop.run_until_complete(aioredis.create_pool(("127.0.0.1", 6379), maxsize=1))
 
 
 class TestRedis:
@@ -37,9 +35,7 @@ class TestRedis:
 
         print(
             "\n{:0.2f}/{:0.2f}: {:0.2f}".format(
-                aiocache_total_time,
-                aioredis_total_time,
-                aiocache_total_time / aioredis_total_time,
+                aiocache_total_time, aioredis_total_time, aiocache_total_time / aioredis_total_time
             )
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
@@ -73,9 +69,7 @@ class TestRedis:
 
         print(
             "\n{:0.2f}/{:0.2f}: {:0.2f}".format(
-                aiocache_total_time,
-                aioredis_total_time,
-                aiocache_total_time / aioredis_total_time,
+                aiocache_total_time, aioredis_total_time, aiocache_total_time / aioredis_total_time
             )
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))

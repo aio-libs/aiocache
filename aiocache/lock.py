@@ -158,9 +158,7 @@ class OptimisticLock:
 
         :raises: :class:`aiocache.lock.OptimisticLockError`
         """
-        success = await self.client.set(
-            self.key, value, _cas_token=self._token, **kwargs
-        )
+        success = await self.client.set(self.key, value, _cas_token=self._token, **kwargs)
         if not success:
             raise OptimisticLockError("Value has changed since the lock started")
         return True

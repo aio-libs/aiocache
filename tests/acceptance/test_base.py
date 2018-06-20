@@ -50,10 +50,7 @@ class TestCache:
     async def test_multi_set(self, cache):
         pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs) is True
-        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == [
-            "value",
-            "random_value",
-        ]
+        assert await cache.multi_get([pytest.KEY, pytest.KEY_1]) == ["value", "random_value"]
 
     @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, cache):

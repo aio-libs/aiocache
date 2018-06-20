@@ -22,9 +22,7 @@ class TestRedLock:
         mock_cache._redlock_release.return_value = True
         await lock._acquire()
         await lock._release()
-        mock_cache._redlock_release.assert_called_with(
-            pytest.KEY + "-lock", lock._value
-        )
+        mock_cache._redlock_release.assert_called_with(pytest.KEY + "-lock", lock._value)
         assert pytest.KEY + "-lock" not in lock._EVENTS
 
     @pytest.mark.asyncio
@@ -39,9 +37,7 @@ class TestRedLock:
         async with lock:
             pass
         mock_cache._add.assert_called_with(pytest.KEY + "-lock", lock._value, ttl=20)
-        mock_cache._redlock_release.assert_called_with(
-            pytest.KEY + "-lock", lock._value
-        )
+        mock_cache._redlock_release.assert_called_with(pytest.KEY + "-lock", lock._value)
 
     @pytest.mark.asyncio
     async def test_raises_exceptions(self, mock_cache, lock):

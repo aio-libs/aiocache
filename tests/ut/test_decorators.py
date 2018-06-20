@@ -315,9 +315,7 @@ class TestCachedStampede:
         lock2 = MagicMock(spec=RedLock)
 
         with patch("aiocache.decorators.RedLock", side_effect=[lock1, lock2]):
-            await asyncio.gather(
-                decorator_call(value="value"), decorator_call(value="value")
-            )
+            await asyncio.gather(decorator_call(value="value"), decorator_call(value="value"))
 
             assert decorator.cache.get.call_count == 4
             assert lock1.__aenter__.call_count == 1
@@ -331,11 +329,7 @@ class TestCachedStampede:
 
 
 async def stub_dict(*args, keys=None, **kwargs):
-    values = {
-        "a": random.randint(1, 50),
-        "b": random.randint(1, 50),
-        "c": random.randint(1, 50),
-    }
+    values = {"a": random.randint(1, 50), "b": random.randint(1, 50), "c": random.randint(1, 50)}
     return {k: values.get(k) for k in keys}
 
 
@@ -387,10 +381,7 @@ class TestMultiCached:
             "aiocache.decorators.caches.get", MagicMock(return_value=mock_cache)
         ) as mock_get:
             mc = multi_cached(
-                keys_from_attr="keys",
-                alias="default",
-                cache=SimpleMemoryCache,
-                namespace="test",
+                keys_from_attr="keys", alias="default", cache=SimpleMemoryCache, namespace="test"
             )
             mc(stub_dict)
 
@@ -398,11 +389,7 @@ class TestMultiCached:
             assert mc.cache is mock_cache
 
     def test_get_cache_keys(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"]}) == (
-            ["a", "b"],
-            [],
-            -1,
-        )
+        assert decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"]}) == (["a", "b"], [], -1)
 
     def test_get_cache_keys_empty_list(self, decorator):
         assert decorator.get_cache_keys(stub_dict, (), {"keys": []}) == ([], [], -1)
@@ -421,12 +408,12 @@ class TestMultiCached:
         assert decorator.get_cache_keys(stub_dict, (), {"keys": None}) == ([], [], -1)
 
     def test_get_cache_keys_with_key_builder(self, decorator):
-        decorator.key_builder = (
-            lambda key, *args, **kwargs: kwargs["market"] + "_" + key.upper()
+        decorator.key_builder = lambda key, *args, **kwargs: kwargs["market"] + "_" + key.upper()
+        assert decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"], "market": "ES"}) == (
+            ["ES_A", "ES_B"],
+            [],
+            -1,
         )
-        assert decorator.get_cache_keys(
-            stub_dict, (), {"keys": ["a", "b"], "market": "ES"}
-        ) == (["ES_A", "ES_B"], [], -1)
 
     @pytest.mark.asyncio
     async def test_get_from_cache(self, decorator, decorator_call):
@@ -473,9 +460,7 @@ class TestMultiCached:
         assert stub_dict.call_count == 0
 
     @pytest.mark.asyncio
-    async def test_calls_fn_multi_set_when_multi_get_none(
-        self, mocker, decorator, decorator_call
-    ):
+    async def test_calls_fn_multi_set_when_multi_get_none(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "get_from_cache")
         mocker.spy(decorator, "set_in_cache")
         decorator.cache.multi_get = CoroutineMock(return_value=[None, None])
@@ -487,16 +472,11 @@ class TestMultiCached:
         stub_dict.assert_called_once_with(1, keys=["a", "b"], value="value")
 
     @pytest.mark.asyncio
-    async def test_calls_fn_with_only_missing_keys(
-        self, mocker, decorator, decorator_call
-    ):
+    async def test_calls_fn_with_only_missing_keys(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "set_in_cache")
         decorator.cache.multi_get = CoroutineMock(return_value=[1, None])
 
-        assert await decorator_call(1, keys=["a", "b"], value="value") == {
-            "a": ANY,
-            "b": ANY,
-        }
+        assert await decorator_call(1, keys=["a", "b"], value="value") == {"a": ANY, "b": ANY}
 
         decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=["b"], value="value")

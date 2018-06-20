@@ -130,9 +130,7 @@ class RedisBackend:
     async def _multi_set(self, pairs, ttl=None, _conn=None):
         ttl = ttl or 0
 
-        flattened = list(
-            itertools.chain.from_iterable((key, value) for key, value in pairs)
-        )
+        flattened = list(itertools.chain.from_iterable((key, value) for key, value in pairs))
 
         if ttl:
             await self.__multi_set_ttl(_conn, flattened, ttl)
@@ -155,9 +153,7 @@ class RedisBackend:
             expx = {"pexpire": int(ttl * 1000)}
         was_set = await _conn.set(key, value, exist=_conn.SET_IF_NOT_EXIST, **expx)
         if not was_set:
-            raise ValueError(
-                "Key {} already exists, use .set to update the value".format(key)
-            )
+            raise ValueError("Key {} already exists, use .set to update the value".format(key))
         return was_set
 
     @conn
@@ -218,9 +214,7 @@ class RedisBackend:
                 if not AIOREDIS_BEFORE_ONE:
                     kwargs["create_connection_timeout"] = self.create_connection_timeout
 
-                self._pool = await aioredis.create_pool(
-                    (self.endpoint, self.port), **kwargs
-                )
+                self._pool = await aioredis.create_pool((self.endpoint, self.port), **kwargs)
 
             return self._pool
 

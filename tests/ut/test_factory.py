@@ -59,9 +59,7 @@ class TestCacheHandler:
                 }
             }
         )
-        cache = caches.create(
-            "default", namespace="whatever", endpoint="127.0.0.10", db=10
-        )
+        cache = caches.create("default", namespace="whatever", endpoint="127.0.0.10", db=10)
         assert cache.namespace == "whatever"
         assert cache.endpoint == "127.0.0.10"
         assert cache.db == 10
@@ -253,9 +251,7 @@ class TestCacheHandler:
                         "cache": "aiocache.RedisCache",
                         "endpoint": "127.0.0.10",
                         "port": 6378,
-                        "serializer": {
-                            "class": "aiocache.serializers.PickleSerializer"
-                        },
+                        "serializer": {"class": "aiocache.serializers.PickleSerializer"},
                         "plugins": [
                             {"class": "aiocache.plugins.HitMissRatioPlugin"},
                             {"class": "aiocache.plugins.TimingPlugin"},
