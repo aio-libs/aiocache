@@ -6,17 +6,17 @@ from aiocache.serializers import JsonSerializer
 
 
 class MemcachedBackend:
-
     def __init__(
-            self, endpoint="127.0.0.1", port=11211, pool_size=2,
-            loop=None, **kwargs):
+        self, endpoint="127.0.0.1", port=11211, pool_size=2, loop=None, **kwargs
+    ):
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
         self.pool_size = pool_size
         self._loop = loop
         self.client = aiomcache.Client(
-            self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size)
+            self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size
+        )
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
@@ -24,7 +24,7 @@ class MemcachedBackend:
             return value
         return value.decode(encoding)
 
-    async def _gets(self, key, encoding='utf-8', _conn=None):
+    async def _gets(self, key, encoding="utf-8", _conn=None):
         key = key.encode() if isinstance(key, str) else key
         _, token = await self.client.gets(key)
         return token
@@ -45,7 +45,7 @@ class MemcachedBackend:
         try:
             return await self.client.set(key, value, exptime=ttl or 0)
         except aiomcache.exceptions.ValidationException as e:
-            raise TypeError('aiomcache error: {}'.format(str(e)))
+            raise TypeError("aiomcache error: {}".format(str(e)))
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         return await self.client.cas(key, value, token, exptime=ttl or 0)
@@ -59,7 +59,7 @@ class MemcachedBackend:
         try:
             await asyncio.gather(*tasks)
         except aiomcache.exceptions.ValidationException as e:
-            raise TypeError('aiomcache error: {}'.format(str(e)))
+            raise TypeError("aiomcache error: {}".format(str(e)))
 
         return True
 
@@ -68,15 +68,16 @@ class MemcachedBackend:
         try:
             ret = await self.client.add(key, value, exptime=ttl or 0)
         except aiomcache.exceptions.ValidationException as e:
-            raise TypeError('aiomcache error: {}'.format(str(e)))
+            raise TypeError("aiomcache error: {}".format(str(e)))
         if not ret:
             raise ValueError(
-                "Key {} already exists, use .set to update the value".format(key))
+                "Key {} already exists, use .set to update the value".format(key)
+            )
 
         return True
 
     async def _exists(self, key, _conn=None):
-        return await self.client.append(key, b'')
+        return await self.client.append(key, b"")
 
     async def _increment(self, key, delta, _conn=None):
         incremented = None
@@ -89,7 +90,7 @@ class MemcachedBackend:
             if "NOT_FOUND" in str(e):
                 await self._set(key, str(delta).encode())
             else:
-                raise TypeError('aiomcache error: {}'.format(str(e)))
+                raise TypeError("aiomcache error: {}".format(str(e)))
 
         return incremented or delta
 
@@ -140,12 +141,13 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     :param port: int with the port to connect to. Default is 11211.
     :param pool_size: int size for memcached connections pool. Default is 2.
     """
+
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
         self.serializer = serializer or JsonSerializer()
 
     def _build_key(self, key, namespace=None):
-        ns_key = super()._build_key(key, namespace=namespace).replace(' ', '_')
+        ns_key = super()._build_key(key, namespace=namespace).replace(" ", "_")
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover

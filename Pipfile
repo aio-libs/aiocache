@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"e1839a8" = {path = ".", extras = ["msgpack", "redis", "memcached"], editable = true}
+"e1839a8" = {path = ".", extras = ["memcached", "msgpack", "redis"], editable = true}
 
 [dev-packages]
 "flake8" = "*"
@@ -21,3 +21,4 @@ pystache = "*"
 coverage = "*"
 pylint = "*"
 ipdb = "*"
+black = ">=18.6b3"

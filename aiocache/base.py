@@ -52,14 +52,16 @@ class API:
         Use this decorator to be able to fake the return of the function by setting the
         ``AIOCACHE_DISABLE`` environment variable
         """
+
         def enabled(func):
             @functools.wraps(func)
             async def _enabled(*args, **kwargs):
-                if os.getenv('AIOCACHE_DISABLE') == "1":
+                if os.getenv("AIOCACHE_DISABLE") == "1":
                     return fake_return
                 return await func(*args, **kwargs)
 
             return _enabled
+
         return enabled
 
     @classmethod
@@ -68,15 +70,17 @@ class API:
         async def _plugins(self, *args, **kwargs):
             start = time.monotonic()
             for plugin in self.plugins:
-                await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
+                await getattr(plugin, "pre_{}".format(func.__name__))(
+                    self, *args, **kwargs
+                )
 
             ret = await func(self, *args, **kwargs)
 
             end = time.monotonic()
             for plugin in self.plugins:
-                await getattr(
-                    plugin, "post_{}".format(func.__name__))(
-                        self, *args, took=end - start, ret=ret, **kwargs)
+                await getattr(plugin, "post_{}".format(func.__name__))(
+                    self, *args, took=end - start, ret=ret, **kwargs
+                )
             return ret
 
         return _plugins
@@ -102,8 +106,14 @@ class BaseCache:
     """
 
     def __init__(
-            self, serializer=None, plugins=None,
-            namespace=None, key_builder=None, timeout=5, ttl=None):
+        self,
+        serializer=None,
+        plugins=None,
+        namespace=None,
+        key_builder=None,
+        timeout=5,
+        ttl=None,
+    ):
         self.timeout = timeout
         self.namespace = namespace
         self.ttl = ttl
@@ -135,7 +145,9 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def add(self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None):
+    async def add(
+        self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None
+    ):
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
@@ -187,9 +199,13 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
         ns_key = self.build_key(key, namespace=namespace)
 
-        value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
+        value = loads(
+            await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn)
+        )
 
-        logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.monotonic() - start)
+        logger.debug(
+            "GET %s %s (%.4f)s", ns_key, value is not None, time.monotonic() - start
+        )
         return value if value is not None else default
 
     async def _get(self, key, encoding, _conn=None):
@@ -215,14 +231,19 @@ class BaseCache:
         loads = loads_fn or self._serializer.loads
 
         ns_keys = [self.build_key(key, namespace=namespace) for key in keys]
-        values = [loads(value) for value in await self._multi_get(
-            ns_keys, encoding=self.serializer.encoding, _conn=_conn)]
+        values = [
+            loads(value)
+            for value in await self._multi_get(
+                ns_keys, encoding=self.serializer.encoding, _conn=_conn
+            )
+        ]
 
         logger.debug(
             "MULTI_GET %s %d (%.4f)s",
             ns_keys,
             len([value for value in values if value is not None]),
-            time.monotonic() - start)
+            time.monotonic() - start,
+        )
         return values
 
     async def _multi_get(self, keys, encoding, _conn=None):
@@ -233,8 +254,15 @@ class BaseCache:
     @API.timeout
     @API.plugins
     async def set(
-            self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _cas_token=None,
-            _conn=None):
+        self,
+        key,
+        value,
+        ttl=SENTINEL,
+        dumps_fn=None,
+        namespace=None,
+        _cas_token=None,
+        _conn=None,
+    ):
         """
         Stores the value in the given key with ttl if specified
 
@@ -255,7 +283,12 @@ class BaseCache:
         ns_key = self.build_key(key, namespace=namespace)
 
         res = await self._set(
-            ns_key, dumps(value), ttl=self._get_ttl(ttl), _cas_token=_cas_token, _conn=_conn)
+            ns_key,
+            dumps(value),
+            ttl=self._get_ttl(ttl),
+            _cas_token=_cas_token,
+            _conn=_conn,
+        )
 
         logger.debug("SET %s %d (%.4f)s", ns_key, True, time.monotonic() - start)
         return res
@@ -267,7 +300,9 @@ class BaseCache:
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def multi_set(self, pairs, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None):
+    async def multi_set(
+        self, pairs, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None
+    ):
         """
         Stores multiple values in the given keys.
 
@@ -295,7 +330,8 @@ class BaseCache:
             "MULTI_SET %s %d (%.4f)s",
             [key for key, value in tmp_pairs],
             len(pairs),
-            time.monotonic() - start)
+            time.monotonic() - start,
+        )
         return True
 
     async def _multi_set(self, pairs, ttl, _conn=None):
@@ -444,7 +480,8 @@ class BaseCache:
         """
         start = time.monotonic()
         ret = await self._raw(
-            command, *args, encoding=self.serializer.encoding, _conn=_conn, **kwargs)
+            command, *args, encoding=self.serializer.encoding, _conn=_conn, **kwargs
+        )
         logger.debug("%s (%.4f)s", command, time.monotonic() - start)
         return ret
 
@@ -489,7 +526,6 @@ class BaseCache:
 
 
 class _Conn:
-
     def __init__(self, cache):
         self._cache = cache
         self._conn = None
@@ -506,9 +542,10 @@ class _Conn:
 
     @classmethod
     def _inject_conn(cls, cmd_name):
-
         async def _do_inject_conn(self, *args, **kwargs):
-            return await getattr(self._cache, cmd_name)(*args, _conn=self._conn, **kwargs)
+            return await getattr(self._cache, cmd_name)(
+                *args, _conn=self._conn, **kwargs
+            )
 
         return _do_inject_conn
 

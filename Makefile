@@ -3,6 +3,10 @@ cov-report = true
 
 lint:
 	pipenv run flake8
+	black --check tests/ aiocache/
+
+format:
+	black tests/ aiocache/
 
 install-dev:
 	pipenv install --skip-lock -d

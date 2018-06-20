@@ -7,7 +7,6 @@ from aiocache.base import API
 
 
 class BasePlugin:
-
     @classmethod
     def add_hook(cls, func, hooks):
         for hook in hooks:
@@ -18,9 +17,11 @@ class BasePlugin:
 
 
 BasePlugin.add_hook(
-    BasePlugin.do_nothing, ["pre_{}".format(method.__name__) for method in API.CMDS])
+    BasePlugin.do_nothing, ["pre_{}".format(method.__name__) for method in API.CMDS]
+)
 BasePlugin.add_hook(
-    BasePlugin.do_nothing, ["post_{}".format(method.__name__) for method in API.CMDS])
+    BasePlugin.do_nothing, ["post_{}".format(method.__name__) for method in API.CMDS]
+)
 
 
 class TimingPlugin(BasePlugin):
@@ -32,7 +33,6 @@ class TimingPlugin(BasePlugin):
 
     @classmethod
     def save_time(cls, method):
-
         async def do_save_time(self, client, *args, took=0, **kwargs):
             if not hasattr(client, "profiling"):
                 client.profiling = {}
@@ -43,18 +43,21 @@ class TimingPlugin(BasePlugin):
             previous_min = client.profiling.get("{}_min".format(method))
 
             client.profiling["{}_total".format(method)] = previous_total + 1
-            client.profiling["{}_avg".format(method)] = \
-                previous_avg + (took - previous_avg) / (previous_total + 1)
+            client.profiling["{}_avg".format(method)] = previous_avg + (
+                took - previous_avg
+            ) / (previous_total + 1)
             client.profiling["{}_max".format(method)] = max(took, previous_max)
-            client.profiling["{}_min".format(method)] = \
+            client.profiling["{}_min".format(method)] = (
                 min(took, previous_min) if previous_min else took
+            )
 
         return do_save_time
 
 
 for method in API.CMDS:
     TimingPlugin.add_hook(
-        TimingPlugin.save_time(method.__name__), ["post_{}".format(method.__name__)])
+        TimingPlugin.save_time(method.__name__), ["post_{}".format(method.__name__)]
+    )
 
 
 class HitMissRatioPlugin(BasePlugin):
@@ -64,6 +67,7 @@ class HitMissRatioPlugin(BasePlugin):
     you can do ``cache.hit_miss_ratio['hit_ratio']``. It also provides the "total" and "hits"
     keys.
     """
+
     async def post_get(self, client, key, took=0, ret=None):
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
@@ -74,8 +78,9 @@ class HitMissRatioPlugin(BasePlugin):
         if ret is not None:
             client.hit_miss_ratio["hits"] += 1
 
-        client.hit_miss_ratio['hit_ratio'] = \
+        client.hit_miss_ratio["hit_ratio"] = (
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
+        )
 
     async def post_multi_get(self, client, keys, took=0, ret=None):
         if not hasattr(client, "hit_miss_ratio"):
@@ -88,5 +93,6 @@ class HitMissRatioPlugin(BasePlugin):
             if result is not None:
                 client.hit_miss_ratio["hits"] += 1
 
-        client.hit_miss_ratio['hit_ratio'] = \
+        client.hit_miss_ratio["hit_ratio"] = (
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
+        )

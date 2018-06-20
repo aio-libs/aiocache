@@ -20,17 +20,17 @@ _NOT_SET = object()
 
 class BaseSerializer:
 
-    DEFAULT_ENCODING = 'utf-8'
+    DEFAULT_ENCODING = "utf-8"
 
     def __init__(self, *args, encoding=_NOT_SET, **kwargs):
         self.encoding = self.DEFAULT_ENCODING if encoding is _NOT_SET else encoding
         super().__init__(*args, **kwargs)
 
     def dumps(self, value):
-        raise NotImplementedError('dumps method must be implemented')
+        raise NotImplementedError("dumps method must be implemented")
 
     def loads(self, value):
-        raise NotImplementedError('loads method must be implemented')
+        raise NotImplementedError("loads method must be implemented")
 
 
 class NullSerializer(BaseSerializer):
@@ -48,6 +48,7 @@ class NullSerializer(BaseSerializer):
         my_list.append(2)
         await cache.get("key")  # Will return [1, 2]
     """
+
     def dumps(self, value):
         """
         Returns the same value
@@ -72,6 +73,7 @@ class StringSerializer(BaseSerializer):
     If you want to keep python types, use ``PickleSerializer``. ``JsonSerializer``
     may also be useful to keep type of symple python types.
     """
+
     def dumps(self, value):
         """
         Serialize the received value casting it to str.
@@ -92,6 +94,7 @@ class PickleSerializer(BaseSerializer):
     """
     Transform data to bytes using pickle.dumps and pickle.loads to retrieve it back.
     """
+
     DEFAULT_ENCODING = None
 
     def dumps(self, value):
@@ -125,6 +128,7 @@ class JsonSerializer(BaseSerializer):
         - ujson dumps supports bytes while json doesn't
         - ujson and json outputs may differ sometimes
     """
+
     def dumps(self, value):
         """
         Serialize the received value using ``json.dumps``.
@@ -156,6 +160,7 @@ class MsgPackSerializer(BaseSerializer):
     :param use_list: bool. Can be used to change use_list param for ``msgpack.loads`` method.
         Default is True.
     """
+
     def __init__(self, *args, use_list=True, **kwargs):
         self.use_list = use_list
         super().__init__(*args, **kwargs)

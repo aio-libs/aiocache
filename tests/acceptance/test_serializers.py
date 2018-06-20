@@ -1,5 +1,6 @@
 import pytest
 import random
+
 try:
     import ujson as json
 except ImportError:
@@ -12,7 +13,12 @@ except ImportError:
 from marshmallow import fields, Schema, post_load
 
 from aiocache.serializers import (
-    BaseSerializer, NullSerializer, StringSerializer, PickleSerializer, JsonSerializer)
+    BaseSerializer,
+    NullSerializer,
+    StringSerializer,
+    PickleSerializer,
+    JsonSerializer,
+)
 
 
 class MyType:
@@ -27,7 +33,7 @@ class MyType:
 
 class MyTypeSchema(Schema, BaseSerializer):
     r = fields.Integer()
-    encoding = 'utf-8'
+    encoding = "utf-8"
 
     def dumps(self, *args, **kwargs):
         return super().dumps(*args, **kwargs).data
@@ -160,7 +166,6 @@ class TestPickleSerializer:
 
 
 class TestAltSerializers:
-
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer_functions(self, cache):
         cache.serializer = StringSerializer()
@@ -174,4 +179,6 @@ class TestAltSerializers:
         my_obj = MyType()
         cache.serializer = my_serializer
         await cache.set(pytest.KEY, my_obj)
-        assert await cache.get(pytest.KEY) == my_serializer.loads(my_serializer.dumps(my_obj))
+        assert await cache.get(pytest.KEY) == my_serializer.loads(
+            my_serializer.dumps(my_obj)
+        )
