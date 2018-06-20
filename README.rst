@@ -18,6 +18,9 @@ Asyncio cache supporting multiple backends (memory, redis and memcached).
 .. image:: https://api.codacy.com/project/badge/Grade/96f772e38e63489ca884dbaf6e9fb7fd
   :target: https://www.codacy.com/app/argaen/aiocache
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
+
 This library aims for simplicity over specialization. All caches contain the same minimum interface which consists on the following functions:
 
 - ``add``: Only adds key/value if key does not exist.
