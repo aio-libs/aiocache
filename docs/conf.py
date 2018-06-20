@@ -70,7 +70,7 @@ with open(
             '../aiocache/_version.py')) as fp:
     try:
         version = re.findall(
-            r"^__version__ = '([^']+)'\r?$", fp.read())[0]
+            r"^__version__ = \"([^']+)\"\r?$", fp.read())[0]
         release = version
     except IndexError:
         raise RuntimeError('Unable to determine version.')
