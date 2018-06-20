@@ -21,4 +21,4 @@ pystache = "*"
 coverage = "*"
 pylint = "*"
 ipdb = "*"
-black = ">=18.6b3"
+black = {version = ">=18.6b3", markers="python_version >= '3.6'"}
