@@ -6,7 +6,7 @@ from .decorators import cached, cached_stampede, multi_cached
 from ._version import __version__
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 __cache_types = [SimpleMemoryCache]
 
 try:

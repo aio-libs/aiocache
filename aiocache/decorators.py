@@ -7,7 +7,7 @@ from aiocache.base import SENTINEL
 from aiocache.lock import RedLock
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class cached:
