@@ -7,7 +7,7 @@ import asyncio
 from aiocache import serializers
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 SENTINEL = object()
 
