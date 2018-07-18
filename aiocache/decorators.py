@@ -106,7 +106,7 @@ class cached:
         if self.key:
             return self.key
         if self.key_builder:
-            return self.key_builder(*args, **kwargs)
+            return self.key_builder(f, *args, **kwargs)
 
         return self._key_from_args(f, args, kwargs)
 

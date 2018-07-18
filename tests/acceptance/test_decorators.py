@@ -41,15 +41,15 @@ class TestCached:
 
     @pytest.mark.asyncio
     async def test_cached_key_builder(self, cache):
-        def build_key(self, a, b):
-            return "{}_{}_{}".format(self, a, b)
+        def build_key(f, self, a, b):
+            return "{}_{}_{}_{}".format(self, f.__name__, a, b)
 
         @cached(key_builder=build_key)
         async def fn(self, a, b=2):
             return "1"
 
         await fn("self", 1, 3)
-        assert await cache.exists(build_key("self", 1, 3)) is True
+        assert await cache.exists(build_key(fn, "self", 1, 3)) is True
 
 
 class TestCachedStampede:
