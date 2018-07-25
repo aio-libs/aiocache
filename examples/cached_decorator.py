@@ -18,7 +18,7 @@ def test_cached():
     cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
     loop = asyncio.get_event_loop()
     loop.run_until_complete(cached_call())
-    assert loop.run_until_complete(cache.exists("key")) is True
+    assert loop.run_until_complete(cache.exists("key"))
     loop.run_until_complete(cache.delete("key"))
     loop.run_until_complete(cache.close())
 
