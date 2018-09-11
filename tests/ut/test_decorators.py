@@ -362,7 +362,7 @@ class TestMultiCached:
         )
 
         assert mc.ttl == 1
-        assert mc.key_builder("key") == "key"
+        assert mc.key_builder("key", lambda x: x) == "key"
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
@@ -468,7 +468,7 @@ class TestMultiCached:
         ret = await decorator_call(1, keys=["a", "b"], value="value")
 
         decorator.get_from_cache.assert_called_once_with("a", "b")
-        decorator.set_in_cache.assert_called_with(ret, ANY, ANY)
+        decorator.set_in_cache.assert_called_with(ret, stub_dict, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=["a", "b"], value="value")
 
     @pytest.mark.asyncio
@@ -478,7 +478,7 @@ class TestMultiCached:
 
         assert await decorator_call(1, keys=["a", "b"], value="value") == {"a": ANY, "b": ANY}
 
-        decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, ANY, ANY)
+        decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, stub_dict, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=["b"], value="value")
 
     @pytest.mark.asyncio
@@ -516,7 +516,7 @@ class TestMultiCached:
 
     @pytest.mark.asyncio
     async def test_set_in_cache(self, decorator, decorator_call):
-        await decorator.set_in_cache({"a": 1, "b": 2}, (), {})
+        await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict, (), {})
 
         call_args = decorator.cache.multi_set.call_args[0][0]
         assert ("a", 1) in call_args
@@ -526,7 +526,7 @@ class TestMultiCached:
     @pytest.mark.asyncio
     async def test_set_in_cache_with_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
-        await decorator.set_in_cache({"a": 1, "b": 2}, (), {})
+        await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict,  (), {})
 
         assert decorator.cache.multi_set.call_args[1]["ttl"] == decorator.ttl
 
@@ -534,7 +534,7 @@ class TestMultiCached:
     async def test_set_in_cache_exception(self, decorator, decorator_call):
         decorator.cache.multi_set = CoroutineMock(side_effect=Exception)
 
-        assert await decorator.set_in_cache({"a": 1, "b": 2}, (), {}) is None
+        assert await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict,  (), {}) is None
 
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
