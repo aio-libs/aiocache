@@ -526,7 +526,7 @@ class TestMultiCached:
     @pytest.mark.asyncio
     async def test_set_in_cache_with_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
-        await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict,  (), {})
+        await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict, (), {})
 
         assert decorator.cache.multi_set.call_args[1]["ttl"] == decorator.ttl
 
@@ -534,7 +534,7 @@ class TestMultiCached:
     async def test_set_in_cache_exception(self, decorator, decorator_call):
         decorator.cache.multi_set = CoroutineMock(side_effect=Exception)
 
-        assert await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict,  (), {}) is None
+        assert await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict, (), {}) is None
 
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
