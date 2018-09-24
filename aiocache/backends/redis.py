@@ -4,6 +4,7 @@ import functools
 
 import aioredis
 
+from aiocache.backends import BaseBackend
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
@@ -28,7 +29,7 @@ def conn(func):
     return wrapper
 
 
-class RedisBackend:
+class RedisBackend(BaseBackend):
 
     RELEASE_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[1] then"

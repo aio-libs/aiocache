@@ -1,11 +1,12 @@
 import asyncio
 import aiomcache
 
+from aiocache.backends import BaseBackend
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-class MemcachedBackend:
+class MemcachedBackend(BaseBackend):
     def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, loop=None, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = endpoint

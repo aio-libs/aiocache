@@ -1,14 +1,11 @@
 import pytest
 import random
+import pickle
 
 try:
     import ujson as json
 except ImportError:
     import json
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 from marshmallow import fields, Schema, post_load
 

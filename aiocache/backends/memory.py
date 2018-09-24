@@ -1,10 +1,11 @@
 import asyncio
 
+from aiocache.backends import BaseBackend
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
 
-class SimpleMemoryBackend:
+class SimpleMemoryBackend(BaseBackend):
     """
     Wrapper around dict operations to use it as a cache backend
     """
