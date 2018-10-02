@@ -30,7 +30,7 @@ class cached:
         key_builder param. If key and key_builder are not passed, it will use module_name
         + function_name + args + kwargs
     :param key_builder: Callable that allows to build the function dynamically. It receives
-        same args and kwargs as the called function.
+        the function plus same args and kwargs passed to the function.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -106,7 +106,7 @@ class cached:
         if self.key:
             return self.key
         if self.key_builder:
-            return self.key_builder(*args, **kwargs)
+            return self.key_builder(f, *args, **kwargs)
 
         return self._key_from_args(f, args, kwargs)
 
@@ -224,7 +224,7 @@ class multi_cached:
     :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
         as keys to index in the cache.
     :param key_builder: Callable that allows to change the format of the keys before storing.
-        Receives the key and same args and kwargs as the called function.
+        Receives the key the function and same args and kwargs as the called function.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is ``aiocache.SimpleMemoryCache``.
@@ -249,7 +249,7 @@ class multi_cached:
         **kwargs
     ):
         self.keys_from_attr = keys_from_attr
-        self.key_builder = key_builder or (lambda key, *args, **kwargs: key)
+        self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
         self.ttl = ttl
         self.alias = alias
         self.cache = None
@@ -303,14 +303,14 @@ class multi_cached:
         result.update(partial)
 
         if cache_write:
-            await self.set_in_cache(result, args, kwargs)
+            await self.set_in_cache(result, f, args, kwargs)
 
         return result
 
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
         keys = args_dict[self.keys_from_attr] or []
-        keys = [self.key_builder(key, *args, **kwargs) for key in keys]
+        keys = [self.key_builder(key, f, *args, **kwargs) for key in keys]
 
         args_names = f.__code__.co_varnames[: f.__code__.co_argcount]
         new_args = list(args)
@@ -331,10 +331,10 @@ class multi_cached:
             logger.exception("Couldn't retrieve %s, unexpected error", keys)
             return [None] * len(keys)
 
-    async def set_in_cache(self, result, fn_args, fn_kwargs):
+    async def set_in_cache(self, result, fn, fn_args, fn_kwargs):
         try:
             await self.cache.multi_set(
-                [(self.key_builder(k, *fn_args, **fn_kwargs), v) for k, v in result.items()],
+                [(self.key_builder(k, fn, *fn_args, **fn_kwargs), v) for k, v in result.items()],
                 ttl=self.ttl,
             )
         except Exception:

@@ -61,4 +61,4 @@ def memcached_cache(event_loop):
 
 @pytest.fixture(params=["redis_cache", "memory_cache", "memcached_cache"])
 def cache(request):
-    return request.getfuncargvalue(request.param)
+    return request.getfixturevalue(request.param)
