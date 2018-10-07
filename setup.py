@@ -30,12 +30,14 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Framework :: AsyncIO',
     ],
     packages=find_packages(),
     install_requires=None,
     extras_require={
-        'redis': ['aioredis>=0.3.3'],
+        'redis:python_version<"3.7"': ['aioredis>=0.3.3'],
+        'redis:python_version>="3.7"': ['aioredis>=1.0.0'],
         'memcached': ['aiomcache>=0.5.2'],
         'msgpack': ['msgpack'],
     }
