@@ -40,8 +40,5 @@ _release:
 
 release: test _release
 
-freeze:
-	pipenv lock -d
-
 changelog:
 	gitchangelog
