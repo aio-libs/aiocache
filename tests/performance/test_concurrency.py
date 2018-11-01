@@ -48,12 +48,12 @@ def test_concurrency_error_rates(server):
     )
 
     failed_requests = total_requests
-    m = re.search("Failed requests:\s+([0-9]+)", str(result.stdout))
+    m = re.search(r"Failed requests:\s+([0-9]+)", str(result.stdout))
     if m:
         failed_requests = int(m.group(1))
 
     non_200 = 0
-    m = re.search("Non-2xx responses:\s+([0-9]+)", str(result.stdout))
+    m = re.search(r"Non-2xx responses:\s+([0-9]+)", str(result.stdout))
     if m:
         non_200 = int(m.group(1))
 
