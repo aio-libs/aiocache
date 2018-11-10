@@ -151,6 +151,17 @@ class TestMemoryCache:
             SimpleMemoryCache(random_attr="wtf")
 
     @pytest.mark.asyncio
+    async def test_set_cancel_previous_ttl_handle(self, memory_cache):
+        await memory_cache.set(pytest.KEY, "value", ttl=0.1)
+
+        await asyncio.sleep(0.05)
+        assert await memory_cache.get(pytest.KEY) == "value"
+        await memory_cache.set(pytest.KEY, "new_value", ttl=0.1)
+
+        await asyncio.sleep(0.05)
+        assert await memory_cache.get(pytest.KEY) == "new_value"
+
+    @pytest.mark.asyncio
     async def test_set_float_ttl(self, memory_cache):
         await memory_cache.set(pytest.KEY, "value", ttl=0.1)
         await asyncio.sleep(0.15)
