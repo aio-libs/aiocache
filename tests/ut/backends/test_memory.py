@@ -44,6 +44,15 @@ class TestSimpleMemoryBackend:
         assert pytest.KEY not in memory._handlers
 
     @pytest.mark.asyncio
+    async def test_set_cancel_previous_ttl_handle(self, memory, mocker):
+        fake_timer_handle_cancel = mocker.patch("asyncio.TimerHandle.cancel")
+        await memory._set(pytest.KEY, "value", ttl=0.1)
+        fake_timer_handle_cancel.assert_not_called()
+
+        await memory._set(pytest.KEY, "new_value", ttl=0.1)
+        fake_timer_handle_cancel.assert_called_once_with()
+
+    @pytest.mark.asyncio
     async def test_set_ttl_handle(self, memory):
         await memory._set(pytest.KEY, "value", ttl=100)
         assert pytest.KEY in memory._handlers
