@@ -23,6 +23,9 @@ jobs:
       env: TOXENV=py35,codecov
       python: 3.5
     - script: tox
+      env: TOXENV=py35,codecov
+      python: 3.5-dev
+    - script: tox
       env: TOXENV=py35-ujson,codecov
       python: 3.5
     - script: tox
@@ -36,6 +39,9 @@ jobs:
       env: TOXENV=py36,codecov
       python: 3.6
     - script: tox
+      env: TOXENV=py36,codecov
+      python: 3.6-dev
+    - script: tox
       env: TOXENV=py36-ujson,codecov
       python: 3.6
     - script: tox
@@ -44,6 +50,27 @@ jobs:
     - script: tox
       env: TOXENV=py36-deps-devel,codecov
       python: 3.6
+
+    - script: tox
+      env: TOXENV=py37,codecov
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - script: tox
+      env: TOXENV=py37-ujson,codecov
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - script: tox
+      env: TOXENV=py37-deps-lowest,codecov
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - script: tox
+      env: TOXENV=py37-deps-devel,codecov
+      python: 3.7
+      dist: xenial
+      sudo: true
 
     - stage: deploy
       script: skip

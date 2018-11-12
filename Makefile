@@ -2,19 +2,23 @@ cov-report = true
 
 
 lint:
-	flake8
+	pipenv run flake8
+	pipenv run black -l 100 --check tests/ aiocache/
+
+format:
+	pipenv run black -l 100 tests/ aiocache/
 
 install-dev:
-	pipenv install --dev
+	pipenv install --skip-lock -d
 
 pylint:
-	pylint --disable=C0111 aiocache
+	pipenv run pylint --disable=C0111 aiocache
 
 unit:
 	pipenv run coverage run -m pytest tests/ut
 	@if [ $(cov-report) = true ]; then\
-    coverage combine;\
-    coverage report;\
+    pipenv run coverage combine;\
+    pipenv run coverage report;\
 	fi
 
 acceptance:

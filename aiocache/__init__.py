@@ -6,7 +6,7 @@ from .decorators import cached, cached_stampede, multi_cached
 from ._version import __version__
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 __cache_types = [SimpleMemoryCache]
 
 try:
@@ -15,6 +15,7 @@ except ImportError:
     logger.info("aioredis not installed, RedisCache unavailable")
 else:
     from aiocache.backends.redis import RedisCache
+
     __cache_types.append(RedisCache)
     del aioredis
 
@@ -24,15 +25,9 @@ except ImportError:
     logger.info("aiomcache not installed, Memcached unavailable")
 else:
     from aiocache.backends.memcached import MemcachedCache
+
     __cache_types.append(MemcachedCache)
     del aiomcache
 
 
-__all__ = (
-    'caches',
-    'cached',
-    'cached_stampede',
-    'multi_cached',
-    *__cache_types,
-    '__version__',
-)
+__all__ = ("caches", "cached", "cached_stampede", "multi_cached", *__cache_types, "__version__")

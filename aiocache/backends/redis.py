@@ -8,7 +8,7 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-AIOREDIS_BEFORE_ONE = aioredis.__version__.startswith('0.')
+AIOREDIS_BEFORE_ONE = aioredis.__version__.startswith("0.")
 
 
 def conn(func):
@@ -24,6 +24,7 @@ def conn(func):
                 return await func(self, *args, _conn=_conn, **kwargs)
 
         return await func(self, *args, _conn=_conn, **kwargs)
+
     return wrapper
 
 
@@ -52,8 +53,17 @@ class RedisBackend:
     pools = {}
 
     def __init__(
-            self, endpoint="127.0.0.1", port=6379, db=0, password=None,
-            pool_min_size=1, pool_max_size=10, loop=None, create_connection_timeout=None, **kwargs):
+        self,
+        endpoint="127.0.0.1",
+        port=6379,
+        db=0,
+        password=None,
+        pool_min_size=1,
+        pool_max_size=10,
+        loop=None,
+        create_connection_timeout=None,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
@@ -110,22 +120,17 @@ class RedisBackend:
         args = [value, token]
         if ttl is not None:
             if isinstance(ttl, float):
-                args += ['PX', int(ttl * 1000)]
+                args += ["PX", int(ttl * 1000)]
             else:
-                args += ['EX', ttl]
-        res = await self._raw(
-            "eval",
-            self.CAS_SCRIPT,
-            [key],
-            args, _conn=_conn)
+                args += ["EX", ttl]
+        res = await self._raw("eval", self.CAS_SCRIPT, [key], args, _conn=_conn)
         return res
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):
         ttl = ttl or 0
 
-        flattened = list(itertools.chain.from_iterable(
-            (key, value) for key, value in pairs))
+        flattened = list(itertools.chain.from_iterable((key, value) for key, value in pairs))
 
         if ttl:
             await self.__multi_set_ttl(_conn, flattened, ttl)
@@ -148,8 +153,7 @@ class RedisBackend:
             expx = {"pexpire": int(ttl * 1000)}
         was_set = await _conn.set(key, value, exist=_conn.SET_IF_NOT_EXIST, **expx)
         if not was_set:
-            raise ValueError(
-                "Key {} already exists, use .set to update the value".format(key))
+            raise ValueError("Key {} already exists, use .set to update the value".format(key))
         return was_set
 
     @conn
@@ -190,11 +194,7 @@ class RedisBackend:
         return await getattr(_conn, command)(*args, **kwargs)
 
     async def _redlock_release(self, key, value):
-        return await self._raw(
-            "eval",
-            self.RELEASE_SCRIPT,
-            [key],
-            [value])
+        return await self._raw("eval", self.RELEASE_SCRIPT, [key], [value])
 
     async def _close(self, *args, **kwargs):
         if self._pool is not None:
@@ -209,7 +209,7 @@ class RedisBackend:
                     "loop": self._loop,
                     "encoding": "utf-8",
                     "minsize": self.pool_min_size,
-                    "maxsize": self.pool_max_size
+                    "maxsize": self.pool_max_size,
                 }
                 if not AIOREDIS_BEFORE_ONE:
                     kwargs["create_connection_timeout"] = self.create_connection_timeout
@@ -242,6 +242,7 @@ class RedisCache(RedisBackend, BaseCache):
     :param create_connection_timeout: int timeout for the creation of connection,
         only for aioredis>=1. Default is None
     """
+
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
         self.serializer = serializer or JsonSerializer()

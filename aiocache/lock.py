@@ -65,7 +65,7 @@ class RedLock:
 
     def __init__(self, client: Type[BaseCache], key: str, lease: Union[int, float]):
         self.client = client
-        self.key = self.client._build_key(key + '-lock')
+        self.key = self.client._build_key(key + "-lock")
         self.lease = lease
         self._value = ""
 
@@ -75,19 +75,14 @@ class RedLock:
     async def _acquire(self):
         self._value = str(uuid.uuid4())
         try:
-            await self.client._add(
-                self.key,
-                self._value,
-                ttl=self.lease)
+            await self.client._add(self.key, self._value, ttl=self.lease)
             RedLock._EVENTS[self.key] = asyncio.Event()
         except ValueError:
             await self._wait_for_release()
 
     async def _wait_for_release(self):
         try:
-            await asyncio.wait_for(
-                RedLock._EVENTS[self.key].wait(),
-                self.lease)
+            await asyncio.wait_for(RedLock._EVENTS[self.key].wait(), self.lease)
         except asyncio.TimeoutError:
             pass
         except KeyError:  # lock was released when wait_for was rescheduled

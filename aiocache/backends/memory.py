@@ -44,8 +44,7 @@ class SimpleMemoryBackend:
 
     async def _add(self, key, value, ttl=None, _conn=None):
         if key in SimpleMemoryBackend._cache:
-            raise ValueError(
-                "Key {} already exists, use .set to update the value".format(key))
+            raise ValueError("Key {} already exists, use .set to update the value".format(key))
 
         await self._set(key, value, ttl=ttl)
         return True
@@ -123,6 +122,7 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """
+
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
         self.serializer = serializer or NullSerializer()

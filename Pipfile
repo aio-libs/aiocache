@@ -4,8 +4,21 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"e1839a8" = {path = ".", extras = ["redis", "memcached", "msgpack"], editable = true}
+"e1839a8" = {path = ".", extras = ["memcached", "msgpack", "redis"], editable = true}
 
 [dev-packages]
-"e1839a8" = {path = ".", extras = ["dev"], editable = true}
+"flake8" = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-mock = "*"
+codecov = "*"
+marshmallow = "*"
+asynctest = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+sphinx-rtd-theme = "*"
+pystache = "*"
+coverage = "*"
+pylint = "*"
 ipdb = "*"
+black = {version = ">=18.6b3", markers="python_version >= '3.6'"}

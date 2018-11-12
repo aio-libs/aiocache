@@ -9,7 +9,7 @@ with open(
             'aiocache/_version.py')) as fp:
     try:
         version = re.findall(
-            r"^__version__ = '([^']+)'\r?$", fp.read(), re.M)[0]
+            r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
@@ -30,28 +30,15 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Framework :: AsyncIO',
     ],
     packages=find_packages(),
     install_requires=None,
     extras_require={
-        'redis': ['aioredis>=0.3.3'],
+        'redis:python_version<"3.7"': ['aioredis>=0.3.3'],
+        'redis:python_version>="3.7"': ['aioredis>=1.0.0'],
         'memcached': ['aiomcache>=0.5.2'],
         'msgpack': ['msgpack'],
-        'dev': [
-            'flake8',
-            'pytest',
-            'pytest-asyncio',
-            'pytest-mock',
-            'codecov',
-            'marshmallow',
-            'asynctest>=0.11.0',
-
-            'sphinx',
-            'sphinx-autobuild',
-            'sphinx-rtd-theme',
-            'pystache',
-            'ipdb',
-        ]
     }
 )
