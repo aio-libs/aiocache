@@ -27,6 +27,10 @@ class SimpleMemoryBackend:
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
         if _cas_token is not None and _cas_token != SimpleMemoryBackend._cache.get(key):
             return 0
+
+        if key in SimpleMemoryBackend._handlers:
+            SimpleMemoryBackend._handlers[key].cancel()
+
         SimpleMemoryBackend._cache[key] = value
         if ttl:
             loop = asyncio.get_event_loop()

@@ -47,6 +47,17 @@ class TestCache:
         assert await cache.set(pytest.KEY, "value") is True
 
     @pytest.mark.asyncio
+    async def test_set_cancel_previous_ttl_handle(self, cache):
+        await cache.set(pytest.KEY, "value", ttl=2)
+
+        await asyncio.sleep(1)
+        assert await cache.get(pytest.KEY) == "value"
+        await cache.set(pytest.KEY, "new_value", ttl=2)
+
+        await asyncio.sleep(1)
+        assert await cache.get(pytest.KEY) == "new_value"
+
+    @pytest.mark.asyncio
     async def test_multi_set(self, cache):
         pairs = [(pytest.KEY, "value"), [pytest.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs) is True
