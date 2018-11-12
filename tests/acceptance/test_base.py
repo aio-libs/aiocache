@@ -47,13 +47,13 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_set_cancel_previous_ttl_handle(self, cache):
-        await cache.set(pytest.KEY, "value", ttl=0.1)
+        await cache.set(pytest.KEY, "value", ttl=1)
 
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.5)
         assert await cache.get(pytest.KEY) == "value"
-        await cache.set(pytest.KEY, "new_value", ttl=0.1)
+        await cache.set(pytest.KEY, "new_value", ttl=1)
 
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.5)
         assert await cache.get(pytest.KEY) == "new_value"
 
     @pytest.mark.asyncio
