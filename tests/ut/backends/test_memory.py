@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock, ANY, patch
 
 from aiocache import SimpleMemoryCache
 from aiocache.base import BaseCache
@@ -44,12 +44,12 @@ class TestSimpleMemoryBackend:
 
     @pytest.mark.asyncio
     async def test_set_cancel_previous_ttl_handle(self, memory, mocker):
-        fake_timer_handle_cancel = mocker.patch("asyncio.TimerHandle.cancel")
-        await memory._set(pytest.KEY, "value", ttl=0.1)
-        fake_timer_handle_cancel.assert_not_called()
+        with patch("asyncio.get_event_loop"):
+            await memory._set(pytest.KEY, "value", ttl=0.1)
+            memory._handlers[pytest.KEY].cancel.assert_not_called()
 
-        await memory._set(pytest.KEY, "new_value", ttl=0.1)
-        fake_timer_handle_cancel.assert_called_once_with()
+            await memory._set(pytest.KEY, "new_value", ttl=0.1)
+            memory._handlers[pytest.KEY].cancel.assert_called_once_with()
 
     @pytest.mark.asyncio
     async def test_set_ttl_handle(self, memory):
