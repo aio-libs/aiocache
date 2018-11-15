@@ -1,6 +1,19 @@
 # Changelog
 
 
+## 0.10.1 (2018-11-15)
+
+* Cancel the previous ttl timer if exists when setting a new value in the in-memory cache [#424](https://github.com/argaen/aiocache/issues/424) - Minh Tu Le
+
+* Add python 3.7 to CI, now its supported! [#420](https://github.com/argaen/aiocache/issues/420) - Manuel Miranda
+
+* Add function as parameter for key_builder [#417](https://github.com/argaen/aiocache/issues/417) - Manuel Miranda
+
+* Always use __name__ when getting logger [#412](https://github.com/argaen/aiocache/issues/412) - Mansur Mamkin
+
+* Format code with black [#410](https://github.com/argaen/aiocache/issues/410) - Manuel Miranda
+
+
 ## 0.10.0 (2018-06-17)
 
 * Cache can be disabled in decorated functions using `cache_read` and `cache_write` [#404](https://github.com/argaen/aiocache/issues/404) - Josep Cugat
