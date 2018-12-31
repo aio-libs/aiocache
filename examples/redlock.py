@@ -1,12 +1,12 @@
 import asyncio
 import logging
 
-from aiocache import RedisCache
+from aiocache import Cache
 from aiocache.lock import RedLock
 
 
 logger = logging.getLogger(__name__)
-cache = RedisCache(endpoint='127.0.0.1', port=6379, namespace='main')
+cache = Cache(Cache.REDIS, endpoint='127.0.0.1', port=6379, namespace='main')
 
 
 async def expensive_function():

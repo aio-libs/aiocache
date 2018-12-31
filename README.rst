@@ -62,8 +62,8 @@ Using a cache is as simple as
 
     >>> import asyncio
     >>> loop = asyncio.get_event_loop()
-    >>> from aiocache import SimpleMemoryCache  # Here you can also use RedisCache and MemcachedCache
-    >>> cache = SimpleMemoryCache()
+    >>> from aiocache import Cache
+    >>> cache = Cache(Cache.MEMORY) # Here you can also use Cache.REDIS and Cache.MEMCACHED
     >>> loop.run_until_complete(cache.set('key', 'value'))
     True
     >>> loop.run_until_complete(cache.get('key'))
@@ -77,7 +77,7 @@ Or as a decorator
 
     from collections import namedtuple
 
-    from aiocache import cached, RedisCache
+    from aiocache import cached, Cache
     from aiocache.serializers import PickleSerializer
     # With this we can store python objects in backends like Redis!
 
@@ -85,7 +85,7 @@ Or as a decorator
 
 
     @cached(
-        ttl=10, cache=RedisCache, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
+        ttl=10, cache=Cache.REDIS, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
     async def cached_call():
         print("Sleeping for three seconds zzzz.....")
         await asyncio.sleep(3)
@@ -97,11 +97,13 @@ Or as a decorator
         loop.run_until_complete(cached_call())
         loop.run_until_complete(cached_call())
         loop.run_until_complete(cached_call())
-        cache = RedisCache(endpoint="127.0.0.1", port=6379, namespace="main")
+        cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
         loop.run_until_complete(cache.delete("key"))
 
     if __name__ == "__main__":
         run()
+
+The recommended approach to instantiate a new cache is using the `Cache` constructor. However you can also instantiate directly using `aiocache.RedisCache`, `aiocache.SimpleMemoryCache` or `aiocache.MemcachedCache`.
 
 
 You can also setup cache aliases so its easy to reuse configurations
@@ -110,8 +112,7 @@ You can also setup cache aliases so its easy to reuse configurations
 
   import asyncio
 
-  from aiocache import caches, SimpleMemoryCache, RedisCache
-  from aiocache.serializers import StringSerializer, PickleSerializer
+  from aiocache import caches
 
   # You can use either classes or strings for referencing classes
   caches.set_config({

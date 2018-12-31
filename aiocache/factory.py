@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
+
 
 def _class_from_string(class_path):
     class_name = class_path.split(".")[-1]
@@ -24,6 +26,18 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
     cache = _class_from_string(cache) if isinstance(cache, str) else cache
     instance = cache(serializer=serializer, plugins=plugins_instances, **kwargs)
     return instance
+
+
+class Cache:
+
+    REDIS = RedisCache
+    MEMCACHED = MemcachedCache
+    MEMORY = SimpleMemoryCache
+
+    def __new__(cls, cache_type, **kwargs):
+        instance = cache_type.__new__(cache_type, **kwargs)
+        instance.__init__(**kwargs)
+        return instance
 
 
 class CacheHandler:

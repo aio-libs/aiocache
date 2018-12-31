@@ -44,10 +44,10 @@ class RedLock:
 
     Example usage::
 
-        from aiocache import RedisCache
+        from aiocache import Cache
         from aiocache.lock import RedLock
 
-        cache = RedisCache()
+        cache = Cache(Cache.REDIS)
         async with RedLock(cache, 'key', lease=1):  # Calls will wait here
             result = await cache.get('key')
             if result is not None:
@@ -112,7 +112,7 @@ class OptimisticLock:
 
     Example usage::
 
-        cache = RedisCache()
+        cache = Cache(Cache.REDIS)
 
         # The value stored in 'key' will be checked here
         async with OptimisticLock(cache, 'key') as lock:
@@ -123,7 +123,7 @@ class OptimisticLock:
     an :class:`aiocache.lock.OptimisticLockError` will be raised. A way to make
     the same call crash would be to change the value inside the lock like::
 
-        cache = RedisCache()
+        cache = Cache(Cache.REDIS)
 
         # The value stored in 'key' will be checked here
         async with OptimisticLock(cache, 'key') as lock:

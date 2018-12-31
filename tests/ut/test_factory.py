@@ -1,26 +1,27 @@
 import pytest
+from unittest.mock import patch
 
-from aiocache import SimpleMemoryCache, RedisCache, caches
+from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache, caches, Cache
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.serializers import JsonSerializer, PickleSerializer
 from aiocache.plugins import TimingPlugin, HitMissRatioPlugin
 
 
 def test_class_from_string():
-    assert _class_from_string("aiocache.RedisCache") == RedisCache
+    assert _class_from_string("aiocache.RedisCache") == Cache.REDIS
 
 
 def test_create_simple_cache():
-    redis = _create_cache(RedisCache, endpoint="127.0.0.10", port=6378)
+    redis = _create_cache(Cache.REDIS, endpoint="127.0.0.10", port=6378)
 
-    assert isinstance(redis, RedisCache)
+    assert isinstance(redis, Cache.REDIS)
     assert redis.endpoint == "127.0.0.10"
     assert redis.port == 6378
 
 
 def test_create_cache_with_everything():
     redis = _create_cache(
-        RedisCache,
+        Cache.REDIS,
         serializer={"class": PickleSerializer, "encoding": "encoding"},
         plugins=[{"class": "aiocache.plugins.TimingPlugin"}],
     )
@@ -28,6 +29,25 @@ def test_create_cache_with_everything():
     assert isinstance(redis.serializer, PickleSerializer)
     assert redis.serializer.encoding == "encoding"
     assert isinstance(redis.plugins[0], TimingPlugin)
+
+
+class TestCache:
+    def test_cache_types(self):
+        assert Cache.MEMORY == SimpleMemoryCache
+        assert Cache.REDIS == RedisCache
+        assert Cache.MEMCACHED == MemcachedCache
+
+    @pytest.mark.parametrize("cache_type", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
+    def test_new(self, cache_type):
+        kwargs = {"a": 1, "b": 2}
+
+        with patch("aiocache.{}.__init__".format(cache_type.__name__)) as init:
+            cache = Cache(cache_type, **kwargs)
+            assert isinstance(cache, cache_type)
+            init.assert_called_once_with(**kwargs)
+
+    def test_from_url_returns_cache(self):
+        pass
 
 
 class TestCacheHandler:
@@ -85,7 +105,7 @@ class TestCacheHandler:
         )
 
         cache = caches.get("default")
-        assert isinstance(cache, RedisCache)
+        assert isinstance(cache, Cache.REDIS)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
         assert cache.ttl == 10
@@ -113,7 +133,7 @@ class TestCacheHandler:
         )
 
         cache = caches.create("default")
-        assert isinstance(cache, RedisCache)
+        assert isinstance(cache, Cache.REDIS)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
         assert isinstance(cache.serializer, PickleSerializer)
@@ -123,14 +143,14 @@ class TestCacheHandler:
     def test_create_cache_str_no_alias(self):
         cache = caches.create(cache="aiocache.RedisCache")
 
-        assert isinstance(cache, RedisCache)
+        assert isinstance(cache, Cache.REDIS)
         assert cache.endpoint == "127.0.0.1"
         assert cache.port == 6379
 
     def test_create_cache_class_no_alias(self):
-        cache = caches.create(cache=RedisCache)
+        cache = caches.create(cache=Cache.REDIS)
 
-        assert isinstance(cache, RedisCache)
+        assert isinstance(cache, Cache.REDIS)
         assert cache.endpoint == "127.0.0.1"
         assert cache.port == 6379
 
@@ -158,7 +178,7 @@ class TestCacheHandler:
         default = caches.create(**caches.get_alias_config("default"))
         alt = caches.create(**caches.get_alias_config("alt"))
 
-        assert isinstance(default, RedisCache)
+        assert isinstance(default, Cache.REDIS)
         assert default.endpoint == "127.0.0.10"
         assert default.port == 6378
         assert isinstance(default.serializer, PickleSerializer)
@@ -186,7 +206,7 @@ class TestCacheHandler:
         default = caches.get("default")
         alt = caches.get("alt")
 
-        assert isinstance(default, RedisCache)
+        assert isinstance(default, Cache.REDIS)
         assert default.endpoint == "127.0.0.10"
         assert default.port == 6378
         assert isinstance(default.serializer, PickleSerializer)
