@@ -1,5 +1,6 @@
 from copy import deepcopy
 import logging
+import urllib
 
 
 from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
@@ -40,7 +41,7 @@ class Cache:
     REDIS = "redis"
     MEMCACHED = "memcached"
 
-    _PROTOCOL_MAPPING = {
+    _SCHEME_MAPPING = {
         "memory": SimpleMemoryCache,
         "redis": RedisCache,
         "memcached": MemcachedCache,
@@ -48,10 +49,10 @@ class Cache:
 
     def __new__(cls, cache_type=MEMORY, **kwargs):
         try:
-            cache_class = cls.get_protocol_class(cache_type)
+            cache_class = cls.get_scheme_class(cache_type)
         except KeyError as e:
             raise InvalidCacheType(
-                "Invalid cache type, you can only use {}".format(list(cls._PROTOCOL_MAPPING.keys()))
+                "Invalid cache type, you can only use {}".format(list(cls._SCHEME_MAPPING.keys()))
             ) from e
 
         instance = cache_class.__new__(cache_class, **kwargs)
@@ -59,8 +60,24 @@ class Cache:
         return instance
 
     @classmethod
-    def get_protocol_class(cls, protocol):
-        return cls._PROTOCOL_MAPPING[protocol]
+    def get_scheme_class(cls, scheme):
+        return cls._SCHEME_MAPPING[scheme]
+
+    @classmethod
+    def from_url(cls, url):
+        parsed_url = urllib.parse.urlparse(url)
+        kwargs = dict(urllib.parse.parse_qsl(parsed_url.query))
+
+        if parsed_url.hostname:
+            kwargs['endpoint'] = parsed_url.hostname
+
+        if parsed_url.port:
+            kwargs['port'] = parsed_url.port
+
+        return Cache(
+            parsed_url.scheme,
+            **kwargs,
+        )
 
 
 class CacheHandler:

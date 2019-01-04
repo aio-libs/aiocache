@@ -10,7 +10,7 @@ class MemcachedBackend:
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
-        self.pool_size = pool_size
+        self.pool_size = int(pool_size)
         self._loop = loop
         self.client = aiomcache.Client(
             self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size

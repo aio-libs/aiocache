@@ -66,12 +66,13 @@ class RedisBackend:
     ):
         super().__init__(**kwargs)
         self.endpoint = endpoint
-        self.port = port
-        self.db = db
+        self.port = int(port)
+        self.db = int(db)
         self.password = password
-        self.pool_min_size = pool_min_size
-        self.pool_max_size = pool_max_size
-        self.create_connection_timeout = create_connection_timeout
+        self.pool_min_size = int(pool_min_size)
+        self.pool_max_size = int(pool_max_size)
+        self.create_connection_timeout = (
+            float(create_connection_timeout) if create_connection_timeout else None)
         self.__pool_lock = None
         self._loop = loop
         self._pool = None
