@@ -34,9 +34,9 @@ def test_create_cache_with_everything():
 
 class TestCache:
     def test_cache_types(self):
-        assert Cache.MEMORY == 'memory'
-        assert Cache.REDIS == 'redis'
-        assert Cache.MEMCACHED == 'memcached'
+        assert Cache.MEMORY == "memory"
+        assert Cache.REDIS == "redis"
+        assert Cache.MEMCACHED == "memcached"
 
     @pytest.mark.parametrize("cache_type", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
     def test_new(self, cache_type):
@@ -53,9 +53,10 @@ class TestCache:
 
     def test_new_invalid_cache_raises(self):
         with pytest.raises(InvalidCacheType) as e:
-            Cache('file')
-        assert str(e.value) == \
-            "Invalid cache type, you can only use ['memory', 'redis', 'memcached']"
+            Cache("file")
+        assert str(e.value) == "Invalid cache type, you can only use {}".format(
+            list(Cache._PROTOCOL_MAPPING.keys())
+        )
 
     @pytest.mark.parametrize("protocol", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
     def test_get_protocol_class(self, protocol):
@@ -63,7 +64,7 @@ class TestCache:
 
     def test_get_protocol_class_invalid(self):
         with pytest.raises(KeyError):
-            Cache.get_protocol_class('http')
+            Cache.get_protocol_class("http")
 
 
 class TestCacheHandler:

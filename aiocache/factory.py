@@ -36,14 +36,14 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
 
 class Cache:
 
-    MEMORY = 'memory'
-    REDIS = 'redis'
-    MEMCACHED = 'memcached'
+    MEMORY = "memory"
+    REDIS = "redis"
+    MEMCACHED = "memcached"
 
     _PROTOCOL_MAPPING = {
-        'memory': SimpleMemoryCache,
-        'redis': RedisCache,
-        'memcached': MemcachedCache,
+        "memory": SimpleMemoryCache,
+        "redis": RedisCache,
+        "memcached": MemcachedCache,
     }
 
     def __new__(cls, cache_type=MEMORY, **kwargs):
@@ -51,8 +51,8 @@ class Cache:
             cache_class = cls.get_protocol_class(cache_type)
         except KeyError as e:
             raise InvalidCacheType(
-                'Invalid cache type, you can only use {}'.format(
-                    list(cls._PROTOCOL_MAPPING.keys()))) from e
+                "Invalid cache type, you can only use {}".format(list(cls._PROTOCOL_MAPPING.keys()))
+            ) from e
 
         instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
