@@ -68,7 +68,7 @@ class TestCache:
 
     @pytest.mark.parametrize("scheme", ["memory", "redis", "memcached"])
     def test_from_url_returns_cache_from_scheme(self, scheme):
-        assert isinstance(Cache.from_url(f"{scheme}://"), Cache.get_scheme_class(scheme))
+        assert isinstance(Cache.from_url("{}://".format(scheme)), Cache.get_scheme_class(scheme))
 
     @pytest.mark.parametrize(
         "url,expected_args",

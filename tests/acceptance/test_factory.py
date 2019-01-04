@@ -38,4 +38,4 @@ class TestCache:
     @pytest.mark.parametrize("scheme", ["memory", "redis", "memcached"])
     def test_from_url_unexpected_param(self, scheme):
         with pytest.raises(TypeError):
-            Cache.from_url(f"{scheme}://?arg1=arg1")
+            Cache.from_url("{}://?arg1=arg1".format(scheme))
