@@ -54,8 +54,8 @@ class TestCache:
     def test_new_invalid_cache_raises(self):
         with pytest.raises(InvalidCacheType) as e:
             Cache("file")
-        assert (
-            str(e.value) == "Invalid cache type, you can only use ['memory', 'redis', 'memcached']"
+        assert str(e.value) == "Invalid cache type, you can only use {}".format(
+            list(Cache._SCHEME_MAPPING.keys())
         )
 
     @pytest.mark.parametrize("scheme", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
