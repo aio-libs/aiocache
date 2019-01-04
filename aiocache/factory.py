@@ -36,6 +36,24 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
 
 
 class Cache:
+    """
+    This class is just a proxy to the specific cache implementations like
+    :class:`aiocache.SimpleMemoryCache`, :class:`aiocache.RedisCache` and
+    :class:`aiocache.MemcachedCache`. It is the preferred method of
+    instantiating new caches over using the backend specific classes.
+
+    You can instatiate a new one using the ``cache_type`` attribute like:
+
+    >>> from aiocache import Cache
+    >>> Cache(Cache.REDIS)
+    RedisCache (127.0.0.1:6379)
+
+    If you don't specify anything, ``Cache.MEMORY`` is used.
+
+    Only ``Cache.MEMORY``, ``Cache.REDIS`` and ``Cache.MEMCACHED`` types
+    are allowed. If the type passed is invalid, it will raise a
+    :class:`aiocache.exceptions.InvalidCacheType` exception.
+    """
 
     MEMORY = "memory"
     REDIS = "redis"
@@ -65,6 +83,27 @@ class Cache:
 
     @classmethod
     def from_url(cls, url):
+        """
+        Given a resource uri, return an instance of that cache initialized with the given
+        parameters. An example usage:
+
+        >>> from aiocache import Cache
+        >>> Cache.from_url('memory://')
+        <aiocache.backends.memory.SimpleMemoryCache object at 0x1081dbb00>
+
+        a more advanced usage using queryparams to configure the cache:
+
+        >>> from aiocache import Cache
+        >>> cache = Cache.from_url('redis://localhost:10?db=1&pool_min_size=1')
+        >>> cache
+        RedisCache (localhost:10)
+        >>> cache.db
+        1
+        >>> cache.pool_min_size
+        1
+
+        :param url: string identifying the resource uri of the cache to connect to
+        """
         parsed_url = urllib.parse.urlparse(url)
         kwargs = dict(urllib.parse.parse_qsl(parsed_url.query))
 
