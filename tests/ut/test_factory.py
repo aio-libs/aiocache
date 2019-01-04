@@ -66,32 +66,39 @@ class TestCache:
         with pytest.raises(KeyError):
             Cache.get_scheme_class("http")
 
-    @pytest.mark.parametrize("scheme", ['memory', 'redis', 'memcached'])
+    @pytest.mark.parametrize("scheme", ["memory", "redis", "memcached"])
     def test_from_url_returns_cache_from_scheme(self, scheme):
-        assert isinstance(Cache.from_url(f'{scheme}://'), Cache.get_scheme_class(scheme))
+        assert isinstance(Cache.from_url(f"{scheme}://"), Cache.get_scheme_class(scheme))
 
-    @pytest.mark.parametrize("url,expected_args", [
-        ('redis://', {}),
-        ('redis://localhost', {'endpoint': 'localhost'}),
-        ('redis://localhost/', {'endpoint': 'localhost'}),
-        ('redis://localhost:6379', {'endpoint': 'localhost', 'port': 6379}),
-        ('redis://localhost/?arg1=arg1&arg2=arg2', {
-            'endpoint': 'localhost', 'arg1': 'arg1', 'arg2': 'arg2'}),
-        ('redis://localhost:6379/?arg1=arg1&arg2=arg2', {
-            'endpoint': 'localhost', 'port': 6379, 'arg1': 'arg1', 'arg2': 'arg2'}),
-        ('redis:///?arg1=arg1', {'arg1': 'arg1'}),
-        ('redis:///?arg2=arg2', {'arg2': 'arg2'}),
-        ('redis://user:password@localhost/', {'endpoint': 'localhost'}),
-    ])
+    @pytest.mark.parametrize(
+        "url,expected_args",
+        [
+            ("redis://", {}),
+            ("redis://localhost", {"endpoint": "localhost"}),
+            ("redis://localhost/", {"endpoint": "localhost"}),
+            ("redis://localhost:6379", {"endpoint": "localhost", "port": 6379}),
+            (
+                "redis://localhost/?arg1=arg1&arg2=arg2",
+                {"endpoint": "localhost", "arg1": "arg1", "arg2": "arg2"},
+            ),
+            (
+                "redis://localhost:6379/?arg1=arg1&arg2=arg2",
+                {"endpoint": "localhost", "port": 6379, "arg1": "arg1", "arg2": "arg2"},
+            ),
+            ("redis:///?arg1=arg1", {"arg1": "arg1"}),
+            ("redis:///?arg2=arg2", {"arg2": "arg2"}),
+            ("redis://user:password@localhost/", {"endpoint": "localhost"}),
+        ],
+    )
     def test_from_url_calls_cache_with_args(self, url, expected_args):
-        with patch('aiocache.factory.Cache') as mock:
+        with patch("aiocache.factory.Cache") as mock:
             Cache.from_url(url)
 
-        mock.assert_called_once_with('redis', **expected_args)
+        mock.assert_called_once_with("redis", **expected_args)
 
     def test_from_url_invalid_protocol(self):
         with pytest.raises(InvalidCacheType):
-            Cache.from_url('http://')
+            Cache.from_url("http://")
 
 
 class TestCacheHandler:

@@ -87,8 +87,12 @@ class TestRedisBackend:
 
     def test_setup_casts(self):
         redis_backend = RedisBackend(
-            db='2', port='6379', pool_min_size="1", pool_max_size="10",
-            create_connection_timeout="1.5")
+            db="2",
+            port="6379",
+            pool_min_size="1",
+            pool_max_size="10",
+            create_connection_timeout="1.5",
+        )
 
         assert redis_backend.db == 2
         assert redis_backend.port == 6379

@@ -69,15 +69,12 @@ class Cache:
         kwargs = dict(urllib.parse.parse_qsl(parsed_url.query))
 
         if parsed_url.hostname:
-            kwargs['endpoint'] = parsed_url.hostname
+            kwargs["endpoint"] = parsed_url.hostname
 
         if parsed_url.port:
-            kwargs['port'] = parsed_url.port
+            kwargs["port"] = parsed_url.port
 
-        return Cache(
-            parsed_url.scheme,
-            **kwargs,
-        )
+        return Cache(parsed_url.scheme, **kwargs)
 
 
 class CacheHandler:

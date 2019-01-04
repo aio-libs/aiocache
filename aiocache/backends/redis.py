@@ -72,7 +72,8 @@ class RedisBackend:
         self.pool_min_size = int(pool_min_size)
         self.pool_max_size = int(pool_max_size)
         self.create_connection_timeout = (
-            float(create_connection_timeout) if create_connection_timeout else None)
+            float(create_connection_timeout) if create_connection_timeout else None
+        )
         self.__pool_lock = None
         self._loop = loop
         self._pool = None

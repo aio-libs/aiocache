@@ -39,7 +39,7 @@ class TestMemcachedBackend:
 
     def test_setup_casts(self):
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
-            memcached = MemcachedBackend(pool_size='10')
+            memcached = MemcachedBackend(pool_size="10")
 
             aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=10)
 
