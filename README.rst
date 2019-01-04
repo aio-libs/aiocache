@@ -63,7 +63,7 @@ Using a cache is as simple as
     >>> import asyncio
     >>> loop = asyncio.get_event_loop()
     >>> from aiocache import Cache
-    >>> cache = Cache() # Here you can also use Cache.REDIS and Cache.MEMCACHED, default is Cache.MEMORY
+    >>> cache = Cache(Cache.MEMORY) # Here you can also use Cache.REDIS and Cache.MEMCACHED, default is Cache.MEMORY
     >>> loop.run_until_complete(cache.set('key', 'value'))
     True
     >>> loop.run_until_complete(cache.get('key'))

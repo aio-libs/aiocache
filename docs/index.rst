@@ -26,7 +26,7 @@ Using a cache is as simple as
     >>> import asyncio
     >>> loop = asyncio.get_event_loop()
     >>> from aiocache import Cache
-    >>> cache = Cache(Cache.MEMORY)
+    >>> cache = Cache()
     >>> loop.run_until_complete(cache.set('key', 'value'))
     True
     >>> loop.run_until_complete(cache.get('key'))

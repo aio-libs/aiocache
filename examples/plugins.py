@@ -19,7 +19,6 @@ class MyCustomPlugin(BasePlugin):
 
 
 cache = Cache(
-    Cache.MEMORY,
     plugins=[HitMissRatioPlugin(), TimingPlugin(), MyCustomPlugin()],
     namespace="main")
 

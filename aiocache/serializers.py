@@ -36,13 +36,13 @@ class BaseSerializer:
 class NullSerializer(BaseSerializer):
     """
     This serializer does nothing. Its only recommended to be used by
-    :class:`aiocache.Cache.MEMORY` because for other backends it will
+    :class:`aiocache.SimpleMemoryCache` because for other backends it will
     produce incompatible data unless you work only with str types.
 
     DISCLAIMER: Be careful with mutable types and memory storage. The following
     behavior is considered normal (same as ``functools.lru_cache``)::
 
-        cache = Cache(Cache.MEMORY)
+        cache = Cache()
         my_list = [1]
         await cache.set("key", my_list)
         my_list.append(2)

@@ -1,27 +1,28 @@
 import pytest
 from unittest.mock import patch
 
-from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache, caches, Cache
+from aiocache import SimpleMemoryCache, RedisCache, caches, Cache
 from aiocache.factory import _class_from_string, _create_cache
+from aiocache.exceptions import InvalidCacheType
 from aiocache.serializers import JsonSerializer, PickleSerializer
 from aiocache.plugins import TimingPlugin, HitMissRatioPlugin
 
 
 def test_class_from_string():
-    assert _class_from_string("aiocache.RedisCache") == Cache.REDIS
+    assert _class_from_string("aiocache.RedisCache") == RedisCache
 
 
 def test_create_simple_cache():
-    redis = _create_cache(Cache.REDIS, endpoint="127.0.0.10", port=6378)
+    redis = _create_cache(RedisCache, endpoint="127.0.0.10", port=6378)
 
-    assert isinstance(redis, Cache.REDIS)
+    assert isinstance(redis, RedisCache)
     assert redis.endpoint == "127.0.0.10"
     assert redis.port == 6378
 
 
 def test_create_cache_with_everything():
     redis = _create_cache(
-        Cache.REDIS,
+        RedisCache,
         serializer={"class": PickleSerializer, "encoding": "encoding"},
         plugins=[{"class": "aiocache.plugins.TimingPlugin"}],
     )
@@ -33,21 +34,34 @@ def test_create_cache_with_everything():
 
 class TestCache:
     def test_cache_types(self):
-        assert Cache.MEMORY == SimpleMemoryCache
-        assert Cache.REDIS == RedisCache
-        assert Cache.MEMCACHED == MemcachedCache
+        assert Cache.MEMORY == 'memory'
+        assert Cache.REDIS == 'redis'
+        assert Cache.MEMCACHED == 'memcached'
 
     @pytest.mark.parametrize("cache_type", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
     def test_new(self, cache_type):
         kwargs = {"a": 1, "b": 2}
+        cache_class = Cache.get_protocol_class(cache_type)
 
-        with patch("aiocache.{}.__init__".format(cache_type.__name__)) as init:
+        with patch("aiocache.{}.__init__".format(cache_class.__name__)) as init:
             cache = Cache(cache_type, **kwargs)
-            assert isinstance(cache, cache_type)
+            assert isinstance(cache, cache_class)
             init.assert_called_once_with(**kwargs)
 
     def test_new_defaults_to_memory(self):
-        assert isinstance(Cache(), Cache.MEMORY)
+        assert isinstance(Cache(), Cache.get_protocol_class(Cache.MEMORY))
+
+    def test_new_invalid_cache_raises(self):
+        with pytest.raises(InvalidCacheType):
+            Cache('file')
+
+    @pytest.mark.parametrize("protocol", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
+    def test_get_protocol_class(self, protocol):
+        assert Cache.get_protocol_class(protocol) == Cache._PROTOCOL_MAPPING[protocol]
+
+    def test_get_protocol_class_invalid(self):
+        with pytest.raises(KeyError):
+            Cache.get_protocol_class('http')
 
 
 class TestCacheHandler:
@@ -105,7 +119,7 @@ class TestCacheHandler:
         )
 
         cache = caches.get("default")
-        assert isinstance(cache, Cache.REDIS)
+        assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
         assert cache.ttl == 10
@@ -133,7 +147,7 @@ class TestCacheHandler:
         )
 
         cache = caches.create("default")
-        assert isinstance(cache, Cache.REDIS)
+        assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.10"
         assert cache.port == 6378
         assert isinstance(cache.serializer, PickleSerializer)
@@ -143,14 +157,14 @@ class TestCacheHandler:
     def test_create_cache_str_no_alias(self):
         cache = caches.create(cache="aiocache.RedisCache")
 
-        assert isinstance(cache, Cache.REDIS)
+        assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.1"
         assert cache.port == 6379
 
     def test_create_cache_class_no_alias(self):
-        cache = caches.create(cache=Cache.REDIS)
+        cache = caches.create(cache=RedisCache)
 
-        assert isinstance(cache, Cache.REDIS)
+        assert isinstance(cache, RedisCache)
         assert cache.endpoint == "127.0.0.1"
         assert cache.port == 6379
 
@@ -178,7 +192,7 @@ class TestCacheHandler:
         default = caches.create(**caches.get_alias_config("default"))
         alt = caches.create(**caches.get_alias_config("alt"))
 
-        assert isinstance(default, Cache.REDIS)
+        assert isinstance(default, RedisCache)
         assert default.endpoint == "127.0.0.10"
         assert default.port == 6378
         assert isinstance(default.serializer, PickleSerializer)
@@ -206,7 +220,7 @@ class TestCacheHandler:
         default = caches.get("default")
         alt = caches.get("alt")
 
-        assert isinstance(default, Cache.REDIS)
+        assert isinstance(default, RedisCache)
         assert default.endpoint == "127.0.0.10"
         assert default.port == 6378
         assert isinstance(default.serializer, PickleSerializer)

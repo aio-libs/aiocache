@@ -7,7 +7,7 @@ Plugins can be used to enrich the behavior of the cache. By default all caches a
 
     >>> from aiocache import Cache
     >>> from aiocache.plugins import TimingPlugin
-    cache = Cache(Cache.MEMORY, plugins=[HitMissRatioPlugin()])
+    cache = Cache(plugins=[HitMissRatioPlugin()])
     cache.plugins += [TimingPlugin()]
 
 You can define your custom plugin by inheriting from `BasePlugin`_ and overriding the needed methods (the overrides NEED to be async). All commands have ``pre_<command_name>`` and ``post_<command_name>`` hooks.

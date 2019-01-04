@@ -39,7 +39,7 @@ def redis_cache(event_loop):
 
 @pytest.fixture
 def memory_cache(event_loop):
-    cache = Cache(Cache.MEMORY, namespace="test")
+    cache = Cache(namespace="test")
     yield cache
 
     event_loop.run_until_complete(cache.delete(pytest.KEY))

@@ -47,7 +47,7 @@ class MarshmallowSerializer(Schema, BaseSerializer):
         strict = True
 
 
-cache = Cache(Cache.MEMORY, serializer=MarshmallowSerializer(), namespace="main")
+cache = Cache(serializer=MarshmallowSerializer(), namespace="main")
 
 
 async def serializer():

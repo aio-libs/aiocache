@@ -1,6 +1,12 @@
 from copy import deepcopy
+import logging
+
 
 from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
+from aiocache.exceptions import InvalidCacheType
+
+
+logger = logging.getLogger(__name__)
 
 
 def _class_from_string(class_path):
@@ -30,14 +36,31 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
 
 class Cache:
 
-    REDIS = RedisCache
-    MEMCACHED = MemcachedCache
-    MEMORY = SimpleMemoryCache
+    MEMORY = 'memory'
+    REDIS = 'redis'
+    MEMCACHED = 'memcached'
+
+    _PROTOCOL_MAPPING = {
+        'memory': SimpleMemoryCache,
+        'redis': RedisCache,
+        'memcached': MemcachedCache,
+    }
 
     def __new__(cls, cache_type=MEMORY, **kwargs):
-        instance = cache_type.__new__(cache_type, **kwargs)
+        try:
+            cache_class = cls.get_protocol_class(cache_type)
+        except KeyError as e:
+            logger.error(
+                'Invalid cache type, you can only use {}'.format(cls._PROTOCOL_MAPPING.keys()))
+            raise InvalidCacheType from e
+
+        instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
         return instance
+
+    @classmethod
+    def get_protocol_class(cls, protocol):
+        return cls._PROTOCOL_MAPPING[protocol]
 
 
 class CacheHandler:
