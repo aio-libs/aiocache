@@ -34,7 +34,7 @@ class Cache:
     MEMCACHED = MemcachedCache
     MEMORY = SimpleMemoryCache
 
-    def __new__(cls, cache_type, **kwargs):
+    def __new__(cls, cache_type=MEMORY, **kwargs):
         instance = cache_type.__new__(cache_type, **kwargs)
         instance.__init__(**kwargs)
         return instance

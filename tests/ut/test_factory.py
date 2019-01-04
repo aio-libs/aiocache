@@ -46,8 +46,8 @@ class TestCache:
             assert isinstance(cache, cache_type)
             init.assert_called_once_with(**kwargs)
 
-    def test_from_url_returns_cache(self):
-        pass
+    def test_new_defaults_to_memory(self):
+        assert isinstance(Cache(), Cache.MEMORY)
 
 
 class TestCacheHandler:
