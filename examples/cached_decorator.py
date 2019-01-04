@@ -9,7 +9,8 @@ Result = namedtuple('Result', "content, status")
 
 
 @cached(
-    ttl=10, cache=RedisCache, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
+    ttl=10, cache=RedisCache, key="key", serializer=PickleSerializer(),
+    port=6379, namespace="main")
 async def cached_call():
     return Result("content", 200)
 

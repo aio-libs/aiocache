@@ -1,7 +1,7 @@
 import asyncio
 import zlib
 
-from aiocache import RedisCache
+from aiocache import Cache
 from aiocache.serializers import BaseSerializer
 
 
@@ -25,7 +25,7 @@ class CompressionSerializer(BaseSerializer):
         return decompressed
 
 
-cache = RedisCache(serializer=CompressionSerializer(), namespace="main")
+cache = Cache(Cache.REDIS, serializer=CompressionSerializer(), namespace="main")
 
 
 async def serializer():

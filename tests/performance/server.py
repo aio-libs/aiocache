@@ -2,7 +2,7 @@ import asyncio
 import argparse
 import logging
 import uuid
-import aiocache
+from aiocache import Cache
 
 from aiohttp import web
 
@@ -11,9 +11,9 @@ logging.getLogger("aiohttp.access").propagate = False
 
 
 AIOCACHE_BACKENDS = {
-    "memory": aiocache.SimpleMemoryCache(),
-    "redis": aiocache.RedisCache(pool_max_size=1),
-    "memcached": aiocache.MemcachedCache(pool_size=1),
+    "memory": Cache(Cache.MEMORY),
+    "redis": Cache(Cache.REDIS),
+    "memcached": Cache(Cache.MEMCACHED),
 }
 
 

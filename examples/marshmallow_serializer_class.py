@@ -4,7 +4,7 @@ import asyncio
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache import SimpleMemoryCache
+from aiocache import Cache
 from aiocache.serializers import BaseSerializer
 
 
@@ -47,7 +47,7 @@ class MarshmallowSerializer(Schema, BaseSerializer):
         strict = True
 
 
-cache = SimpleMemoryCache(serializer=MarshmallowSerializer(), namespace="main")
+cache = Cache(serializer=MarshmallowSerializer(), namespace="main")
 
 
 async def serializer():

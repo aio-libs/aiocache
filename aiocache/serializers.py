@@ -42,7 +42,7 @@ class NullSerializer(BaseSerializer):
     DISCLAIMER: Be careful with mutable types and memory storage. The following
     behavior is considered normal (same as ``functools.lru_cache``)::
 
-        cache = SimpleMemoryCache()
+        cache = Cache()
         my_list = [1]
         await cache.set("key", my_list)
         my_list.append(2)

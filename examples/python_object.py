@@ -1,12 +1,12 @@
 import asyncio
 
 from collections import namedtuple
-from aiocache import RedisCache
+from aiocache import Cache
 from aiocache.serializers import PickleSerializer
 
 
 MyObject = namedtuple("MyObject", ["x", "y"])
-cache = RedisCache(serializer=PickleSerializer(), namespace="main")
+cache = Cache(Cache.REDIS, serializer=PickleSerializer(), namespace="main")
 
 
 async def complex_object():
