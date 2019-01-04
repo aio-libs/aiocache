@@ -52,8 +52,10 @@ class TestCache:
         assert isinstance(Cache(), Cache.get_protocol_class(Cache.MEMORY))
 
     def test_new_invalid_cache_raises(self):
-        with pytest.raises(InvalidCacheType):
+        with pytest.raises(InvalidCacheType) as e:
             Cache('file')
+        assert str(e.value) == \
+            "Invalid cache type, you can only use ['memory', 'redis', 'memcached']"
 
     @pytest.mark.parametrize("protocol", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
     def test_get_protocol_class(self, protocol):

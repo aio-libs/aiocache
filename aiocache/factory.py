@@ -50,9 +50,9 @@ class Cache:
         try:
             cache_class = cls.get_protocol_class(cache_type)
         except KeyError as e:
-            logger.error(
-                'Invalid cache type, you can only use {}'.format(cls._PROTOCOL_MAPPING.keys()))
-            raise InvalidCacheType from e
+            raise InvalidCacheType(
+                'Invalid cache type, you can only use {}'.format(
+                    list(cls._PROTOCOL_MAPPING.keys()))) from e
 
         instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
