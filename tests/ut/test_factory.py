@@ -87,7 +87,6 @@ class TestCache:
             ),
             ("redis:///?arg1=arg1", {"arg1": "arg1"}),
             ("redis:///?arg2=arg2", {"arg2": "arg2"}),
-            ("redis://user:password@localhost/", {"endpoint": "localhost"}),
         ],
     )
     def test_from_url_calls_cache_with_args(self, url, expected_args):
