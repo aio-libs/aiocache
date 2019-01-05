@@ -77,7 +77,7 @@ Or as a decorator
 
     from collections import namedtuple
 
-    from aiocache import cached, Cache
+    from aiocache import cached, Cache, RedisCache
     from aiocache.serializers import PickleSerializer
     # With this we can store python objects in backends like Redis!
 
@@ -85,7 +85,7 @@ Or as a decorator
 
 
     @cached(
-        ttl=10, cache=Cache.REDIS, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
+        ttl=10, cache=RedisCache, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
     async def cached_call():
         print("Sleeping for three seconds zzzz.....")
         await asyncio.sleep(3)
