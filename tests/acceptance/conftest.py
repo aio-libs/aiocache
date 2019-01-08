@@ -4,8 +4,14 @@ from aiocache import Cache, caches
 from aiocache.backends.redis import RedisBackend
 
 
-def pytest_namespace():
-    return {"KEY": "key", "KEY_1": "random"}
+def pytest_configure():
+    """
+    Before pytest_namespace was being used to set the keys for
+    testing but the feature was removed
+    https://docs.pytest.org/en/latest/deprecations.html#pytest-namespace
+    """
+    pytest.KEY = "key"
+    pytest.KEY_1 = "random"
 
 
 @pytest.fixture(autouse=True)
