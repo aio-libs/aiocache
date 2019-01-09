@@ -1,5 +1,6 @@
 from copy import deepcopy
 import logging
+import urllib
 
 
 from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache
@@ -35,32 +36,89 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
 
 
 class Cache:
+    """
+    This class is just a proxy to the specific cache implementations like
+    :class:`aiocache.SimpleMemoryCache`, :class:`aiocache.RedisCache` and
+    :class:`aiocache.MemcachedCache`. It is the preferred method of
+    instantiating new caches over using the backend specific classes.
+
+    You can instatiate a new one using the ``cache_type`` attribute like:
+
+    >>> from aiocache import Cache
+    >>> Cache(Cache.REDIS)
+    RedisCache (127.0.0.1:6379)
+
+    If you don't specify anything, ``Cache.MEMORY`` is used.
+
+    Only ``Cache.MEMORY``, ``Cache.REDIS`` and ``Cache.MEMCACHED`` types
+    are allowed. If the type passed is invalid, it will raise a
+    :class:`aiocache.exceptions.InvalidCacheType` exception.
+    """
 
     MEMORY = "memory"
     REDIS = "redis"
     MEMCACHED = "memcached"
 
-    _PROTOCOL_MAPPING = {
+    _SCHEME_MAPPING = {
         "memory": SimpleMemoryCache,
         "redis": RedisCache,
         "memcached": MemcachedCache,
     }
 
     def __new__(cls, cache_type=MEMORY, **kwargs):
-        try:
-            cache_class = cls.get_protocol_class(cache_type)
-        except KeyError as e:
-            raise InvalidCacheType(
-                "Invalid cache type, you can only use {}".format(list(cls._PROTOCOL_MAPPING.keys()))
-            ) from e
-
+        cache_class = cls.get_scheme_class(cache_type)
         instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
         return instance
 
     @classmethod
-    def get_protocol_class(cls, protocol):
-        return cls._PROTOCOL_MAPPING[protocol]
+    def get_scheme_class(cls, scheme):
+        try:
+            return cls._SCHEME_MAPPING[scheme]
+        except KeyError as e:
+            raise InvalidCacheType(
+                "Invalid cache type, you can only use {}".format(list(cls._SCHEME_MAPPING.keys()))
+            ) from e
+
+    @classmethod
+    def from_url(cls, url):
+        """
+        Given a resource uri, return an instance of that cache initialized with the given
+        parameters. An example usage:
+
+        >>> from aiocache import Cache
+        >>> Cache.from_url('memory://')
+        <aiocache.backends.memory.SimpleMemoryCache object at 0x1081dbb00>
+
+        a more advanced usage using queryparams to configure the cache:
+
+        >>> from aiocache import Cache
+        >>> cache = Cache.from_url('redis://localhost:10/1?pool_min_size=1')
+        >>> cache
+        RedisCache (localhost:10)
+        >>> cache.db
+        1
+        >>> cache.pool_min_size
+        1
+
+        :param url: string identifying the resource uri of the cache to connect to
+        """
+        parsed_url = urllib.parse.urlparse(url)
+        kwargs = dict(urllib.parse.parse_qsl(parsed_url.query))
+
+        if parsed_url.path:
+            kwargs.update(Cache.get_scheme_class(parsed_url.scheme).parse_uri_path(parsed_url.path))
+
+        if parsed_url.hostname:
+            kwargs["endpoint"] = parsed_url.hostname
+
+        if parsed_url.port:
+            kwargs["port"] = parsed_url.port
+
+        if parsed_url.password:
+            kwargs["password"] = parsed_url.password
+
+        return Cache(parsed_url.scheme, **kwargs)
 
 
 class CacheHandler:

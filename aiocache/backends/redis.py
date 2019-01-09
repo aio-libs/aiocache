@@ -66,12 +66,14 @@ class RedisBackend:
     ):
         super().__init__(**kwargs)
         self.endpoint = endpoint
-        self.port = port
-        self.db = db
+        self.port = int(port)
+        self.db = int(db)
         self.password = password
-        self.pool_min_size = pool_min_size
-        self.pool_max_size = pool_max_size
-        self.create_connection_timeout = create_connection_timeout
+        self.pool_min_size = int(pool_min_size)
+        self.pool_max_size = int(pool_max_size)
+        self.create_connection_timeout = (
+            float(create_connection_timeout) if create_connection_timeout else None
+        )
         self.__pool_lock = None
         self._loop = loop
         self._pool = None
@@ -217,6 +219,22 @@ class RedisBackend:
                 self._pool = await aioredis.create_pool((self.endpoint, self.port), **kwargs)
 
             return self._pool
+
+    @classmethod
+    def parse_uri_path(self, path):
+        """
+        Given a uri path, return the Redis specific configuration
+        options in that path string according to iana definition
+        http://www.iana.org/assignments/uri-schemes/prov/redis
+
+        :param path: string containing the path. Example: "/0"
+        :return: mapping containing the options. Example: {"db": "0"}
+        """
+        options = {}
+        db, *_ = path[1:].split("/")
+        if db:
+            options["db"] = db
+        return options
 
 
 class RedisCache(RedisBackend, BaseCache):
