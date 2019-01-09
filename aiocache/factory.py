@@ -113,6 +113,9 @@ class Cache:
         if parsed_url.port:
             kwargs["port"] = parsed_url.port
 
+        if parsed_url.password:
+            kwargs["password"] = parsed_url.password
+
         return Cache(parsed_url.scheme, **kwargs)
 
 

@@ -91,6 +91,10 @@ class TestCache:
                 "redis://:password@localhost:6379",
                 {"endpoint": "localhost", "password": "password", "port": 6379}
             ),
+            (
+                "redis://:password@localhost:6379?password=pass",
+                {"endpoint": "localhost", "password": "password", "port": 6379}
+            ),
         ],
     )
     def test_from_url_calls_cache_with_args(self, url, expected_args):
