@@ -206,7 +206,11 @@ def _get_args_dict(func, args, kwargs):
 class multi_cached:
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
-    of the dict-like object returned by the function.
+    of the dict-like object returned by the function. Note that in this decorator, the function
+    name is not prefixed in the key when stored so, if there is another function returning a dict
+    with same keys, they will be overwritten. To avoid this, use a specific namespace in each
+    cache decorator or pass a key_builder.
+
     The cache is available in the function object as ``<function_name>.cache``.
 
     If key_builder is passed, before storing the key, it will be transformed according to the output
