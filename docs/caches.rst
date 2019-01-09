@@ -49,6 +49,15 @@ BaseCache
   :members:
 
 
+..  _cache:
+
+Cache
+-----
+
+.. autoclass:: aiocache.Cache
+  :members:
+
+
 ..  _rediscache:
 
 RedisCache
