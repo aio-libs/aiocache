@@ -339,6 +339,12 @@ class TestConn:
         await d(redis, "a", _conn=redis_connection)
         self.dummy.assert_called_with(redis, "a", _conn=redis_connection)
 
+    @pytest.mark.parametrize(
+        "path,expected", [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})]
+    )
+    def test_parse_uri_path(self, path, expected):
+        assert RedisBackend.parse_uri_path(path) == expected
+
 
 class TestRedisCache:
     @pytest.fixture

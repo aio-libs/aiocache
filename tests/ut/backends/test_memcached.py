@@ -250,6 +250,9 @@ class TestMemcachedBackend:
         await memcached._close()
         assert memcached.client.close.call_count == 1
 
+    def test_parse_uri_path(self):
+        assert MemcachedBackend.parse_uri_path("/1/2/3") == {}
+
 
 class TestMemcachedCache:
     @pytest.fixture

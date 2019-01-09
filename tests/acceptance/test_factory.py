@@ -15,7 +15,7 @@ class TestCache:
 
     def test_from_url_redis(self):
         cache = Cache.from_url(
-            "redis://endpoint:1000?db=0&password=pass&pool_min_size=40"
+            "redis://endpoint:1000/0/?password=pass&pool_min_size=40"
             "&pool_max_size=50&create_connection_timeout=20"
         )
 

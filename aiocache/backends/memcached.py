@@ -118,6 +118,10 @@ class MemcachedBackend:
     async def _close(self, *args, _conn=None, **kwargs):
         await self.client.close()
 
+    @classmethod
+    def parse_uri_path(self, path):
+        return {}
+
 
 class MemcachedCache(MemcachedBackend, BaseCache):
     """
