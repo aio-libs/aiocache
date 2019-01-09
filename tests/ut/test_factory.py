@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from aiocache import SimpleMemoryCache, RedisCache, caches, Cache, AIOCACHE_CACHES
 from aiocache.factory import _class_from_string, _create_cache
@@ -41,7 +41,7 @@ class TestCache:
     @pytest.mark.parametrize("cache_type", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
     def test_new(self, cache_type):
         kwargs = {"a": 1, "b": 2}
-        cache_class = Cache.get_protocol_class(cache_type)
+        cache_class = Cache.get_scheme_class(cache_type)
 
         with patch("aiocache.{}.__init__".format(cache_class.__name__)) as init:
             cache = Cache(cache_type, **kwargs)
@@ -49,7 +49,7 @@ class TestCache:
             init.assert_called_once_with(**kwargs)
 
     def test_new_defaults_to_memory(self):
-        assert isinstance(Cache(), Cache.get_protocol_class(Cache.MEMORY))
+        assert isinstance(Cache(), Cache.get_scheme_class(Cache.MEMORY))
 
     def test_new_invalid_cache_raises(self):
         with pytest.raises(InvalidCacheType) as e:
@@ -58,13 +58,62 @@ class TestCache:
             list(AIOCACHE_CACHES.keys())
         )
 
-    @pytest.mark.parametrize("protocol", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
-    def test_get_protocol_class(self, protocol):
-        assert Cache.get_protocol_class(protocol) == AIOCACHE_CACHES[protocol]
+    @pytest.mark.parametrize("scheme", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
+    def test_get_scheme_class(self, scheme):
+        assert Cache.get_scheme_class(scheme) == AIOCACHE_CACHES[scheme]
 
-    def test_get_protocol_class_invalid(self):
-        with pytest.raises(KeyError):
-            Cache.get_protocol_class("http")
+    def test_get_scheme_class_invalid(self):
+        with pytest.raises(InvalidCacheType):
+            Cache.get_scheme_class("http")
+
+    @pytest.mark.parametrize("scheme", ["memory", "redis", "memcached"])
+    def test_from_url_returns_cache_from_scheme(self, scheme):
+        assert isinstance(Cache.from_url("{}://".format(scheme)), Cache.get_scheme_class(scheme))
+
+    @pytest.mark.parametrize(
+        "url,expected_args",
+        [
+            ("redis://", {}),
+            ("redis://localhost", {"endpoint": "localhost"}),
+            ("redis://localhost/", {"endpoint": "localhost"}),
+            ("redis://localhost:6379", {"endpoint": "localhost", "port": 6379}),
+            (
+                "redis://localhost/?arg1=arg1&arg2=arg2",
+                {"endpoint": "localhost", "arg1": "arg1", "arg2": "arg2"},
+            ),
+            (
+                "redis://localhost:6379/?arg1=arg1&arg2=arg2",
+                {"endpoint": "localhost", "port": 6379, "arg1": "arg1", "arg2": "arg2"},
+            ),
+            ("redis:///?arg1=arg1", {"arg1": "arg1"}),
+            ("redis:///?arg2=arg2", {"arg2": "arg2"}),
+            (
+                "redis://:password@localhost:6379",
+                {"endpoint": "localhost", "password": "password", "port": 6379},
+            ),
+            (
+                "redis://:password@localhost:6379?password=pass",
+                {"endpoint": "localhost", "password": "password", "port": 6379},
+            ),
+        ],
+    )
+    def test_from_url_calls_cache_with_args(self, url, expected_args):
+        with patch("aiocache.factory.Cache") as mock:
+            Cache.from_url(url)
+
+        mock.assert_called_once_with("redis", **expected_args)
+
+    def test_calls_parse_uri_path_from_cache(self):
+        with patch("aiocache.factory.Cache") as mock:
+            mock.get_scheme_class.return_value.parse_uri_path = Mock(return_value={"arg1": "arg1"})
+            Cache.from_url("redis:///")
+
+        mock.get_scheme_class.return_value.parse_uri_path.assert_called_once_with("/")
+        mock.assert_called_once_with("redis", arg1="arg1")
+
+    def test_from_url_invalid_protocol(self):
+        with pytest.raises(InvalidCacheType):
+            Cache.from_url("http://")
 
 
 class TestCacheHandler:

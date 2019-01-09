@@ -85,6 +85,21 @@ class TestRedisBackend:
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
+    def test_setup_casts(self):
+        redis_backend = RedisBackend(
+            db="2",
+            port="6379",
+            pool_min_size="1",
+            pool_max_size="10",
+            create_connection_timeout="1.5",
+        )
+
+        assert redis_backend.db == 2
+        assert redis_backend.port == 6379
+        assert redis_backend.pool_min_size == 1
+        assert redis_backend.pool_max_size == 10
+        assert redis_backend.create_connection_timeout == 1.5
+
     @pytest.mark.asyncio
     async def test_acquire_conn(self, redis, redis_connection):
         assert await redis.acquire_conn() == redis_connection
@@ -323,6 +338,12 @@ class TestConn:
         self.dummy.assert_called_with(redis, "a", _conn=redis_connection)
         await d(redis, "a", _conn=redis_connection)
         self.dummy.assert_called_with(redis, "a", _conn=redis_connection)
+
+    @pytest.mark.parametrize(
+        "path,expected", [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})]
+    )
+    def test_parse_uri_path(self, path, expected):
+        assert RedisBackend.parse_uri_path(path) == expected
 
 
 class TestRedisCache:

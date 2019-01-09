@@ -37,6 +37,14 @@ class TestMemcachedBackend:
         assert memcached.port == 2
         assert memcached.pool_size == 10
 
+    def test_setup_casts(self):
+        with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
+            memcached = MemcachedBackend(pool_size="10")
+
+            aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=10)
+
+        assert memcached.pool_size == 10
+
     @pytest.mark.asyncio
     async def test_get(self, memcached):
         memcached.client.get.return_value = b"value"
@@ -241,6 +249,9 @@ class TestMemcachedBackend:
     async def test_close(self, memcached):
         await memcached._close()
         assert memcached.client.close.call_count == 1
+
+    def test_parse_uri_path(self):
+        assert MemcachedBackend.parse_uri_path("/1/2/3") == {}
 
 
 class TestMemcachedCache:
