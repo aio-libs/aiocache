@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, Mock
 
-from aiocache import SimpleMemoryCache, RedisCache, caches, Cache
+from aiocache import SimpleMemoryCache, RedisCache, caches, Cache, AIOCACHE_CACHES
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.exceptions import InvalidCacheType
 from aiocache.serializers import JsonSerializer, PickleSerializer
@@ -55,12 +55,12 @@ class TestCache:
         with pytest.raises(InvalidCacheType) as e:
             Cache("file")
         assert str(e.value) == "Invalid cache type, you can only use {}".format(
-            list(Cache._SCHEME_MAPPING.keys())
+            list(AIOCACHE_CACHES.keys())
         )
 
     @pytest.mark.parametrize("scheme", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
     def test_get_scheme_class(self, scheme):
-        assert Cache.get_scheme_class(scheme) == Cache._SCHEME_MAPPING[scheme]
+        assert Cache.get_scheme_class(scheme) == AIOCACHE_CACHES[scheme]
 
     def test_get_scheme_class_invalid(self):
         with pytest.raises(InvalidCacheType):

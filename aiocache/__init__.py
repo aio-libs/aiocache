@@ -5,7 +5,9 @@ from ._version import __version__
 
 
 logger = logging.getLogger(__name__)
-__cache_types = [SimpleMemoryCache]
+
+AIOCACHE_CACHES = {"memory": SimpleMemoryCache}
+
 
 try:
     import aioredis
@@ -14,7 +16,7 @@ except ImportError:
 else:
     from aiocache.backends.redis import RedisCache
 
-    __cache_types.append(RedisCache)
+    AIOCACHE_CACHES["redis"] = RedisCache
     del aioredis
 
 try:
@@ -24,7 +26,7 @@ except ImportError:
 else:
     from aiocache.backends.memcached import MemcachedCache
 
-    __cache_types.append(MemcachedCache)
+    AIOCACHE_CACHES["memcached"] = MemcachedCache
     del aiomcache
 
 
@@ -38,6 +40,6 @@ __all__ = (
     "cached",
     "cached_stampede",
     "multi_cached",
-    *__cache_types,
+    *list(AIOCACHE_CACHES.values()),
     "__version__",
 )
