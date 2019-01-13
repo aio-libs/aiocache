@@ -121,6 +121,27 @@ class TestCacheHandler:
     def remove_caches(self):
         caches._caches = {}
 
+    def test_add_new_entry(self):
+        alias = "memory"
+        config = {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.StringSerializer"},
+        }
+        caches.add(alias, config)
+
+        assert caches.get_config()[alias] == config
+
+    def test_add_updates_existing_entry(self):
+        alias = "memory"
+        config = {
+            "cache": "aiocache.SimpleMemoryCache",
+            "serializer": {"class": "aiocache.serializers.StringSerializer"},
+        }
+        caches.add(alias, {})
+        caches.add(alias, config)
+
+        assert caches.get_config()[alias] == config
+
     def test_get_wrong_alias(self):
         with pytest.raises(KeyError):
             caches.get("wrong_cache")
@@ -149,6 +170,15 @@ class TestCacheHandler:
         assert cache.namespace == "whatever"
         assert cache.endpoint == "127.0.0.10"
         assert cache.db == 10
+
+    def test_create_deprecated(self):
+        with patch("aiocache.factory.warnings.warn") as mock:
+            caches.create(cache="aiocache.SimpleMemoryCache")
+
+        mock.assert_called_once_with(
+            "Creating a cache with an explicit config is deprecated, please use 'aiocache.Cache'",
+            DeprecationWarning,
+        )
 
     def test_retrieve_cache(self):
         caches.set_config(
