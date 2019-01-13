@@ -39,6 +39,6 @@ setup(
         'redis:python_version<"3.7"': ['aioredis>=0.3.3'],
         'redis:python_version>="3.7"': ['aioredis>=1.0.0'],
         'memcached': ['aiomcache>=0.5.2'],
-        'msgpack': ['msgpack>=0.5.5'],
+        'msgpack': ['msgpack'],
     }
 )
