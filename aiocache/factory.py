@@ -1,6 +1,7 @@
 from copy import deepcopy
 import logging
 import urllib
+import warnings
 
 from aiocache.exceptions import InvalidCacheType
 from aiocache import AIOCACHE_CACHES
@@ -126,9 +127,29 @@ class CacheHandler:
     def __init__(self):
         self._caches = {}
 
-    def get(self, alias):
+    def add(self, alias: str, config: dict) -> None:
+        """
+        Add a cache to the current config. If the key already exists, it
+        will overwrite it::
+
+            >>> caches.add('default', {
+                    'cache': "aiocache.SimpleMemoryCache",
+                    'serializer': {
+                        'class': "aiocache.serializers.StringSerializer"
+                    }
+                })
+
+        :param alias: The alias for the cache
+        :param config: Mapping containing the cache configuration
+        """
+        self._config[alias] = config
+
+    def get(self, alias: str):
         """
         Retrieve cache identified by alias. Will return always the same instance
+
+        If the cache was not instantiated yet, it will do it lazily the first time
+        this is called.
 
         :param alias: str cache alias
         :return: cache instance
@@ -148,6 +169,10 @@ class CacheHandler:
         Create a new cache. Either alias or cache params are required. You can use
         kwargs to pass extra parameters to configure the cache.
 
+        .. deprecated:: 0.11.0
+            Only creating a cache passing an alias is supported. If you want to
+            create a cache passing explicit cache and kwargs use ``aiocache.Cache``.
+
         :param alias: str alias to pull configuration from
         :param cache: str or class cache class to use for creating the
             new cache (when no alias is used)
@@ -156,6 +181,10 @@ class CacheHandler:
         if alias:
             config = self.get_alias_config(alias)
         elif cache:
+            warnings.warn(
+                "Creating a cache with an explicit config is deprecated, use 'aiocache.Cache'",
+                DeprecationWarning,
+            )
             config = {"cache": cache}
         else:
             raise TypeError("create call needs to receive an alias or a cache")
