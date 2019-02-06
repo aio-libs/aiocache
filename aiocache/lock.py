@@ -94,7 +94,10 @@ class RedLock:
     async def _release(self):
         removed = await self.client._redlock_release(self.key, self._value)
         if removed:
-            RedLock._EVENTS.pop(self.key).set()
+            try:
+                RedLock._EVENTS.pop(self.key).set()
+            except KeyError:  # lock was already released
+                pass
 
 
 class OptimisticLock:
