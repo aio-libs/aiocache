@@ -50,7 +50,7 @@ class TestNullSerializer:
         assert NullSerializer().dumps(obj) is obj
 
     def test_loads(self):
-        assert NullSerializer().loads("hi") is "hi"
+        assert NullSerializer().loads("hi") == "hi"
 
 
 class TestStringSerializer:
