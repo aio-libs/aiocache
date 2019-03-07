@@ -95,4 +95,3 @@ _release_notes
 tags
 .mypy_cache/
 .pytest_cache/
-Pipfile.lock
