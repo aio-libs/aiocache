@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import functools
 import logging
@@ -22,8 +23,15 @@ class cached:
     Only one cache instance is created per decorated call. If you expect high concurrency of calls
     to the same function, you should adapt the pool size as needed.
 
-    When calling the decorated function, the reads and writes from/to the cache can be controlled
-    with the parameters ``cache_read`` and ``cache_write`` (both are enabled by default).
+    Extra args that are injected in the function that you can use to control the cache behavior are:
+
+        - ``cache_read``: Controls whether the function call will try to read from cache first or
+                          not. Enabled by default.
+        - ``cache_write``: Controls whether the function call will try to write in the cache once
+                           the result has been retrieved. Enabled by default.
+        - ``aiocache_wait_for_write``: Controls whether the call of the function will wait for the
+                                       value in the cache to be written. If set to False, the write
+                                       happens in the background. Enabled by default
 
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key: str value to set as key for the function return. Takes precedence over
@@ -87,7 +95,9 @@ class cached:
         wrapper.cache = self.cache
         return wrapper
 
-    async def decorator(self, f, *args, cache_read=True, cache_write=True, **kwargs):
+    async def decorator(
+        self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
+    ):
         key = self.get_cache_key(f, args, kwargs)
 
         if cache_read:
@@ -98,7 +108,10 @@ class cached:
         result = await f(*args, **kwargs)
 
         if cache_write:
-            await self.set_in_cache(key, result)
+            if aiocache_wait_for_write:
+                await self.set_in_cache(key, result)
+            else:
+                asyncio.ensure_future(self.set_in_cache(key, result))
 
         return result
 
@@ -222,8 +235,15 @@ class multi_cached:
     Only one cache instance is created per decorated function. If you expect high concurrency
     of calls to the same function, you should adapt the pool size as needed.
 
-    When calling the decorated function, the reads and writes from/to the cache can be controlled
-    with the parameters ``cache_read`` and ``cache_write`` (both are enabled by default).
+    Extra args that are injected in the function that you can use to control the cache behavior are:
+
+        - ``cache_read``: Controls whether the function call will try to read from cache first or
+                          not. Enabled by default.
+        - ``cache_write``: Controls whether the function call will try to write in the cache once
+                           the result has been retrieved. Enabled by default.
+        - ``aiocache_wait_for_write``: Controls whether the call of the function will wait for the
+                                       value in the cache to be written. If set to False, the write
+                                       happens in the background. Enabled by default
 
     :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
         as keys to index in the cache.
@@ -281,7 +301,9 @@ class multi_cached:
         wrapper.cache = self.cache
         return wrapper
 
-    async def decorator(self, f, *args, cache_read=True, cache_write=True, **kwargs):
+    async def decorator(
+        self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
+    ):
         missing_keys = []
         partial = {}
         keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
@@ -307,7 +329,10 @@ class multi_cached:
         result.update(partial)
 
         if cache_write:
-            await self.set_in_cache(result, f, args, kwargs)
+            if aiocache_wait_for_write:
+                await self.set_in_cache(result, f, args, kwargs)
+            else:
+                asyncio.ensure_future(self.set_in_cache(result, f, args, kwargs))
 
         return result
 
