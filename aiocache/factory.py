@@ -4,7 +4,8 @@ import urllib
 import warnings
 
 from aiocache.exceptions import InvalidCacheType
-from aiocache import AIOCACHE_CACHES
+from aiocache import AIOCACHE_CACHES, SimpleMemoryCache, RedisCache, MemcachedCache
+from aiocache.base import BaseCache
 
 
 logger = logging.getLogger(__name__)
@@ -55,20 +56,29 @@ class Cache:
     :class:`aiocache.exceptions.InvalidCacheType` exception.
     """
 
-    MEMORY = "memory"
-    REDIS = "redis"
-    MEMCACHED = "memcached"
+    MEMORY = SimpleMemoryCache
+    REDIS = RedisCache
+    MEMCACHED = MemcachedCache
 
-    def __new__(cls, cache_type=MEMORY, **kwargs):
-        cache_class = cls.get_scheme_class(cache_type)
+    def __new__(cls, cache_class=MEMORY, **kwargs):
+        try:
+            assert issubclass(cache_class, BaseCache)
+        except AssertionError as e:
+            raise InvalidCacheType(
+                "Invalid cache type, you can only use {}".format(list(AIOCACHE_CACHES.keys()))
+            ) from e
         instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
         return instance
 
     @classmethod
+    def _get_cache_class(cls, scheme):
+        return AIOCACHE_CACHES[scheme]
+
+    @classmethod
     def get_scheme_class(cls, scheme):
         try:
-            return AIOCACHE_CACHES[scheme]
+            return cls._get_cache_class(scheme)
         except KeyError as e:
             raise InvalidCacheType(
                 "Invalid cache type, you can only use {}".format(list(AIOCACHE_CACHES.keys()))
@@ -99,9 +109,10 @@ class Cache:
         """
         parsed_url = urllib.parse.urlparse(url)
         kwargs = dict(urllib.parse.parse_qsl(parsed_url.query))
+        cache_class = Cache.get_scheme_class(parsed_url.scheme)
 
         if parsed_url.path:
-            kwargs.update(Cache.get_scheme_class(parsed_url.scheme).parse_uri_path(parsed_url.path))
+            kwargs.update(cache_class.parse_uri_path(parsed_url.path))
 
         if parsed_url.hostname:
             kwargs["endpoint"] = parsed_url.hostname
@@ -112,7 +123,7 @@ class Cache:
         if parsed_url.password:
             kwargs["password"] = parsed_url.password
 
-        return Cache(parsed_url.scheme, **kwargs)
+        return Cache(cache_class, **kwargs)
 
 
 class CacheHandler:
