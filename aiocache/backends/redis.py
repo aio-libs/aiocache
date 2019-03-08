@@ -220,22 +220,6 @@ class RedisBackend:
 
             return self._pool
 
-    @classmethod
-    def parse_uri_path(self, path):
-        """
-        Given a uri path, return the Redis specific configuration
-        options in that path string according to iana definition
-        http://www.iana.org/assignments/uri-schemes/prov/redis
-
-        :param path: string containing the path. Example: "/0"
-        :return: mapping containing the options. Example: {"db": "0"}
-        """
-        options = {}
-        db, *_ = path[1:].split("/")
-        if db:
-            options["db"] = db
-        return options
-
 
 class RedisCache(RedisBackend, BaseCache):
     """
@@ -261,9 +245,27 @@ class RedisCache(RedisBackend, BaseCache):
         only for aioredis>=1. Default is None
     """
 
+    NAME = "redis"
+
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
         self.serializer = serializer or JsonSerializer()
+
+    @classmethod
+    def parse_uri_path(self, path):
+        """
+        Given a uri path, return the Redis specific configuration
+        options in that path string according to iana definition
+        http://www.iana.org/assignments/uri-schemes/prov/redis
+
+        :param path: string containing the path. Example: "/0"
+        :return: mapping containing the options. Example: {"db": "0"}
+        """
+        options = {}
+        db, *_ = path[1:].split("/")
+        if db:
+            options["db"] = db
+        return options
 
     def _build_key(self, key, namespace=None):
         if namespace is not None:

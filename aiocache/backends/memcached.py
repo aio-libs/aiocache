@@ -118,10 +118,6 @@ class MemcachedBackend:
     async def _close(self, *args, _conn=None, **kwargs):
         await self.client.close()
 
-    @classmethod
-    def parse_uri_path(self, path):
-        return {}
-
 
 class MemcachedCache(MemcachedBackend, BaseCache):
     """
@@ -142,9 +138,15 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     :param pool_size: int size for memcached connections pool. Default is 2.
     """
 
+    NAME = "memcached"
+
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
         self.serializer = serializer or JsonSerializer()
+
+    @classmethod
+    def parse_uri_path(self, path):
+        return {}
 
     def _build_key(self, key, namespace=None):
         ns_key = super()._build_key(key, namespace=namespace).replace(" ", "_")

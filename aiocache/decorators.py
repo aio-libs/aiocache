@@ -2,7 +2,7 @@ import inspect
 import functools
 import logging
 
-from aiocache import SimpleMemoryCache, caches
+from aiocache import Cache, caches
 from aiocache.base import SENTINEL
 from aiocache.lock import RedLock
 
@@ -16,7 +16,7 @@ class cached:
     The cache is available in the function object as ``<function_name>.cache``.
 
     In some cases you will need to send more args to configure the cache object.
-    An example would be endpoint and port for the RedisCache. You can send those args as
+    An example would be endpoint and port for the Redis cache. You can send those args as
     kwargs and they will be propagated accordingly.
 
     Only one cache instance is created per decorated call. If you expect high concurrency of calls
@@ -32,7 +32,7 @@ class cached:
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
-        Default is ``aiocache.SimpleMemoryCache``.
+        Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
         If its None, default one from the cache backend is used.
     :param plugins: list plugins to use when calling the cmd hooks
@@ -50,7 +50,7 @@ class cached:
         ttl=SENTINEL,
         key=None,
         key_builder=None,
-        cache=SimpleMemoryCache,
+        cache=Cache.MEMORY,
         serializer=None,
         plugins=None,
         alias=None,
@@ -139,7 +139,7 @@ class cached_stampede(cached):
     while avoids for cache stampede effects.
 
     In some cases you will need to send more args to configure the cache object.
-    An example would be endpoint and port for the RedisCache. You can send those args as
+    An example would be endpoint and port for the Redis cache. You can send those args as
     kwargs and they will be propagated accordingly.
 
     Only one cache instance is created per decorated function. If you expect high concurrency
@@ -154,7 +154,7 @@ class cached_stampede(cached):
         + function_name + args + kwargs
     :param key_from_attr: str arg or kwarg name from the function to use as a key.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
-        Default is ``aiocache.SimpleMemoryCache``.
+        Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
         Default is JsonSerializer.
     :param plugins: list plugins to use when calling the cmd hooks
@@ -189,7 +189,7 @@ class cached_stampede(cached):
         return result
 
 
-def _get_cache(cache=SimpleMemoryCache, serializer=None, plugins=None, **cache_kwargs):
+def _get_cache(cache=Cache.MEMORY, serializer=None, plugins=None, **cache_kwargs):
     return cache(serializer=serializer, plugins=plugins, **cache_kwargs)
 
 
@@ -231,7 +231,7 @@ class multi_cached:
         Receives the key the function and same args and kwargs as the called function.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
-        Default is ``aiocache.SimpleMemoryCache``.
+        Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
         If its None, default one from the cache backend is used.
     :param plugins: plugins to use when calling the cmd hooks
@@ -246,7 +246,7 @@ class multi_cached:
         keys_from_attr,
         key_builder=None,
         ttl=SENTINEL,
-        cache=SimpleMemoryCache,
+        cache=Cache.MEMORY,
         serializer=None,
         plugins=None,
         alias=None,

@@ -198,13 +198,16 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
         assert SimpleMemoryBackend._cache.pop.call_count == 0
 
-    def test_parse_uri_path(self):
-        assert SimpleMemoryBackend.parse_uri_path("/1/2/3") == {}
-
 
 class TestSimpleMemoryCache:
+    def test_name(self):
+        assert SimpleMemoryCache.NAME == "memory"
+
     def test_inheritance(self):
         assert isinstance(SimpleMemoryCache(), BaseCache)
 
     def test_default_serializer(self):
         assert isinstance(SimpleMemoryCache().serializer, NullSerializer)
+
+    def test_parse_uri_path(self):
+        assert SimpleMemoryCache().parse_uri_path("/1/2/3") == {}

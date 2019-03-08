@@ -1,6 +1,6 @@
 import asyncio
 
-from aiocache import caches, SimpleMemoryCache, RedisCache
+from aiocache import caches, Cache
 from aiocache.serializers import StringSerializer, PickleSerializer
 
 caches.set_config({
@@ -31,7 +31,7 @@ async def default_cache():
     await cache.set("key", "value")
 
     assert await cache.get("key") == "value"
-    assert isinstance(cache, SimpleMemoryCache)
+    assert isinstance(cache, Cache.MEMORY)
     assert isinstance(cache.serializer, StringSerializer)
 
 
@@ -42,7 +42,7 @@ async def alt_cache():
     await cache.set("key", "value")
 
     assert await cache.get("key") == "value"
-    assert isinstance(cache, RedisCache)
+    assert isinstance(cache, Cache.REDIS)
     assert isinstance(cache.serializer, PickleSerializer)
     assert len(cache.plugins) == 2
     assert cache.endpoint == "127.0.0.1"
@@ -56,7 +56,7 @@ def test_alias():
     loop.run_until_complete(default_cache())
     loop.run_until_complete(alt_cache())
 
-    cache = RedisCache()
+    cache = Cache(Cache.REDIS)
     loop.run_until_complete(cache.delete("key"))
     loop.run_until_complete(cache.close())
 

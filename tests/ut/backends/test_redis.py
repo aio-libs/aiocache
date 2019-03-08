@@ -339,12 +339,6 @@ class TestConn:
         await d(redis, "a", _conn=redis_connection)
         self.dummy.assert_called_with(redis, "a", _conn=redis_connection)
 
-    @pytest.mark.parametrize(
-        "path,expected", [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})]
-    )
-    def test_parse_uri_path(self, path, expected):
-        assert RedisBackend.parse_uri_path(path) == expected
-
 
 class TestRedisCache:
     @pytest.fixture
@@ -353,11 +347,20 @@ class TestRedisCache:
         yield
         redis_cache.namespace = None
 
+    def test_name(self):
+        assert RedisCache.NAME == "redis"
+
     def test_inheritance(self):
         assert isinstance(RedisCache(), BaseCache)
 
     def test_default_serializer(self):
         assert isinstance(RedisCache().serializer, JsonSerializer)
+
+    @pytest.mark.parametrize(
+        "path,expected", [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})]
+    )
+    def test_parse_uri_path(self, path, expected):
+        assert RedisCache().parse_uri_path(path) == expected
 
     @pytest.mark.parametrize(
         "namespace, expected",
