@@ -106,10 +106,6 @@ class SimpleMemoryBackend:
 
         return 0
 
-    @classmethod
-    def parse_uri_path(cls, path):
-        return {}
-
 
 class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     """
@@ -127,6 +123,12 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
         By default its 5.
     """
 
+    NAME = "memory"
+
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
         self.serializer = serializer or NullSerializer()
+
+    @classmethod
+    def parse_uri_path(cls, path):
+        return {}

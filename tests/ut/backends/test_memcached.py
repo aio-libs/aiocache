@@ -250,9 +250,6 @@ class TestMemcachedBackend:
         await memcached._close()
         assert memcached.client.close.call_count == 1
 
-    def test_parse_uri_path(self):
-        assert MemcachedBackend.parse_uri_path("/1/2/3") == {}
-
 
 class TestMemcachedCache:
     @pytest.fixture
@@ -261,11 +258,17 @@ class TestMemcachedCache:
         yield
         memcached_cache.namespace = None
 
+    def test_name(self):
+        assert MemcachedCache.NAME == "memcached"
+
     def test_inheritance(self):
         assert isinstance(MemcachedCache(), BaseCache)
 
     def test_default_serializer(self):
         assert isinstance(MemcachedCache().serializer, JsonSerializer)
+
+    def test_parse_uri_path(self):
+        assert MemcachedCache().parse_uri_path("/1/2/3") == {}
 
     @pytest.mark.parametrize(
         "namespace, expected",

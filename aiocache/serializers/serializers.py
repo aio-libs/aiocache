@@ -37,7 +37,8 @@ class NullSerializer(BaseSerializer):
     """
     This serializer does nothing. Its only recommended to be used by
     :class:`aiocache.SimpleMemoryCache` because for other backends it will
-    produce incompatible data unless you work only with str types.
+    produce incompatible data unless you work only with str types because it
+    store data as is.
 
     DISCLAIMER: Be careful with mutable types and memory storage. The following
     behavior is considered normal (same as ``functools.lru_cache``)::

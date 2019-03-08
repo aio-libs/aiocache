@@ -6,7 +6,7 @@ from ._version import __version__
 
 logger = logging.getLogger(__name__)
 
-AIOCACHE_CACHES = {"memory": SimpleMemoryCache}
+AIOCACHE_CACHES = {SimpleMemoryCache.NAME: SimpleMemoryCache}
 
 
 try:
@@ -16,7 +16,7 @@ except ImportError:
 else:
     from aiocache.backends.redis import RedisCache
 
-    AIOCACHE_CACHES["redis"] = RedisCache
+    AIOCACHE_CACHES[RedisCache.NAME] = RedisCache
     del aioredis
 
 try:
@@ -26,7 +26,7 @@ except ImportError:
 else:
     from aiocache.backends.memcached import MemcachedCache
 
-    AIOCACHE_CACHES["memcached"] = MemcachedCache
+    AIOCACHE_CACHES[MemcachedCache.NAME] = MemcachedCache
     del aiomcache
 
 
