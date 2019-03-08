@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, Mock
 
-from aiocache import SimpleMemoryCache, RedisCache, caches, Cache, AIOCACHE_CACHES
+from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache, caches, Cache, AIOCACHE_CACHES
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.exceptions import InvalidCacheType
 from aiocache.serializers import JsonSerializer, PickleSerializer
@@ -34,31 +34,33 @@ def test_create_cache_with_everything():
 
 class TestCache:
     def test_cache_types(self):
-        assert Cache.MEMORY == "memory"
-        assert Cache.REDIS == "redis"
-        assert Cache.MEMCACHED == "memcached"
+        assert Cache.MEMORY == SimpleMemoryCache
+        assert Cache.REDIS == RedisCache
+        assert Cache.MEMCACHED == MemcachedCache
 
-    @pytest.mark.parametrize("cache_type", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
+    @pytest.mark.parametrize(
+        "cache_type", [Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME]
+    )
     def test_new(self, cache_type):
         kwargs = {"a": 1, "b": 2}
         cache_class = Cache.get_scheme_class(cache_type)
 
         with patch("aiocache.{}.__init__".format(cache_class.__name__)) as init:
-            cache = Cache(cache_type, **kwargs)
+            cache = Cache(cache_class, **kwargs)
             assert isinstance(cache, cache_class)
             init.assert_called_once_with(**kwargs)
 
     def test_new_defaults_to_memory(self):
-        assert isinstance(Cache(), Cache.get_scheme_class(Cache.MEMORY))
+        assert isinstance(Cache(), Cache.MEMORY)
 
     def test_new_invalid_cache_raises(self):
         with pytest.raises(InvalidCacheType) as e:
-            Cache("file")
+            Cache(object)
         assert str(e.value) == "Invalid cache type, you can only use {}".format(
             list(AIOCACHE_CACHES.keys())
         )
 
-    @pytest.mark.parametrize("scheme", [Cache.MEMORY, Cache.REDIS, Cache.MEMCACHED])
+    @pytest.mark.parametrize("scheme", [Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME])
     def test_get_scheme_class(self, scheme):
         assert Cache.get_scheme_class(scheme) == AIOCACHE_CACHES[scheme]
 
@@ -66,7 +68,7 @@ class TestCache:
         with pytest.raises(InvalidCacheType):
             Cache.get_scheme_class("http")
 
-    @pytest.mark.parametrize("scheme", ["memory", "redis", "memcached"])
+    @pytest.mark.parametrize("scheme", [Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME])
     def test_from_url_returns_cache_from_scheme(self, scheme):
         assert isinstance(Cache.from_url("{}://".format(scheme)), Cache.get_scheme_class(scheme))
 
@@ -101,7 +103,7 @@ class TestCache:
         with patch("aiocache.factory.Cache") as mock:
             Cache.from_url(url)
 
-        mock.assert_called_once_with("redis", **expected_args)
+        mock.assert_called_once_with(mock.get_scheme_class.return_value, **expected_args)
 
     def test_calls_parse_uri_path_from_cache(self):
         with patch("aiocache.factory.Cache") as mock:
@@ -109,7 +111,7 @@ class TestCache:
             Cache.from_url("redis:///")
 
         mock.get_scheme_class.return_value.parse_uri_path.assert_called_once_with("/")
-        mock.assert_called_once_with("redis", arg1="arg1")
+        mock.assert_called_once_with(mock.get_scheme_class.return_value, arg1="arg1")
 
     def test_from_url_invalid_protocol(self):
         with pytest.raises(InvalidCacheType):
