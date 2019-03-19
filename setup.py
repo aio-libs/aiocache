@@ -42,7 +42,7 @@ setup(
         'msgpack': ['msgpack>=0.5.5'],
         'dev': [
             'asynctest>=0.11.0',
-            'black;python_version<"3.6"',
+            'black;python_version>="3.6"',
             'codecov',
             'coverage',
             'flake8',

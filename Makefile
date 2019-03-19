@@ -9,7 +9,7 @@ format:
 	black -l 100 tests/ aiocache/
 
 install-dev:
-	pip install -e .[all]
+	pip install -e .[redis,memcached,msgpack,dev]
 
 pylint:
 	pylint --disable=C0111 aiocache
