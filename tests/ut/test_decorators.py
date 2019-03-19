@@ -165,6 +165,25 @@ class TestCached:
             assert await decorator_call()
 
     @pytest.mark.asyncio
+    async def test_cache_write_waits_for_future(self, mocker, decorator, decorator_call):
+        decorator.get_from_cache = CoroutineMock(return_value=None)
+        decorator.set_in_cache = CoroutineMock()
+        await decorator_call()
+
+        decorator.set_in_cache.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_cache_write_doesnt_wait_for_future(self, mocker, decorator, decorator_call):
+        decorator.get_from_cache = CoroutineMock(return_value=None)
+        decorator.set_in_cache = CoroutineMock()
+
+        with patch("aiocache.decorators.asyncio.ensure_future"):
+            await decorator_call(aiocache_wait_for_write=False, value="value")
+
+        decorator.set_in_cache.assert_not_awaited()
+        decorator.set_in_cache.assert_called_once_with("stub()[('value', 'value')]", "value")
+
+    @pytest.mark.asyncio
     async def test_set_calls_set(self, decorator, decorator_call):
         await decorator.set_in_cache("key", "value")
         decorator.cache.set.assert_called_with("key", "value", ttl=SENTINEL)
@@ -470,6 +489,25 @@ class TestMultiCached:
         decorator.get_from_cache.assert_called_once_with("a", "b")
         decorator.set_in_cache.assert_called_with(ret, stub_dict, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=["a", "b"], value="value")
+
+    @pytest.mark.asyncio
+    async def test_cache_write_waits_for_future(self, decorator, decorator_call):
+        decorator.get_from_cache = CoroutineMock(return_value=[None, None])
+        decorator.set_in_cache = CoroutineMock()
+        await decorator_call(1, keys=["a", "b"], value="value")
+
+        decorator.set_in_cache.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_cache_write_doesnt_wait_for_future(self, decorator, decorator_call):
+        decorator.get_from_cache = CoroutineMock(return_value=[None, None])
+        decorator.set_in_cache = CoroutineMock()
+
+        with patch("aiocache.decorators.asyncio.ensure_future"):
+            await decorator_call(1, keys=["a", "b"], value="value", aiocache_wait_for_write=False)
+
+        decorator.set_in_cache.assert_not_awaited()
+        decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, stub_dict, ANY, ANY)
 
     @pytest.mark.asyncio
     async def test_calls_fn_with_only_missing_keys(self, mocker, decorator, decorator_call):
