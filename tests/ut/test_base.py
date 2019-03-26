@@ -144,6 +144,10 @@ class TestAPI:
 
 
 class TestBaseCache:
+    def test_str_ttl(self):
+        cache = BaseCache(ttl="1.5")
+        assert cache.ttl == 1.5
+
     @pytest.mark.asyncio
     async def test_add(self, base_cache):
         with pytest.raises(NotImplementedError):
