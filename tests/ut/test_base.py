@@ -148,6 +148,10 @@ class TestBaseCache:
         cache = BaseCache(ttl="1.5")
         assert cache.ttl == 1.5
 
+    def test_str_timeout(self):
+        cache = BaseCache(timeout="1.5")
+        assert cache.timeout == 1.5
+
     @pytest.mark.asyncio
     async def test_add(self, base_cache):
         with pytest.raises(NotImplementedError):

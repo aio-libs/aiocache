@@ -106,7 +106,7 @@ class BaseCache:
     def __init__(
         self, serializer=None, plugins=None, namespace=None, key_builder=None, timeout=5, ttl=None
     ):
-        self.timeout = timeout
+        self.timeout = float(timeout) if timeout is not None else timeout
         self.namespace = namespace
         self.ttl = float(ttl) if ttl is not None else ttl
         self.build_key = key_builder or self._build_key
