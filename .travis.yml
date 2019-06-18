@@ -12,10 +12,10 @@ jobs:
   include:
     - stage: syntax
       script: tox
-      python: 3.6
+      python: 3.7
       env: TOXENV=syntax
     - script: tox
-      python: 3.6
+      python: 3.7
       env: TOXENV=docs-html
 
     - stage: test
@@ -69,6 +69,27 @@ jobs:
     - script: tox
       env: TOXENV=py37-deps-devel,codecov
       python: 3.7
+      dist: xenial
+      sudo: true
+
+    - script: tox
+      env: TOXENV=py38,codecov
+      python: 3.8
+      dist: xenial
+      sudo: true
+    - script: tox
+      env: TOXENV=py38-ujson,codecov
+      python: 3.8
+      dist: xenial
+      sudo: true
+    - script: tox
+      env: TOXENV=py38-deps-lowest,codecov
+      python: 3.8
+      dist: xenial
+      sudo: true
+    - script: tox
+      env: TOXENV=py38-deps-devel,codecov
+      python: 3.8
       dist: xenial
       sudo: true
 
