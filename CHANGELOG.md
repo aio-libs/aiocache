@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## 0.11.0 (2019-07-31)
+
+* Support str for timeout and ttl [#454](https://github.com/argaen/aiocache/issues/454) - Manuel Miranda
+
+* Add aiocache_wait_for_write decorator param [#448](https://github.com/argaen/aiocache/issues/448) - Manuel Miranda
+
+* Extend and improve usage of Cache class [#446](https://github.com/argaen/aiocache/issues/446) - Manuel Miranda
+
+* Add caches.add functionality [#440](https://github.com/argaen/aiocache/issues/440) - Manuel Miranda
+
+* Use raw msgpack attribute for loads [#439](https://github.com/argaen/aiocache/issues/439) - Manuel Miranda
+
+* Add docs regarding plugin timeouts and multicached [#438](https://github.com/argaen/aiocache/issues/438) - Manuel Miranda
+
+* Fix typehints in lock.py [#434](https://github.com/argaen/aiocache/issues/434) - Aviv
+
+* Use pytest_configure instead of pytest_namespace [#436](https://github.com/argaen/aiocache/issues/436) - Manuel Miranda
+
+* Add Cache class factory [#430](https://github.com/argaen/aiocache/issues/430) - Manuel Miranda
+
+
 ## 0.10.1 (2018-11-15)
 
 * Cancel the previous ttl timer if exists when setting a new value in the in-memory cache [#424](https://github.com/argaen/aiocache/issues/424) - Minh Tu Le
@@ -27,7 +48,6 @@
 * Lazy load redis asyncio.Lock [#397](https://github.com/argaen/aiocache/issues/397) - Jordi Soucheiron
 
 
-
 ## 0.9.0 (2018-04-24)
 
 * Bug #389/propagate redlock exceptions [#394](https://github.com/argaen/aiocache/issues/394) - Manuel Miranda
@@ -48,8 +68,9 @@ raise always any exception raised from inside_
 * Add create_connection_timeout for redis>=1.0.0 when creating connections [#368](https://github.com/argaen/aiocache/issues/368) - tmarques82
 
 * Fixed spelling error in serializers.py [#371](https://github.com/argaen/aiocache/issues/371) - Jared Shields
-## 0.8.0 (2017-11-08)
 
+
+## 0.8.0 (2017-11-08)
 
 * Add pypy support in build pipeline [#359](https://github.com/argaen/aiocache/issues/359) - Manuel Miranda
 
