@@ -4,7 +4,7 @@ import urllib
 import warnings
 
 from aiocache.exceptions import InvalidCacheType
-from aiocache import AIOCACHE_CACHES, SimpleMemoryCache, RedisCache, MemcachedCache
+from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
 
 
@@ -56,9 +56,9 @@ class Cache:
     :class:`aiocache.exceptions.InvalidCacheType` exception.
     """
 
-    MEMORY = SimpleMemoryCache
-    REDIS = RedisCache
-    MEMCACHED = MemcachedCache
+    MEMORY = AIOCACHE_CACHES["memory"]
+    REDIS = AIOCACHE_CACHES.get("redis")
+    MEMCACHED = AIOCACHE_CACHES.get("memcached")
 
     def __new__(cls, cache_class=MEMORY, **kwargs):
         try:
