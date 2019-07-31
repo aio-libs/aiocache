@@ -74,22 +74,22 @@ jobs:
 
     - script: tox
       env: TOXENV=py38,codecov
-      python: 3.8
+      python: 3.8-dev
       dist: xenial
       sudo: true
     - script: tox
       env: TOXENV=py38-ujson,codecov
-      python: 3.8
+      python: 3.8-dev
       dist: xenial
       sudo: true
     - script: tox
       env: TOXENV=py38-deps-lowest,codecov
-      python: 3.8
+      python: 3.8-dev
       dist: xenial
       sudo: true
     - script: tox
       env: TOXENV=py38-deps-devel,codecov
-      python: 3.8
+      python: 3.8-dev
       dist: xenial
       sudo: true
 
