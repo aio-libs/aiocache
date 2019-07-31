@@ -1,5 +1,11 @@
 # CHANGELOG
 
+
+## 0.11.1 (2019-07-31)
+
+* Don't hardcode import redis and memcached in factory [#461](https://github.com/argaen/aiocache/issues/461) - Manuel Miranda
+
+
 ## 0.11.0 (2019-07-31)
 
 * Support str for timeout and ttl [#454](https://github.com/argaen/aiocache/issues/454) - Manuel Miranda
