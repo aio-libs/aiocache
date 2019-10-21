@@ -16,16 +16,16 @@ class MyTypeSchema(Schema):
     y = fields.Number()
 
     @post_load
-    def build_object(self, data):
+    def build_object(self, data, **kwargs):
         return MyType(data['x'], data['y'])
 
 
 def dumps(value):
-    return MyTypeSchema().dumps(value).data
+    return MyTypeSchema().dumps(value)
 
 
 def loads(value):
-    return MyTypeSchema().loads(value).data
+    return MyTypeSchema().loads(value)
 
 
 cache = Cache(Cache.REDIS, namespace="main")
