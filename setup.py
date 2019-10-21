@@ -47,7 +47,7 @@ setup(
             'coverage',
             'flake8',
             'ipdb',
-            'marshmallow<3',
+            'marshmallow>=3',
             'pystache',
             'pytest',
             'pytest-asyncio',
