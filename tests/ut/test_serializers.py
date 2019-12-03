@@ -1,6 +1,7 @@
 import pytest
 
 from collections import namedtuple
+from unittest import mock
 
 from aiocache.serializers import (
     BaseSerializer,
@@ -137,6 +138,12 @@ class TestMsgPackSerializer:
         assert isinstance(serializer, BaseSerializer)
         assert serializer.DEFAULT_ENCODING == "utf-8"
         assert serializer.encoding == "utf-8"
+
+    def test_init_fails_if_msgpack_not_installed(self):
+        with mock.patch("aiocache.serializers.serializers.msgpack", None):
+            with pytest.raises(RuntimeError):
+                MsgPackSerializer()
+            assert JsonSerializer(), "Other serializers should still initialize"
 
     def test_init_use_list(self):
         serializer = MsgPackSerializer(use_list=True)
