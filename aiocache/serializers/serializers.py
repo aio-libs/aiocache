@@ -12,7 +12,8 @@ except ImportError:
 try:
     import msgpack
 except ImportError:
-    logger.warning("msgpack not installed, MsgPackSerializer unavailable")
+    msgpack = None
+    logger.debug("msgpack not installed, MsgPackSerializer unavailable")
 
 
 _NOT_SET = object()
@@ -163,6 +164,8 @@ class MsgPackSerializer(BaseSerializer):
     """
 
     def __init__(self, *args, use_list=True, **kwargs):
+        if not msgpack:
+            raise RuntimeError("msgpack not installed, MsgPackSerializer unavailable")
         self.use_list = use_list
         super().__init__(*args, **kwargs)
 
