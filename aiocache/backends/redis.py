@@ -184,7 +184,8 @@ class RedisBackend:
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
             keys = await _conn.keys("{}:*".format(namespace))
-            await _conn.delete(*keys)
+            if keys:
+                await _conn.delete(*keys)
         else:
             await _conn.flushdb()
         return True
