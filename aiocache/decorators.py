@@ -3,6 +3,8 @@ import inspect
 import functools
 import logging
 
+from aiohttp.web import Response as AIOResponse
+
 from aiocache import Cache, caches
 from aiocache.base import SENTINEL
 from aiocache.lock import RedLock
@@ -135,6 +137,15 @@ class cached:
     async def get_from_cache(self, key):
         try:
             value = await self.cache.get(key)
+            # recreate the response if value is an aiohttp response
+            # (can't be reused for multiple requests)
+            if type(value) == AIOResponse:
+                return AIOResponse(
+                    body=value.body,
+                    status=value.status,
+                    reason=value.reason,
+                    headers=value.headers,
+                )
             return value
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", key)
