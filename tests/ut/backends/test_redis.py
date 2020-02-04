@@ -289,6 +289,12 @@ class TestRedisBackend:
         redis_connection.delete.assert_called_with("nm:a", "nm:b")
 
     @pytest.mark.asyncio
+    async def test_clear_no_keys(self, redis, redis_connection):
+        redis_connection.keys.return_value = []
+        await redis._clear("nm")
+        redis_connection.delete.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_clear_no_namespace(self, redis, redis_connection):
         await redis._clear()
         assert redis_connection.flushdb.call_count == 1
