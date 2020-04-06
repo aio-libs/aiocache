@@ -9,7 +9,7 @@ import asyncio
 
 from sanic import Sanic
 from sanic.response import json
-from sanic.log import log
+from sanic.log import logger
 from aiocache import cached, Cache
 from aiocache.serializers import JsonSerializer
 
@@ -18,7 +18,7 @@ app = Sanic(__name__)
 
 @cached(key="my_custom_key", serializer=JsonSerializer())
 async def expensive_call():
-    log.info("Expensive has been called")
+    logger.info("Expensive has been called")
     await asyncio.sleep(3)
     return {"test": True}
 
@@ -31,13 +31,13 @@ async def reuse_data():
 
 @app.route("/")
 async def main(request):
-    log.info("Received GET /")
+    logger.info("Received GET /")
     return json(await expensive_call())
 
 
 @app.route("/reuse")
 async def reuse(request):
-    log.info("Received GET /reuse")
+    logger.info("Received GET /reuse")
     return json(await reuse_data())
 
 
