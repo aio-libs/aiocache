@@ -57,10 +57,10 @@ class SimpleMemoryBackend:
             SimpleMemoryBackend._cache[key] = delta
         else:
             try:
-                SimpleMemoryBackend._cache[key] = int(SimpleMemoryBackend._cache[key]) + delta
+                SimpleMemoryBackend._cache[key] = str(int(SimpleMemoryBackend._cache[key]) + delta)
             except ValueError:
                 raise TypeError("Value is not an integer") from None
-        return SimpleMemoryBackend._cache[key]
+        return int(SimpleMemoryBackend._cache[key])
 
     async def _expire(self, key, ttl, _conn=None):
         if key in SimpleMemoryBackend._cache:
