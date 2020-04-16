@@ -207,13 +207,11 @@ def _get_cache(cache=Cache.MEMORY, serializer=None, plugins=None, **cache_kwargs
 
 
 def _get_args_dict(func, args, kwargs):
-    defaults = {
-        arg_name: arg.default
-        for arg_name, arg in inspect.signature(func).parameters.items()
-        if arg.default is not inspect._empty  # TODO: bug prone..
-    }
-    args_names = func.__code__.co_varnames[: func.__code__.co_argcount]
-    return {**defaults, **dict(zip(args_names, args)), **kwargs}
+    signature = inspect.signature(func)
+    incoming_args = signature.bind(*args, **kwargs)
+    incoming_args.apply_defaults()
+    incoming_args = dict(incoming_args.arguments)
+    return incoming_args
 
 
 class multi_cached:
@@ -341,7 +339,7 @@ class multi_cached:
         keys = args_dict[self.keys_from_attr] or []
         keys = [self.key_builder(key, f, *args, **kwargs) for key in keys]
 
-        args_names = f.__code__.co_varnames[: f.__code__.co_argcount]
+        args_names = list(inspect.signature(f).parameters.keys())
         new_args = list(args)
         keys_index = -1
         if self.keys_from_attr in args_names and self.keys_from_attr not in kwargs:

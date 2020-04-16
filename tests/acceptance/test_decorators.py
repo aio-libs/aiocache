@@ -1,4 +1,6 @@
 import asyncio
+import functools
+
 import pytest
 import random
 
@@ -152,6 +154,23 @@ class TestMultiCachedDecorator:
 
         @dummy_d
         @multi_cached("keys")
+        async def fn(keys):
+            return {pytest.KEY: 1}
+
+        await fn([pytest.KEY])
+        assert await cache.exists(pytest.KEY) is True
+
+    @pytest.mark.asyncio
+    async def test_decorator_over_decorator(self, cache):
+        def dummy_d(fn):
+            @functools.wraps(fn)
+            async def wrapper(*args, **kwargs):
+                return await fn(*args, **kwargs)
+
+            return wrapper
+
+        @multi_cached("keys")
+        @dummy_d
         async def fn(keys):
             return {pytest.KEY: 1}
 
