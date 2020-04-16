@@ -29,6 +29,16 @@ else:
     AIOCACHE_CACHES[MemcachedCache.NAME] = MemcachedCache
     del aiomcache
 
+try:
+    import aiosqlite
+except ImportError:
+    logger.info("aiosqlite not installed, SQLite unavailable")
+else:
+    from aiocache.backends.sqlite import SQLiteCache
+
+    AIOCACHE_CACHES[SQLiteCache.NAME] = SQLiteCache
+    del aiosqlite
+
 
 from .factory import caches, Cache  # noqa: E402
 from .decorators import cached, cached_stampede, multi_cached  # noqa: E402
