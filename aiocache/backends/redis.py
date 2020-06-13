@@ -65,6 +65,8 @@ class RedisBackend:
         **kwargs
     ):
         super().__init__(**kwargs)
+        # TODO: this is a super() option
+        self.default_ttl = kwargs.get("default_ttl", None)
         self.endpoint = endpoint
         self.port = int(port)
         self.db = int(db)
@@ -111,6 +113,8 @@ class RedisBackend:
 
     @conn
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         if ttl is None:
@@ -119,6 +123,8 @@ class RedisBackend:
 
     @conn
     async def _cas(self, key, value, token, ttl=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         args = [value, token]
         if ttl is not None:
             if isinstance(ttl, float):
@@ -130,6 +136,8 @@ class RedisBackend:
 
     @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         ttl = ttl or 0
 
         flattened = list(itertools.chain.from_iterable((key, value) for key, value in pairs))
@@ -150,6 +158,8 @@ class RedisBackend:
 
     @conn
     async def _add(self, key, value, ttl=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         expx = {"expire": ttl}
         if isinstance(ttl, float):
             expx = {"pexpire": int(ttl * 1000)}

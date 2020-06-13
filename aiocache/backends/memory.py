@@ -14,6 +14,8 @@ class SimpleMemoryBackend:
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # TODO: this is a super() option
+        self.default_ttl = kwargs.get("default_ttl", None)
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         return SimpleMemoryBackend._cache.get(key)
@@ -25,6 +27,8 @@ class SimpleMemoryBackend:
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         if _cas_token is not None and _cas_token != SimpleMemoryBackend._cache.get(key):
             return 0
 
@@ -38,11 +42,15 @@ class SimpleMemoryBackend:
         return True
 
     async def _multi_set(self, pairs, ttl=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         for key, value in pairs:
             await self._set(key, value, ttl=ttl)
         return True
 
     async def _add(self, key, value, ttl=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         if key in SimpleMemoryBackend._cache:
             raise ValueError("Key {} already exists, use .set to update the value".format(key))
 

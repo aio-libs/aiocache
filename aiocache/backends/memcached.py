@@ -8,6 +8,8 @@ from aiocache.serializers import JsonSerializer
 class MemcachedBackend:
     def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, loop=None, **kwargs):
         super().__init__(**kwargs)
+        # TODO: this is a super() option
+        self.default_ttl = kwargs.get("default_ttl", None)
         self.endpoint = endpoint
         self.port = port
         self.pool_size = int(pool_size)
@@ -37,6 +39,8 @@ class MemcachedBackend:
         return values
 
     async def _set(self, key, value, ttl=0, _cas_token=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         value = value.encode() if isinstance(value, str) else value
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
@@ -46,9 +50,13 @@ class MemcachedBackend:
             raise TypeError("aiomcache error: {}".format(str(e)))
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         return await self.client.cas(key, value, token, exptime=ttl or 0)
 
     async def _multi_set(self, pairs, ttl=0, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         tasks = []
         for key, value in pairs:
             value = str.encode(value) if isinstance(value, str) else value
@@ -62,6 +70,8 @@ class MemcachedBackend:
         return True
 
     async def _add(self, key, value, ttl=0, _conn=None):
+        if ttl is None:
+            ttl = self.default_ttl
         value = str.encode(value) if isinstance(value, str) else value
         try:
             ret = await self.client.add(key, value, exptime=ttl or 0)
