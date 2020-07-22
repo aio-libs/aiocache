@@ -98,7 +98,7 @@ class SimpleMemoryBackend:
 
     @classmethod
     def __delete(cls, key):
-        if cls._cache.pop(key, None):
+        if cls._cache.pop(key, None) is not None:
             handle = cls._handlers.pop(key, None)
             if handle:
                 handle.cancel()
