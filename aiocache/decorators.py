@@ -183,12 +183,20 @@ class cached_stampede(cached):
         super().__init__(**kwargs)
         self.lease = lease
 
-    async def decorator(self, f, *args, **kwargs):
+    async def decorator(self,
+        f,
+        *args,
+        cache_read=True,
+        cache_write=True,
+        aiocache_wait_for_write=True,
+        **kwargs
+    ):
         key = self.get_cache_key(f, args, kwargs)
 
-        value = await self.get_from_cache(key)
-        if value is not None:
-            return value
+        if cache_read:
+            value = await self.get_from_cache(key)
+            if value is not None:
+                return value
 
         async with RedLock(self.cache, key, self.lease):
             value = await self.get_from_cache(key)
@@ -197,7 +205,11 @@ class cached_stampede(cached):
 
             result = await f(*args, **kwargs)
 
-            await self.set_in_cache(key, result)
+            if cache_write:
+                if aiocache_wait_for_write:
+                    await self.set_in_cache(key, result)
+                else:
+                    asyncio.ensure_future(self.set_in_cache(key, result))
 
         return result
 
