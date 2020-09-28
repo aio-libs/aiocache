@@ -2,7 +2,7 @@ cov-report = true
 
 
 lint:
-	flake8
+	flake8 tests/ aiocache/
 	black -l 100 --check tests/ aiocache/
 
 format:
