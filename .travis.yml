@@ -12,30 +12,14 @@ jobs:
   include:
     - stage: syntax
       script: tox
-      python: 3.6
+      python: 3.8
       env: TOXENV=syntax
     - script: tox
-      python: 3.6
+      python: 3.8
       env: TOXENV=docs-html
 
     - stage: test
       script: tox
-      env: TOXENV=py35,codecov
-      python: 3.5
-    - script: tox
-      env: TOXENV=py35,codecov
-      python: 3.5-dev
-    - script: tox
-      env: TOXENV=py35-ujson,codecov
-      python: 3.5
-    - script: tox
-      env: TOXENV=py35-deps-lowest,codecov
-      python: 3.5
-    - script: tox
-      env: TOXENV=py35-deps-devel,codecov
-      python: 3.5
-
-    - script: tox
       env: TOXENV=py36,codecov
       python: 3.6
     - script: tox
@@ -72,9 +56,25 @@ jobs:
       dist: xenial
       sudo: true
 
+    - script: tox
+      env: TOXENV=py38,codecov
+      python: 3.8
+    - script: tox
+      env: TOXENV=py38,codecov
+      python: 3.8-dev
+    - script: tox
+      env: TOXENV=py38-ujson,codecov
+      python: 3.8
+    - script: tox
+      env: TOXENV=py38-deps-lowest,codecov
+      python: 3.8
+    - script: tox
+      env: TOXENV=py38-deps-devel,codecov
+      python: 3.8
+
     - stage: deploy
       script: skip
-      python: 3.6
+      python: 3.8
       deploy: &pypi
         provider: pypi
         user: blck
@@ -83,4 +83,4 @@ jobs:
         distributions: "sdist bdist_wheel"
         on:
           tags: true
-          python: 3.6
+          python: 3.8
