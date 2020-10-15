@@ -345,7 +345,7 @@ class multi_cached:
 
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
-        keys = args_dict[self.keys_from_attr] or []
+        keys = args_dict.get(self.keys_from_attr, []) or []
         keys = [self.key_builder(key, f, *args, **kwargs) for key in keys]
 
         args_names = f.__code__.co_varnames[: f.__code__.co_argcount]
