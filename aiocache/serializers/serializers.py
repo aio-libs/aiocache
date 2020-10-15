@@ -99,6 +99,10 @@ class PickleSerializer(BaseSerializer):
 
     DEFAULT_ENCODING = None
 
+    def __init__(self, *args, protocol=pickle.DEFAULT_PROTOCOL, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.protocol = protocol
+
     def dumps(self, value):
         """
         Serialize the received value using ``pickle.dumps``.
@@ -106,7 +110,7 @@ class PickleSerializer(BaseSerializer):
         :param value: obj
         :returns: bytes
         """
-        return pickle.dumps(value)
+        return pickle.dumps(value, protocol=self.protocol)
 
     def loads(self, value):
         """

@@ -1,4 +1,5 @@
 import pytest
+import pickle
 
 from collections import namedtuple
 from unittest import mock
@@ -70,32 +71,40 @@ class TestStringSerializer:
 
 
 class TestPickleSerializer:
-    def test_init(self):
-        serializer = PickleSerializer()
+    @pytest.fixture
+    def serializer(self):
+        yield PickleSerializer(protocol=4)
+
+    def test_init(self, serializer):
         assert isinstance(serializer, BaseSerializer)
         assert serializer.DEFAULT_ENCODING is None
         assert serializer.encoding is None
+        assert serializer.protocol == 4
+
+    def test_init_sets_default_protocol(self):
+        serializer = PickleSerializer()
+        assert serializer.protocol == pickle.DEFAULT_PROTOCOL
 
     @pytest.mark.parametrize("obj", TYPES)
-    def test_set_types(self, obj):
-        serializer = PickleSerializer()
+    def test_set_types(self, obj, serializer):
         assert serializer.loads(serializer.dumps(obj)) == obj
 
-    def test_dumps(self):
-        assert PickleSerializer().dumps("hi") == b"\x80\x03X\x02\x00\x00\x00hiq\x00."
+    def test_dumps(self, serializer):
+        assert (
+            serializer.dumps("hi") == b"\x80\x04\x95\x06\x00\x00\x00\x00\x00\x00\x00\x8c\x02hi\x94."
+        )
 
-    def test_dumps_with_none(self):
-        assert isinstance(PickleSerializer().dumps(None), bytes)
+    def test_dumps_with_none(self, serializer):
+        assert isinstance(serializer.dumps(None), bytes)
 
-    def test_loads(self):
-        assert PickleSerializer().loads(b"\x80\x03X\x02\x00\x00\x00hiq\x00.") == "hi"
+    def test_loads(self, serializer):
+        assert serializer.loads(b"\x80\x03X\x02\x00\x00\x00hiq\x00.") == "hi"
 
-    def test_loads_with_none(self):
-        assert PickleSerializer().loads(None) is None
+    def test_loads_with_none(self, serializer):
+        assert serializer.loads(None) is None
 
-    def test_dumps_and_loads(self):
+    def test_dumps_and_loads(self, serializer):
         obj = Dummy(1, 2)
-        serializer = PickleSerializer()
         assert serializer.loads(serializer.dumps(obj)) == obj
 
 
