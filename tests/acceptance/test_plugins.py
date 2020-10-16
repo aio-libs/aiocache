@@ -1,7 +1,6 @@
 import pytest
-
-from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 from aiocache.backends.memory import SimpleMemoryBackend
+from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
 
 class TestHitMissRatioPlugin:
@@ -54,6 +53,21 @@ class TestHitMissRatioPlugin:
             memory_cache.hit_miss_ratio["hit_ratio"]
             == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "key,value,namespace", [("a", 1, None), ("b", 2, "test")],
+    )
+    async def test_set_and_get(self, memory_cache, key, value, namespace):
+        memory_cache.plugins = [HitMissRatioPlugin()]
+        if namespace is None:
+            await memory_cache.set(key, value)
+            result = await memory_cache.get(key)
+            assert result == value
+        else:
+            await memory_cache.set(key, value, namespace=namespace)
+            result = await memory_cache.get(key, namespace=namespace)
+            assert result == value
 
 
 class TestTimingPlugin:
