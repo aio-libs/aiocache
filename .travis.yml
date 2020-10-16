@@ -12,30 +12,14 @@ jobs:
   include:
     - stage: syntax
       script: tox
-      python: 3.6
+      python: 3.8
       env: TOXENV=syntax
     - script: tox
-      python: 3.6
+      python: 3.8
       env: TOXENV=docs-html
 
     - stage: test
       script: tox
-      env: TOXENV=py35,codecov
-      python: 3.5
-    - script: tox
-      env: TOXENV=py35,codecov
-      python: 3.5-dev
-    - script: tox
-      env: TOXENV=py35-ujson,codecov
-      python: 3.5
-    - script: tox
-      env: TOXENV=py35-deps-lowest,codecov
-      python: 3.5
-    - script: tox
-      env: TOXENV=py35-deps-devel,codecov
-      python: 3.5
-
-    - script: tox
       env: TOXENV=py36,codecov
       python: 3.6
     - script: tox
@@ -54,27 +38,51 @@ jobs:
     - script: tox
       env: TOXENV=py37,codecov
       python: 3.7
-      dist: xenial
-      sudo: true
+    - script: tox
+      env: TOXENV=py37,codecov
+      python: 3.7-dev
     - script: tox
       env: TOXENV=py37-ujson,codecov
       python: 3.7
-      dist: xenial
-      sudo: true
     - script: tox
       env: TOXENV=py37-deps-lowest,codecov
       python: 3.7
-      dist: xenial
-      sudo: true
     - script: tox
       env: TOXENV=py37-deps-devel,codecov
       python: 3.7
-      dist: xenial
-      sudo: true
+
+    - script: tox
+      env: TOXENV=py38,codecov
+      python: 3.8
+    - script: tox
+      env: TOXENV=py38,codecov
+      python: 3.8-dev
+    - script: tox
+      env: TOXENV=py38-ujson,codecov
+      python: 3.8
+    - script: tox
+      env: TOXENV=py38-deps-lowest,codecov
+      python: 3.8
+    - script: tox
+      env: TOXENV=py38-deps-devel,codecov
+      python: 3.8
+
+    - script: tox
+      env: TOXENV=py39,codecov
+      python: 3.9-dev
+    - script: tox
+      env: TOXENV=py39-ujson,codecov
+      python: 3.9-dev
+    - script: tox
+      env: TOXENV=py39-deps-lowest,codecov
+      python: 3.9-dev
+    - script: tox
+      env: TOXENV=py39-deps-devel,codecov
+      python: 3.9-dev
 
     - stage: deploy
       script: skip
-      python: 3.6
+      python: 3.8
       deploy: &pypi
         provider: pypi
         user: blck
@@ -83,4 +91,4 @@ jobs:
         distributions: "sdist bdist_wheel"
         on:
           tags: true
-          python: 3.6
+          python: 3.8
