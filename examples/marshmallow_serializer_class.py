@@ -31,16 +31,8 @@ class MarshmallowSerializer(Schema, BaseSerializer):
     # BaseSerializer.__init__
     encoding = 'utf-8'
 
-    def dumps(self, *args, **kwargs):
-        # dumps returns (data, errors), we just want to save data
-        return super().dumps(*args, **kwargs).data
-
-    def loads(self, *args, **kwargs):
-        # dumps returns (data, errors), we just want to return data
-        return super().loads(*args, **kwargs).data
-
     @post_load
-    def build_my_type(self, data):
+    def build_my_type(self, data,  **kwargs):
         return RandomModel(**data)
 
     class Meta:

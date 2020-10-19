@@ -6,13 +6,14 @@ logger = logging.getLogger(__name__)
 try:
     import ujson as json
 except ImportError:
-    logger.warning("ujson module not found, using json")
+    logger.debug("ujson module not found, using json")
     import json
 
 try:
     import msgpack
 except ImportError:
-    logger.warning("msgpack not installed, MsgPackSerializer unavailable")
+    msgpack = None
+    logger.debug("msgpack not installed, MsgPackSerializer unavailable")
 
 
 _NOT_SET = object()
@@ -98,6 +99,10 @@ class PickleSerializer(BaseSerializer):
 
     DEFAULT_ENCODING = None
 
+    def __init__(self, *args, protocol=pickle.DEFAULT_PROTOCOL, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.protocol = protocol
+
     def dumps(self, value):
         """
         Serialize the received value using ``pickle.dumps``.
@@ -105,7 +110,7 @@ class PickleSerializer(BaseSerializer):
         :param value: obj
         :returns: bytes
         """
-        return pickle.dumps(value)
+        return pickle.dumps(value, protocol=self.protocol)
 
     def loads(self, value):
         """
@@ -163,6 +168,8 @@ class MsgPackSerializer(BaseSerializer):
     """
 
     def __init__(self, *args, use_list=True, **kwargs):
+        if not msgpack:
+            raise RuntimeError("msgpack not installed, MsgPackSerializer unavailable")
         self.use_list = use_list
         super().__init__(*args, **kwargs)
 

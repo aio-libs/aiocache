@@ -98,7 +98,7 @@ class SimpleMemoryBackend:
 
     @classmethod
     def __delete(cls, key):
-        if cls._cache.pop(key, None):
+        if cls._cache.pop(key, None) is not None:
             handle = cls._handlers.pop(key, None)
             if handle:
                 handle.cancel()
@@ -110,7 +110,7 @@ class SimpleMemoryBackend:
 class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     """
     Memory cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.JsonSerializer`
+        - serializer: :class:`aiocache.serializers.NullSerializer`
         - plugins: None
 
     Config options are:

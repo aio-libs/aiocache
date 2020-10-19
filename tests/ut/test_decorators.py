@@ -414,8 +414,7 @@ class TestMultiCached:
         assert decorator.get_cache_keys(stub_dict, (), {"keys": []}) == ([], [], -1)
 
     def test_get_cache_keys_missing_kwarg(self, decorator):
-        with pytest.raises(KeyError):
-            assert decorator.get_cache_keys(stub_dict, (), {})
+        assert decorator.get_cache_keys(stub_dict, (), {}) == ([], [], -1)
 
     def test_get_cache_keys_arg_key_from_attr(self, decorator):
         def fake(keys, a=1, b=2):
