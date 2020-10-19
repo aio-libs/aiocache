@@ -161,6 +161,20 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.pop.assert_called_with(pytest.KEY, None)
 
     @pytest.mark.asyncio
+    async def test_delete_non_truthy(self, memory):
+        non_truthy = MagicMock()
+        non_truthy.__bool__.side_effect = ValueError("Does not implement truthiness")
+
+        with pytest.raises(ValueError):
+            bool(non_truthy)
+
+        SimpleMemoryBackend._cache.pop.return_value = non_truthy
+        await memory._delete(pytest.KEY)
+
+        assert non_truthy.__bool__.call_count == 1
+        SimpleMemoryBackend._cache.pop.assert_called_with(pytest.KEY, None)
+
+    @pytest.mark.asyncio
     async def test_clear_namespace(self, memory):
         SimpleMemoryBackend._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
         await memory._clear("nm")
