@@ -1,4 +1,5 @@
 import pytest
+
 from aiocache.backends.memory import SimpleMemoryBackend
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
@@ -55,19 +56,14 @@ class TestHitMissRatioPlugin:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "key,value,namespace", [("a", 1, None), ("b", 2, "test")],
-    )
-    async def test_set_and_get(self, memory_cache, key, value, namespace):
+    async def test_set_and_get_using_namespace(self, memory_cache):
         memory_cache.plugins = [HitMissRatioPlugin()]
-        if namespace is None:
-            await memory_cache.set(key, value)
-            result = await memory_cache.get(key)
-            assert result == value
-        else:
-            await memory_cache.set(key, value, namespace=namespace)
-            result = await memory_cache.get(key, namespace=namespace)
-            assert result == value
+        key = "A"
+        namespace = "test"
+        value = 1
+        await memory_cache.set(key, value, namespace=namespace)
+        result = await memory_cache.get(key, namespace=namespace)
+        assert result == value
 
 
 class TestTimingPlugin:
