@@ -22,7 +22,7 @@ setup(
     name='aiocache',
     version=version,
     author='Manuel Miranda',
-    url='https://github.com/argaen/aiocache',
+    url='https://github.com/aio-libs/aiocache',
     author_email='manu.mirandad@gmail.com',
     description='multi backend asyncio cache',
     long_description=readme,
