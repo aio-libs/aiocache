@@ -431,6 +431,14 @@ class BaseCache:
         return ret
 
     async def _clear(self, namespace, _conn=None):
+        """
+        Clears the cache according to each type's implementation.
+        WARNING: if no namespace is specified when `clear` is called or when the cache instance
+        is created, it will clear all the namespaces in the cache and all nodes in Redis.
+
+        :param namespace: cache namespace to clear
+        raises: :`NotImplementedError` if the cache type does not implement this method
+        """
         raise NotImplementedError()
 
     @API.register
