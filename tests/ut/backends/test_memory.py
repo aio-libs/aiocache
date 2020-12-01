@@ -187,8 +187,8 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._handlers = "asdad"
         SimpleMemoryBackend._cache = "asdad"
         await memory._clear()
-        SimpleMemoryBackend._handlers = {}
-        SimpleMemoryBackend._cache = {}
+        assert {} == SimpleMemoryBackend._handlers
+        assert {} == SimpleMemoryBackend._cache
 
     @pytest.mark.asyncio
     async def test_raw(self, memory):
@@ -225,3 +225,21 @@ class TestSimpleMemoryCache:
 
     def test_parse_uri_path(self):
         assert SimpleMemoryCache().parse_uri_path("/1/2/3") == {}
+
+    @pytest.mark.asyncio
+    async def test_clear_cache_self_namespace(self):
+        namespace_a = "a"
+        namespace_b = "b"
+        cache_a = SimpleMemoryCache(namespace=namespace_a)
+        cache_b = SimpleMemoryCache(namespace=namespace_b)
+
+        await cache_a.set("foo", "bar")
+        val = await cache_a.get("foo")
+        assert "bar" == val
+
+        await cache_b.clear()
+        for key in cache_b._cache.keys():
+            assert not key.startswith(namespace_b)
+
+        for key in cache_a._cache.keys():
+            assert key.startswith(namespace_a)

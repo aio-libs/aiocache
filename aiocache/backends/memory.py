@@ -78,9 +78,10 @@ class SimpleMemoryBackend:
         return self.__delete(key)
 
     async def _clear(self, namespace=None, _conn=None):
-        if namespace:
+        ns = namespace or self.namespace
+        if ns:
             for key in list(SimpleMemoryBackend._cache):
-                if key.startswith(namespace):
+                if key.startswith(ns):
                     self.__delete(key)
         else:
             SimpleMemoryBackend._cache = {}

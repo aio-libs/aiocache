@@ -42,3 +42,4 @@ release: test _release
 
 changelog:
 	gitchangelog
+
