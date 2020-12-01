@@ -182,8 +182,9 @@ class RedisBackend:
 
     @conn
     async def _clear(self, namespace=None, _conn=None):
-        if namespace:
-            keys = await _conn.keys("{}:*".format(namespace))
+        ns = namespace or self.namespace
+        if ns:
+            keys = await _conn.keys("{}:*".format(ns))
             if keys:
                 await _conn.delete(*keys)
         else:
