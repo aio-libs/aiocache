@@ -389,3 +389,6 @@ class TestRedisCache:
 
         await cache_b.clear()
         cache_b._pool._conn.keys.assert_called_once_with("{}:*".format(namespace_b))
+
+        with pytest.raises(AssertionError):
+            cache_a._pool._conn.keys.assert_called_once_with("{}:*".format(namespace_a))

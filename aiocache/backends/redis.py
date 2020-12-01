@@ -77,6 +77,7 @@ class RedisBackend:
         self.__pool_lock = None
         self._loop = loop
         self._pool = None
+        self.namespace = kwargs.get("namespace")
 
     @property
     def _pool_lock(self):
@@ -182,9 +183,9 @@ class RedisBackend:
 
     @conn
     async def _clear(self, namespace=None, _conn=None):
-        ns = namespace or self.namespace
-        if ns:
-            keys = await _conn.keys("{}:*".format(ns))
+        namespace = namespace or self.namespace
+        if namespace:
+            keys = await _conn.keys("{}:*".format(namespace))
             if keys:
                 await _conn.delete(*keys)
         else:

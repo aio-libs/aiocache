@@ -187,8 +187,8 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._handlers = "asdad"
         SimpleMemoryBackend._cache = "asdad"
         await memory._clear()
-        assert {} == SimpleMemoryBackend._handlers
-        assert {} == SimpleMemoryBackend._cache
+        assert SimpleMemoryBackend._handlers == {}
+        assert SimpleMemoryBackend._cache == {}
 
     @pytest.mark.asyncio
     async def test_raw(self, memory):
@@ -234,8 +234,6 @@ class TestSimpleMemoryCache:
         cache_b = SimpleMemoryCache(namespace=namespace_b)
 
         await cache_a.set("foo", "bar")
-        val = await cache_a.get("foo")
-        assert "bar" == val
 
         await cache_b.clear()
         for key in cache_b._cache.keys():
