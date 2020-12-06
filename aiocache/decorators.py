@@ -325,8 +325,9 @@ class multi_cached:
         else:
             kwargs[self.keys_from_attr] = missing_keys
 
-        result = await f(*new_args, **kwargs)
-        result.update(partial)
+        result = partial
+        new_items = await f(*new_args, **kwargs)
+        result.update(new_items)
 
         if cache_write:
             if aiocache_wait_for_write:
