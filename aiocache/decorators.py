@@ -334,7 +334,7 @@ class multi_cached:
             else:
                 asyncio.ensure_future(self.set_in_cache(result, f, args, kwargs))
 
-        return result
+        return {key: value for key, value in result.items() if key in keys}
 
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
