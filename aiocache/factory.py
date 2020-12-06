@@ -59,6 +59,7 @@ class Cache:
     MEMORY = AIOCACHE_CACHES["memory"]
     REDIS = AIOCACHE_CACHES.get("redis")
     MEMCACHED = AIOCACHE_CACHES.get("memcached")
+    SQLITE = AIOCACHE_CACHES.get("sqlite")
 
     def __new__(cls, cache_class=MEMORY, **kwargs):
         try:
