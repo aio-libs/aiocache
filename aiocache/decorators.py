@@ -328,7 +328,7 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
-        if cache_write:
+        if result and cache_write:
             if aiocache_wait_for_write:
                 await self.set_in_cache(result, f, args, kwargs)
             else:
