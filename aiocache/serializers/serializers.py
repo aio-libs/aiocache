@@ -137,7 +137,8 @@ class PickleSerializer(BaseSerializer):
         """
         if value is None:
             return None
-        return pickle.loads(restricted_loads(value))
+        restricted_loads(value)
+        return pickle.loads(value)
 
 
 class JsonSerializer(BaseSerializer):
