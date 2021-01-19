@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from unittest.mock import MagicMock, ANY, patch
+from unittest.mock import MagicMock, ANY, patch, call
 
 from aiocache import SimpleMemoryCache
 from aiocache.base import BaseCache
@@ -187,8 +187,8 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._handlers = "asdad"
         SimpleMemoryBackend._cache = "asdad"
         await memory._clear()
-        SimpleMemoryBackend._handlers = {}
-        SimpleMemoryBackend._cache = {}
+        assert SimpleMemoryBackend._handlers == {}
+        assert SimpleMemoryBackend._cache == {}
 
     @pytest.mark.asyncio
     async def test_raw(self, memory):
@@ -211,6 +211,22 @@ class TestSimpleMemoryBackend:
         assert await memory._redlock_release(pytest.KEY, "lock") == 0
         SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
         assert SimpleMemoryBackend._cache.pop.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_clear_cache_wipes_desired_namespaces_cache(self, memory):
+        namespace_a = "a"
+        namespace_b = "b"
+        cache_a = SimpleMemoryBackend()
+        cache_a.namespace = namespace_a
+        cache_b = SimpleMemoryBackend()
+        cache_b.namespace = namespace_b
+
+        cache_a._cache.__iter__.return_value = iter([f"{namespace_a}key_a"])
+        cache_b._cache.__iter__.return_value = iter([f"{namespace_b}key_b"])
+
+        await cache_b._clear(namespace_b)
+        cache_b._cache.pop.assert_called_once_with("bkey_b", None)
+        assert call("akey_a", None) not in cache_a._cache.pop.call_args_list
 
 
 class TestSimpleMemoryCache:

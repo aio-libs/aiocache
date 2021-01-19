@@ -1,3 +1,5 @@
+from unittest.mock import call
+
 import pytest
 import aioredis
 
@@ -323,6 +325,17 @@ class TestRedisBackend:
         redis._pool = None
         await redis._close()
         assert redis_pool.clear.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_clear_redis_cache_wipes_self_namespace_cache(self, redis, redis_connection):
+        namespace_a = "a"
+        namespace_b = "b"
+        redis.namespace = namespace_b
+        redis_connection.keys.return_value = [f"{namespace_b}:key_b"]
+
+        await redis._clear()
+        redis_connection.delete.assert_called_with(f"{namespace_b}:key_b")
+        assert call(f"{namespace_a}:key_a", None) not in redis_connection.delete.call_args_list
 
 
 class TestConn:

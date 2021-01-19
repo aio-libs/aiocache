@@ -14,6 +14,7 @@ class SimpleMemoryBackend:
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.namespace = kwargs.get("namespace")
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         return SimpleMemoryBackend._cache.get(key)
@@ -78,6 +79,7 @@ class SimpleMemoryBackend:
         return self.__delete(key)
 
     async def _clear(self, namespace=None, _conn=None):
+        namespace = namespace or self.namespace
         if namespace:
             for key in list(SimpleMemoryBackend._cache):
                 if key.startswith(namespace):
