@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from unittest.mock import MagicMock, ANY, patch
+from unittest.mock import MagicMock, ANY, patch, call
 
 from aiocache import SimpleMemoryCache
 from aiocache.base import BaseCache
@@ -212,6 +212,22 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.get.assert_called_with(pytest.KEY)
         assert SimpleMemoryBackend._cache.pop.call_count == 0
 
+    @pytest.mark.asyncio
+    async def test_clear_cache_wipes_desired_namespaces_cache(self, memory):
+        namespace_a = "a"
+        namespace_b = "b"
+        cache_a = SimpleMemoryBackend()
+        cache_a.namespace = namespace_a
+        cache_b = SimpleMemoryBackend()
+        cache_b.namespace = namespace_b
+
+        cache_a._cache.__iter__.return_value = iter([f"{namespace_a}key_a"])
+        cache_b._cache.__iter__.return_value = iter([f"{namespace_b}key_b"])
+
+        await cache_b._clear(namespace_b)
+        cache_b._cache.pop.assert_called_once_with("bkey_b", None)
+        assert call("akey_a", None) not in cache_a._cache.pop.call_args_list
+
 
 class TestSimpleMemoryCache:
     def test_name(self):
@@ -225,19 +241,3 @@ class TestSimpleMemoryCache:
 
     def test_parse_uri_path(self):
         assert SimpleMemoryCache().parse_uri_path("/1/2/3") == {}
-
-    @pytest.mark.asyncio
-    async def test_clear_cache_self_namespace(self):
-        namespace_a = "a"
-        namespace_b = "b"
-        cache_a = SimpleMemoryCache(namespace=namespace_a)
-        cache_b = SimpleMemoryCache(namespace=namespace_b)
-
-        await cache_a.set("foo", "bar")
-
-        await cache_b.clear()
-        for key in cache_b._cache.keys():
-            assert not key.startswith(namespace_b)
-
-        for key in cache_a._cache.keys():
-            assert key.startswith(namespace_a)

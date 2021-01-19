@@ -377,18 +377,3 @@ class TestRedisCache:
 
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache.build_key(pytest.KEY, namespace=None) == pytest.KEY
-
-    @pytest.mark.asyncio
-    async def test_clear_cache_self_namespace(self, redis_pool):
-        namespace_a = "a"
-        namespace_b = "b"
-        cache_a = RedisCache(namespace=namespace_a)
-        cache_a._pool = redis_pool
-        cache_b = RedisCache(namespace=namespace_b)
-        cache_b._pool = redis_pool
-
-        await cache_b.clear()
-        cache_b._pool._conn.keys.assert_called_once_with("{}:*".format(namespace_b))
-
-        with pytest.raises(AssertionError):
-            cache_a._pool._conn.keys.assert_called_once_with("{}:*".format(namespace_a))
