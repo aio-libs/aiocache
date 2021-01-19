@@ -291,16 +291,15 @@ class TestRedisCache:
     async def test_clear_only_wipes_relevant_namespace_redis(self):
         namespace_a = "a"
         namespace_b = "b"
-        cache_a = RedisCache(namespace=namespace_a)
-        cache_b = RedisCache(namespace=namespace_b)
+        redis_cache = RedisCache()
 
-        await cache_a.set("a", 1)
-        await cache_b.set("b", 2)
+        await redis_cache.set("a", 1, namespace=namespace_a)
+        await redis_cache.set("b", 2, namespace=namespace_b)
 
-        await cache_b.clear()
+        await redis_cache.clear(namespace=namespace_b)
 
-        assert await cache_a.exists("a") is True
-        assert await cache_b.exists("b") is False
+        assert await redis_cache.exists("a", namespace=namespace_a) is True
+        assert await redis_cache.exists("b", namespace=namespace_b) is False
 
     @pytest.mark.asyncio
     async def test_close(self, redis_cache):
