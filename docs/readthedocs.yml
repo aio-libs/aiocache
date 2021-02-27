@@ -11,3 +11,4 @@ python:
     - redis
     - memcached
     - msgpack
+    - dill
