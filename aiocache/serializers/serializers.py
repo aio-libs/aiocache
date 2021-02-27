@@ -15,6 +15,12 @@ except ImportError:
     msgpack = None
     logger.debug("msgpack not installed, MsgPackSerializer unavailable")
 
+try:
+    import dill
+except ImportError:
+    dill = None
+    logger.debug("dill not installed, DillSerializer unavailable")
+
 
 _NOT_SET = object()
 
@@ -193,3 +199,35 @@ class MsgPackSerializer(BaseSerializer):
         if value is None:
             return None
         return msgpack.loads(value, raw=raw, use_list=self.use_list)
+
+
+class DillSerializer(BaseSerializer):
+    """
+    Transform data to bytes using dill.dumps and dill.loads to retrieve it back.
+    """
+
+    DEFAULT_ENCODING = None
+
+    def __init__(self, *args, protocol=dill.DEFAULT_PROTOCOL, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.protocol = protocol
+
+    def dumps(self, value):
+        """
+        Serialize the received value using ``dill.dumps``.
+
+        :param value: obj
+        :returns: bytes
+        """
+        return dill.dumps(value, protocol=self.protocol)
+
+    def loads(self, value):
+        """
+        Deserialize value using ``dill.loads``.
+
+        :param value: bytes
+        :returns: obj
+        """
+        if value is None:
+            return None
+        return dill.loads(value)

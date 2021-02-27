@@ -20,6 +20,14 @@ else:
 
     del msgpack
 
+try:
+    import dill
+except ImportError:
+    logger.debug("dill not installed, DillSerializer unavailable")
+else:
+    from .serializers import DillSerializer
+
+    del dill
 
 __all__ = [
     "BaseSerializer",
@@ -28,4 +36,5 @@ __all__ = [
     "PickleSerializer",
     "JsonSerializer",
     "MsgPackSerializer",
+    "DillSerializer",
 ]
