@@ -200,6 +200,15 @@ class TestCached:
         assert await decorator.set_in_cache("key", "value") is None
 
     @pytest.mark.asyncio
+    async def test_set_uses_dynamic_ttl_coroutine(self, decorator, decorator_call):
+        async def get_ttl():
+            return 2
+
+        decorator.dynamic_ttl_coroutine = get_ttl
+        await decorator.set_in_cache("key", "value")
+        decorator.cache.set.assert_called_with("key", "value", 2)
+
+    @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
         mock_cache.get = CoroutineMock(return_value=None)
         with patch("aiocache.decorators._get_cache", return_value=mock_cache):
