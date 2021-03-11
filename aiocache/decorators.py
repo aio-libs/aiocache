@@ -51,6 +51,8 @@ class cached:
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
+    :param dynamic_ttl_coroutine: coroutine that you want to run to obtain dynamic ttl value,
+        has to return integer value
     """
 
     def __init__(
@@ -63,6 +65,7 @@ class cached:
         plugins=None,
         alias=None,
         noself=False,
+        dynamic_ttl_coroutine=None,
         **kwargs
     ):
         self.ttl = ttl
@@ -71,6 +74,7 @@ class cached:
         self.noself = noself
         self.alias = alias
         self.cache = None
+        self.dynamic_ttl_coroutine = dynamic_ttl_coroutine
 
         self._cache = cache
         self._serializer = serializer
@@ -99,7 +103,6 @@ class cached:
         self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
     ):
         key = self.get_cache_key(f, args, kwargs)
-
         if cache_read:
             value = await self.get_from_cache(key)
             if value is not None:
@@ -141,7 +144,11 @@ class cached:
 
     async def set_in_cache(self, key, value):
         try:
-            await self.cache.set(key, value, ttl=self.ttl)
+            if self.dynamic_ttl_coroutine:
+                ttl = await self.dynamic_ttl_coroutine()
+            else:
+                ttl = self.ttl
+            await self.cache.set(key, value, ttl=ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
