@@ -208,7 +208,6 @@ class TestCached:
         await decorator.set_in_cache("key", "value")
         decorator.cache.set.assert_called_with("key", "value", 2)
 
-
     @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
         mock_cache.get = CoroutineMock(return_value=None)
