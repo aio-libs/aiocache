@@ -1,6 +1,8 @@
 import logging
 import pickle
 
+import orjson as orjson
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -154,6 +156,33 @@ class JsonSerializer(BaseSerializer):
         if value is None:
             return None
         return json.loads(value)
+
+
+class ORJsonSerializer(BaseSerializer):
+    """
+    Transform data to json string with orjson.dumps and orjson.loads to retrieve it back. Check
+    https://github.com/ijl/orjson#types for how types are converted.
+    """
+
+    def dumps(self, value):
+        """
+        Serialize the received value using ``orjson.dumps``.
+
+        :param value: dict
+        :returns: str
+        """
+        return orjson.dumps(value)
+
+    def loads(self, value):
+        """
+        Deserialize value using ``orjson.loads``.
+
+        :param value: str
+        :returns: output of ``orjson.loads``.
+        """
+        if value is None:
+            return None
+        return orjson.loads(value)
 
 
 class MsgPackSerializer(BaseSerializer):

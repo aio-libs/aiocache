@@ -1,3 +1,4 @@
+import orjson
 import pytest
 import random
 
@@ -18,6 +19,7 @@ from aiocache.serializers import (
     StringSerializer,
     PickleSerializer,
     JsonSerializer,
+    ORJsonSerializer,
 )
 
 
@@ -137,6 +139,32 @@ class TestJsonSerializer:
         cache.serializer = JsonSerializer()
         assert await cache.multi_set([(pytest.KEY, obj)]) is True
         assert await cache.multi_get([pytest.KEY]) == [json.loads(json.dumps(obj))]
+
+
+class TestORJsonSerializer:
+
+    TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
+
+    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.asyncio
+    async def test_set_get_types(self, cache, obj):
+        cache.serializer = ORJsonSerializer()
+        assert await cache.set(pytest.KEY, obj) is True
+        assert await cache.get(pytest.KEY) == orjson.loads(orjson.dumps(obj))
+
+    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.asyncio
+    async def test_add_get_types(self, cache, obj):
+        cache.serializer = ORJsonSerializer()
+        assert await cache.add(pytest.KEY, obj) is True
+        assert await cache.get(pytest.KEY) == orjson.loads(orjson.dumps(obj))
+
+    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.asyncio
+    async def test_multi_set_multi_get_types(self, cache, obj):
+        cache.serializer = ORJsonSerializer()
+        assert await cache.multi_set([(pytest.KEY, obj)]) is True
+        assert await cache.multi_get([pytest.KEY]) == [orjson.loads(orjson.dumps(obj))]
 
 
 class TestPickleSerializer:

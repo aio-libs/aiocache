@@ -10,6 +10,7 @@ from aiocache.serializers import (
     StringSerializer,
     PickleSerializer,
     JsonSerializer,
+    ORJsonSerializer,
     MsgPackSerializer,
 )
 
@@ -138,6 +139,36 @@ class TestJsonSerializer:
     def test_dumps_and_loads(self):
         obj = {"hi": 1}
         serializer = JsonSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+
+class TestORJsonSerializer:
+    def test_init(self):
+        serializer = ORJsonSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
+
+    @pytest.mark.parametrize("obj", JSON_TYPES)
+    def test_set_types(self, obj):
+        serializer = ORJsonSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+    def test_dumps(self):
+        assert ORJsonSerializer().dumps({"hi": 1}) == b'{"hi":1}'
+
+    def test_dumps_with_none(self):
+        assert ORJsonSerializer().dumps(None) == b"null"
+
+    def test_loads_with_null(self):
+        assert ORJsonSerializer().loads("null") is None
+
+    def test_loads_with_none(self):
+        assert ORJsonSerializer().loads(None) is None
+
+    def test_dumps_and_loads(self):
+        obj = {"hi": 1}
+        serializer = ORJsonSerializer()
         assert serializer.loads(serializer.dumps(obj)) == obj
 
 
