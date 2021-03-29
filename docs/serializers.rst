@@ -46,6 +46,14 @@ JsonSerializer
 .. autoclass:: aiocache.serializers.JsonSerializer
   :members:
 
+..  _orjsonserializer:
+
+ORJsonSerializer
+--------------
+
+.. autoclass:: aiocache.serializers.ORJsonSerializer
+  :members:
+
 ..  _msgpackserializer:
 
 MsgPackSerializer
