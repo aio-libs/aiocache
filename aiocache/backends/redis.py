@@ -161,7 +161,7 @@ class RedisBackend:
     @conn
     async def _exists(self, key, _conn=None):
         exists = await _conn.exists(key)
-        return True if exists > 0 else False
+        return exists > 0
 
     @conn
     async def _increment(self, key, delta, _conn=None):
