@@ -35,12 +35,6 @@ class MyTypeSchema(Schema, BaseSerializer):
     r = fields.Integer()
     encoding = "utf-8"
 
-    def dumps(self, *args, **kwargs):
-        return super().dumps(*args, **kwargs)
-
-    def loads(self, *args, **kwargs):
-        return super().loads(*args, **kwargs)
-
     @post_load
     def build_my_type(self, data, **kwargs):
         return MyType(**data)

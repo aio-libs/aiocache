@@ -99,8 +99,7 @@ class MemcachedBackend:
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
             raise ValueError("MemcachedBackend doesnt support flushing by namespace")
-        else:
-            await self.client.flush_all()
+        await self.client.flush_all()
         return True
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):

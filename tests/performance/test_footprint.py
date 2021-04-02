@@ -50,7 +50,7 @@ class TestRedis:
         for n in range(N):
             start = time.time()
             with await aioredis_pool as redis:
-                await redis.mset(*[x for x in values * 2])
+                await redis.mset(*list(values * 2))
             with await aioredis_pool as redis:
                 await redis.mget(*values)
             for k in values:

@@ -62,7 +62,8 @@ class Cache:
 
     def __new__(cls, cache_class=MEMORY, **kwargs):
         try:
-            assert issubclass(cache_class, BaseCache)
+            if not issubclass(cache_class, BaseCache):
+                raise AssertionError
         except AssertionError as e:
             raise InvalidCacheType(
                 "Invalid cache type, you can only use {}".format(list(AIOCACHE_CACHES.keys()))

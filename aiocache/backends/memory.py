@@ -12,9 +12,6 @@ class SimpleMemoryBackend:
     _cache = {}
     _handlers = {}
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     async def _get(self, key, encoding="utf-8", _conn=None):
         return SimpleMemoryBackend._cache.get(key)
 

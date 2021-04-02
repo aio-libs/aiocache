@@ -189,7 +189,7 @@ class MsgPackSerializer(BaseSerializer):
         :param value: bytes
         :returns: obj
         """
-        raw = False if self.encoding == "utf-8" else True
+        raw = not self.encoding == "utf-8"
         if value is None:
             return None
         return msgpack.loads(value, raw=raw, use_list=self.use_list)
