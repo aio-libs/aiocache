@@ -106,6 +106,8 @@ class cached:
         key = self.get_cache_key(f, args, kwargs)
 
         bypass = kwargs.pop(self.bypass_kwarg, False)
+        if "refresh" not in inspect.signature(f).parameters:
+            kwargs.pop("refresh", None)
 
         if cache_read and not bypass:
             value = await self.get_from_cache(key)
