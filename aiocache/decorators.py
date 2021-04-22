@@ -51,6 +51,9 @@ class cached:
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
+    :param bypass_kwargs: str the keyword argument containing a bool you want to pass to the decorated 
+        function to bypass the cache. For example, if ``bypass_kwargs='refresh'``, you can call
+        ``decorated_function(..., refresh=True, ...)`` to bypass the cache.
     """
 
     def __init__(
@@ -63,6 +66,7 @@ class cached:
         plugins=None,
         alias=None,
         noself=False,
+        bypass_kwargs=None,
         **kwargs
     ):
         self.ttl = ttl
@@ -71,6 +75,7 @@ class cached:
         self.noself = noself
         self.alias = alias
         self.cache = None
+        self.bypass_kwargs = bypass_kwargs
 
         self._cache = cache
         self._serializer = serializer
@@ -100,7 +105,9 @@ class cached:
     ):
         key = self.get_cache_key(f, args, kwargs)
 
-        if cache_read:
+        bypass = kwargs.pop(self.bypass_kwarg, False)
+
+        if cache_read and not bypass:
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
