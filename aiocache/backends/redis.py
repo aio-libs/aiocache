@@ -62,7 +62,7 @@ class RedisBackend:
         pool_max_size=10,
         loop=None,
         create_connection_timeout=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.endpoint = endpoint
