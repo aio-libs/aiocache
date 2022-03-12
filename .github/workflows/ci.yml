@@ -57,7 +57,7 @@ jobs:
         pyver: ['3.7', '3.8', '3.9']
         os: [ubuntu, macos, windows]
         ujson: ['Y', '']
-        redis: ''
+        redis: ['']
     services:
       redis:
         image: redis:${{ matrix.redis }}
