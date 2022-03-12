@@ -58,6 +58,12 @@ jobs:
         os: [ubuntu, macos, windows]
         ujson: ['Y', '']
         redis: ['']
+        include:
+          - pyver: pypy-3.8
+            os: ubuntu
+          - os: ubuntu
+            pyver: '3.9'
+            redis: '5.0.14'
     services:
       redis:
         image: redis:${{ matrix.redis }}
