@@ -159,4 +159,3 @@ jobs:
        dist_dir: dist
        fix_issue_regex: "`#(\\d+) <https://github.com/aio-libs/aiocache/issues/\\1>`"
        fix_issue_repl: "(#\\1)"
-
