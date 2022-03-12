@@ -31,7 +31,7 @@ jobs:
         restore-keys: |
             pip-lint-
     - name: Pre-Commit hooks
-      uses: pre-commit/action@v2
+      uses: pre-commit/action@v2.0.3
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v3
       with:
