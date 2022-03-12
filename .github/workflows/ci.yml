@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - master
-    tags:
-      - '*'
+      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.6
+    tags: [ 'v*' ]
   pull_request:
     branches:
       - master
+      - '[0-9].[0-9]+'
 
 jobs:
   lint:
@@ -22,30 +23,47 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Install flake8 and black
-      run: pip install flake8 black
+    - name: Cache PyPI
+      uses: actions/cache@v2
+      with:
+        key: pip-lint-${{ hashFiles('requirements-dev.txt') }}
+        path: ~/.cache/pip
+        restore-keys: |
+            pip-lint-
+    - name: Pre-Commit hooks
+      uses: pre-commit/action@v2.0.0
+    - name: Install dependencies
+      uses: py-actions/py-dependency-install@v3.0.0
+      with:
+        path: requirements-dev.txt
+    - name: Install itself
+      run: |
+        pip install .
     - name: Run linter
       run: |
         make lint
     - name: Prepare twine checker
       run: |
-        pip install -U twine wheel
-        python setup.py sdist bdist_wheel
+        pip install -U build twine wheel
+        python -m build
     - name: Run twine checker
       run: |
         twine check dist/*
 
   test:
-    name: Test ${{ matrix.pyver }} redis ${{ matrix.redis }} memcached ${{ matrix.memcached }} ${{ matrix.ujson }}
-    needs: lint
+    name: Test
     strategy:
       matrix:
-        os: [ubuntu-20.04]
-        pyver: ["3.6", "3.7", "3.8", "3.9"]
-        ujson: ["ujson", "no-ujson"]
-        redis: ["5.0.14", "6.2.6"]
-        memcached: ["1.6.14"]
-      fail-fast: false
+        pyver: ['3.7', '3.8', '3.9']
+        os: [ubuntu, macos, windows]
+        ujson: ['Y', '']
+        redis: ''
+        include:
+          - pyver: pypy-3.8
+            os: ubuntu
+          - os: ubuntu
+            pyver: '3.9'
+            redis: '5.0.14'
     services:
       redis:
         image: redis:${{ matrix.redis }}
@@ -57,39 +75,63 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       memcached:
-        image: memcached:${{ matrix.memcached }}
+        image: memcached
         ports:
         - 11211:11211
-    runs-on: ${{ matrix.os }}
-    env:
-      OS: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+    timeout-minutes: 15
     steps:
     - name: Checkout
-      uses: actions/checkout@v2.4.0
+      uses: actions/checkout@v2
     - name: Setup Python ${{ matrix.pyver }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.pyver }}
-    - name: Install ujson
-      if: ${{ matrix.ujson == 'ujson' }}
-      run: pip install ujson
-    - name: Install self and test dependencies
-      run: python -m pip install -e ".[dev,redis,memcached,msgpack]"
-    - name: Run unit tests
+    - name: Get pip cache dir
+      id: pip-cache
       run: |
-        coverage run -m pytest tests/ut
-        coverage combine
-        coverage xml
-    - name: Run acceptance tests
-      run: pytest -sv tests/acceptance
+        echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
+    - name: Cache PyPI
+      uses: actions/cache@v2
+      with:
+        key: pip-ci-${{ runner.os }}-${{ matrix.pyver }}-${{ matrix.ujson }}-${{ hashFiles('requirements-dev.txt') }}
+        path: ${{ steps.pip-cache.outputs.dir }}
+        restore-keys: |
+            pip-ci-${{ runner.os }}-${{ matrix.pyver }}-${{ matrix.ujson }}-
+    - name: Install ujson
+      if: ${{ matrix.ujson == 'Y' }}
+      run: pip install ujson
+    - name: Install dependencies
+      uses: py-actions/py-dependency-install@v3
+      with:
+        path: requirements-dev.txt
+    - name: Run unittests
+      env:
+        COLOR: 'yes'
+      run: |
+        pytest tests
+        python -m coverage xml
     - name: Run functional tests
       run: bash examples/run_all.sh
     - name: Upload coverage
-      uses: codecov/codecov-action@v2.1.0
+      uses: codecov/codecov-action@v2
       with:
         file: ./coverage.xml
         flags: unit
         fail_ci_if_error: false
+
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+
+    needs: [lint, test]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}
 
   deploy:
    name: Deploy
@@ -99,20 +141,21 @@ jobs:
    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
    steps:
    - name: Checkout
-     uses: actions/checkout@v2.4.0
-   - name: Setup Python 3.9
-     uses: actions/setup-python@v2
-     with:
-       python-version: "3.9"
-   - name: Install dependencies
-     run:
-       python -m pip install -U pip wheel twine
-   - name: Make dists
-     run:
-       python setup.py sdist bdist_wheel
-   - name: PyPI upload
-     env:
-       TWINE_USERNAME: __token__
-       TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+     uses: actions/checkout@v2
+   - name: Update pip, wheel, setuptools, build, twine
      run: |
-       twine upload dist/*
+       python -m pip install -U pip wheel setuptools build twine
+   - name: Build dists
+     run: |
+       python -m build
+   - name: Make Release
+     uses: aio-libs/create-release@v1
+     with:
+       changes_file: CHANGES.txt
+       name: aiocache
+       version_file: aiocache/__init__.py
+       github_token: ${{ secrets.GITHUB_TOKEN }}
+       pypi_token: ${{ secrets.PYPI_API_TOKEN }}
+       dist_dir: dist
+       fix_issue_regex: "`#(\\d+) <https://github.com/aio-libs/aiocache/issues/\\1>`"
+       fix_issue_repl: "(#\\1)"
