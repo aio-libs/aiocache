@@ -63,7 +63,7 @@ class cached:
         plugins=None,
         alias=None,
         noself=False,
-        **kwargs
+        **kwargs,
     ):
         self.ttl = ttl
         self.key = key
@@ -85,7 +85,7 @@ class cached:
                 cache=self._cache,
                 serializer=self._serializer,
                 plugins=self._plugins,
-                **self._kwargs
+                **self._kwargs,
             )
 
         @functools.wraps(f)
@@ -270,7 +270,7 @@ class multi_cached:
         serializer=None,
         plugins=None,
         alias=None,
-        **kwargs
+        **kwargs,
     ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
@@ -291,7 +291,7 @@ class multi_cached:
                 cache=self._cache,
                 serializer=self._serializer,
                 plugins=self._plugins,
-                **self._kwargs
+                **self._kwargs,
             )
 
         @functools.wraps(f)
