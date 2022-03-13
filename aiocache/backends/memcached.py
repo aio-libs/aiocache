@@ -1,4 +1,5 @@
 import asyncio
+
 import aiomcache
 
 from aiocache.base import BaseCache
@@ -145,7 +146,7 @@ class MemcachedCache(MemcachedBackend, BaseCache):
         self.serializer = serializer or JsonSerializer()
 
     @classmethod
-    def parse_uri_path(self, path):
+    def parse_uri_path(cls, path):
         return {}
 
     def _build_key(self, key, namespace=None):
