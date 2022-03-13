@@ -86,7 +86,7 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, memcached):
         mocker.spy(memcached, "_cas")
-        await memcached._set(pytest.KEY, "value", _cas_token="token")  # noqa: S106
+        await memcached._set(pytest.KEY, "value", _cas_token="token")
         memcached._cas.assert_called_with(pytest.KEY, b"value", "token", ttl=0, _conn=None)
 
     @pytest.mark.asyncio
