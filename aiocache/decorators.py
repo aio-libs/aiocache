@@ -3,8 +3,8 @@ import functools
 import inspect
 import logging
 
-from aiocache import Cache, caches
 from aiocache.base import SENTINEL
+from aiocache.factory import Cache, caches
 from aiocache.lock import RedLock
 
 
