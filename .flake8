@@ -9,8 +9,8 @@ select = A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,B901,B902,B903,B950
 # W503: Mutually exclusive with W504.
 ignore = E226,E501,E722,W503,W505
 per-file-ignores =
-    # S101: Pytest uses assert
-    tests/*:S101
+    # S*: Bandit security checks not useful in tests.
+    tests/*:S
 
 # flake8-import-order
 application-import-names = aiocache
