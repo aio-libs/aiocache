@@ -3,8 +3,8 @@ import pytest
 from asynctest import ANY, MagicMock, patch
 
 from aiocache import MemcachedCache
-from aiocache.base import BaseCache
 from aiocache.backends.memcached import MemcachedBackend
+from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
