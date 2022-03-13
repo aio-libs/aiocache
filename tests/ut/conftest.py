@@ -1,8 +1,8 @@
-import pytest
 import asynctest
+import pytest
 
-from aiocache.base import BaseCache, API
-from aiocache import caches, RedisCache, MemcachedCache
+from aiocache import MemcachedCache, RedisCache, caches
+from aiocache.base import API, BaseCache
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import BaseSerializer
 
