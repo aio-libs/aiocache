@@ -1,11 +1,12 @@
 import sys
 
-import pytest
-
 if sys.version_info < (3, 8):
-    pytest.skip("Missing AsyncMock", allow_module_level=True)
+    # Missing AsyncMock on 3.7
+    collect_ignore_glob = ["*"]
 
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from aiocache import MemcachedCache, RedisCache, caches
 from aiocache.base import API, BaseCache
