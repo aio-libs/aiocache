@@ -1,7 +1,8 @@
-import pytest
 import asyncio
 
-from aiocache import RedisCache, SimpleMemoryCache, MemcachedCache
+import pytest
+
+from aiocache import MemcachedCache, RedisCache, SimpleMemoryCache
 from aiocache.base import _Conn
 
 
@@ -84,7 +85,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_add_existing(self, cache):
-        await cache.set(pytest.KEY, "value") is True
+        assert await cache.set(pytest.KEY, "value") is True
         with pytest.raises(ValueError):
             await cache.add(pytest.KEY, "value")
 
