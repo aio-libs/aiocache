@@ -57,16 +57,18 @@ jobs:
         pyver: ['3.7', '3.8', '3.9']
         os: [ubuntu]
         ujson: ['']
-        redis: ['']
+        redis: ['latest']
         include:
           - pyver: pypy-3.8
             os: ubuntu
+            redis: 'latest'
           - os: ubuntu
             pyver: '3.9'
             redis: '5.0.14'
           - os: ubuntu
             pyver: '3.9'
-            ujson: 'Y'
+            ujson: 'ujson'
+            redis: 'latest'
     services:
       redis:
         image: redis:${{ matrix.redis }}
@@ -102,7 +104,7 @@ jobs:
         restore-keys: |
             pip-ci-${{ runner.os }}-${{ matrix.pyver }}-${{ matrix.ujson }}-
     - name: Install ujson
-      if: ${{ matrix.ujson == 'Y' }}
+      if: ${{ matrix.ujson == 'ujson' }}
       run: pip install ujson
     - name: Install dependencies
       uses: py-actions/py-dependency-install@v3
