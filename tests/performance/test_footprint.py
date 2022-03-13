@@ -1,8 +1,8 @@
-import pytest
 import time
 
 import aioredis
 import aiomcache
+import pytest
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ class TestRedis:
     async def test_redis_getsetdel(self, aioredis_pool, redis_cache):
         N = 10000
         aioredis_total_time = 0
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             with await aioredis_pool as redis:
                 await redis.set("hi", "value")
@@ -26,7 +26,7 @@ class TestRedis:
             aioredis_total_time += time.time() - start
 
         aiocache_total_time = 0
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             await redis_cache.set("hi", "value", timeout=0)
             await redis_cache.get("hi", timeout=0)
@@ -47,7 +47,7 @@ class TestRedis:
         N = 5000
         aioredis_total_time = 0
         values = ["a", "b", "c", "d", "e", "f"]
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             with await aioredis_pool as redis:
                 await redis.mset(*[x for x in values * 2])
@@ -59,7 +59,7 @@ class TestRedis:
             aioredis_total_time += time.time() - start
 
         aiocache_total_time = 0
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             await redis_cache.multi_set([(x, x) for x in values], timeout=0)
             await redis_cache.multi_get(values, timeout=0)
@@ -87,7 +87,7 @@ class TestMemcached:
     async def test_memcached_getsetdel(self, aiomcache_pool, memcached_cache):
         N = 10000
         aiomcache_total_time = 0
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             await aiomcache_pool.set(b"hi", b"value")
             await aiomcache_pool.get(b"hi")
@@ -95,7 +95,7 @@ class TestMemcached:
             aiomcache_total_time += time.time() - start
 
         aiocache_total_time = 0
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             await memcached_cache.set("hi", "value", timeout=0)
             await memcached_cache.get("hi", timeout=0)
@@ -118,7 +118,7 @@ class TestMemcached:
         N = 2000
         aiomcache_total_time = 0
         values = [b"a", b"b", b"c", b"d", b"e", b"f"]
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             for k in values:
                 await aiomcache_pool.set(k, k)
@@ -129,7 +129,7 @@ class TestMemcached:
 
         aiocache_total_time = 0
         values = [b"a", b"b", b"c", b"d", b"e", b"f"]
-        for n in range(N):
+        for _n in range(N):
             start = time.time()
             await memcached_cache.multi_set([(x, x) for x in values], timeout=0)
             await memcached_cache.multi_get(values, timeout=0)
