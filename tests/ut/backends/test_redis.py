@@ -4,7 +4,7 @@ import aioredis
 import pytest
 
 from aiocache import RedisCache
-from aiocache.backends.redis import AIOREDIS_BEFORE_ONE, RedisBackend, conn
+from aiocache.backends.redis import RedisBackend, conn
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
@@ -90,10 +90,7 @@ class TestRedisBackend:
     async def test_release_conn(self, redis):
         conn = await redis.acquire_conn()
         await redis.release_conn(conn)
-        if AIOREDIS_BEFORE_ONE:
-            redis._pool.release.assert_called_with(conn)
-        else:
-            redis._pool.release.assert_called_with(conn.connection)
+        redis._pool.release.assert_called_with(conn)
 
     @pytest.mark.asyncio
     async def test_get_pool_sets_pool(self, redis, redis_pool, create_pool):
@@ -121,27 +118,16 @@ class TestRedisBackend:
     async def test_get_pool_calls_create_pool(self, redis, create_pool):
         redis._pool = None
         await redis._get_pool()
-        if AIOREDIS_BEFORE_ONE:
-            create_pool.assert_called_with(
-                (redis.endpoint, redis.port),
-                db=redis.db,
-                password=redis.password,
-                loop=redis._loop,
-                encoding="utf-8",
-                minsize=redis.pool_min_size,
-                maxsize=redis.pool_max_size,
-            )
-        else:
-            create_pool.assert_called_with(
-                (redis.endpoint, redis.port),
-                db=redis.db,
-                password=redis.password,
-                loop=redis._loop,
-                encoding="utf-8",
-                minsize=redis.pool_min_size,
-                maxsize=redis.pool_max_size,
-                create_connection_timeout=redis.create_connection_timeout,
-            )
+        create_pool.assert_called_with(
+            (redis.endpoint, redis.port),
+            db=redis.db,
+            password=redis.password,
+            loop=redis._loop,
+            encoding="utf-8",
+            minsize=redis.pool_min_size,
+            maxsize=redis.pool_max_size,
+            create_connection_timeout=redis.create_connection_timeout,
+        )
 
     @pytest.mark.asyncio
     async def test_get(self, redis, redis_connection):
