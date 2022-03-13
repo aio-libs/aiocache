@@ -1,8 +1,9 @@
 import asyncio
-import pytest
-import asynctest
 
-from aiocache.lock import RedLock, OptimisticLock, OptimisticLockError
+import asynctest
+import pytest
+
+from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
 
 
 class TestRedLock:
