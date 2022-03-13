@@ -1,22 +1,22 @@
 import asyncio
-import sys
-import pytest
-import random
 import inspect
+import random
+import sys
 
-from asynctest import MagicMock, CoroutineMock, ANY, patch
+import pytest
+from asynctest import ANY, CoroutineMock, MagicMock, patch
 
+from aiocache import SimpleMemoryCache, cached, cached_stampede, multi_cached
 from aiocache.base import BaseCache, SENTINEL
-from aiocache import cached, cached_stampede, multi_cached, SimpleMemoryCache
-from aiocache.lock import RedLock
 from aiocache.decorators import _get_args_dict
+from aiocache.lock import RedLock
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
     await asyncio.sleep(seconds)
     if value:
         return str(value)
-    return str(random.randint(1, 50))
+    return str(random.randint(1, 50))  # noqa: S311
 
 
 class TestCached:
@@ -348,7 +348,7 @@ class TestCachedStampede:
 
 
 async def stub_dict(*args, keys=None, **kwargs):
-    values = {"a": random.randint(1, 50), "b": random.randint(1, 50), "c": random.randint(1, 50)}
+    values = {"a": random.randint(1, 50), "b": random.randint(1, 50), "c": random.randint(1, 50)}  # noqa
     return {k: values.get(k) for k in keys}
 
 
@@ -408,7 +408,8 @@ class TestMultiCached:
             assert mc.cache is mock_cache
 
     def test_get_cache_keys(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"]}) == (["a", "b"], [], -1)
+        keys = decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"]})
+        assert keys == (["a", "b"], [], -1)
 
     def test_get_cache_keys_empty_list(self, decorator):
         assert decorator.get_cache_keys(stub_dict, (), {"keys": []}) == ([], [], -1)
