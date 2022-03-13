@@ -2,9 +2,9 @@ import asyncio
 import inspect
 import random
 import sys
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 from aiocache import SimpleMemoryCache, cached, cached_stampede, multi_cached
 from aiocache.base import BaseCache, SENTINEL
