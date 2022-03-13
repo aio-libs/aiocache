@@ -4,7 +4,10 @@ if sys.version_info < (3, 8):
     # Missing AsyncMock on 3.7
     collect_ignore_glob = ["*"]
 
-from unittest.mock import AsyncMock, Mock
+    from unittest.mock import Mock
+    AsyncMock = Mock
+else:
+    from unittest.mock import AsyncMock, Mock
 
 import pytest
 
