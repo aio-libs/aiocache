@@ -77,12 +77,12 @@ class TestRedisBackend:
         assert redis_backend.pool_max_size == 10
 
     def test_setup_override(self):
-        redis_backend = RedisBackend(db=2, password="pass")  # noqa: S106
+        redis_backend = RedisBackend(db=2, password="pass")
 
         assert redis_backend.endpoint == "127.0.0.1"
         assert redis_backend.port == 6379
         assert redis_backend.db == 2
-        assert redis_backend.password == "pass"  # noqa: S105
+        assert redis_backend.password == "pass"
 
     def test_setup_casts(self):
         redis_backend = RedisBackend(
@@ -182,7 +182,7 @@ class TestRedisBackend:
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, redis, redis_connection):
         mocker.spy(redis, "_cas")
-        await redis._set(pytest.KEY, "value", _cas_token="old_value", _conn=redis_connection)  # noqa: S106
+        await redis._set(pytest.KEY, "value", _cas_token="old_value", _conn=redis_connection)
         redis._cas.assert_called_with(
             pytest.KEY, "value", "old_value", ttl=None, _conn=redis_connection
         )
