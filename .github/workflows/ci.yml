@@ -55,7 +55,7 @@ jobs:
     strategy:
       matrix:
         pyver: ['3.7', '3.8', '3.9']
-        os: [ubuntu, macos, windows]
+        os: [ubuntu]
         ujson: ['']
         redis: ['']
         include:
