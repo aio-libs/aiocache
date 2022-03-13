@@ -46,9 +46,9 @@ class cached:
         If its None, default one from the cache backend is used.
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
-    :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored. Same cache identified by alias is used on every call. If you need
-        a per function cache, specify the parameters explicitly without using alias.
+    :param alias: str specifying the alias to load the config from. If alias is passed, other
+        config parameters are ignored. Same cache identified by alias is used on every call. If
+        you need a per function cache, specify the parameters explicitly without using alias.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
