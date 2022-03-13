@@ -65,6 +65,7 @@ jobs:
             pyver: '3.9'
             redis: '5.0.14'
           - os: ubuntu
+            pyver: '3.9'
             ujson: 'Y'
     services:
       redis:
