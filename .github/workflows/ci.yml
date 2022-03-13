@@ -56,7 +56,7 @@ jobs:
       matrix:
         pyver: ['3.7', '3.8', '3.9']
         os: [ubuntu, macos, windows]
-        ujson: ['Y', '']
+        ujson: ['']
         redis: ['']
         include:
           - pyver: pypy-3.8
@@ -64,6 +64,8 @@ jobs:
           - os: ubuntu
             pyver: '3.9'
             redis: '5.0.14'
+          - os: ubuntu
+            ujson: 'Y'
     services:
       redis:
         image: redis:${{ matrix.redis }}
