@@ -12,9 +12,8 @@ class MemcachedBackend:
         self.endpoint = endpoint
         self.port = port
         self.pool_size = int(pool_size)
-        self._loop = loop
         self.client = aiomcache.Client(
-            self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size
+            self.endpoint, self.port, pool_size=self.pool_size
         )
 
     async def _get(self, key, encoding="utf-8", _conn=None):
