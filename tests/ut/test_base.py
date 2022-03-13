@@ -1,10 +1,10 @@
-import os
-import pytest
 import asyncio
+import os
 
-from asynctest import patch, MagicMock, ANY, CoroutineMock
+import pytest
+from asynctest import ANY, CoroutineMock, MagicMock, patch
 
-from aiocache.base import API, _Conn, BaseCache
+from aiocache.base import API, BaseCache, _Conn
 
 
 class TestAPI:
@@ -217,7 +217,7 @@ class TestBaseCache:
 
     @pytest.mark.asyncio
     async def test_release_conn(self, base_cache):
-        await base_cache.release_conn("mock") is None
+        assert await base_cache.release_conn("mock") is None
 
     @pytest.fixture
     def set_test_namespace(self, base_cache):
@@ -422,7 +422,8 @@ class TestCache:
         mock_cache._exists = CoroutineMock(return_value=False)
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
-        mock_cache._add.assert_called_with(mock_cache._build_key(pytest.KEY), ANY, ttl=2, _conn=ANY)
+        key = mock_cache._build_key(pytest.KEY)
+        mock_cache._add.assert_called_with(key, ANY, ttl=2, _conn=ANY)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
