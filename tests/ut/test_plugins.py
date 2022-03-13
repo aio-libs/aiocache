@@ -1,17 +1,19 @@
-import pytest
-
 from unittest.mock import MagicMock
 
-from aiocache.plugins import BasePlugin, TimingPlugin, HitMissRatioPlugin
+import pytest
+
 from aiocache.base import API, BaseCache
+from aiocache.plugins import BasePlugin, HitMissRatioPlugin, TimingPlugin
 
 
 class TestBasePlugin:
     @pytest.mark.asyncio
     async def test_interface_methods(self):
         for method in API.CMDS:
-            assert await getattr(BasePlugin, "pre_{}".format(method.__name__))(MagicMock()) is None
-            assert await getattr(BasePlugin, "post_{}".format(method.__name__))(MagicMock()) is None
+            pre = await getattr(BasePlugin, "pre_{}".format(method.__name__))(MagicMock())
+            assert pre is None
+            post = await getattr(BasePlugin, "post_{}".format(method.__name__))(MagicMock())
+            assert post is None
 
     @pytest.mark.asyncio
     async def test_do_nothing(self):
@@ -20,7 +22,7 @@ class TestBasePlugin:
 
 class TestTimingPlugin:
     @pytest.mark.asyncio
-    async def test_save_time(mock_cache):
+    async def test_save_time(self, mock_cache):
         do_save_time = TimingPlugin().save_time("get")
         await do_save_time("self", mock_cache, took=1)
         await do_save_time("self", mock_cache, took=2)
@@ -31,7 +33,7 @@ class TestTimingPlugin:
         assert mock_cache.profiling["get_avg"] == 1.5
 
     @pytest.mark.asyncio
-    async def test_save_time_post_set(mock_cache):
+    async def test_save_time_post_set(self, mock_cache):
         await TimingPlugin().post_set(mock_cache, took=1)
         await TimingPlugin().post_set(mock_cache, took=2)
 
