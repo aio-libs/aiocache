@@ -1,6 +1,6 @@
 import asyncio
+from unittest.mock import patch
 
-import asynctest
 import pytest
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
@@ -50,7 +50,7 @@ class TestRedLock:
     @pytest.mark.asyncio
     async def test_acquire_block_timeouts(self, mock_cache, lock):
         await lock._acquire()
-        with asynctest.patch("asyncio.wait_for", side_effect=asyncio.TimeoutError):
+        with patch("asyncio.wait_for", side_effect=asyncio.TimeoutError):
             mock_cache._add.side_effect = ValueError
             assert await lock._acquire() is None
 

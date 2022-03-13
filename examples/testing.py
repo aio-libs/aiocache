@@ -1,6 +1,5 @@
 import asyncio
-
-from asynctest import MagicMock
+from unittest.mock import MagicMock
 
 from aiocache.base import BaseCache
 

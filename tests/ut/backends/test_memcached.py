@@ -1,6 +1,6 @@
 import aiomcache
 import pytest
-from asynctest import ANY, MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from aiocache import MemcachedCache
 from aiocache.backends.memcached import MemcachedBackend

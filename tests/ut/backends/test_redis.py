@@ -1,6 +1,6 @@
 import aioredis
 import pytest
-from asynctest import ANY, CoroutineMock, MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from aiocache import RedisCache
 from aiocache.backends.redis import AIOREDIS_BEFORE_ONE, RedisBackend, conn
@@ -13,21 +13,21 @@ def redis_connection():
     conn = MagicMock()
     conn.__enter__ = MagicMock(return_value=conn)
     conn.__exit__ = MagicMock()
-    conn.get = CoroutineMock()
-    conn.mget = CoroutineMock()
-    conn.set = CoroutineMock()
-    conn.setex = CoroutineMock()
-    conn.mset = CoroutineMock()
-    conn.incrby = CoroutineMock()
-    conn.exists = CoroutineMock()
-    conn.persist = CoroutineMock()
-    conn.expire = CoroutineMock()
-    conn.delete = CoroutineMock()
-    conn.flushdb = CoroutineMock()
-    conn.eval = CoroutineMock()
-    conn.keys = CoroutineMock()
+    conn.get = MagicMock()
+    conn.mget = MagicMock()
+    conn.set = MagicMock()
+    conn.setex = MagicMock()
+    conn.mset = MagicMock()
+    conn.incrby = MagicMock()
+    conn.exists = MagicMock()
+    conn.persist = MagicMock()
+    conn.expire = MagicMock()
+    conn.delete = MagicMock()
+    conn.flushdb = MagicMock()
+    conn.eval = MagicMock()
+    conn.keys = MagicMock()
     conn.multi_exec = MagicMock(return_value=conn)
-    conn.execute = CoroutineMock()
+    conn.execute = MagicMock()
     return conn
 
 
@@ -40,9 +40,9 @@ def redis_pool(redis_connection):
 
     pool = FakePool()
     pool._conn = redis_connection
-    pool.release = CoroutineMock()
-    pool.clear = CoroutineMock()
-    pool.acquire = CoroutineMock(return_value=redis_connection)
+    pool.release = MagicMock()
+    pool.clear = MagicMock()
+    pool.acquire = MagicMock(return_value=redis_connection)
     pool.__call__ = MagicMock(return_value=pool)
 
     return pool
