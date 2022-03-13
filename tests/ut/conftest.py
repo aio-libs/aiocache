@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 from aiocache import MemcachedCache, RedisCache, caches
 from aiocache.base import API, BaseCache
