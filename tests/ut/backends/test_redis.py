@@ -1,4 +1,4 @@
-from unittest.mock import ANY, MagicMock, create_autospec, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
 
 import aioredis
 import pytest
@@ -23,9 +23,9 @@ def redis_pool(redis_connection):
 
     pool = FakePool()
     pool._conn = redis_connection
-    pool.release = MagicMock()
-    pool.clear = MagicMock()
-    pool.acquire = MagicMock(return_value=redis_connection)
+    pool.release = AsyncMock()
+    pool.clear = AsyncMock()
+    pool.acquire = AsyncMock(return_value=redis_connection)
     pool.__call__ = MagicMock(return_value=pool)
 
     return pool
