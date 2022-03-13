@@ -2,10 +2,10 @@ import logging
 
 from .serializers import (
     BaseSerializer,
-    NullSerializer,
-    StringSerializer,
-    PickleSerializer,
     JsonSerializer,
+    NullSerializer,
+    PickleSerializer,
+    StringSerializer,
 )
 
 logger = logging.getLogger(__name__)
