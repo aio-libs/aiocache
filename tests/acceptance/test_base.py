@@ -148,9 +148,9 @@ class TestCache:
         assert await cache.set(pytest.KEY, "value") is True
         assert await cache.get(pytest.KEY) == "value"
 
-    @pytest.skip("aioredis code is broken")
     @pytest.mark.asyncio
     async def test_single_connection(self, cache):
+        pytest.skip("aioredis code is broken")
         async with cache.get_connection() as conn:
             assert isinstance(conn, _Conn)
             assert await conn.set(pytest.KEY, "value") is True
