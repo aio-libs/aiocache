@@ -16,7 +16,7 @@ async def stub(*args, value=None, seconds=0, **kwargs):
     await asyncio.sleep(seconds)
     if value:
         return str(value)
-    return str(random.randint(1, 50))  # noqa: S311
+    return str(random.randint(1, 50))
 
 
 class TestCached:
@@ -348,7 +348,7 @@ class TestCachedStampede:
 
 
 async def stub_dict(*args, keys=None, **kwargs):
-    values = {"a": random.randint(1, 50), "b": random.randint(1, 50), "c": random.randint(1, 50)}  # noqa
+    values = {"a": random.randint(1, 50), "b": random.randint(1, 50), "c": random.randint(1, 50)}
     return {k: values.get(k) for k in keys}
 
 
