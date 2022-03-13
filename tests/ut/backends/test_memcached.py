@@ -21,7 +21,7 @@ class TestMemcachedBackend:
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
             memcached = MemcachedBackend()
 
-            aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=2)
+            aiomcache_client.assert_called_with("127.0.0.1", 11211, pool_size=2)
 
         assert memcached.endpoint == "127.0.0.1"
         assert memcached.port == 11211
@@ -31,7 +31,7 @@ class TestMemcachedBackend:
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
             memcached = MemcachedBackend(endpoint="127.0.0.2", port=2, pool_size=10)
 
-            aiomcache_client.assert_called_with("127.0.0.2", 2, loop=ANY, pool_size=10)
+            aiomcache_client.assert_called_with("127.0.0.2", 2, pool_size=10)
 
         assert memcached.endpoint == "127.0.0.2"
         assert memcached.port == 2
@@ -41,7 +41,7 @@ class TestMemcachedBackend:
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
             memcached = MemcachedBackend(pool_size="10")
 
-            aiomcache_client.assert_called_with("127.0.0.1", 11211, loop=ANY, pool_size=10)
+            aiomcache_client.assert_called_with("127.0.0.1", 11211, pool_size=10)
 
         assert memcached.pool_size == 10
 
