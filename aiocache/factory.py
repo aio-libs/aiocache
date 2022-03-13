@@ -1,11 +1,11 @@
-from copy import deepcopy
 import logging
 import urllib
 import warnings
+from copy import deepcopy
 
-from aiocache.exceptions import InvalidCacheType
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
+from aiocache.exceptions import InvalidCacheType
 
 
 logger = logging.getLogger(__name__)
