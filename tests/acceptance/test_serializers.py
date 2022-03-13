@@ -1,6 +1,7 @@
 import random
 
 import pytest
+from marshmallow import Schema, fields, post_load
 
 try:
     import ujson as json
@@ -10,8 +11,6 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-
-from marshmallow import Schema, fields, post_load
 
 from aiocache.serializers import (
     BaseSerializer,
