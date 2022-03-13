@@ -1,11 +1,11 @@
 import re
-import time
-import pytest
 import subprocess
-
+import time
 from multiprocessing import Process
 
-from server import run_server
+import pytest
+
+from .server import run_server
 
 
 @pytest.fixture
