@@ -112,7 +112,8 @@ class cached:
             if aiocache_wait_for_write:
                 await self.set_in_cache(key, result)
             else:
-                asyncio.ensure_future(self.set_in_cache(key, result))
+                # TODO: Use aiojobs to avoid warnings.
+                asyncio.create_task(self.set_in_cache(key, result))
 
         return result
 
@@ -335,7 +336,8 @@ class multi_cached:
             if aiocache_wait_for_write:
                 await self.set_in_cache(result, f, args, kwargs)
             else:
-                asyncio.ensure_future(self.set_in_cache(result, f, args, kwargs))
+                # TODO: Use aiojobs to avoid warnings.
+                asyncio.create_task(self.set_in_cache(result, f, args, kwargs))
 
         return result
 

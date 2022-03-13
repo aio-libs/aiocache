@@ -456,7 +456,7 @@ class TestMultiCached:
     @pytest.mark.asyncio
     async def test_get_from_cache_conn(self, decorator, decorator_call):
         decorator._conn._conn = AsyncMock()
-        decorator.cache.multi_get = MagicMock(return_value=[1, 2, 3])
+        decorator.cache.multi_get = AsyncMock(return_value=[1, 2, 3])
 
         assert await decorator.get_from_cache("a", "b", "c") == [1, 2, 3]
         decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
