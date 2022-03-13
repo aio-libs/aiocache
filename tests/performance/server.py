@@ -1,9 +1,9 @@
-import asyncio
 import argparse
+import asyncio
 import logging
 import uuid
-from aiocache import Cache
 
+from aiocache import Cache
 from aiohttp import web
 
 
