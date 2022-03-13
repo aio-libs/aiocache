@@ -27,7 +27,7 @@ else:
     AIOCACHE_CACHES[MemcachedCache.NAME] = MemcachedCache
     del aiomcache
 
-from .decorators import cached, cached_stampede, multi_cached  # noqa: E402
+from .decorators import cached, cached_stampede, multi_cached  # noqa: E402,I102
 from .factory import Cache, caches  # noqa: E402
 
 
