@@ -1,6 +1,7 @@
+from unittest.mock import ANY, MagicMock, patch
+
 import aioredis
 import pytest
-from unittest.mock import ANY, MagicMock, patch
 
 from aiocache import RedisCache
 from aiocache.backends.redis import AIOREDIS_BEFORE_ONE, RedisBackend, conn
