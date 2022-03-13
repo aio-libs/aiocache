@@ -37,8 +37,7 @@ setup(
         'redis:python_version<"3.7"': ["aioredis>=0.3.3,<2.0"],
         'redis:python_version>="3.8"': ["aioredis>=1.3.0,<2.0"],
         'redis:python_version>="3.7" and python_version<"3.8"': ["aioredis>=1.0.0,<2.0"],
-        # todo: adapt code for aiomcache 0.7 (requires python >= 3.7)
-        "memcached": ["aiomcache>=0.5.2,<0.7"],
+        "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
         "dev": [
             "asynctest>=0.11.0",
