@@ -1,7 +1,8 @@
 import asyncio
+
 import pytest
 
-from aiocache.lock import RedLock, OptimisticLock, OptimisticLockError
+from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
 from aiocache.serializers import StringSerializer
 
 
