@@ -1,8 +1,8 @@
 import asyncio
-import pytest
 import random
-
 from unittest import mock
+
+import pytest
 
 from aiocache import cached, cached_stampede, multi_cached
 
