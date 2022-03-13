@@ -1,6 +1,6 @@
 import asyncio
-import itertools
 import functools
+import itertools
 
 import aioredis
 
@@ -253,7 +253,7 @@ class RedisCache(RedisBackend, BaseCache):
         self.serializer = serializer or JsonSerializer()
 
     @classmethod
-    def parse_uri_path(self, path):
+    def parse_uri_path(cls, path):
         """
         Given a uri path, return the Redis specific configuration
         options in that path string according to iana definition
