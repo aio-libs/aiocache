@@ -1,4 +1,4 @@
-import pickle  # noqa: S403
+import pickle
 from collections import namedtuple
 from unittest import mock
 
