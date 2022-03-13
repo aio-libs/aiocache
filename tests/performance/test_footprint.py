@@ -6,8 +6,8 @@ import pytest
 
 
 @pytest.fixture
-async def aioredis():
-    return await redis.create_redis_pool(("127.0.0.1", 6379), maxsize=1)
+async def redis():
+    return await aioredis.create_redis_pool(("127.0.0.1", 6379), maxsize=1)
 
 
 class TestRedis:
