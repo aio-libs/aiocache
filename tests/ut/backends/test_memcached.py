@@ -1,12 +1,11 @@
-import pytest
 import aiomcache
-
-from asynctest import MagicMock, patch, ANY
+import pytest
+from asynctest import ANY, MagicMock, patch
 
 from aiocache import MemcachedCache
 from aiocache.base import BaseCache
-from aiocache.serializers import JsonSerializer
 from aiocache.backends.memcached import MemcachedBackend
+from aiocache.serializers import JsonSerializer
 
 
 @pytest.fixture
@@ -87,7 +86,7 @@ class TestMemcachedBackend:
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, memcached):
         mocker.spy(memcached, "_cas")
-        await memcached._set(pytest.KEY, "value", _cas_token="token")
+        await memcached._set(pytest.KEY, "value", _cas_token="token")  # noqa: S106
         memcached._cas.assert_called_with(pytest.KEY, b"value", "token", ttl=0, _conn=None)
 
     @pytest.mark.asyncio
