@@ -1,12 +1,12 @@
-import pytest
 import asyncio
+from unittest.mock import ANY, MagicMock, patch
 
-from unittest.mock import MagicMock, ANY, patch
+import pytest
 
 from aiocache import SimpleMemoryCache
+from aiocache.backends.memory import SimpleMemoryBackend
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
-from aiocache.backends.memory import SimpleMemoryBackend
 
 
 @pytest.fixture
@@ -60,13 +60,13 @@ class TestSimpleMemoryBackend:
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, memory):
         memory._cache.get.return_value = "old_value"
-        assert await memory._set(pytest.KEY, "value", _cas_token="old_value") == 1
+        assert await memory._set(pytest.KEY, "value", _cas_token="old_value") == 1  # noqa: S106
         SimpleMemoryBackend._cache.__setitem__.assert_called_with(pytest.KEY, "value")
 
     @pytest.mark.asyncio
     async def test_set_cas_fail(self, mocker, memory):
         memory._cache.get.return_value = "value"
-        assert await memory._set(pytest.KEY, "value", _cas_token="old_value") == 0
+        assert await memory._set(pytest.KEY, "value", _cas_token="old_value") == 0  # noqa: S106
         assert SimpleMemoryBackend._cache.__setitem__.call_count == 0
 
     @pytest.mark.asyncio
