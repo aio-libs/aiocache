@@ -1,7 +1,7 @@
 import time
 
-import aioredis
 import aiomcache
+import aioredis
 import pytest
 
 
