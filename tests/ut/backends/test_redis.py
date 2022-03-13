@@ -11,25 +11,7 @@ from aiocache.serializers import JsonSerializer
 
 @pytest.fixture
 def redis_connection():
-    conn = MagicMock()
-    conn.__enter__ = MagicMock(return_value=conn)
-    conn.__exit__ = MagicMock()
-    conn.get = MagicMock()
-    conn.mget = MagicMock()
-    conn.set = MagicMock()
-    conn.setex = MagicMock()
-    conn.mset = MagicMock()
-    conn.incrby = MagicMock()
-    conn.exists = MagicMock()
-    conn.persist = MagicMock()
-    conn.expire = MagicMock()
-    conn.delete = MagicMock()
-    conn.flushdb = MagicMock()
-    conn.eval = MagicMock()
-    conn.keys = MagicMock()
-    conn.multi_exec = MagicMock(return_value=conn)
-    conn.execute = MagicMock()
-    return conn
+    return create_autospec(aioredis.RedisConnection)
 
 
 @pytest.fixture
