@@ -78,8 +78,10 @@ class TestRedis:
 
 
 @pytest.fixture
-def aiomcache_pool():
-    yield aiomcache.Client("127.0.0.1", 11211, pool_size=1)
+async def aiomcache_pool():
+    client = aiomcache.Client("127.0.0.1", 11211, pool_size=1)
+    yield client
+    await client.close()
 
 
 class TestMemcached:
