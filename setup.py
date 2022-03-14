@@ -39,4 +39,5 @@ setup(
         "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
     },
+    include_package_data=True,
 )

@@ -3,8 +3,7 @@ from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
-from aiocache import SimpleMemoryCache
-from aiocache.backends.memory import SimpleMemoryBackend
+from aiocache.backends.memory import SimpleMemoryBackend, SimpleMemoryCache
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 

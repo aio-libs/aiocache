@@ -2,11 +2,18 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from aiocache import AIOCACHE_CACHES, Cache, MemcachedCache, RedisCache, SimpleMemoryCache, caches
+from aiocache import AIOCACHE_CACHES, Cache, caches
+from aiocache.backends.memcached import MemcachedCache
+from aiocache.backends.memory import SimpleMemoryCache
+from aiocache.backends.redis import RedisCache
 from aiocache.exceptions import InvalidCacheType
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 from aiocache.serializers import JsonSerializer, PickleSerializer
+
+assert Cache.REDIS is not None
+assert Cache.MEMCACHED is not None
+CACHE_NAMES = (Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME)
 
 
 def test_class_from_string():
@@ -39,9 +46,7 @@ class TestCache:
         assert Cache.REDIS == RedisCache
         assert Cache.MEMCACHED == MemcachedCache
 
-    @pytest.mark.parametrize(
-        "cache_type", [Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME]
-    )
+    @pytest.mark.parametrize("cache_type", CACHE_NAMES)
     def test_new(self, cache_type):
         kwargs = {"a": 1, "b": 2}
         cache_class = Cache.get_scheme_class(cache_type)
@@ -61,7 +66,7 @@ class TestCache:
             list(AIOCACHE_CACHES.keys())
         )
 
-    @pytest.mark.parametrize("scheme", [Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME])
+    @pytest.mark.parametrize("scheme", CACHE_NAMES)
     def test_get_scheme_class(self, scheme):
         assert Cache.get_scheme_class(scheme) == AIOCACHE_CACHES[scheme]
 
@@ -69,7 +74,7 @@ class TestCache:
         with pytest.raises(InvalidCacheType):
             Cache.get_scheme_class("http")
 
-    @pytest.mark.parametrize("scheme", [Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME])
+    @pytest.mark.parametrize("scheme", CACHE_NAMES)
     def test_from_url_returns_cache_from_scheme(self, scheme):
         assert isinstance(Cache.from_url("{}://".format(scheme)), Cache.get_scheme_class(scheme))
 

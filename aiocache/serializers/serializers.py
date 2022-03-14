@@ -1,5 +1,6 @@
 import logging
 import pickle  # noqa: S403
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -7,7 +8,7 @@ try:
     import ujson as json
 except ImportError:
     logger.debug("ujson module not found, using json")
-    import json
+    import json  # type: ignore[no-redef]
 
 try:
     import msgpack
@@ -21,16 +22,18 @@ _NOT_SET = object()
 
 class BaseSerializer:
 
-    DEFAULT_ENCODING = "utf-8"
+    DEFAULT_ENCODING: Optional[str] = "utf-8"
 
     def __init__(self, *args, encoding=_NOT_SET, **kwargs):
         self.encoding = self.DEFAULT_ENCODING if encoding is _NOT_SET else encoding
         super().__init__(*args, **kwargs)
 
-    def dumps(self, value):
+    # TODO(PY38): Positional-only
+    def dumps(self, value: Any) -> str:
         raise NotImplementedError("dumps method must be implemented")
 
-    def loads(self, value):
+    # TODO(PY38): Positional-only
+    def loads(self, value: str) -> Any:
         raise NotImplementedError("loads method must be implemented")
 
 

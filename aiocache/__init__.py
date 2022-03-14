@@ -1,11 +1,13 @@
 import logging
+from typing import Dict, Type
 
 from ._version import __version__
 from .backends.memory import SimpleMemoryCache
+from .base import BaseCache
 
 logger = logging.getLogger(__name__)
 
-AIOCACHE_CACHES = {SimpleMemoryCache.NAME: SimpleMemoryCache}
+AIOCACHE_CACHES: Dict[str, Type[BaseCache]] = {SimpleMemoryCache.NAME: SimpleMemoryCache}
 
 try:
     import aioredis

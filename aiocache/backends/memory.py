@@ -1,4 +1,5 @@
 import asyncio
+from typing import Dict
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
@@ -9,8 +10,8 @@ class SimpleMemoryBackend:
     Wrapper around dict operations to use it as a cache backend
     """
 
-    _cache = {}
-    _handlers = {}
+    _cache: Dict[str, object] = {}
+    _handlers: Dict[str, asyncio.TimerHandle] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

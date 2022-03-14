@@ -46,8 +46,6 @@ class RedisBackend:
         " end"
     )
 
-    pools = {}
-
     def __init__(
         self,
         endpoint="127.0.0.1",

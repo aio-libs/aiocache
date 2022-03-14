@@ -6,7 +6,8 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from aiocache import SimpleMemoryCache, cached, cached_stampede, multi_cached
+from aiocache import cached, cached_stampede, multi_cached
+from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import BaseCache, SENTINEL
 from aiocache.decorators import _get_args_dict
 from aiocache.lock import RedLock

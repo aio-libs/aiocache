@@ -1,7 +1,6 @@
 import pytest
 
 from aiocache import Cache, caches
-from aiocache.backends.redis import RedisBackend
 
 
 def pytest_configure():
@@ -25,11 +24,6 @@ def reset_caches():
             }
         }
     )
-
-
-@pytest.fixture(autouse=True)
-def reset_redis_pools():
-    RedisBackend.pools = {}
 
 
 @pytest.fixture
