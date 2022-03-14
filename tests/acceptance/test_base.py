@@ -2,7 +2,9 @@ import asyncio
 
 import pytest
 
-from aiocache import MemcachedCache, RedisCache, SimpleMemoryCache
+from aiocache.backends.memcached import MemcachedCache
+from aiocache.backends.memory import SimpleMemoryCache
+from aiocache.backends.redis import RedisCache
 from aiocache.base import _Conn
 
 

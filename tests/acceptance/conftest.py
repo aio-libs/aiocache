@@ -27,11 +27,6 @@ def reset_caches():
     )
 
 
-@pytest.fixture(autouse=True)
-def reset_redis_pools():
-    RedisBackend.pools = {}
-
-
 @pytest.fixture
 def redis_cache(event_loop):
     cache = Cache(Cache.REDIS, namespace="test")

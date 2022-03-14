@@ -3,6 +3,7 @@ import functools
 import logging
 import os
 import time
+from typing import Callable, Set
 
 from aiocache import serializers
 
@@ -14,7 +15,7 @@ SENTINEL = object()
 
 class API:
 
-    CMDS = set()
+    CMDS: Set[Callable[..., object]] = set()
 
     @classmethod
     def register(cls, func):
@@ -102,6 +103,8 @@ class BaseCache:
     :param ttl: int the expiration time in seconds to use as a default in all operations of
         the backend. It can be overriden in the specific calls.
     """
+
+    NAME: str
 
     def __init__(
         self, serializer=None, plugins=None, namespace=None, key_builder=None, timeout=5, ttl=None

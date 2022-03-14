@@ -3,15 +3,14 @@ from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
 import aioredis
 import pytest
 
-from aiocache import RedisCache
-from aiocache.backends.redis import RedisBackend, conn
+from aiocache.backends.redis import RedisBackend, RedisCache, conn
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 pytest.skip("aioredis code is broken", allow_module_level=True)
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore[unreachable]
 def redis_connection():
     return create_autospec(aioredis.RedisConnection)
 

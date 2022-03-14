@@ -114,7 +114,7 @@ jobs:
       env:
         COLOR: 'yes'
       run: |
-        pytest tests
+        pytest tests --cov-report xml --cov-report html
         python -m coverage xml
     - name: Run functional tests
       run: bash examples/run_all.sh

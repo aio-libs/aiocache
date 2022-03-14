@@ -76,7 +76,7 @@ class TestPickleSerializer:
         yield PickleSerializer(protocol=4)
 
     def test_init(self, serializer):
-        assert isinstance(serializer, BaseSerializer)
+        assert isinstance(serializer, PickleSerializer)
         assert serializer.DEFAULT_ENCODING is None
         assert serializer.encoding is None
         assert serializer.protocol == 4

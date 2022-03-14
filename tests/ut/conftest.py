@@ -11,7 +11,9 @@ else:
 
 import pytest
 
-from aiocache import MemcachedCache, RedisCache, caches
+from aiocache import caches
+from aiocache.backends.memcached import MemcachedCache
+from aiocache.backends.redis import RedisCache
 from aiocache.base import API, BaseCache
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import BaseSerializer

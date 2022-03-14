@@ -2,6 +2,7 @@ import logging
 import urllib
 import warnings
 from copy import deepcopy
+from typing import Dict
 
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
@@ -126,7 +127,7 @@ class Cache:
 
 class CacheHandler:
 
-    _config = {
+    _config: Dict[str, Dict[str, object]] = {
         "default": {
             "cache": "aiocache.SimpleMemoryCache",
             "serializer": {"class": "aiocache.serializers.StringSerializer"},
@@ -136,7 +137,7 @@ class CacheHandler:
     def __init__(self):
         self._caches = {}
 
-    def add(self, alias: str, config: dict) -> None:
+    def add(self, alias: str, config: Dict[str, object]) -> None:
         """
         Add a cache to the current config. If the key already exists, it
         will overwrite it::
@@ -153,7 +154,7 @@ class CacheHandler:
         """
         self._config[alias] = config
 
-    def get(self, alias: str):
+    def get(self, alias: str) -> object:
         """
         Retrieve cache identified by alias. Will return always the same instance
 

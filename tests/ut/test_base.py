@@ -227,7 +227,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),
+        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),  # type: ignore[attr-defined]
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
         assert base_cache.build_key(pytest.KEY, namespace=namespace) == expected

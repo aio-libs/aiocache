@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 from aiocache.base import BaseCache
 
@@ -60,7 +60,7 @@ class RedLock:
     result of ``super_expensive_function``.
     """
 
-    _EVENTS = {}
+    _EVENTS: Dict[str, asyncio.Event] = {}
 
     def __init__(self, client: BaseCache, key: str, lease: Union[int, float]):
         self.client = client
@@ -149,7 +149,7 @@ class OptimisticLock:
     async def __aexit__(self, exc_type, exc_value, traceback):
         pass
 
-    async def cas(self, value: Any, **kwargs) -> bool:
+    async def cas(self, value: Any, **kwargs: Any) -> bool:
         """
         Checks and sets the specified value for the locked key. If the value has changed
         since the lock was created, it will raise an :class:`aiocache.lock.OptimisticLockError`

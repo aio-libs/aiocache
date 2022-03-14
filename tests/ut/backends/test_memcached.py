@@ -3,8 +3,7 @@ from unittest.mock import MagicMock, patch
 import aiomcache
 import pytest
 
-from aiocache import MemcachedCache
-from aiocache.backends.memcached import MemcachedBackend
+from aiocache.backends.memcached import MemcachedBackend, MemcachedCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
@@ -272,7 +271,7 @@ class TestMemcachedCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),
+        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),  # type: ignore[attr-defined]
     )
     def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
         assert memcached_cache.build_key(pytest.KEY, namespace=namespace) == expected.encode()

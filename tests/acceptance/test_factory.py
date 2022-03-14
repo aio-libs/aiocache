@@ -1,6 +1,9 @@
 import pytest
 
-from aiocache import Cache, MemcachedCache, RedisCache, SimpleMemoryCache
+from aiocache import Cache
+from aiocache.backends.memcached import MemcachedCache
+from aiocache.backends.memory import SimpleMemoryCache
+from aiocache.backends.redis import RedisCache
 
 
 class TestCache:
