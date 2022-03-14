@@ -54,21 +54,21 @@ jobs:
     name: Test
     strategy:
       matrix:
-        pyver: ['3.7', '3.8', '3.9']
         os: [ubuntu]
-        ujson: ['']
+        pyver: ['3.7', '3.8', '3.9']
         redis: ['latest']
+        ujson: ['']
         include:
-          - pyver: pypy-3.8
-            os: ubuntu
+          - os: ubuntu
+            pyver: pypy-3.8
             redis: 'latest'
           - os: ubuntu
             pyver: '3.9'
             redis: '5.0.14'
           - os: ubuntu
             pyver: '3.9'
-            ujson: 'ujson'
             redis: 'latest'
+            ujson: 'ujson'
     services:
       redis:
         image: redis:${{ matrix.redis }}
