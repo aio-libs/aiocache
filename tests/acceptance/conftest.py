@@ -1,7 +1,6 @@
 import pytest
 
 from aiocache import Cache, caches
-from aiocache.backends.redis import RedisBackend
 
 
 def pytest_configure():

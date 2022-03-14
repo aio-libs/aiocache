@@ -28,10 +28,12 @@ class BaseSerializer:
         self.encoding = self.DEFAULT_ENCODING if encoding is _NOT_SET else encoding
         super().__init__(*args, **kwargs)
 
-    def dumps(self, value: Any, /) -> str:
+    # TODO(PY38): Positional-only
+    def dumps(self, value: Any) -> str:
         raise NotImplementedError("dumps method must be implemented")
 
-    def loads(self, value: str, /) -> Any:
+    # TODO(PY38): Positional-only
+    def loads(self, value: str) -> Any:
         raise NotImplementedError("loads method must be implemented")
 
 

@@ -21,7 +21,7 @@ class RandomModel:
         return self.__dict__ == obj.__dict__
 
 
-class MarshmallowSerializer(Schema, BaseSerializer):
+class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
     int_type = fields.Integer()
     str_type = fields.String()
     dict_type = fields.Dict()
