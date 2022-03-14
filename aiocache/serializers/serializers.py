@@ -1,5 +1,5 @@
 import logging
-import pickle
+import pickle  # noqa: S403
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class PickleSerializer(BaseSerializer):
         """
         if value is None:
             return None
-        return pickle.loads(value)
+        return pickle.loads(value)  # noqa: S301
 
 
 class JsonSerializer(BaseSerializer):

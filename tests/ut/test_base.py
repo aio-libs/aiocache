@@ -1,10 +1,10 @@
-import os
-import pytest
 import asyncio
+import os
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
-from asynctest import patch, MagicMock, ANY, CoroutineMock
+import pytest
 
-from aiocache.base import API, _Conn, BaseCache
+from aiocache.base import API, BaseCache, _Conn
 
 
 class TestAPI:
@@ -125,11 +125,11 @@ class TestAPI:
     async def test_plugins(self):
         self = MagicMock()
         plugin1 = MagicMock()
-        plugin1.pre_dummy = CoroutineMock()
-        plugin1.post_dummy = CoroutineMock()
+        plugin1.pre_dummy = AsyncMock()
+        plugin1.post_dummy = AsyncMock()
         plugin2 = MagicMock()
-        plugin2.pre_dummy = CoroutineMock()
-        plugin2.post_dummy = CoroutineMock()
+        plugin2.pre_dummy = AsyncMock()
+        plugin2.post_dummy = AsyncMock()
         self.plugins = [plugin1, plugin2]
 
         @API.plugins
@@ -217,7 +217,7 @@ class TestBaseCache:
 
     @pytest.mark.asyncio
     async def test_release_conn(self, base_cache):
-        await base_cache.release_conn("mock") is None
+        assert await base_cache.release_conn("mock") is None
 
     @pytest.fixture
     def set_test_namespace(self, base_cache):
@@ -238,7 +238,7 @@ class TestBaseCache:
 
     @pytest.mark.asyncio
     async def test_add_ttl_cache_default(self, base_cache):
-        base_cache._add = CoroutineMock()
+        base_cache._add = AsyncMock()
 
         await base_cache.add(pytest.KEY, "value")
 
@@ -247,7 +247,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_add_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = CoroutineMock()
+        base_cache._add = AsyncMock()
 
         await base_cache.add(pytest.KEY, "value")
 
@@ -256,7 +256,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_add_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = CoroutineMock()
+        base_cache._add = AsyncMock()
 
         await base_cache.add(pytest.KEY, "value", ttl=20)
 
@@ -265,7 +265,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_add_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = CoroutineMock()
+        base_cache._add = AsyncMock()
 
         await base_cache.add(pytest.KEY, "value", ttl=None)
 
@@ -273,7 +273,7 @@ class TestBaseCache:
 
     @pytest.mark.asyncio
     async def test_set_ttl_cache_default(self, base_cache):
-        base_cache._set = CoroutineMock()
+        base_cache._set = AsyncMock()
 
         await base_cache.set(pytest.KEY, "value")
 
@@ -284,7 +284,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_set_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = CoroutineMock()
+        base_cache._set = AsyncMock()
 
         await base_cache.set(pytest.KEY, "value")
 
@@ -295,7 +295,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_set_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = CoroutineMock()
+        base_cache._set = AsyncMock()
 
         await base_cache.set(pytest.KEY, "value", ttl=20)
 
@@ -306,7 +306,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_set_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = CoroutineMock()
+        base_cache._set = AsyncMock()
 
         await base_cache.set(pytest.KEY, "value", ttl=None)
 
@@ -316,7 +316,7 @@ class TestBaseCache:
 
     @pytest.mark.asyncio
     async def test_multi_set_ttl_cache_default(self, base_cache):
-        base_cache._multi_set = CoroutineMock()
+        base_cache._multi_set = AsyncMock()
 
         await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
 
@@ -327,7 +327,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_multi_set_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = CoroutineMock()
+        base_cache._multi_set = AsyncMock()
 
         await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]])
 
@@ -338,7 +338,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_multi_set_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = CoroutineMock()
+        base_cache._multi_set = AsyncMock()
 
         await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=20)
 
@@ -349,7 +349,7 @@ class TestBaseCache:
     @pytest.mark.asyncio
     async def test_multi_set_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = CoroutineMock()
+        base_cache._multi_set = AsyncMock()
 
         await base_cache.multi_set([[pytest.KEY, "value"], [pytest.KEY_1, "value1"]], ttl=None)
 
@@ -419,10 +419,11 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_add(self, mock_cache):
-        mock_cache._exists = CoroutineMock(return_value=False)
+        mock_cache._exists = AsyncMock(return_value=False)
         await mock_cache.add(pytest.KEY, "value", ttl=2)
 
-        mock_cache._add.assert_called_with(mock_cache._build_key(pytest.KEY), ANY, ttl=2, _conn=ANY)
+        key = mock_cache._build_key(pytest.KEY)
+        mock_cache._add.assert_called_with(key, ANY, ttl=2, _conn=ANY)
         assert mock_cache.plugins[0].pre_add.call_count == 1
         assert mock_cache.plugins[0].post_add.call_count == 1
 
@@ -596,7 +597,7 @@ class TestConn:
     @pytest.mark.asyncio
     async def test_inject_conn(self, conn):
         conn._conn = "connection"
-        conn._cache.dummy = CoroutineMock()
+        conn._cache.dummy = AsyncMock()
 
         await _Conn._inject_conn("dummy")(conn, "a", b="b")
         conn._cache.dummy.assert_called_with("a", _conn=conn._conn, b="b")

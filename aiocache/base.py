@@ -1,8 +1,8 @@
-import os
-import time
+import asyncio
 import functools
 import logging
-import asyncio
+import os
+import time
 
 from aiocache import serializers
 
@@ -95,8 +95,8 @@ class BaseCache:
         list.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
-    :param key_builder: alternative callable to build the key. Receives the key and the namespace as
-        params and should return something that can be used as key by the underlying backend.
+    :param key_builder: alternative callable to build the key. Receives the key and the namespace
+        as params and should return something that can be used as key by the underlying backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     :param ttl: int the expiration time in seconds to use as a default in all operations of

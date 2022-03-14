@@ -1,11 +1,11 @@
-from copy import deepcopy
 import logging
 import urllib
 import warnings
+from copy import deepcopy
 
-from aiocache.exceptions import InvalidCacheType
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
+from aiocache.exceptions import InvalidCacheType
 
 
 logger = logging.getLogger(__name__)
@@ -61,12 +61,10 @@ class Cache:
     MEMCACHED = AIOCACHE_CACHES.get("memcached")
 
     def __new__(cls, cache_class=MEMORY, **kwargs):
-        try:
-            assert issubclass(cache_class, BaseCache)
-        except AssertionError as e:
+        if not issubclass(cache_class, BaseCache):
             raise InvalidCacheType(
                 "Invalid cache type, you can only use {}".format(list(AIOCACHE_CACHES.keys()))
-            ) from e
+            )
         instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
         return instance

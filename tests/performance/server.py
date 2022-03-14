@@ -1,10 +1,11 @@
-import asyncio
 import argparse
+import asyncio
 import logging
 import uuid
-from aiocache import Cache
 
 from aiohttp import web
+
+from aiocache import Cache
 
 
 logging.getLogger("aiohttp.access").propagate = False

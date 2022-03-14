@@ -32,7 +32,7 @@ class MarshmallowSerializer(Schema, BaseSerializer):
     encoding = 'utf-8'
 
     @post_load
-    def build_my_type(self, data,  **kwargs):
+    def build_my_type(self, data, **kwargs):
         return RandomModel(**data)
 
     class Meta:

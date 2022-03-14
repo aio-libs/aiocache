@@ -1,7 +1,6 @@
 import asyncio
 import uuid
-
-from typing import Union, Any
+from typing import Any, Union
 
 from aiocache.base import BaseCache
 

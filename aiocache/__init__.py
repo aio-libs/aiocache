@@ -1,13 +1,11 @@
 import logging
 
-from .backends.memory import SimpleMemoryCache
 from ._version import __version__
-
+from .backends.memory import SimpleMemoryCache
 
 logger = logging.getLogger(__name__)
 
 AIOCACHE_CACHES = {SimpleMemoryCache.NAME: SimpleMemoryCache}
-
 
 try:
     import aioredis
@@ -29,9 +27,8 @@ else:
     AIOCACHE_CACHES[MemcachedCache.NAME] = MemcachedCache
     del aiomcache
 
-
-from .factory import caches, Cache  # noqa: E402
-from .decorators import cached, cached_stampede, multi_cached  # noqa: E402
+from .decorators import cached, cached_stampede, multi_cached  # noqa: E402,I202
+from .factory import Cache, caches  # noqa: E402
 
 
 __all__ = (

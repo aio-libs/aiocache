@@ -1,11 +1,12 @@
-import pytest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from aiocache import SimpleMemoryCache, RedisCache, MemcachedCache, caches, Cache, AIOCACHE_CACHES
-from aiocache.factory import _class_from_string, _create_cache
+import pytest
+
+from aiocache import AIOCACHE_CACHES, Cache, MemcachedCache, RedisCache, SimpleMemoryCache, caches
 from aiocache.exceptions import InvalidCacheType
+from aiocache.factory import _class_from_string, _create_cache
+from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 from aiocache.serializers import JsonSerializer, PickleSerializer
-from aiocache.plugins import TimingPlugin, HitMissRatioPlugin
 
 
 def test_class_from_string():

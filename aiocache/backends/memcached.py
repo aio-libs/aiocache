@@ -1,4 +1,5 @@
 import asyncio
+
 import aiomcache
 
 from aiocache.base import BaseCache
@@ -11,9 +12,8 @@ class MemcachedBackend:
         self.endpoint = endpoint
         self.port = port
         self.pool_size = int(pool_size)
-        self._loop = loop
         self.client = aiomcache.Client(
-            self.endpoint, self.port, loop=self._loop, pool_size=self.pool_size
+            self.endpoint, self.port, pool_size=self.pool_size
         )
 
     async def _get(self, key, encoding="utf-8", _conn=None):
@@ -145,7 +145,7 @@ class MemcachedCache(MemcachedBackend, BaseCache):
         self.serializer = serializer or JsonSerializer()
 
     @classmethod
-    def parse_uri_path(self, path):
+    def parse_uri_path(cls, path):
         return {}
 
     def _build_key(self, key, namespace=None):

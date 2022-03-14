@@ -1,14 +1,11 @@
 import asyncio
-import itertools
 import functools
+import itertools
 
 import aioredis
 
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
-
-
-AIOREDIS_BEFORE_ONE = aioredis.__version__.startswith("0.")
 
 
 def conn(func):
@@ -19,8 +16,7 @@ def conn(func):
             pool = await self._get_pool()
             conn_context = await pool
             with conn_context as _conn:
-                if not AIOREDIS_BEFORE_ONE:
-                    _conn = aioredis.Redis(_conn)
+                _conn = aioredis.Redis(_conn)
                 return await func(self, *args, _conn=_conn, **kwargs)
 
         return await func(self, *args, _conn=_conn, **kwargs)
@@ -87,15 +83,11 @@ class RedisBackend:
     async def acquire_conn(self):
         await self._get_pool()
         conn = await self._pool.acquire()
-        if not AIOREDIS_BEFORE_ONE:
-            conn = aioredis.Redis(conn)
+        conn = aioredis.Redis(conn)
         return conn
 
     async def release_conn(self, _conn):
-        if AIOREDIS_BEFORE_ONE:
-            self._pool.release(_conn)
-        else:
-            self._pool.release(_conn.connection)
+        self._pool.release(_conn)
 
     @conn
     async def _get(self, key, encoding="utf-8", _conn=None):
@@ -214,8 +206,7 @@ class RedisBackend:
                     "minsize": self.pool_min_size,
                     "maxsize": self.pool_max_size,
                 }
-                if not AIOREDIS_BEFORE_ONE:
-                    kwargs["create_connection_timeout"] = self.create_connection_timeout
+                kwargs["create_connection_timeout"] = self.create_connection_timeout
 
                 self._pool = await aioredis.create_pool((self.endpoint, self.port), **kwargs)
 
@@ -253,7 +244,7 @@ class RedisCache(RedisBackend, BaseCache):
         self.serializer = serializer or JsonSerializer()
 
     @classmethod
-    def parse_uri_path(self, path):
+    def parse_uri_path(cls, path):
         """
         Given a uri path, return the Redis specific configuration
         options in that path string according to iana definition

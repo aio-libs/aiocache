@@ -1,6 +1,5 @@
 import asyncio
-
-from asynctest import MagicMock
+from unittest.mock import MagicMock
 
 from aiocache.base import BaseCache
 
@@ -12,5 +11,8 @@ async def async_main():
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(async_main())
+    import sys
+
+    if sys.version_info >= (3, 8):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(async_main())

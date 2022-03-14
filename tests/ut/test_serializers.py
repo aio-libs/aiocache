@@ -1,16 +1,16 @@
-import pytest
 import pickle
-
 from collections import namedtuple
 from unittest import mock
 
+import pytest
+
 from aiocache.serializers import (
     BaseSerializer,
-    NullSerializer,
-    StringSerializer,
-    PickleSerializer,
     JsonSerializer,
     MsgPackSerializer,
+    NullSerializer,
+    PickleSerializer,
+    StringSerializer,
 )
 
 
@@ -90,9 +90,8 @@ class TestPickleSerializer:
         assert serializer.loads(serializer.dumps(obj)) == obj
 
     def test_dumps(self, serializer):
-        assert (
-            serializer.dumps("hi") == b"\x80\x04\x95\x06\x00\x00\x00\x00\x00\x00\x00\x8c\x02hi\x94."
-        )
+        expected = b"\x80\x04\x95\x06\x00\x00\x00\x00\x00\x00\x00\x8c\x02hi\x94."
+        assert serializer.dumps("hi") == expected
 
     def test_dumps_with_none(self, serializer):
         assert isinstance(serializer.dumps(None), bytes)

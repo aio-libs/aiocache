@@ -1,12 +1,12 @@
-import pytest
 import asyncio
+from unittest.mock import ANY, MagicMock, patch
 
-from unittest.mock import MagicMock, ANY, patch
+import pytest
 
 from aiocache import SimpleMemoryCache
+from aiocache.backends.memory import SimpleMemoryBackend
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
-from aiocache.backends.memory import SimpleMemoryBackend
 
 
 @pytest.fixture

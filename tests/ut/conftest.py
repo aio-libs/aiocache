@@ -1,8 +1,18 @@
-import pytest
-import asynctest
+import sys
 
-from aiocache.base import BaseCache, API
-from aiocache import caches, RedisCache, MemcachedCache
+if sys.version_info < (3, 8):
+    # Missing AsyncMock on 3.7
+    collect_ignore_glob = ["*"]
+
+    from unittest.mock import Mock
+    AsyncMock = Mock
+else:
+    from unittest.mock import AsyncMock, Mock
+
+import pytest
+
+from aiocache import MemcachedCache, RedisCache, caches
+from aiocache.base import API, BaseCache
 from aiocache.plugins import BasePlugin
 from aiocache.serializers import BaseSerializer
 
@@ -32,22 +42,22 @@ def reset_caches():
 class MockCache(BaseCache):
     def __init__(self):
         super().__init__()
-        self._add = asynctest.CoroutineMock()
-        self._get = asynctest.CoroutineMock()
-        self._gets = asynctest.CoroutineMock()
-        self._set = asynctest.CoroutineMock()
-        self._multi_get = asynctest.CoroutineMock(return_value=["a", "b"])
-        self._multi_set = asynctest.CoroutineMock()
-        self._delete = asynctest.CoroutineMock()
-        self._exists = asynctest.CoroutineMock()
-        self._increment = asynctest.CoroutineMock()
-        self._expire = asynctest.CoroutineMock()
-        self._clear = asynctest.CoroutineMock()
-        self._raw = asynctest.CoroutineMock()
-        self._redlock_release = asynctest.CoroutineMock()
-        self.acquire_conn = asynctest.CoroutineMock()
-        self.release_conn = asynctest.CoroutineMock()
-        self._close = asynctest.CoroutineMock()
+        self._add = AsyncMock()
+        self._get = AsyncMock()
+        self._gets = AsyncMock()
+        self._set = AsyncMock()
+        self._multi_get = AsyncMock(return_value=["a", "b"])
+        self._multi_set = AsyncMock()
+        self._delete = AsyncMock()
+        self._exists = AsyncMock()
+        self._increment = AsyncMock()
+        self._expire = AsyncMock()
+        self._clear = AsyncMock()
+        self._raw = AsyncMock()
+        self._redlock_release = AsyncMock()
+        self.acquire_conn = AsyncMock()
+        self.release_conn = AsyncMock()
+        self._close = AsyncMock()
 
 
 @pytest.fixture
@@ -58,9 +68,9 @@ def mock_cache(mocker):
     for cmd in API.CMDS:
         mocker.spy(cache, cmd.__name__)
     mocker.spy(cache, "close")
-    cache.serializer = asynctest.Mock(spec=BaseSerializer)
+    cache.serializer = Mock(spec=BaseSerializer)
     cache.serializer.encoding = "utf-8"
-    cache.plugins = [asynctest.Mock(spec=BasePlugin)]
+    cache.plugins = [Mock(spec=BasePlugin)]
     return cache
 
 

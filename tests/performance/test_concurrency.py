@@ -1,11 +1,11 @@
 import re
-import time
-import pytest
 import subprocess
-
+import time
 from multiprocessing import Process
 
-from server import run_server
+import pytest
+
+from .server import run_server
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def memory_server():
 
 @pytest.fixture(params=["memcached_server", "memory_server", "redis_server"])
 def server(request):
-    return request.getfuncargvalue(request.param)
+    return request.getfixturevalue(request.param)
 
 
 def test_concurrency_error_rates(server):
