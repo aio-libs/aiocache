@@ -271,7 +271,7 @@ class TestMemcachedCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),  # type: ignore[attr-defined]
+        ([None, "test" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns" + pytest.KEY]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
         assert memcached_cache.build_key(pytest.KEY, namespace=namespace) == expected.encode()

@@ -2,8 +2,8 @@ import logging
 from typing import Dict, Type
 
 from ._version import __version__
-from .base import BaseCache
 from .backends.memory import SimpleMemoryCache
+from .base import BaseCache
 
 logger = logging.getLogger(__name__)
 
