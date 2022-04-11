@@ -7,7 +7,6 @@ from aiocache.base import SENTINEL
 from aiocache.factory import Cache, caches
 from aiocache.lock import RedLock
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -310,19 +309,19 @@ class multi_cached:
     ):
         missing_keys = []
         partial = {}
-        keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
+        orig_keys, cache_keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
 
         if cache_read:
-            values = await self.get_from_cache(*keys)
-            for key, value in zip(keys, values):
+            values = await self.get_from_cache(*cache_keys)
+            for orig_key, value in zip(orig_keys, values):
                 if value is None:
-                    missing_keys.append(key)
+                    missing_keys.append(orig_key)
                 else:
-                    partial[key] = value
+                    partial[orig_key] = value
             if values and None not in values:
                 return partial
         else:
-            missing_keys = list(keys)
+            missing_keys = list(orig_keys)
 
         if args_index > -1:
             new_args[args_index] = missing_keys
@@ -343,17 +342,16 @@ class multi_cached:
 
     def get_cache_keys(self, f, args, kwargs):
         args_dict = _get_args_dict(f, args, kwargs)
-        keys = args_dict.get(self.keys_from_attr, []) or []
-        keys = [self.key_builder(key, f, *args, **kwargs) for key in keys]
+        orig_keys = args_dict.get(self.keys_from_attr, []) or []
+        cache_keys = [self.key_builder(key, f, *args, **kwargs) for key in orig_keys]
 
         args_names = f.__code__.co_varnames[: f.__code__.co_argcount]
         new_args = list(args)
         keys_index = -1
         if self.keys_from_attr in args_names and self.keys_from_attr not in kwargs:
             keys_index = args_names.index(self.keys_from_attr)
-            new_args[keys_index] = keys
 
-        return keys, new_args, keys_index
+        return orig_keys, cache_keys, new_args, keys_index
 
     async def get_from_cache(self, *keys):
         if not keys:
