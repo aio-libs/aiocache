@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.11.2 (2022-04-12)
+
+* Fix issue with get after increment [#542](https://github.com/aio-libs/aiocache/issues/542) - Stanislav Bushuev
+
 
 ## 0.11.1 (2019-07-31)
 

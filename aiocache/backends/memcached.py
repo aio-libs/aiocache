@@ -36,12 +36,14 @@ class MemcachedBackend:
                 values.append(value.decode(encoding))
         return values
 
-    async def _set(self, key, value, ttl=0, _cas_token=None, _conn=None):
+    async def _set(self, key, value, ttl=0, _cas_token=None, _conn=None, _keep_ttl=None):
         value = value.encode() if isinstance(value, str) else value
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         try:
-            return await self.client.set(key, value, exptime=ttl or 0)
+            if not _keep_ttl:
+                return await self.client.set(key, value, exptime=ttl or 0)
+            return await self.client.replace(key, value)
         except aiomcache.exceptions.ValidationException as e:
             raise TypeError("aiomcache error: {}".format(str(e)))
 

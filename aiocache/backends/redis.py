@@ -100,9 +100,11 @@ class RedisBackend:
         return await _conn.mget(*keys, encoding=encoding)
 
     @conn
-    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None, _keep_ttl=None):
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
+        if _keep_ttl:
+            return await _conn.execute("SET", key, value, "KEEPTTL")
         if ttl is None:
             return await _conn.set(key, value)
         return await _conn.setex(key, ttl, value)

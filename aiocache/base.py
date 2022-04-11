@@ -271,7 +271,7 @@ class BaseCache:
         logger.debug("SET %s %d (%.4f)s", ns_key, True, time.monotonic() - start)
         return res
 
-    async def _set(self, key, value, ttl, _cas_token=None, _conn=None):
+    async def _set(self, key, value, ttl, _cas_token=None, _conn=None, _keep_ttl=None):
         raise NotImplementedError()
 
     @API.register
@@ -381,7 +381,21 @@ class BaseCache:
         """
         start = time.monotonic()
         ns_key = self.build_key(key, namespace=namespace)
-        ret = await self._increment(ns_key, delta, _conn=_conn)
+        value = await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn)
+        if isinstance(value, int):
+            ret = await self._increment(ns_key, delta, _conn=_conn)
+        elif value is None:
+            ret = delta
+            await self._set(ns_key, self._serializer.dumps(delta), ttl=self.ttl, _conn=_conn)
+        else:
+            try:
+                ret = self._serializer.loads(value) + delta
+            except ValueError:
+                raise TypeError("Value is not an integer") from None
+            await self._set(
+                ns_key, self._serializer.dumps(ret), ttl=None, _conn=_conn, _keep_ttl=True
+            )
+
         logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 

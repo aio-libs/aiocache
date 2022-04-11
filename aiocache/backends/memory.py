@@ -25,15 +25,15 @@ class SimpleMemoryBackend:
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         return [SimpleMemoryBackend._cache.get(key) for key in keys]
 
-    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+    async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None, _keep_ttl=None):
         if _cas_token is not None and _cas_token != SimpleMemoryBackend._cache.get(key):
             return 0
 
-        if key in SimpleMemoryBackend._handlers:
+        if key in SimpleMemoryBackend._handlers and not _keep_ttl:
             SimpleMemoryBackend._handlers[key].cancel()
 
         SimpleMemoryBackend._cache[key] = value
-        if ttl:
+        if ttl and not _keep_ttl:
             loop = asyncio.get_event_loop()
             SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
@@ -56,11 +56,11 @@ class SimpleMemoryBackend:
     async def _increment(self, key, delta, _conn=None):
         if key not in SimpleMemoryBackend._cache:
             SimpleMemoryBackend._cache[key] = delta
-        else:
-            try:
-                SimpleMemoryBackend._cache[key] = int(SimpleMemoryBackend._cache[key]) + delta
-            except ValueError:
-                raise TypeError("Value is not an integer") from None
+            return delta
+        try:
+            SimpleMemoryBackend._cache[key] = int(SimpleMemoryBackend._cache[key]) + delta
+        except ValueError:
+            raise TypeError("Value is not an integer") from None
         return SimpleMemoryBackend._cache[key]
 
     async def _expire(self, key, ttl, _conn=None):

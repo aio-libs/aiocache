@@ -489,6 +489,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_increment(self, mock_cache):
+        mock_cache._get.return_value = 0
         await mock_cache.increment(pytest.KEY, 2)
 
         mock_cache._increment.assert_called_with(mock_cache._build_key(pytest.KEY), 2, _conn=ANY)
@@ -497,6 +498,7 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_increment_timeouts(self, mock_cache):
+        mock_cache._get.return_value = 0
         mock_cache._increment = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):

@@ -161,6 +161,12 @@ class TestPickleSerializer:
         assert await cache.multi_set([(pytest.KEY, obj)]) is True
         assert await cache.multi_get([pytest.KEY]) == [pickle.loads(pickle.dumps(obj))]
 
+    async def test_increment(self, cache):
+        cache.serializer = PickleSerializer()
+        assert await cache.increment(pytest.KEY, delta=1)
+        assert await cache.increment(pytest.KEY, delta=1)
+        assert await cache.get(pytest.KEY) == 2
+
 
 class TestAltSerializers:
     @pytest.mark.asyncio
