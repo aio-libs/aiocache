@@ -39,7 +39,7 @@ setup(
     extras_require={
         'redis:python_version<"3.7"': ['aioredis>=0.3.3'],
         'redis:python_version>="3.8"': ['aioredis>=1.3.0'],
-        'redis:python_version>="3.7" and python_version<"3.8"': ['aioredis>=1.0.0'],
+        'redis:python_version>="3.7" and python_version<"3.8"': ['aioredis>=1.0.0,<2.0'],
         'memcached': ['aiomcache>=0.5.2'],
         'msgpack': ['msgpack>=0.5.5'],
         'dev': [
