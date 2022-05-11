@@ -153,7 +153,6 @@ class TestCache:
 
     @pytest.mark.asyncio
     async def test_single_connection(self, cache):
-        pytest.skip("aioredis code is broken")
         async with cache.get_connection() as conn:
             assert isinstance(conn, _Conn)
             assert await conn.set(Keys.KEY, "value") is True
@@ -269,6 +268,8 @@ class TestRedisCache:
         await redis_cache.raw("set", "key", "value")
         assert await redis_cache.raw("get", "key") == "value"
         assert await redis_cache.raw("keys", "k*") == ["key"]
+        # .raw() doesn't build key with namespace prefix, clear it manually
+        await redis_cache.raw("delete", "key")
 
     @pytest.mark.asyncio
     async def test_clear_with_namespace_redis(self, redis_cache):
@@ -281,4 +282,3 @@ class TestRedisCache:
     async def test_close(self, redis_cache):
         await redis_cache.set(Keys.KEY, "value")
         await redis_cache._close()
-        assert redis_cache._pool.size == 0

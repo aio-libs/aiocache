@@ -26,7 +26,6 @@ class TestCache:
         assert cache.endpoint == "endpoint"
         assert cache.port == 1000
         assert cache.password == "pass"
-        assert cache.pool_min_size == 40
         assert cache.pool_max_size == 50
         assert cache.create_connection_timeout == 20
 
