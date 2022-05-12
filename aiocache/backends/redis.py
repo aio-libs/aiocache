@@ -1,8 +1,8 @@
 import itertools
 import warnings
 
-import aioredis
-from aioredis.exceptions import ResponseError as IncrbyException
+import redis.asyncio as redis
+from redis.exceptions import ResponseError as IncrbyException
 
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
@@ -45,12 +45,12 @@ class RedisBackend:
         super().__init__(**kwargs)
         if loop is not None:
             warnings.warn(
-                "Parameter 'loop' has been obsolete since aioredis 2.0.0.",
+                "Parameter 'loop' has been obsolete on aiocache >= 0.12.0",
                 DeprecationWarning,
             )
         if pool_min_size != 1:
             warnings.warn(
-                "Parameter 'pool_min_size' has been obsolete since aioredis 2.0.0.",
+                "Parameter 'pool_min_size' has been obsolete since aiocache >= 0.12.0",
                 DeprecationWarning,
             )
 
@@ -68,17 +68,16 @@ class RedisBackend:
             "port": self.port,
             "db": self.db,
             "password": self.password,
-            # NOTE: decoding can't be controlled on API level since
-            #  aioredis 2.x, we need to disable decoding on
-            #  global/connection level. Cause some of the values are
-            #  save as bytes directly, like pickle serialized values,
-            #  which may raise exc when decoded with 'utf-8'.
+            # NOTE: decoding can't be controlled on API level after switching to
+            #  redis, we need to disable decoding on global/connection level.
+            #  Cause some of the values are save as bytes directly, like pickle
+            #  serialized values, which may raise exc when decoded with 'utf-8'.
             "decode_responses": False,
             # parameter names are different
             "socket_connect_timeout": self.create_connection_timeout,
             "max_connections": self.pool_max_size,
         }
-        self.client = aioredis.Redis(**redis_kwargs)
+        self.client = redis.Redis(**redis_kwargs)
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
@@ -217,8 +216,7 @@ class RedisCache(RedisBackend, BaseCache):
     :param password: str indicating password to use. Default is None.
     :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
     :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
-    :param create_connection_timeout: int timeout for the creation of connection,
-        only for aioredis>=1. Default is None
+    :param create_connection_timeout: int timeout for the creation of connection. Default is None
     """
 
     NAME = "redis"

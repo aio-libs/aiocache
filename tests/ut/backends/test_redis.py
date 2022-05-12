@@ -1,7 +1,7 @@
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
-import aioredis
 import pytest
+from redis.exceptions import ResponseError
 from tests.utils import Keys
 
 from aiocache.backends.redis import RedisBackend, RedisCache
@@ -39,9 +39,9 @@ def redis(redis_client):
     redis = RedisBackend()
     redis.client = redis_client
     yield redis
+
+
 class TestRedisBackend:
-
-
     default_redis_kwargs = {
         "host": "127.0.0.1",
         "port": 6379,
@@ -52,7 +52,7 @@ class TestRedisBackend:
         "max_connections": 10,
     }
 
-    @patch("aioredis.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class")
     def test_setup(self, mock_class):
         redis_backend = RedisBackend()
         kwargs = self.default_redis_kwargs.copy()
@@ -63,7 +63,7 @@ class TestRedisBackend:
         assert redis_backend.password is None
         assert redis_backend.pool_max_size == 10
 
-    @patch("aioredis.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class")
     def test_setup_override(self, mock_class):
         override = {"db": 2, "password": "pass"}
         redis_backend = RedisBackend(**override)
@@ -77,7 +77,7 @@ class TestRedisBackend:
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
-    @patch("aioredis.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class")
     def test_setup_casts(self, mock_class):
         override = {
             "db": "2",
@@ -208,7 +208,7 @@ class TestRedisBackend:
 
     @pytest.mark.asyncio
     async def test_increment_typerror(self, redis):
-        redis.client.incrby.side_effect = aioredis.exceptions.ResponseError("msg")
+        redis.client.incrby.side_effect = ResponseError("msg")
         with pytest.raises(TypeError):
             await redis._increment(Keys.KEY, delta=2)
         redis.client.incrby.assert_called_with(Keys.KEY, 2)
