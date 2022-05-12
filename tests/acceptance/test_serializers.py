@@ -3,6 +3,7 @@ import random
 
 import pytest
 from marshmallow import Schema, fields, post_load
+from tests.utils import Keys
 
 try:
     import ujson as json
@@ -66,22 +67,22 @@ class TestNullSerializer:
     @pytest.mark.asyncio
     async def test_set_get_types(self, memory_cache, obj):
         memory_cache.serializer = NullSerializer()
-        assert await memory_cache.set(pytest.KEY, obj) is True
-        assert await memory_cache.get(pytest.KEY) is obj
+        assert await memory_cache.set(Keys.KEY, obj) is True
+        assert await memory_cache.get(Keys.KEY) is obj
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_add_get_types(self, memory_cache, obj):
         memory_cache.serializer = NullSerializer()
-        assert await memory_cache.add(pytest.KEY, obj) is True
-        assert await memory_cache.get(pytest.KEY) is obj
+        assert await memory_cache.add(Keys.KEY, obj) is True
+        assert await memory_cache.get(Keys.KEY) is obj
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_multi_set_multi_get_types(self, memory_cache, obj):
         memory_cache.serializer = NullSerializer()
-        assert await memory_cache.multi_set([(pytest.KEY, obj)]) is True
-        assert (await memory_cache.multi_get([pytest.KEY]))[0] is obj
+        assert await memory_cache.multi_set([(Keys.KEY, obj)]) is True
+        assert (await memory_cache.multi_get([Keys.KEY]))[0] is obj
 
 
 class TestStringSerializer:
@@ -92,22 +93,22 @@ class TestStringSerializer:
     @pytest.mark.asyncio
     async def test_set_get_types(self, cache, obj):
         cache.serializer = StringSerializer()
-        assert await cache.set(pytest.KEY, obj) is True
-        assert await cache.get(pytest.KEY) == str(obj)
+        assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == str(obj)
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_add_get_types(self, cache, obj):
         cache.serializer = StringSerializer()
-        assert await cache.add(pytest.KEY, obj) is True
-        assert await cache.get(pytest.KEY) == str(obj)
+        assert await cache.add(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == str(obj)
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_multi_set_multi_get_types(self, cache, obj):
         cache.serializer = StringSerializer()
-        assert await cache.multi_set([(pytest.KEY, obj)]) is True
-        assert await cache.multi_get([pytest.KEY]) == [str(obj)]
+        assert await cache.multi_set([(Keys.KEY, obj)]) is True
+        assert await cache.multi_get([Keys.KEY]) == [str(obj)]
 
 
 class TestJsonSerializer:
@@ -118,22 +119,22 @@ class TestJsonSerializer:
     @pytest.mark.asyncio
     async def test_set_get_types(self, cache, obj):
         cache.serializer = JsonSerializer()
-        assert await cache.set(pytest.KEY, obj) is True
-        assert await cache.get(pytest.KEY) == json.loads(json.dumps(obj))
+        assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == json.loads(json.dumps(obj))
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_add_get_types(self, cache, obj):
         cache.serializer = JsonSerializer()
-        assert await cache.add(pytest.KEY, obj) is True
-        assert await cache.get(pytest.KEY) == json.loads(json.dumps(obj))
+        assert await cache.add(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == json.loads(json.dumps(obj))
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_multi_set_multi_get_types(self, cache, obj):
         cache.serializer = JsonSerializer()
-        assert await cache.multi_set([(pytest.KEY, obj)]) is True
-        assert await cache.multi_get([pytest.KEY]) == [json.loads(json.dumps(obj))]
+        assert await cache.multi_set([(Keys.KEY, obj)]) is True
+        assert await cache.multi_get([Keys.KEY]) == [json.loads(json.dumps(obj))]
 
 
 class TestPickleSerializer:
@@ -144,36 +145,36 @@ class TestPickleSerializer:
     @pytest.mark.asyncio
     async def test_set_get_types(self, cache, obj):
         cache.serializer = PickleSerializer()
-        assert await cache.set(pytest.KEY, obj) is True
-        assert await cache.get(pytest.KEY) == pickle.loads(pickle.dumps(obj))
+        assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == pickle.loads(pickle.dumps(obj))
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_add_get_types(self, cache, obj):
         cache.serializer = PickleSerializer()
-        assert await cache.add(pytest.KEY, obj) is True
-        assert await cache.get(pytest.KEY) == pickle.loads(pickle.dumps(obj))
+        assert await cache.add(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == pickle.loads(pickle.dumps(obj))
 
     @pytest.mark.parametrize("obj", TYPES)
     @pytest.mark.asyncio
     async def test_multi_set_multi_get_types(self, cache, obj):
         cache.serializer = PickleSerializer()
-        assert await cache.multi_set([(pytest.KEY, obj)]) is True
-        assert await cache.multi_get([pytest.KEY]) == [pickle.loads(pickle.dumps(obj))]
+        assert await cache.multi_set([(Keys.KEY, obj)]) is True
+        assert await cache.multi_get([Keys.KEY]) == [pickle.loads(pickle.dumps(obj))]
 
 
 class TestAltSerializers:
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer_functions(self, cache):
         cache.serializer = StringSerializer()
-        await cache.set(pytest.KEY, "value", dumps_fn=dumps)
-        assert await cache.get(pytest.KEY) == "v4lu3"
-        assert await cache.get(pytest.KEY, loads_fn=loads) == "value"
+        await cache.set(Keys.KEY, "value", dumps_fn=dumps)
+        assert await cache.get(Keys.KEY) == "v4lu3"
+        assert await cache.get(Keys.KEY, loads_fn=loads) == "value"
 
     @pytest.mark.asyncio
     async def test_get_set_alt_serializer_class(self, cache):
         my_serializer = MyTypeSchema()
         my_obj = MyType()
         cache.serializer = my_serializer
-        await cache.set(pytest.KEY, my_obj)
-        assert await cache.get(pytest.KEY) == my_serializer.loads(my_serializer.dumps(my_obj))
+        await cache.set(Keys.KEY, my_obj)
+        assert await cache.get(Keys.KEY) == my_serializer.loads(my_serializer.dumps(my_obj))

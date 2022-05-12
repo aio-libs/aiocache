@@ -3,13 +3,14 @@ import random
 from unittest import mock
 
 import pytest
+from tests.utils import Keys
 
 from aiocache import cached, cached_stampede, multi_cached
 
 
 async def return_dict(keys=None):
     ret = {}
-    for value, key in enumerate(keys or [pytest.KEY, pytest.KEY_1]):
+    for value, key in enumerate(keys or [Keys.KEY, Keys.KEY_1]):
         ret[key] = str(value)
     return ret
 
@@ -28,16 +29,16 @@ class TestCached:
 
     @pytest.mark.asyncio
     async def test_cached_ttl(self, cache):
-        @cached(ttl=1, key=pytest.KEY)
+        @cached(ttl=1, key=Keys.KEY)
         async def fn():
             return str(random.randint(1, 50))
 
         resp1 = await fn()
         resp2 = await fn()
 
-        assert await cache.get(pytest.KEY) == resp1 == resp2
+        assert await cache.get(Keys.KEY) == resp1 == resp2
         await asyncio.sleep(1)
-        assert await cache.get(pytest.KEY) is None
+        assert await cache.get(Keys.KEY) is None
 
     @pytest.mark.asyncio
     async def test_cached_key_builder(self, cache):
@@ -105,7 +106,7 @@ class TestMultiCachedDecorator:
     async def test_multi_cached(self, cache):
         multi_cached_decorator = multi_cached("keys")
 
-        default_keys = {pytest.KEY, pytest.KEY_1}
+        default_keys = {Keys.KEY, Keys.KEY_1}
         await multi_cached_decorator(return_dict)(keys=default_keys)
 
         for key in default_keys:
@@ -115,10 +116,10 @@ class TestMultiCachedDecorator:
     async def test_keys_without_kwarg(self, cache):
         @multi_cached("keys")
         async def fn(keys):
-            return {pytest.KEY: 1}
+            return {Keys.KEY: 1}
 
-        await fn([pytest.KEY])
-        assert await cache.exists(pytest.KEY) is True
+        await fn([Keys.KEY])
+        assert await cache.exists(Keys.KEY) is True
 
     @pytest.mark.asyncio
     async def test_multi_cached_key_builder(self, cache):
@@ -127,21 +128,21 @@ class TestMultiCachedDecorator:
 
         @multi_cached(keys_from_attr="keys", key_builder=build_key)
         async def fn(self, keys, market="ES"):
-            return {pytest.KEY: 1, pytest.KEY_1: 2}
+            return {Keys.KEY: 1, Keys.KEY_1: 2}
 
-        await fn("self", keys=[pytest.KEY, pytest.KEY_1])
-        assert await cache.exists("fn_" + pytest.KEY + "_ES") is True
-        assert await cache.exists("fn_" + pytest.KEY_1 + "_ES") is True
+        await fn("self", keys=[Keys.KEY, Keys.KEY_1])
+        assert await cache.exists("fn_" + Keys.KEY + "_ES") is True
+        assert await cache.exists("fn_" + Keys.KEY_1 + "_ES") is True
 
     @pytest.mark.asyncio
     async def test_fn_with_args(self, cache):
         @multi_cached("keys")
         async def fn(keys, *args):
             assert len(args) == 1
-            return {pytest.KEY: 1}
+            return {Keys.KEY: 1}
 
-        await fn([pytest.KEY], "arg")
-        assert await cache.exists(pytest.KEY) is True
+        await fn([Keys.KEY], "arg")
+        assert await cache.exists(Keys.KEY) is True
 
     @pytest.mark.asyncio
     async def test_double_decorator(self, cache):
@@ -154,7 +155,7 @@ class TestMultiCachedDecorator:
         @dummy_d
         @multi_cached("keys")
         async def fn(keys):
-            return {pytest.KEY: 1}
+            return {Keys.KEY: 1}
 
-        await fn([pytest.KEY])
-        assert await cache.exists(pytest.KEY) is True
+        await fn([Keys.KEY])
+        assert await cache.exists(Keys.KEY) is True
