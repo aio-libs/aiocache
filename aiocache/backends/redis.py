@@ -8,6 +8,9 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
+_NOT_SET = object()
+
+
 class RedisBackend:
 
     RELEASE_SCRIPT = (
@@ -36,7 +39,7 @@ class RedisBackend:
         port=6379,
         db=0,
         password=None,
-        pool_min_size=1,
+        pool_min_size=_NOT_SET,
         pool_max_size=10,
         loop=None,
         create_connection_timeout=None,
@@ -48,7 +51,7 @@ class RedisBackend:
                 "Parameter 'loop' has been obsolete on aiocache >= 0.12.0",
                 DeprecationWarning,
             )
-        if pool_min_size != 1:
+        if pool_min_size is not _NOT_SET:
             warnings.warn(
                 "Parameter 'pool_min_size' has been obsolete since aiocache >= 0.12.0",
                 DeprecationWarning,
@@ -214,7 +217,6 @@ class RedisCache(RedisBackend, BaseCache):
     :param port: int with the port to connect to. Default is 6379.
     :param db: int indicating database to use. Default is 0.
     :param password: str indicating password to use. Default is None.
-    :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
     :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
     :param create_connection_timeout: int timeout for the creation of connection. Default is None
     """
