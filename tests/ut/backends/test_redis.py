@@ -2,6 +2,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
 
 import aioredis
 import pytest
+from tests.utils import Keys
 
 from aiocache.backends.redis import RedisBackend, RedisCache, conn
 from aiocache.base import BaseCache
@@ -132,39 +133,39 @@ class TestRedisBackend:
 
     @pytest.mark.asyncio
     async def test_get(self, redis, redis_connection):
-        await redis._get(pytest.KEY)
-        redis_connection.get.assert_called_with(pytest.KEY, encoding="utf-8")
+        await redis._get(Keys.KEY)
+        redis_connection.get.assert_called_with(Keys.KEY, encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_gets(self, mocker, redis, redis_connection):
         mocker.spy(redis, "_get")
-        await redis._gets(pytest.KEY)
-        redis._get.assert_called_with(pytest.KEY, encoding="utf-8", _conn=ANY)
+        await redis._gets(Keys.KEY)
+        redis._get.assert_called_with(Keys.KEY, encoding="utf-8", _conn=ANY)
 
     @pytest.mark.asyncio
     async def test_set(self, redis, redis_connection):
-        await redis._set(pytest.KEY, "value")
-        redis_connection.set.assert_called_with(pytest.KEY, "value")
+        await redis._set(Keys.KEY, "value")
+        redis_connection.set.assert_called_with(Keys.KEY, "value")
 
-        await redis._set(pytest.KEY, "value", ttl=1)
-        redis_connection.setex.assert_called_with(pytest.KEY, 1, "value")
+        await redis._set(Keys.KEY, "value", ttl=1)
+        redis_connection.setex.assert_called_with(Keys.KEY, 1, "value")
 
     @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, redis, redis_connection):
         mocker.spy(redis, "_cas")
-        await redis._set(pytest.KEY, "value", _cas_token="old_value", _conn=redis_connection)
+        await redis._set(Keys.KEY, "value", _cas_token="old_value", _conn=redis_connection)
         redis._cas.assert_called_with(
-            pytest.KEY, "value", "old_value", ttl=None, _conn=redis_connection
+            Keys.KEY, "value", "old_value", ttl=None, _conn=redis_connection
         )
 
     @pytest.mark.asyncio
     async def test_cas(self, mocker, redis, redis_connection):
         mocker.spy(redis, "_raw")
-        await redis._cas(pytest.KEY, "value", "old_value", ttl=10, _conn=redis_connection)
+        await redis._cas(Keys.KEY, "value", "old_value", ttl=10, _conn=redis_connection)
         redis._raw.assert_called_with(
             "eval",
             redis.CAS_SCRIPT,
-            [pytest.KEY],
+            [Keys.KEY],
             ["value", "old_value", "EX", 10],
             _conn=redis_connection,
         )
@@ -172,84 +173,84 @@ class TestRedisBackend:
     @pytest.mark.asyncio
     async def test_cas_float_ttl(self, mocker, redis, redis_connection):
         mocker.spy(redis, "_raw")
-        await redis._cas(pytest.KEY, "value", "old_value", ttl=0.1, _conn=redis_connection)
+        await redis._cas(Keys.KEY, "value", "old_value", ttl=0.1, _conn=redis_connection)
         redis._raw.assert_called_with(
             "eval",
             redis.CAS_SCRIPT,
-            [pytest.KEY],
+            [Keys.KEY],
             ["value", "old_value", "PX", 100],
             _conn=redis_connection,
         )
 
     @pytest.mark.asyncio
     async def test_multi_get(self, redis, redis_connection):
-        await redis._multi_get([pytest.KEY, pytest.KEY_1])
-        redis_connection.mget.assert_called_with(pytest.KEY, pytest.KEY_1, encoding="utf-8")
+        await redis._multi_get([Keys.KEY, Keys.KEY_1])
+        redis_connection.mget.assert_called_with(Keys.KEY, Keys.KEY_1, encoding="utf-8")
 
     @pytest.mark.asyncio
     async def test_multi_set(self, redis, redis_connection):
-        await redis._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")])
-        redis_connection.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
+        await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")])
+        redis_connection.mset.assert_called_with(Keys.KEY, "value", Keys.KEY_1, "random")
 
     @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, redis, redis_connection):
-        await redis._multi_set([(pytest.KEY, "value"), (pytest.KEY_1, "random")], ttl=1)
+        await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
         assert redis_connection.multi_exec.call_count == 1
-        redis_connection.mset.assert_called_with(pytest.KEY, "value", pytest.KEY_1, "random")
-        redis_connection.expire.assert_any_call(pytest.KEY, timeout=1)
-        redis_connection.expire.assert_any_call(pytest.KEY_1, timeout=1)
+        redis_connection.mset.assert_called_with(Keys.KEY, "value", Keys.KEY_1, "random")
+        redis_connection.expire.assert_any_call(Keys.KEY, timeout=1)
+        redis_connection.expire.assert_any_call(Keys.KEY_1, timeout=1)
         assert redis_connection.execute.call_count == 1
 
     @pytest.mark.asyncio
     async def test_add(self, redis, redis_connection):
-        await redis._add(pytest.KEY, "value")
-        redis_connection.set.assert_called_with(pytest.KEY, "value", exist=ANY, expire=None)
+        await redis._add(Keys.KEY, "value")
+        redis_connection.set.assert_called_with(Keys.KEY, "value", exist=ANY, expire=None)
 
-        await redis._add(pytest.KEY, "value", 1)
-        redis_connection.set.assert_called_with(pytest.KEY, "value", exist=ANY, expire=1)
+        await redis._add(Keys.KEY, "value", 1)
+        redis_connection.set.assert_called_with(Keys.KEY, "value", exist=ANY, expire=1)
 
     @pytest.mark.asyncio
     async def test_add_existing(self, redis, redis_connection):
         redis_connection.set.return_value = False
         with pytest.raises(ValueError):
-            await redis._add(pytest.KEY, "value")
+            await redis._add(Keys.KEY, "value")
 
     @pytest.mark.asyncio
     async def test_add_float_ttl(self, redis, redis_connection):
-        await redis._add(pytest.KEY, "value", 0.1)
-        redis_connection.set.assert_called_with(pytest.KEY, "value", exist=ANY, pexpire=100)
+        await redis._add(Keys.KEY, "value", 0.1)
+        redis_connection.set.assert_called_with(Keys.KEY, "value", exist=ANY, pexpire=100)
 
     @pytest.mark.asyncio
     async def test_exists(self, redis, redis_connection):
         redis_connection.exists.return_value = 1
-        await redis._exists(pytest.KEY)
-        redis_connection.exists.assert_called_with(pytest.KEY)
+        await redis._exists(Keys.KEY)
+        redis_connection.exists.assert_called_with(Keys.KEY)
 
     @pytest.mark.asyncio
     async def test_expire(self, redis, redis_connection):
-        await redis._expire(pytest.KEY, ttl=1)
-        redis_connection.expire.assert_called_with(pytest.KEY, 1)
+        await redis._expire(Keys.KEY, ttl=1)
+        redis_connection.expire.assert_called_with(Keys.KEY, 1)
 
     @pytest.mark.asyncio
     async def test_increment(self, redis, redis_connection):
-        await redis._increment(pytest.KEY, delta=2)
-        redis_connection.incrby.assert_called_with(pytest.KEY, 2)
+        await redis._increment(Keys.KEY, delta=2)
+        redis_connection.incrby.assert_called_with(Keys.KEY, 2)
 
     @pytest.mark.asyncio
     async def test_increment_typerror(self, redis, redis_connection):
         redis_connection.incrby.side_effect = aioredis.errors.ReplyError("msg")
         with pytest.raises(TypeError):
-            await redis._increment(pytest.KEY, 2)
+            await redis._increment(Keys.KEY, 2)
 
     @pytest.mark.asyncio
     async def test_expire_0_ttl(self, redis, redis_connection):
-        await redis._expire(pytest.KEY, ttl=0)
-        redis_connection.persist.assert_called_with(pytest.KEY)
+        await redis._expire(Keys.KEY, ttl=0)
+        redis_connection.persist.assert_called_with(Keys.KEY)
 
     @pytest.mark.asyncio
     async def test_delete(self, redis, redis_connection):
-        await redis._delete(pytest.KEY)
-        redis_connection.delete.assert_called_with(pytest.KEY)
+        await redis._delete(Keys.KEY)
+        redis_connection.delete.assert_called_with(Keys.KEY)
 
     @pytest.mark.asyncio
     async def test_clear(self, redis, redis_connection):
@@ -270,20 +271,20 @@ class TestRedisBackend:
 
     @pytest.mark.asyncio
     async def test_raw(self, redis, redis_connection):
-        await redis._raw("get", pytest.KEY)
-        await redis._raw("set", pytest.KEY, 1)
-        redis_connection.get.assert_called_with(pytest.KEY, encoding=ANY)
-        redis_connection.set.assert_called_with(pytest.KEY, 1)
+        await redis._raw("get", Keys.KEY)
+        await redis._raw("set", Keys.KEY, 1)
+        redis_connection.get.assert_called_with(Keys.KEY, encoding=ANY)
+        redis_connection.set.assert_called_with(Keys.KEY, 1)
 
     @pytest.mark.asyncio
     async def test_redlock_release(self, mocker, redis):
         mocker.spy(redis, "_raw")
-        await redis._redlock_release(pytest.KEY, "random")
-        redis._raw.assert_called_with("eval", redis.RELEASE_SCRIPT, [pytest.KEY], ["random"])
+        await redis._redlock_release(Keys.KEY, "random")
+        redis._raw.assert_called_with("eval", redis.RELEASE_SCRIPT, [Keys.KEY], ["random"])
 
     @pytest.mark.asyncio
     async def test_close_when_connected(self, redis):
-        await redis._raw("set", pytest.KEY, 1)
+        await redis._raw("set", Keys.KEY, 1)
         await redis._close()
         assert redis._pool.clear.call_count == 1
 
@@ -339,10 +340,10 @@ class TestRedisCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test:" + pytest.KEY], ["", pytest.KEY], ["my_ns", "my_ns:" + pytest.KEY]),
+        ([None, "test:" + Keys.KEY], ["", Keys.KEY], ["my_ns", "my_ns:" + Keys.KEY]),
     )
     def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
-        assert redis_cache.build_key(pytest.KEY, namespace=namespace) == expected
+        assert redis_cache.build_key(Keys.KEY, namespace=namespace) == expected
 
     def test_build_key_no_namespace(self, redis_cache):
-        assert redis_cache.build_key(pytest.KEY, namespace=None) == pytest.KEY
+        assert redis_cache.build_key(Keys.KEY, namespace=None) == Keys.KEY
