@@ -49,7 +49,7 @@ class TestRedisBackend:
         "password": None,
         "socket_connect_timeout": None,
         "decode_responses": False,
-        "max_connections": 10,
+        "max_connections": None,
     }
 
     @patch("redis.asyncio.Redis", name="mock_class")
@@ -61,7 +61,7 @@ class TestRedisBackend:
         assert redis_backend.port == 6379
         assert redis_backend.db == 0
         assert redis_backend.password is None
-        assert redis_backend.pool_max_size == 10
+        assert redis_backend.pool_max_size is None
 
     @patch("redis.asyncio.Redis", name="mock_class")
     def test_setup_override(self, mock_class):

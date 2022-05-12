@@ -40,7 +40,7 @@ class RedisBackend:
         db=0,
         password=None,
         pool_min_size=_NOT_SET,
-        pool_max_size=10,
+        pool_max_size=None,
         loop=None,
         create_connection_timeout=None,
         **kwargs,
@@ -61,7 +61,14 @@ class RedisBackend:
         self.port = int(port)
         self.db = int(db)
         self.password = password
-        self.pool_max_size = int(pool_max_size)
+        # NOTE: In redis and aioredis 2.x, ConnectionPool raises ConnectionError
+        #  but doesn't wait for connection reuse when number of conns
+        #  exceeds the limit. While in aioredis 1.x, it waits asynchronously
+        #  via asyncio.Condition. So max pool size defaults to None in redis.
+        if pool_max_size is None:
+            self.pool_max_size = None
+        else:
+            self.pool_max_size = int(pool_max_size)
         self.create_connection_timeout = (
             float(create_connection_timeout) if create_connection_timeout else None
         )
@@ -195,7 +202,7 @@ class RedisBackend:
     async def _redlock_release(self, key, value):
         return await self._raw("eval", self.RELEASE_SCRIPT, 1, key, value)
 
-    async def _close(self, *args, **kwargs):
+    async def _close(self, *args, _conn=None, **kwargs):
         await self.client.close()
 
 
@@ -217,7 +224,7 @@ class RedisCache(RedisBackend, BaseCache):
     :param port: int with the port to connect to. Default is 6379.
     :param db: int indicating database to use. Default is 0.
     :param password: str indicating password to use. Default is None.
-    :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
+    :param pool_max_size: int maximum pool size for the redis connections pool. Default is None.
     :param create_connection_timeout: int timeout for the creation of connection. Default is None
     """
 
