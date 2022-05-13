@@ -35,11 +35,7 @@ def memory_server():
     time.sleep(2)
 
 
-# TODO: following concurrency benchmark doesn't work as expected with redis-py,
-#  where both ConnectionPool and BlockingConnectionPool raise ConnectionError
-#  but don't wait for connection reuse when number of conns exceeds the limit.
-#  While in aioredis 1.x, it wait asynchronously with asyncio.Condition.
-@pytest.fixture(params=["memcached_server", "memory_server"])
+@pytest.fixture(params=["memcached_server", "memory_server", "redis_server"])
 def server(request):
     return request.getfixturevalue(request.param)
 

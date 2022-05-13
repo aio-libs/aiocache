@@ -1,8 +1,8 @@
 import time
 
 import aiomcache
-import redis.asyncio as redis
 import pytest
+import redis.asyncio as redis
 
 
 @pytest.fixture
