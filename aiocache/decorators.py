@@ -3,12 +3,16 @@ import functools
 import inspect
 import logging
 
+import aiojobs
+
 from aiocache.base import SENTINEL
 from aiocache.factory import Cache, caches
 from aiocache.lock import RedLock
 
 
 logger = logging.getLogger(__name__)
+loop = asyncio.get_event_loop()
+scheduler = loop.run_until_complete(aiojobs.create_scheduler(pending_limit=0, limit=None))
 
 
 class cached:
@@ -112,9 +116,7 @@ class cached:
             if aiocache_wait_for_write:
                 await self.set_in_cache(key, result)
             else:
-                # TODO: Use aiojobs to avoid warnings.
-                asyncio.create_task(self.set_in_cache(key, result))
-
+                await scheduler.spawn(self.set_in_cache(key, result))
         return result
 
     def get_cache_key(self, f, args, kwargs):
@@ -336,8 +338,7 @@ class multi_cached:
             if aiocache_wait_for_write:
                 await self.set_in_cache(result, f, args, kwargs)
             else:
-                # TODO: Use aiojobs to avoid warnings.
-                asyncio.create_task(self.set_in_cache(result, f, args, kwargs))
+                await scheduler.spawn(self.set_in_cache(result, f, args, kwargs))
 
         return result
 
