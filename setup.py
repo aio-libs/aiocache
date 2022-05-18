@@ -38,6 +38,7 @@ setup(
         'redis:python_version>="3.8"': ["aioredis>=1.3.0,<2.0"],
         "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
+        "aiojobs": ["aiojobs>=1.0.0"],
     },
     include_package_data=True,
 )

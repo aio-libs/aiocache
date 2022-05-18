@@ -1,4 +1,5 @@
 -e .[dev,redis,memcached,msgpack]
+aiojobs==1.0.0
 aiohttp==3.8.1
 flake8==4.0.1
 flake8-bandit==3.0.0
