@@ -113,6 +113,18 @@ class TestMultiCachedDecorator:
             assert await cache.get(key) is not None
 
     @pytest.mark.asyncio
+    async def test_multi_cached_with_empty_dict(self, mocker, cache):
+        mocker.spy(cache, "set")
+
+        @multi_cached("keys")
+        async def fn(keys):
+            return {}
+
+        await fn([pytest.KEY])
+        assert await cache.exists(pytest.KEY) is False
+        assert cache.set.call_count == 0
+
+    @pytest.mark.asyncio
     async def test_keys_without_kwarg(self, cache):
         @multi_cached("keys")
         async def fn(keys):
