@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.6
+      - '[0-9].[0-9]+'  # matches to backport branches, e.g. 3.8
     tags: [ 'v*' ]
   pull_request:
     branches:
@@ -18,13 +18,13 @@ jobs:
     timeout-minutes: 5
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-    - name: Setup Python 3.9
-      uses: actions/setup-python@v2
+      uses: actions/checkout@v3
+    - name: Setup Python 3.10
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: '3.10'
     - name: Cache PyPI
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         key: pip-lint-${{ hashFiles('requirements-dev.txt') }}
         path: ~/.cache/pip
@@ -55,12 +55,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu]
-        pyver: ['3.7', '3.8', '3.9']
+        pyver: ['3.7', '3.8', '3.9', '3.10']
         redis: ['latest']
         ujson: ['']
         include:
           - os: ubuntu
-            pyver: pypy-3.8
+            pyver: pypy-3.9
             redis: 'latest'
           - os: ubuntu
             pyver: '3.9'
@@ -87,9 +87,9 @@ jobs:
     timeout-minutes: 15
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Setup Python ${{ matrix.pyver }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.pyver }}
     - name: Get pip cache dir
@@ -97,7 +97,7 @@ jobs:
       run: |
         echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
     - name: Cache PyPI
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         key: pip-ci-${{ runner.os }}-${{ matrix.pyver }}-${{ matrix.ujson }}-${{ hashFiles('requirements-dev.txt') }}
         path: ${{ steps.pip-cache.outputs.dir }}
@@ -146,7 +146,7 @@ jobs:
    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
    steps:
    - name: Checkout
-     uses: actions/checkout@v2
+     uses: actions/checkout@v3
    - name: Update pip, wheel, setuptools, build, twine
      run: |
        python -m pip install -U pip wheel setuptools build twine
