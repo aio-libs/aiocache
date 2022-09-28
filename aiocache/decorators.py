@@ -1,4 +1,5 @@
 import asyncio
+from copy import deepcopy
 import functools
 import inspect
 import logging
@@ -137,13 +138,15 @@ class cached:
     async def get_from_cache(self, key):
         try:
             value = await self.cache.get(key)
-            return value
+            deep_copy_value = deepcopy(value)
+            return deep_copy_value
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", key)
 
     async def set_in_cache(self, key, value):
         try:
-            await self.cache.set(key, value, ttl=self.ttl)
+            deep_copy_value = deepcopy(value)
+            await self.cache.set(key, deep_copy_value, ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
