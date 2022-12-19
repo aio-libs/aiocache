@@ -60,12 +60,15 @@ for method in API.CMDS:
     )
 
 
-class HitMissRatioPlugin(BasePlugin):
+class _HitMissRatioPlugin(BasePlugin):
     """
-    Calculates the ratio of hits the cache has. The data is saved in the cache class as a dict
-    attribute called ``hit_miss_ratio``. For example, to access the hit ratio of the cache,
-    you can do ``cache.hit_miss_ratio['hit_ratio']``. It also provides the "total" and "hits"
-    keys.
+    Calculates the ratio of hits the cache has. The data is saved in the 
+    cache class as a dict attribute called ``hit_miss_ratio``. 
+    For example, to access the hit ratio of the cache,
+    you can do ``cache.hit_miss_ratio['hit_ratio']``. 
+    It also provides the "total" and "hits" keys.
+
+    :param key: str should already include the namespace, if available
     """
 
     async def post_get(self, client, key, took=0, ret=None, **kwargs):
@@ -96,3 +99,22 @@ class HitMissRatioPlugin(BasePlugin):
         client.hit_miss_ratio["hit_ratio"] = (
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
         )
+
+
+class HitMissRatioPlugin(_HitMissRatioPlugin):
+    """
+    Calculates the ratio of hits the cache has. The data is saved in the 
+    cache class as a dict attribute called ``hit_miss_ratio``. 
+    For example, to access the hit ratio of the cache,
+    you can do ``cache.hit_miss_ratio['hit_ratio']``. 
+    It also provides the "total" and "hits" keys.
+
+    :param key: str should not include the namespace
+    """
+
+    async def post_get(self, client, key, took=0, ret=None, **kwargs):
+        """Update cache stats; use namespace if available"""
+        namespace = kwargs.get("namespace", None)
+        ns_key = client.build_key(key, namespace=namespace)
+        await super().post_get(client, ns_key, took=took, ret=ret, **kwargs)
+        return

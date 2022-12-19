@@ -98,6 +98,13 @@ class BaseCache:
         the backend. Default is None
     :param key_builder: alternative callable to build the key. Receives the key and the namespace
         as params and should return something that can be used as key by the underlying backend.
+    :param key_filter: callable that returns `True` if the specified key is 
+        in the specified namespace. Callable signature must be:
+        `key_filter(key, namespace)`.
+        This callable is complementary to the `key_builder` callable.
+        If `key_builder` is provided, `key_filter` should also be provided.
+        If `key_filter` is not provided, default behavior will be compatible
+        with the default behavior of `key_builder`.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     :param ttl: int the expiration time in seconds to use as a default in all operations of
@@ -107,12 +114,13 @@ class BaseCache:
     NAME: str
 
     def __init__(
-        self, serializer=None, plugins=None, namespace=None, key_builder=None, timeout=5, ttl=None
+        self, serializer=None, plugins=None, namespace=None, key_builder=None, key_filter=None, timeout=5, ttl=None
     ):
         self.timeout = float(timeout) if timeout is not None else timeout
         self.namespace = namespace
         self.ttl = float(ttl) if ttl is not None else ttl
         self.build_key = key_builder or self._build_key
+        self.key_filter = key_filter or self._key_filter
 
         self._serializer = None
         self.serializer = serializer or serializers.StringSerializer()
@@ -487,6 +495,10 @@ class BaseCache:
         if self.namespace is not None:
             return "{}{}".format(self.namespace, key)
         return key
+
+    def _key_filter(self, key, namespace):
+        """Return True if key is in namespace"""
+        return key.startswith(namespace)
 
     def _get_ttl(self, ttl):
         return ttl if ttl is not SENTINEL else self.ttl

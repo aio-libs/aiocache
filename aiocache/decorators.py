@@ -136,14 +136,16 @@ class cached:
 
     async def get_from_cache(self, key):
         try:
-            value = await self.cache.get(key)
+            namespace = self._kwargs.get("namespace", None)
+            value = await self.cache.get(key, namespace=namespace)
             return value
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", key)
 
     async def set_in_cache(self, key, value):
         try:
-            await self.cache.set(key, value, ttl=self.ttl)
+            namespace = self._kwargs.get("namespace", None)
+            await self.cache.set(key, value, namespace=namespace, ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
@@ -205,7 +207,12 @@ class cached_stampede(cached):
 
 
 def _get_cache(cache=Cache.MEMORY, serializer=None, plugins=None, **cache_kwargs):
-    return cache(serializer=serializer, plugins=plugins, **cache_kwargs)
+    return Cache(
+        cache, 
+        serializer=serializer, 
+        plugins=plugins, 
+        **cache_kwargs,
+    )
 
 
 def _get_args_dict(func, args, kwargs):
