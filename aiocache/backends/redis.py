@@ -65,10 +65,8 @@ class RedisBackend:
         #  but doesn't wait for connection reuse when number of conns
         #  exceeds the limit. While in aioredis 1.x, it waits asynchronously
         #  via asyncio.Condition. So max pool size defaults to None in redis.
-        if pool_max_size is None:
-            self.pool_max_size = None
-        else:
-            self.pool_max_size = int(pool_max_size)
+        # TODO: Remove int() call some time after adding type annotations.
+        self.pool_max_size = None if pool_max_size is None else int(pool_max_size)
         self.create_connection_timeout = (
             float(create_connection_timeout) if create_connection_timeout else None
         )
