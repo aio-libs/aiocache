@@ -67,21 +67,15 @@ class RedisBackend:
             float(create_connection_timeout) if create_connection_timeout else None
         )
 
-        redis_kwargs = {
-            "host": self.endpoint,
-            "port": self.port,
-            "db": self.db,
-            "password": self.password,
-            # NOTE: decoding can't be controlled on API level after switching to
-            #  redis, we need to disable decoding on global/connection level.
-            #  Cause some of the values are save as bytes directly, like pickle
-            #  serialized values, which may raise exc when decoded with 'utf-8'.
-            "decode_responses": False,
-            # parameter names are different
-            "socket_connect_timeout": self.create_connection_timeout,
-            "max_connections": self.pool_max_size,
-        }
-        self.client = redis.Redis(**redis_kwargs)
+        # NOTE: decoding can't be controlled on API level after switching to
+        # redis, we need to disable decoding on global/connection level
+        # (decode_responses=False), because some of the values are saved as
+        # bytes directly, like pickle serialized values, which may raise an
+        # exception when decoded with 'utf-8'.
+        self.client = redis.Redis(host=self.endpoint, port=self.port, db=self.db
+                                  password=self.password, decode_responses=False,
+                                  socket_connect_timeout=self.create_connection_timeout,
+                                  max_connections=self.pool_max_size)
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
