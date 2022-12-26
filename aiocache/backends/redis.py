@@ -103,13 +103,12 @@ class RedisBackend:
         return await self.client.setex(key, ttl, value)
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
-        args = [value, token]
+        args = [key, value, token]
         if ttl is not None:
             if isinstance(ttl, float):
                 args += ["PX", int(ttl * 1000)]
             else:
                 args += ["EX", ttl]
-        args = [key] + args
         res = await self._raw("eval", self.CAS_SCRIPT, 1, *args, _conn=_conn)
         return res
 
