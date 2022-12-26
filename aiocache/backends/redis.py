@@ -134,13 +134,9 @@ class RedisBackend:
     async def __multi_set_ttl(self, flattened, ttl):
         async with self.client.pipeline(transaction=True) as p:
             p.execute_command("MSET", *flattened)
-            if isinstance(ttl, float):
-                ttl = int(ttl * 1000)
-                for key in flattened[::2]:
-                    p.pexpire(key, time=ttl)
-            else:
-                for key in flattened[::2]:
-                    p.expire(key, time=ttl)
+            ttl, exp = (int(ttl * 1000), p.pexpire) if isinstance(ttl, float) else (ttl, p.expire)
+            for key in flattened[::2]:
+                exp(key, time=ttl)
             await p.execute()
 
     async def _add(self, key, value, ttl=None, _conn=None):
