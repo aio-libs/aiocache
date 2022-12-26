@@ -48,7 +48,7 @@ class RedisBackend:
         super().__init__(**kwargs)
         if loop is not None:
             warnings.warn(
-                "Parameter 'loop' has been obsolete on aiocache >= 0.12.0",
+                "Parameter 'loop' has been deprecated since aiocache 0.12",
                 DeprecationWarning,
             )
         if pool_min_size is not _NOT_SET:
