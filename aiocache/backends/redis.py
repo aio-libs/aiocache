@@ -93,13 +93,10 @@ class RedisBackend:
         return await self._get(key, encoding=encoding, _conn=_conn)
 
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
-        values = []
-        for value in await self.client.mget(*keys):
-            if encoding is None or value is None:
-                values.append(value)
-            else:
-                values.append(value.decode(encoding))
-        return values
+        values = await self.client.mget(*keys)
+        if encoding is None:
+            return values
+        return [v if v is None else v.decode(encoding) for v in values]
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
         if _cas_token is not None:
