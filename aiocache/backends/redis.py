@@ -142,9 +142,9 @@ class RedisBackend:
     async def _add(self, key, value, ttl=None, _conn=None):
         kwargs = {"nx": True}
         if isinstance(ttl, float):
-            kwargs.update({"px": int(ttl * 1000)})
+            kwargs["px"] = int(ttl * 1000)
         else:
-            kwargs.update({"ex": ttl})
+            kwargs["ex"] = ttl
         was_set = await self.client.set(key, value, **kwargs)
         if not was_set:
             raise ValueError("Key {} already exists, use .set to update the value".format(key))
