@@ -182,7 +182,7 @@ class RedisBackend:
         if encoding is not None:
             if command == "get" and value is not None:
                 value = value.decode(encoding)
-            elif command in ["keys", "mget"]:
+            elif command in {"keys", "mget"}:
                 value = [_.decode(encoding) if _ is not None else _ for _ in value]
         return value
 
