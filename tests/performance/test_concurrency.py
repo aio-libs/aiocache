@@ -41,6 +41,8 @@ def server(request):
 
 
 def test_concurrency_error_rates(server):
+    """Test with Apache benchmark tool."""
+
     total_requests = 1500
     # On some platforms, it's required to enlarge number of "open file descriptors"
     #  with "ulimit -n number" before doing the benchmark.
@@ -49,19 +51,13 @@ def test_concurrency_error_rates(server):
         stdout=subprocess.PIPE,
     )
 
-    failed_requests = total_requests
     m = re.search(r"Failed requests:\s+([0-9]+)", str(result.stdout))
-    if m:
-        failed_requests = int(m.group(1))
+    assert m, "Missing output from ab."
+    failed_requests = int(m.group(1))
 
-    non_200 = 0
     m = re.search(r"Non-2xx responses:\s+([0-9]+)", str(result.stdout))
-    if m:
-        non_200 = int(m.group(1))
+    assert m, "Missing output from ab."
+    non_200 = int(m.group(1))
 
-    print("Failed requests: {}%".format(failed_requests / total_requests * 100))
-    print("Non 200 requests: {}%".format(non_200 / total_requests * 100))
-    assert (
-        failed_requests / total_requests < 0.75
-    )
+    assert failed_requests / total_requests < 0.75
     assert non_200 / total_requests < 0.75
