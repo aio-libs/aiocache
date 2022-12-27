@@ -1,6 +1,6 @@
+import platform
 import re
 import subprocess
-import sys
 import time
 from multiprocessing import Process
 
@@ -20,7 +20,7 @@ def server(request):
     p.join(timeout=15)
 
 
-@pytest.mark.skipif(sys.platform.python_implementation() == "PyPy", "Not working on Pypy currently.")
+@pytest.mark.skipif(platform.python_implementation() == "PyPy", "Not working on Pypy currently.")
 def test_concurrency_error_rates(server):
     """Test with Apache benchmark tool."""
 
