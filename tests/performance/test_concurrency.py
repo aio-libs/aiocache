@@ -8,39 +8,14 @@ import pytest
 from .server import run_server
 
 
-@pytest.fixture
-def redis_server():
-    p = Process(target=run_server, args=["redis"])
-    p.start()
-    time.sleep(2)
-    yield
-    p.terminate()
-    time.sleep(2)
-
-
-@pytest.fixture
-def memcached_server():
-    p = Process(target=run_server, args=["memcached"])
-    p.start()
-    time.sleep(2)
-    yield
-    p.terminate()
-    time.sleep(2)
-
-
-@pytest.fixture
-def memory_server():
-    p = Process(target=run_server, args=["memory"])
-    p.start()
-    time.sleep(2)
-    yield
-    p.terminate()
-    time.sleep(2)
-
-
-@pytest.fixture(params=["memcached_server", "memory_server", "redis_server"])
+@pytest.fixture(params=("memory", "memcached", "redis"))
 def server(request):
-    return request.getfixturevalue(request.param)
+    p = Process(target=run_server, args=(request.param,))
+    p.start()
+    time.sleep(1)
+    yield
+    p.terminate()
+    p.join(timeout=15)
 
 
 def test_concurrency_error_rates(server):
@@ -62,8 +37,9 @@ def test_concurrency_error_rates(server):
     failed_requests = int(m.group(1))
 
     m = re.search(r"Non-2xx responses:\s+([0-9]+)", result.stdout)
-    assert m, "Missing output from ab."
+    assert m, "Missing output from ab:" + result.stdout
     non_200 = int(m.group(1))
 
+    print(failed_requests / total_requests, non_200 / total_requests)
     assert failed_requests / total_requests < 0.75
     assert non_200 / total_requests < 0.75
