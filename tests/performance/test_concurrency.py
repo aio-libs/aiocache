@@ -34,6 +34,5 @@ def test_concurrency_error_rates(server):
     m = re.search(r"Non-2xx responses:\s+([0-9]+)", result.stdout)
     non_200 = int(m.group(1)) if m else 0
 
-    print(failed_requests / total_requests, non_200 / total_requests)
     assert failed_requests / total_requests < 0.75, result.stdout
     assert non_200 / total_requests < 0.75 result.stdout
