@@ -20,13 +20,13 @@ AIOCACHE_BACKENDS = {
 
 class CacheManager:
     def __init__(self, backend):
-        self.cache = AIOCACHE_BACKENDS.get(backend)
+        self.cache = AIOCACHE_BACKENDS[backend]
 
     async def get(self, key):
-        return await self.cache.get(key, timeout=0.1)
+        return await self.cache.get(key, timeout=0.2)
 
     async def set(self, key, value):
-        return await self.cache.set(key, value, timeout=0.1)
+        return await self.cache.set(key, value, timeout=0.2)
 
 
 async def handler_get(req):
@@ -42,9 +42,7 @@ async def handler_get(req):
     return web.Response(text=str(data))
 
 
-def run_server(backend, loop=None):
-    if loop:
-        asyncio.set_event_loop(loop)
+def run_server(backend):
     app = web.Application()
     app["cache"] = CacheManager(backend)
     app.router.add_route("GET", "/", handler_get)
