@@ -42,17 +42,16 @@ async def handler_get(req):
     return web.Response(text=str(data))
 
 
-def run_server(backend):
+def run_server(backend: str, conn):
+    class PipeTee:
+        def __init__(self, pipe):
+            self.pipe = pipe
+
+        def write(self, data):
+            self.pipe.send(data)
+    sys.stdout = PipeTee(conn)
+
     app = web.Application()
     app["cache"] = CacheManager(backend)
     app.router.add_route("GET", "/", handler_get)
     web.run_app(app)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-b", dest="backend", required=True, choices=["memory", "redis", "memcached"]
-    )
-    args = parser.parse_args()
-    run_server(args.backend)
