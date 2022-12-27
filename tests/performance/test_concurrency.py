@@ -1,15 +1,18 @@
+import logging
 import re
 import subprocess
 import time
-from multiprocessing import Process
+from multiprocessing import Process, log_to_stderr
 
 import pytest
 
 from .server import run_server
 
+log_to_stderr(logging.INFO)
+
 
 # TODO: Fix and readd "memcached" (currently fails >98% of requests)
-@pytest.fixture(params=("memory", "redis"))
+@pytest.fixture(params=("memory", "memcached", "redis"))
 def server(request):
     p = Process(target=run_server, args=(request.param,))
     p.start()
