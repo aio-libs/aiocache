@@ -49,7 +49,7 @@ def run_server(backend: str, conn):
 
         def write(self, data):
             self.pipe.send(data)
-    sys.stderr = PipeTee(conn)
+    sys.stdout = sys.stderr = PipeTee(conn)
 
     app = web.Application()
     app["cache"] = CacheManager(backend)
