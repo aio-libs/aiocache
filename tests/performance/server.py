@@ -1,6 +1,6 @@
-import argparse
 import asyncio
 import logging
+import sys
 import uuid
 
 from aiohttp import web
