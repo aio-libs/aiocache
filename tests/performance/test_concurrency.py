@@ -16,8 +16,9 @@ def server(request):
     p.start()
     time.sleep(1)
     yield
-    print("PROCESS:", parent_conn.recv())
     p.terminate()
+    while parent_conn.poll():
+        print("PROCESS:", parent_conn.recv())
     p.join(timeout=15)
 
 
