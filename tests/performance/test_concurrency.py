@@ -12,6 +12,7 @@ from .server import run_server
 def redis_server():
     p = Process(target=run_server, args=["redis"])
     p.start()
+    time.sleep(2)
     yield
     p.terminate()
     time.sleep(2)
@@ -21,6 +22,7 @@ def redis_server():
 def memcached_server():
     p = Process(target=run_server, args=["memcached"])
     p.start()
+    time.sleep(2)
     yield
     p.terminate()
     time.sleep(2)
@@ -30,6 +32,7 @@ def memcached_server():
 def memory_server():
     p = Process(target=run_server, args=["memory"])
     p.start()
+    time.sleep(2)
     yield
     p.terminate()
     time.sleep(2)
