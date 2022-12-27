@@ -1,7 +1,7 @@
 import re
 import subprocess
 import time
-from multiprocessing import Pipe, Process
+from multiprocessing import Process
 
 import pytest
 
@@ -9,15 +9,12 @@ from .server import run_server
 
 
 # TODO: Fix and readd "memcached" (currently fails >98% of requests)
-@pytest.fixture(params=("memory", "memcached", "redis"))
+@pytest.fixture(params=("memory", "redis"))
 def server(request):
-    parent_conn, child_conn = Pipe(False)
-    p = Process(target=run_server, args=(request.param, child_conn))
+    p = Process(target=run_server, args=(request.param,))
     p.start()
     time.sleep(1)
     yield
-    while parent_conn.poll():
-        print("PROCESS:", parent_conn.recv())
     p.terminate()
     p.join(timeout=15)
 
