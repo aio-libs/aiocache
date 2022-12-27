@@ -1,23 +1,22 @@
-import logging
 import re
 import subprocess
 import time
-from multiprocessing import Process, log_to_stderr
+from multiprocessing import Pipe, Process
 
 import pytest
 
 from .server import run_server
 
-log_to_stderr(logging.INFO)
-
 
 # TODO: Fix and readd "memcached" (currently fails >98% of requests)
 @pytest.fixture(params=("memory", "memcached", "redis"))
 def server(request):
-    p = Process(target=run_server, args=(request.param,))
+    parent_conn, child_conn = Pipe(False)
+    p = Process(target=run_server, args=(request.param, child_conn))
     p.start()
     time.sleep(1)
     yield
+    print(parent_conn.recv())
     p.terminate()
     p.join(timeout=15)
 
