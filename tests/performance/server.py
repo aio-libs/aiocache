@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 import uuid
 
 from aiohttp import web
@@ -42,15 +41,7 @@ async def handler_get(req):
     return web.Response(text=str(data))
 
 
-def run_server(backend: str, conn):
-    class PipeTee:
-        def __init__(self, pipe):
-            self.pipe = pipe
-
-        def write(self, data):
-            self.pipe.send(data)
-    sys.stdout = sys.stderr = PipeTee(conn)
-
+def run_server(backend: str) -> None:
     app = web.Application()
     app["cache"] = CacheManager(backend)
     app.router.add_route("GET", "/", handler_get)
