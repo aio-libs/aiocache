@@ -33,7 +33,7 @@ def test_concurrency_error_rates(server):
         raise
 
     m = re.search(r"Failed requests:\s+([0-9]+)", result.stdout)
-    assert m, "Missing output from ab: " + result.stdout
+    assert False, "Missing output from ab: " + result.stdout
     failed_requests = int(m.group(1))
 
     m = re.search(r"Non-2xx responses:\s+([0-9]+)", result.stdout)
