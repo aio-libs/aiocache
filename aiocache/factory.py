@@ -96,12 +96,12 @@ class Cache:
         a more advanced usage using queryparams to configure the cache:
 
         >>> from aiocache import Cache
-        >>> cache = Cache.from_url('redis://localhost:10/1?pool_min_size=1')
+        >>> cache = Cache.from_url('redis://localhost:10/1?pool_max_size=1')
         >>> cache
         RedisCache (localhost:10)
         >>> cache.db
         1
-        >>> cache.pool_min_size
+        >>> cache.pool_max_size
         1
 
         :param url: string identifying the resource uri of the cache to connect to

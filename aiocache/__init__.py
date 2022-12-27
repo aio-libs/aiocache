@@ -10,14 +10,14 @@ logger = logging.getLogger(__name__)
 AIOCACHE_CACHES: Dict[str, Type[BaseCache]] = {SimpleMemoryCache.NAME: SimpleMemoryCache}
 
 try:
-    import aioredis
+    import redis
 except ImportError:
-    logger.info("aioredis not installed, RedisCache unavailable")
+    logger.info("redis not installed, RedisCache unavailable")
 else:
     from aiocache.backends.redis import RedisCache
 
     AIOCACHE_CACHES[RedisCache.NAME] = RedisCache
-    del aioredis
+    del redis
 
 try:
     import aiomcache

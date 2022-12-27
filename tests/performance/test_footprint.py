@@ -1,26 +1,26 @@
 import time
 
 import aiomcache
-import aioredis
 import pytest
+import redis.asyncio as redis
 
 
 @pytest.fixture
-async def redis():
-    return await aioredis.create_redis_pool(("127.0.0.1", 6379), maxsize=1)
+async def redis_client():
+    return redis.Redis(host="127.0.0.1", port=6379, max_connections=1)
 
 
 class TestRedis:
     @pytest.mark.asyncio
-    async def test_redis_getsetdel(self, redis, redis_cache):
+    async def test_redis_getsetdel(self, redis_client, redis_cache):
         N = 10000
-        aioredis_total_time = 0
+        redis_total_time = 0
         for _n in range(N):
             start = time.time()
-            await redis.set("hi", "value")
-            await redis.get("hi")
-            await redis.delete("hi")
-            aioredis_total_time += time.time() - start
+            await redis_client.set("hi", "value")
+            await redis_client.get("hi")
+            await redis_client.delete("hi")
+            redis_total_time += time.time() - start
 
         aiocache_total_time = 0
         for _n in range(N):
@@ -32,25 +32,25 @@ class TestRedis:
 
         print(
             "\n{:0.2f}/{:0.2f}: {:0.2f}".format(
-                aiocache_total_time, aioredis_total_time, aiocache_total_time / aioredis_total_time
+                aiocache_total_time, redis_total_time, aiocache_total_time / redis_total_time
             )
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
-        print("aioredis avg call: {:0.5f}s".format(aioredis_total_time / N))
-        assert aiocache_total_time / aioredis_total_time < 1.30
+        print("redis    avg call: {:0.5f}s".format(redis_total_time / N))
+        assert aiocache_total_time / redis_total_time < 1.30
 
     @pytest.mark.asyncio
-    async def test_redis_multigetsetdel(self, redis, redis_cache):
+    async def test_redis_multigetsetdel(self, redis_client, redis_cache):
         N = 5000
-        aioredis_total_time = 0
+        redis_total_time = 0
         values = ["a", "b", "c", "d", "e", "f"]
         for _n in range(N):
             start = time.time()
-            await redis.mset(*[x for x in values * 2])
-            await redis.mget(*values)
+            await redis_client.mset({x: x for x in values})
+            await redis_client.mget(values)
             for k in values:
-                await redis.delete(k)
-            aioredis_total_time += time.time() - start
+                await redis_client.delete(k)
+            redis_total_time += time.time() - start
 
         aiocache_total_time = 0
         for _n in range(N):
@@ -63,12 +63,12 @@ class TestRedis:
 
         print(
             "\n{:0.2f}/{:0.2f}: {:0.2f}".format(
-                aiocache_total_time, aioredis_total_time, aiocache_total_time / aioredis_total_time
+                aiocache_total_time, redis_total_time, aiocache_total_time / redis_total_time
             )
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
-        print("aioredis avg call: {:0.5f}s".format(aioredis_total_time / N))
-        assert aiocache_total_time / aioredis_total_time < 1.35
+        print("redis_client    avg call: {:0.5f}s".format(redis_total_time / N))
+        assert aiocache_total_time / redis_total_time < 1.35
 
 
 @pytest.fixture

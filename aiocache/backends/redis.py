@@ -1,27 +1,14 @@
-import asyncio
-import functools
 import itertools
+import warnings
 
-import aioredis
+import redis.asyncio as redis
+from redis.exceptions import ResponseError as IncrbyException
 
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-def conn(func):
-    @functools.wraps(func)
-    async def wrapper(self, *args, _conn=None, **kwargs):
-        if _conn is None:
-
-            pool = await self._get_pool()
-            conn_context = await pool
-            with conn_context as _conn:
-                _conn = aioredis.Redis(_conn)
-                return await func(self, *args, _conn=_conn, **kwargs)
-
-        return await func(self, *args, _conn=_conn, **kwargs)
-
-    return wrapper
+_NOT_SET = object()
 
 
 class RedisBackend:
@@ -52,163 +39,147 @@ class RedisBackend:
         port=6379,
         db=0,
         password=None,
-        pool_min_size=1,
-        pool_max_size=10,
+        pool_min_size=_NOT_SET,
+        pool_max_size=None,
         loop=None,
         create_connection_timeout=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        if loop is not None:
+            warnings.warn(
+                "Parameter 'loop' has been deprecated since aiocache 0.12",
+                DeprecationWarning,
+            )
+        if pool_min_size is not _NOT_SET:
+            warnings.warn(
+                "Parameter 'pool_min_size' is deprecated since aiocache 0.12",
+                DeprecationWarning,
+            )
+
         self.endpoint = endpoint
         self.port = int(port)
         self.db = int(db)
         self.password = password
-        self.pool_min_size = int(pool_min_size)
-        self.pool_max_size = int(pool_max_size)
+        # TODO: Remove int() call some time after adding type annotations.
+        self.pool_max_size = None if pool_max_size is None else int(pool_max_size)
         self.create_connection_timeout = (
             float(create_connection_timeout) if create_connection_timeout else None
         )
-        self.__pool_lock = None
-        self._loop = loop
-        self._pool = None
 
-    @property
-    def _pool_lock(self):
-        if self.__pool_lock is None:
-            self.__pool_lock = asyncio.Lock()
-        return self.__pool_lock
+        # NOTE: decoding can't be controlled on API level after switching to
+        # redis, we need to disable decoding on global/connection level
+        # (decode_responses=False), because some of the values are saved as
+        # bytes directly, like pickle serialized values, which may raise an
+        # exception when decoded with 'utf-8'.
+        self.client = redis.Redis(host=self.endpoint, port=self.port, db=self.db,
+                                  password=self.password, decode_responses=False,
+                                  socket_connect_timeout=self.create_connection_timeout,
+                                  max_connections=self.pool_max_size)
 
-    async def acquire_conn(self):
-        await self._get_pool()
-        conn = await self._pool.acquire()
-        conn = aioredis.Redis(conn)
-        return conn
-
-    async def release_conn(self, _conn):
-        self._pool.release(_conn)
-
-    @conn
     async def _get(self, key, encoding="utf-8", _conn=None):
-        return await _conn.get(key, encoding=encoding)
+        value = await self.client.get(key)
+        if encoding is None or value is None:
+            return value
+        return value.decode(encoding)
 
-    @conn
     async def _gets(self, key, encoding="utf-8", _conn=None):
         return await self._get(key, encoding=encoding, _conn=_conn)
 
-    @conn
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
-        return await _conn.mget(*keys, encoding=encoding)
+        values = await self.client.mget(*keys)
+        if encoding is None:
+            return values
+        return [v if v is None else v.decode(encoding) for v in values]
 
-    @conn
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         if ttl is None:
-            return await _conn.set(key, value)
-        return await _conn.setex(key, ttl, value)
+            return await self.client.set(key, value)
+        if isinstance(ttl, float):
+            ttl = int(ttl * 1000)
+            return await self.client.psetex(key, ttl, value)
+        return await self.client.setex(key, ttl, value)
 
-    @conn
     async def _cas(self, key, value, token, ttl=None, _conn=None):
-        args = [value, token]
+        args = ()
         if ttl is not None:
-            if isinstance(ttl, float):
-                args += ["PX", int(ttl * 1000)]
-            else:
-                args += ["EX", ttl]
-        res = await self._raw("eval", self.CAS_SCRIPT, [key], args, _conn=_conn)
-        return res
+            args = ("PX", int(ttl * 1000)) if isinstance(ttl, float) else ("EX", ttl)
+        return await self._raw("eval", self.CAS_SCRIPT, 1, key, value, token, *args, _conn=_conn)
 
-    @conn
     async def _multi_set(self, pairs, ttl=None, _conn=None):
         ttl = ttl or 0
 
         flattened = list(itertools.chain.from_iterable((key, value) for key, value in pairs))
 
         if ttl:
-            await self.__multi_set_ttl(_conn, flattened, ttl)
+            await self.__multi_set_ttl(flattened, ttl)
         else:
-            await _conn.mset(*flattened)
+            await self.client.execute_command("MSET", *flattened)
 
         return True
 
-    async def __multi_set_ttl(self, conn, flattened, ttl):
-        redis = conn.multi_exec()
-        redis.mset(*flattened)
-        for key in flattened[::2]:
-            redis.expire(key, timeout=ttl)
-        await redis.execute()
+    async def __multi_set_ttl(self, flattened, ttl):
+        async with self.client.pipeline(transaction=True) as p:
+            p.execute_command("MSET", *flattened)
+            ttl, exp = (int(ttl * 1000), p.pexpire) if isinstance(ttl, float) else (ttl, p.expire)
+            for key in flattened[::2]:
+                exp(key, time=ttl)
+            await p.execute()
 
-    @conn
     async def _add(self, key, value, ttl=None, _conn=None):
-        expx = {"expire": ttl}
+        kwargs = {"nx": True}
         if isinstance(ttl, float):
-            expx = {"pexpire": int(ttl * 1000)}
-        was_set = await _conn.set(key, value, exist=_conn.SET_IF_NOT_EXIST, **expx)
+            kwargs["px"] = int(ttl * 1000)
+        else:
+            kwargs["ex"] = ttl
+        was_set = await self.client.set(key, value, **kwargs)
         if not was_set:
             raise ValueError("Key {} already exists, use .set to update the value".format(key))
         return was_set
 
-    @conn
     async def _exists(self, key, _conn=None):
-        exists = await _conn.exists(key)
-        return True if exists > 0 else False
+        number = await self.client.exists(key)
+        return bool(number)
 
-    @conn
     async def _increment(self, key, delta, _conn=None):
         try:
-            return await _conn.incrby(key, delta)
-        except aioredis.errors.ReplyError:
+            return await self.client.incrby(key, delta)
+        except IncrbyException:
             raise TypeError("Value is not an integer") from None
 
-    @conn
     async def _expire(self, key, ttl, _conn=None):
         if ttl == 0:
-            return await _conn.persist(key)
-        return await _conn.expire(key, ttl)
+            return await self.client.persist(key)
+        return await self.client.expire(key, ttl)
 
-    @conn
     async def _delete(self, key, _conn=None):
-        return await _conn.delete(key)
+        return await self.client.delete(key)
 
-    @conn
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
-            keys = await _conn.keys("{}:*".format(namespace))
+            keys = await self.client.keys("{}:*".format(namespace))
             if keys:
-                await _conn.delete(*keys)
+                await self.client.delete(*keys)
         else:
-            await _conn.flushdb()
+            await self.client.flushdb()
         return True
 
-    @conn
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
-        if command in ["get", "mget"]:
-            kwargs["encoding"] = encoding
-        return await getattr(_conn, command)(*args, **kwargs)
+        value = await getattr(self.client, command)(*args, **kwargs)
+        if encoding is not None:
+            if command == "get" and value is not None:
+                value = value.decode(encoding)
+            elif command in {"keys", "mget"}:
+                value = [v if v is None else v.decode(encoding) for v in value]
+        return value
 
     async def _redlock_release(self, key, value):
-        return await self._raw("eval", self.RELEASE_SCRIPT, [key], [value])
+        return await self._raw("eval", self.RELEASE_SCRIPT, 1, key, value)
 
-    async def _close(self, *args, **kwargs):
-        if self._pool is not None:
-            await self._pool.clear()
-
-    async def _get_pool(self):
-        async with self._pool_lock:
-            if self._pool is None:
-                kwargs = {
-                    "db": self.db,
-                    "password": self.password,
-                    "loop": self._loop,
-                    "encoding": "utf-8",
-                    "minsize": self.pool_min_size,
-                    "maxsize": self.pool_max_size,
-                }
-                kwargs["create_connection_timeout"] = self.create_connection_timeout
-
-                self._pool = await aioredis.create_pool((self.endpoint, self.port), **kwargs)
-
-            return self._pool
+    async def _close(self, *args, _conn=None, **kwargs):
+        await self.client.close()
 
 
 class RedisCache(RedisBackend, BaseCache):
@@ -229,10 +200,8 @@ class RedisCache(RedisBackend, BaseCache):
     :param port: int with the port to connect to. Default is 6379.
     :param db: int indicating database to use. Default is 0.
     :param password: str indicating password to use. Default is None.
-    :param pool_min_size: int minimum pool size for the redis connections pool. Default is 1
-    :param pool_max_size: int maximum pool size for the redis connections pool. Default is 10
-    :param create_connection_timeout: int timeout for the creation of connection,
-        only for aioredis>=1. Default is None
+    :param pool_max_size: int maximum pool size for the redis connections pool. Default is None.
+    :param create_connection_timeout: int timeout for the creation of connection. Default is None
     """
 
     NAME = "redis"

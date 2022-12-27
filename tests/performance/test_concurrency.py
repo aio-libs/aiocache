@@ -42,6 +42,8 @@ def server(request):
 
 def test_concurrency_error_rates(server):
     total_requests = 1500
+    # On some platforms, it's required to enlarge number of "open file descriptors"
+    #  with "ulimit -n number" before doing the benchmark.
     result = subprocess.run(
         ["ab", "-n", str(total_requests), "-c", "500", "http://127.0.0.1:8080/"],
         stdout=subprocess.PIPE,
@@ -61,5 +63,5 @@ def test_concurrency_error_rates(server):
     print("Non 200 requests: {}%".format(non_200 / total_requests * 100))
     assert (
         failed_requests / total_requests < 0.75
-    )  # aioredis is the problem here, need to improve it
+    )
     assert non_200 / total_requests < 0.75
