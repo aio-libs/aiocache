@@ -124,7 +124,7 @@ class TestMemcached:
             aiomcache_total_time += time.time() - start
 
         aiocache_total_time = 0
-        values = [b"a", b"b", b"c", b"d", b"e", b"f"]
+        values = ["a", "b", "c", "d", "e", "f"]
         for _n in range(N):
             start = time.time()
             await memcached_cache.multi_set([(x, x) for x in values], timeout=0)
