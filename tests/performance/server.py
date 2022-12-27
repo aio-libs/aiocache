@@ -12,21 +12,21 @@ logging.getLogger("aiohttp.access").propagate = False
 
 
 AIOCACHE_BACKENDS = {
-    "memory": (Cache(Cache.MEMORY), 0.1),
-    "redis": (Cache(Cache.REDIS), 0.1),
-    "memcached": (Cache(Cache.MEMCACHED), 10),
+    "memory": Cache(Cache.MEMORY),
+    "redis": Cache(Cache.REDIS),
+    "memcached": Cache(Cache.MEMCACHED),
 }
 
 
 class CacheManager:
     def __init__(self, backend: str):
-        self.cache, self.timeout = AIOCACHE_BACKENDS[backend]
+        self.cache = AIOCACHE_BACKENDS[backend]
 
     async def get(self, key):
-        return await self.cache.get(key, timeout=self.timeout)
+        return await self.cache.get(key, timeout=0.1)
 
     async def set(self, key, value):
-        return await self.cache.set(key, value, timeout=self.timeout)
+        return await self.cache.set(key, value, timeout=0.1)
 
 
 async def handler_get(req):
