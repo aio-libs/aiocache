@@ -47,7 +47,12 @@ def test_concurrency_error_rates(server):
     # On some platforms, it's required to enlarge number of "open file descriptors"
     #  with "ulimit -n number" before doing the benchmark.
     cmd = ("ab", "-n", str(total_requests), "-c", "500", "http://127.0.0.1:8080/")
-    result = subprocess.run(cmd, capture_output=True, check=True, encoding="utf-8")
+    try:
+        result = subprocess.run(cmd, capture_output=True, check=True, encoding="utf-8")
+    except subprocess.CalledProcessError as e:
+        print("OUT:", e.stdout)
+        print("ERR:", e.stderr)
+        raise
 
     m = re.search(r"Failed requests:\s+([0-9]+)", result.stdout)
     assert m, "Missing output from ab: " + result.stdout
