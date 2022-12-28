@@ -9,9 +9,11 @@ def redis_cache():
     #  when exceeding max pool size.
     cache = Cache(Cache.REDIS, namespace="test", pool_max_size=1)
     yield cache
+    await cache.close()
 
 
 @pytest.fixture
 def memcached_cache():
     cache = Cache(Cache.MEMCACHED, namespace="test", pool_size=1)
     yield cache
+    await cache.close()
