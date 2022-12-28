@@ -36,7 +36,7 @@ async def default_cache():
 
 
 async def alt_cache():
-    # This generates a new instance every time! You can also use 
+    # This generates a new instance every time! You can also use
     # `caches.create("alt", namespace="test", etc...)` to override extra args
     cache = caches.create("redis_alt")
     await cache.set("key", "value")
