@@ -52,9 +52,9 @@ class TestCache:
         cache_class = Cache.get_scheme_class(cache_type)
 
         with patch("aiocache.{}.__init__".format(cache_class.__name__)) as init:
-            async with Cache(cache_class, **kwargs) as cache:
-                assert isinstance(cache, cache_class)
-                init.assert_called_once_with(**kwargs)
+            cache = Cache(cache_class, **kwargs)
+            assert isinstance(cache, cache_class)
+            init.assert_called_once_with(**kwargs)
 
     def test_new_defaults_to_memory(self):
         assert isinstance(Cache(), Cache.MEMORY)
