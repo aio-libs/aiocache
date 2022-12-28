@@ -2,8 +2,6 @@ import pytest
 
 from aiocache import Cache
 
-collect_ignore_glob = ["*"]
-
 
 @pytest.fixture
 def redis_cache():
