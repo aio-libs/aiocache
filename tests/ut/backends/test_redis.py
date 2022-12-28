@@ -36,7 +36,7 @@ def redis_client(redis_pipeline):
 
 
 @pytest.fixture
-def redis(redis_client):
+def redis():
     redis = RedisBackend()
     with patch.object(redis, "client", autospec=True):
         yield redis
