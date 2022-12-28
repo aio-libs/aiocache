@@ -8,7 +8,6 @@ from aiocache.plugins import BasePlugin, HitMissRatioPlugin, TimingPlugin
 
 
 class TestBasePlugin:
-    @pytest.mark.asyncio
     async def test_interface_methods(self):
         for method in API.CMDS:
             pre = await getattr(BasePlugin, "pre_{}".format(method.__name__))(MagicMock())
@@ -16,13 +15,11 @@ class TestBasePlugin:
             post = await getattr(BasePlugin, "post_{}".format(method.__name__))(MagicMock())
             assert post is None
 
-    @pytest.mark.asyncio
     async def test_do_nothing(self):
         assert await BasePlugin().do_nothing() is None
 
 
 class TestTimingPlugin:
-    @pytest.mark.asyncio
     async def test_save_time(self, mock_cache):
         do_save_time = TimingPlugin().save_time("get")
         await do_save_time("self", mock_cache, took=1)
@@ -33,7 +30,6 @@ class TestTimingPlugin:
         assert mock_cache.profiling["get_min"] == 1
         assert mock_cache.profiling["get_avg"] == 1.5
 
-    @pytest.mark.asyncio
     async def test_save_time_post_set(self, mock_cache):
         await TimingPlugin().post_set(mock_cache, took=1)
         await TimingPlugin().post_set(mock_cache, took=2)
@@ -43,7 +39,6 @@ class TestTimingPlugin:
         assert mock_cache.profiling["set_min"] == 1
         assert mock_cache.profiling["set_avg"] == 1.5
 
-    @pytest.mark.asyncio
     async def test_interface_methods(self):
         for method in API.CMDS:
             assert hasattr(TimingPlugin, "pre_{}".format(method.__name__))
@@ -55,7 +50,6 @@ class TestHitMissRatioPlugin:
     def plugin(self):
         return HitMissRatioPlugin()
 
-    @pytest.mark.asyncio
     async def test_post_get(self, plugin):
         client = MagicMock(spec=BaseCache)
         await plugin.post_get(client, Keys.KEY)
@@ -69,7 +63,6 @@ class TestHitMissRatioPlugin:
         assert client.hit_miss_ratio["total"] == 2
         assert client.hit_miss_ratio["hit_ratio"] == 0.5
 
-    @pytest.mark.asyncio
     async def test_post_multi_get(self, plugin):
         client = MagicMock(spec=BaseCache)
         await plugin.post_multi_get(client, [Keys.KEY, Keys.KEY_1], ret=[None, None])
