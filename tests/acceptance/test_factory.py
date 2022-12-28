@@ -7,7 +7,7 @@ from aiocache.backends.redis import RedisCache
 
 
 class TestCache:
-    def test_from_url_memory(self):
+    async def test_from_url_memory(self):
         async with Cache.from_url("memory://") as cache:
             assert isinstance(cache, SimpleMemoryCache)
 
@@ -15,7 +15,7 @@ class TestCache:
         with pytest.raises(TypeError):
             Cache.from_url("memory://endpoint:10")
 
-    def test_from_url_redis(self):
+    async def test_from_url_redis(self):
         url = ("redis://endpoint:1000/0/?password=pass"
                + "&pool_max_size=50&create_connection_timeout=20")
 
@@ -27,7 +27,7 @@ class TestCache:
             assert cache.pool_max_size == 50
             assert cache.create_connection_timeout == 20
 
-    def test_from_url_memcached(self):
+    async def test_from_url_memcached(self):
         url = "memcached://endpoint:1000?pool_size=10"
 
         async with Cache.from_url(url) as cache:
