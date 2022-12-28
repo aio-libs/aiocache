@@ -6,26 +6,26 @@ from aiohttp import web
 
 from aiocache import Cache
 
-
 logging.getLogger("aiohttp.access").propagate = False
-
-
-AIOCACHE_BACKENDS = {
-    "memory": Cache(Cache.MEMORY),
-    "redis": Cache(Cache.REDIS),
-    "memcached": Cache(Cache.MEMCACHED),
-}
 
 
 class CacheManager:
     def __init__(self, backend: str):
-        self.cache = AIOCACHE_BACKENDS[backend]
+        backends = {
+            "memory": Cache.MEMORY,
+            "redis": Cache.REDIS,
+            "memcached": Cache.MEMCACHED,
+        }
+        self.cache = Cache(backends[backend])
 
     async def get(self, key):
         return await self.cache.get(key, timeout=0.1)
 
     async def set(self, key, value):
         return await self.cache.set(key, value, timeout=0.1)
+
+    async def close(self, *_):
+        await self.cache.close()
 
 
 async def handler_get(req):
@@ -44,5 +44,6 @@ async def handler_get(req):
 def run_server(backend: str) -> None:
     app = web.Application()
     app["cache"] = CacheManager(backend)
+    app.on_shutdown.append(app["cache"].close)
     app.router.add_route("GET", "/", handler_get)
     web.run_app(app)
