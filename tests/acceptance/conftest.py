@@ -20,7 +20,7 @@ def reset_caches():
 
 
 @pytest.fixture
-def redis_cache(event_loop):
+async def redis_cache(event_loop):
     cache = Cache(Cache.REDIS, namespace="test")
     yield cache
 
@@ -29,7 +29,7 @@ def redis_cache(event_loop):
 
 
 @pytest.fixture
-def memory_cache(event_loop):
+async def memory_cache(event_loop):
     cache = Cache(namespace="test")
     yield cache
 
@@ -38,7 +38,7 @@ def memory_cache(event_loop):
 
 
 @pytest.fixture
-def memcached_cache(event_loop):
+async def memcached_cache(event_loop):
     cache = Cache(Cache.MEMCACHED, namespace="test")
     yield cache
 
