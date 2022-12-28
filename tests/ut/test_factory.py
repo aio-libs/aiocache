@@ -179,15 +179,6 @@ class TestCacheHandler:
         assert cache.endpoint == "127.0.0.10"
         assert cache.db == 10
 
-    def test_create_deprecated(self):
-        with patch("aiocache.factory.warnings.warn") as mock:
-            caches.create(cache="aiocache.SimpleMemoryCache")
-
-        mock.assert_called_once_with(
-            "Creating a cache with an explicit config is deprecated, use 'aiocache.Cache'",
-            DeprecationWarning,
-        )
-
     def test_retrieve_cache(self):
         caches.set_config(
             {
@@ -243,20 +234,6 @@ class TestCacheHandler:
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
-
-    def test_create_cache_str_no_alias(self):
-        cache = caches.create(cache="aiocache.RedisCache")
-
-        assert isinstance(cache, RedisCache)
-        assert cache.endpoint == "127.0.0.1"
-        assert cache.port == 6379
-
-    def test_create_cache_class_no_alias(self):
-        cache = caches.create(cache=RedisCache)
-
-        assert isinstance(cache, RedisCache)
-        assert cache.endpoint == "127.0.0.1"
-        assert cache.port == 6379
 
     def test_create_cache_ensure_alias_or_cache(self):
         with pytest.raises(TypeError):
