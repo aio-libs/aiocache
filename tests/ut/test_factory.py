@@ -47,7 +47,7 @@ class TestCache:
         assert Cache.MEMCACHED == MemcachedCache
 
     @pytest.mark.parametrize("cache_type", CACHE_NAMES)
-    def test_new(self, cache_type):
+    async def test_new(self, cache_type):
         kwargs = {"a": 1, "b": 2}
         cache_class = Cache.get_scheme_class(cache_type)
 
