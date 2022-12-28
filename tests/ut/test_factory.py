@@ -52,9 +52,9 @@ class TestCache:
         cache_class = Cache.get_scheme_class(cache_type)
 
         with patch("aiocache.{}.__init__".format(cache_class.__name__)) as init:
-            cache = Cache(cache_class, **kwargs)
-            assert isinstance(cache, cache_class)
-            init.assert_called_once_with(**kwargs)
+            async with Cache(cache_class, **kwargs) as cache:
+                assert isinstance(cache, cache_class)
+                init.assert_called_once_with(**kwargs)
 
     def test_new_defaults_to_memory(self):
         assert isinstance(Cache(), Cache.MEMORY)
@@ -234,10 +234,6 @@ class TestCacheHandler:
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
-
-    def test_create_cache_ensure_alias_or_cache(self):
-        with pytest.raises(TypeError):
-            caches.create()
 
     def test_multiple_caches(self):
         caches.set_config(
