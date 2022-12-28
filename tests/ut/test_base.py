@@ -12,7 +12,7 @@ class TestAPI:
     def test_register(self):
         @API.register
         def dummy():
-            pass
+            """Dummy function."""
 
         assert dummy in API.CMDS
         API.unregister(dummy)
@@ -20,14 +20,14 @@ class TestAPI:
     def test_unregister(self):
         @API.register
         def dummy():
-            pass
+            "Dummy function."""
 
         API.unregister(dummy)
         assert dummy not in API.CMDS
 
     def test_unregister_unexisting(self):
         def dummy():
-            pass
+            "Dummy function."""
 
         API.unregister(dummy)
         assert dummy not in API.CMDS
@@ -44,7 +44,7 @@ class TestAPI:
     async def test_aiocache_enabled_disabled(self):
         @API.aiocache_enabled(fake_return=[])
         async def dummy(*args, **kwargs):
-            return True
+            """Dummy function."""
 
         with patch.dict(os.environ, {"AIOCACHE_DISABLE": "1"}):
             assert await dummy() == []
