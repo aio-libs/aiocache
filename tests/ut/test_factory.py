@@ -239,34 +239,6 @@ class TestCacheHandler:
         with pytest.raises(TypeError):
             caches.create()
 
-    def test_alias_config_is_reusable(self):
-        caches.set_config(
-            {
-                "default": {
-                    "cache": "aiocache.RedisCache",
-                    "endpoint": "127.0.0.10",
-                    "port": 6378,
-                    "serializer": {"class": "aiocache.serializers.PickleSerializer"},
-                    "plugins": [
-                        {"class": "aiocache.plugins.HitMissRatioPlugin"},
-                        {"class": "aiocache.plugins.TimingPlugin"},
-                    ],
-                },
-                "alt": {"cache": "aiocache.SimpleMemoryCache"},
-            }
-        )
-
-        default = caches.create(**caches.get_alias_config("default"))
-        alt = caches.create(**caches.get_alias_config("alt"))
-
-        assert isinstance(default, RedisCache)
-        assert default.endpoint == "127.0.0.10"
-        assert default.port == 6378
-        assert isinstance(default.serializer, PickleSerializer)
-        assert len(default.plugins) == 2
-
-        assert isinstance(alt, SimpleMemoryCache)
-
     def test_multiple_caches(self):
         caches.set_config(
             {
