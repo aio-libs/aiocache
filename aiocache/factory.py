@@ -1,6 +1,5 @@
 import logging
 import urllib
-import warnings
 from copy import deepcopy
 from typing import Dict
 
