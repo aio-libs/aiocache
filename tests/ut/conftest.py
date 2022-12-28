@@ -72,12 +72,12 @@ def base_cache():
 
 
 @pytest.fixture
-def redis_cache():
-    cache = RedisCache()
-    return cache
+async def redis_cache():
+    async with RedisCache() as cache:
+        yield cache
 
 
 @pytest.fixture
-def memcached_cache():
-    cache = MemcachedCache()
-    return cache
+async def memcached_cache():
+    async with MemcachedCache() as cache:
+        yield cache
