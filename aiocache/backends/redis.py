@@ -208,7 +208,7 @@ class RedisCache(RedisBackend, BaseCache):
 
     def __init__(self, serializer=None, **kwargs):
         super().__init__(**kwargs)
-        BaseCache.__init__(self, serializer=serializer or JsonSerializer(), **kwargs)
+        BaseCache.__init__(self, serializer=serializer or JsonSerializer())
 
     @classmethod
     def parse_uri_path(cls, path):
