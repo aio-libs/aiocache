@@ -181,7 +181,8 @@ class CacheHandler:
         :return: New cache instance
         """
         config = self.get_alias_config(alias)
-        return _create_cache(**config, **kwargs)
+        # TODO(PY39): **config | kwargs
+        return _create_cache(**{**config, **kwargs})
 
     def get_alias_config(self, alias):
         config = self.get_config()
