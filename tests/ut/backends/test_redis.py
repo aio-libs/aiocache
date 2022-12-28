@@ -101,19 +101,16 @@ class TestRedisBackend:
         assert redis_backend.pool_max_size == 10
         assert redis_backend.create_connection_timeout == 1.5
 
-    @pytest.mark.asyncio
     async def test_get(self, redis):
         redis.client.get.return_value = b"value"
         assert await redis._get(Keys.KEY) == "value"
         redis.client.get.assert_called_with(Keys.KEY)
 
-    @pytest.mark.asyncio
     async def test_gets(self, mocker, redis, redis_client):
         mocker.spy(redis, "_get")
         await redis._gets(Keys.KEY)
         redis._get.assert_called_with(Keys.KEY, encoding="utf-8", _conn=ANY)
 
-    @pytest.mark.asyncio
     async def test_set(self, redis, redis_client):
         await redis._set(Keys.KEY, "value")
         redis_client.set.assert_called_with(Keys.KEY, "value")
@@ -121,7 +118,6 @@ class TestRedisBackend:
         await redis._set(Keys.KEY, "value", ttl=1)
         redis_client.setex.assert_called_with(Keys.KEY, 1, "value")
 
-    @pytest.mark.asyncio
     async def test_set_cas_token(self, mocker, redis, redis_client):
         mocker.spy(redis, "_cas")
         await redis._set(Keys.KEY, "value", _cas_token="old_value", _conn=redis_client)
@@ -129,7 +125,6 @@ class TestRedisBackend:
             Keys.KEY, "value", "old_value", ttl=None, _conn=redis_client
         )
 
-    @pytest.mark.asyncio
     async def test_cas(self, mocker, redis, redis_client):
         mocker.spy(redis, "_raw")
         await redis._cas(Keys.KEY, "value", "old_value", ttl=10, _conn=redis_client)
@@ -141,7 +136,6 @@ class TestRedisBackend:
             _conn=redis_client,
         )
 
-    @pytest.mark.asyncio
     async def test_cas_float_ttl(self, mocker, redis, redis_client):
         mocker.spy(redis, "_raw")
         await redis._cas(Keys.KEY, "value", "old_value", ttl=0.1, _conn=redis_client)
@@ -153,19 +147,16 @@ class TestRedisBackend:
             _conn=redis_client,
         )
 
-    @pytest.mark.asyncio
     async def test_multi_get(self, redis):
         await redis._multi_get([Keys.KEY, Keys.KEY_1])
         redis.client.mget.assert_called_with(Keys.KEY, Keys.KEY_1)
 
-    @pytest.mark.asyncio
     async def test_multi_set(self, redis):
         await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")])
         redis.client.execute_command.assert_called_with(
             "MSET", Keys.KEY, "value", Keys.KEY_1, "random"
         )
 
-    @pytest.mark.asyncio
     async def test_multi_set_with_ttl(self, redis, redis_pipeline):
         await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
         assert redis.client.pipeline.call_count == 1
@@ -176,7 +167,6 @@ class TestRedisBackend:
         redis_pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
         assert redis_pipeline.execute.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_add(self, redis):
         await redis._add(Keys.KEY, "value")
         redis.client.set.assert_called_with(Keys.KEY, "value", nx=True, ex=None)
@@ -184,82 +174,68 @@ class TestRedisBackend:
         await redis._add(Keys.KEY, "value", 1)
         redis.client.set.assert_called_with(Keys.KEY, "value", nx=True, ex=1)
 
-    @pytest.mark.asyncio
     async def test_add_existing(self, redis):
         redis.client.set.return_value = False
         with pytest.raises(ValueError):
             await redis._add(Keys.KEY, "value")
 
-    @pytest.mark.asyncio
     async def test_add_float_ttl(self, redis):
         await redis._add(Keys.KEY, "value", 0.1)
         redis.client.set.assert_called_with(Keys.KEY, "value", nx=True, px=100)
 
-    @pytest.mark.asyncio
     async def test_exists(self, redis):
         redis.client.exists.return_value = 1
         await redis._exists(Keys.KEY)
         redis.client.exists.assert_called_with(Keys.KEY)
 
-    @pytest.mark.asyncio
     async def test_increment(self, redis, redis_client):
         await redis._increment(Keys.KEY, delta=2)
         redis.client.incrby.assert_called_with(Keys.KEY, 2)
 
-    @pytest.mark.asyncio
     async def test_increment_typerror(self, redis):
         redis.client.incrby.side_effect = ResponseError("msg")
         with pytest.raises(TypeError):
             await redis._increment(Keys.KEY, delta=2)
         redis.client.incrby.assert_called_with(Keys.KEY, 2)
 
-    @pytest.mark.asyncio
     async def test_expire(self, redis):
         await redis._expire(Keys.KEY, 1)
         redis.client.expire.assert_called_with(Keys.KEY, 1)
         await redis._increment(Keys.KEY, 2)
 
-    @pytest.mark.asyncio
     async def test_expire_0_ttl(self, redis, redis_client):
         await redis._expire(Keys.KEY, ttl=0)
         redis_client.persist.assert_called_with(Keys.KEY)
 
-    @pytest.mark.asyncio
     async def test_delete(self, redis):
         await redis._delete(Keys.KEY)
         redis.client.delete.assert_called_with(Keys.KEY)
 
-    @pytest.mark.asyncio
     async def test_clear(self, redis):
         redis.client.keys.return_value = ["nm:a", "nm:b"]
         await redis._clear("nm")
         redis.client.delete.assert_called_with("nm:a", "nm:b")
 
-    @pytest.mark.asyncio
     async def test_clear_no_keys(self, redis):
         redis.client.keys.return_value = []
         await redis._clear("nm")
         redis.client.delete.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_clear_no_namespace(self, redis):
         await redis._clear()
         assert redis.client.flushdb.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_raw(self, redis):
         await redis._raw("get", Keys.KEY)
         await redis._raw("set", Keys.KEY, 1)
         redis.client.get.assert_called_with(Keys.KEY)
         redis.client.set.assert_called_with(Keys.KEY, 1)
 
-    @pytest.mark.asyncio
     async def test_redlock_release(self, mocker, redis):
         mocker.spy(redis, "_raw")
         await redis._redlock_release(Keys.KEY, "random")
         redis._raw.assert_called_with("eval", redis.RELEASE_SCRIPT, 1, Keys.KEY, "random")
 
-    @pytest.mark.asyncio
     async def test_close(self, redis):
         await redis._close()
         assert redis.client.close.call_count == 1

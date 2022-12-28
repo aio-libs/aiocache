@@ -13,7 +13,6 @@ async def redis_client():
 
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Too slow")
 class TestRedis:
-    @pytest.mark.asyncio
     async def test_redis_getsetdel(self, redis_client, redis_cache):
         N = 10000
         redis_total_time = 0
@@ -39,9 +38,8 @@ class TestRedis:
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
         print("redis    avg call: {:0.5f}s".format(redis_total_time / N))
-        assert aiocache_total_time / redis_total_time < 1.25
+        assert aiocache_total_time / redis_total_time < 1.30
 
-    @pytest.mark.asyncio
     async def test_redis_multigetsetdel(self, redis_client, redis_cache):
         N = 5000
         redis_total_time = 0
@@ -70,7 +68,7 @@ class TestRedis:
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
         print("redis_client    avg call: {:0.5f}s".format(redis_total_time / N))
-        assert aiocache_total_time / redis_total_time < 1.20
+        assert aiocache_total_time / redis_total_time < 1.30
 
 
 @pytest.fixture
@@ -82,7 +80,6 @@ async def aiomcache_pool():
 
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Too slow")
 class TestMemcached:
-    @pytest.mark.asyncio
     async def test_memcached_getsetdel(self, aiomcache_pool, memcached_cache):
         N = 10000
         aiomcache_total_time = 0
@@ -110,9 +107,8 @@ class TestMemcached:
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
         print("aiomcache avg call: {:0.5f}s".format(aiomcache_total_time / N))
-        assert aiocache_total_time / aiomcache_total_time < 1.30
+        assert aiocache_total_time / aiomcache_total_time < 1.35
 
-    @pytest.mark.asyncio
     async def test_memcached_multigetsetdel(self, aiomcache_pool, memcached_cache):
         N = 2000
         aiomcache_total_time = 0
@@ -145,4 +141,4 @@ class TestMemcached:
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
         print("aiomcache avg call: {:0.5f}s".format(aiomcache_total_time / N))
-        assert aiocache_total_time / aiomcache_total_time < 1.30
+        assert aiocache_total_time / aiomcache_total_time < 1.40

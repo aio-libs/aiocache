@@ -15,10 +15,8 @@ async def return_dict(keys=None):
     return ret
 
 
-async def stub(*args, key=None, seconds=0, **kwargs):
+async def stub(arg: float, seconds: int = 0) -> str:
     await asyncio.sleep(seconds)
-    if key:
-        return str(key)
     return str(random.randint(1, 50))
 
 
@@ -27,7 +25,6 @@ class TestCached:
     def default_cache(self, mocker, cache):
         mocker.patch("aiocache.decorators._get_cache", return_value=cache)
 
-    @pytest.mark.asyncio
     async def test_cached_ttl(self, cache):
         @cached(ttl=1, key=Keys.KEY)
         async def fn():
@@ -40,7 +37,6 @@ class TestCached:
         await asyncio.sleep(1)
         assert await cache.get(Keys.KEY) is None
 
-    @pytest.mark.asyncio
     async def test_cached_key_builder(self, cache):
         def build_key(f, self, a, b):
             return "{}_{}_{}_{}".format(self, f.__name__, a, b)
@@ -58,8 +54,6 @@ class TestCachedStampede:
     def default_cache(self, mocker, cache):
         mocker.patch("aiocache.decorators._get_cache", return_value=cache)
 
-    @pytest.mark.asyncio
-    @pytest.mark.skip(reason="flaky test")
     async def test_cached_stampede(self, mocker, cache):
         mocker.spy(cache, "get")
         mocker.spy(cache, "set")
@@ -67,12 +61,12 @@ class TestCachedStampede:
 
         await asyncio.gather(decorator(stub)(0.5), decorator(stub)(0.5))
 
-        cache.get.assert_called_with("acceptance.test_decoratorsstub(0.5,)[]")
+        cache.get.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]")
         assert cache.get.call_count == 4
-        cache.set.assert_called_with("acceptance.test_decoratorsstub(0.5,)[]", mock.ANY, ttl=10)
-        assert cache.set.call_count == 1
+        cache.set.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]",
+                                     mock.ANY, ttl=10)
+        assert cache.set.call_count == 1, cache.set.call_args_list
 
-    @pytest.mark.asyncio
     async def test_locking_dogpile_lease_expiration(self, mocker, cache):
         mocker.spy(cache, "get")
         mocker.spy(cache, "set")
@@ -87,7 +81,6 @@ class TestCachedStampede:
         assert cache.get.call_count == 6
         assert cache.set.call_count == 3
 
-    @pytest.mark.asyncio
     async def test_locking_dogpile_task_cancellation(self, mocker, cache):
         @cached_stampede()
         async def cancel_task():
@@ -102,7 +95,6 @@ class TestMultiCachedDecorator:
     def default_cache(self, mocker, cache):
         mocker.patch("aiocache.decorators._get_cache", return_value=cache)
 
-    @pytest.mark.asyncio
     async def test_multi_cached(self, cache):
         multi_cached_decorator = multi_cached("keys")
 
@@ -112,7 +104,6 @@ class TestMultiCachedDecorator:
         for key in default_keys:
             assert await cache.get(key) is not None
 
-    @pytest.mark.asyncio
     async def test_keys_without_kwarg(self, cache):
         @multi_cached("keys")
         async def fn(keys):
@@ -121,7 +112,6 @@ class TestMultiCachedDecorator:
         await fn([Keys.KEY])
         assert await cache.exists(Keys.KEY) is True
 
-    @pytest.mark.asyncio
     async def test_multi_cached_key_builder(self, cache):
         def build_key(key, f, self, keys, market="ES"):
             return "{}_{}_{}".format(f.__name__, key, market)
@@ -134,7 +124,6 @@ class TestMultiCachedDecorator:
         assert await cache.exists("fn_" + Keys.KEY + "_ES") is True
         assert await cache.exists("fn_" + Keys.KEY_1 + "_ES") is True
 
-    @pytest.mark.asyncio
     async def test_fn_with_args(self, cache):
         @multi_cached("keys")
         async def fn(keys, *args):
@@ -144,7 +133,6 @@ class TestMultiCachedDecorator:
         await fn([Keys.KEY], "arg")
         assert await cache.exists(Keys.KEY) is True
 
-    @pytest.mark.asyncio
     async def test_double_decorator(self, cache):
         def dummy_d(fn):
             async def wrapper(*args, **kwargs):
