@@ -1,6 +1,7 @@
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
+from redis.asyncio import Redis
 from redis.exceptions import ResponseError
 from tests.utils import Keys
 
@@ -9,7 +10,7 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-@pytest.fixture
+"""@pytest.fixture
 def redis_pipeline():
     pipeline = AsyncMock(name="redis_pipeline")
     for method in ["execute_command", "pexpire", "expire"]:
@@ -24,21 +25,21 @@ def redis_pipeline():
 @pytest.fixture
 def redis_client(redis_pipeline):
     # "Redis.get()" is not a coroutine, but its return value is.
-    redis = AsyncMock(name="redis_client")
+    redis = create_autospec(Redis)
     for method in [
         "get", "mget", "set", "psetex", "setex", "execute_command", "exists",
         "incrby", "persist", "delete", "keys", "flushdb",
     ]:
         setattr(redis, method, AsyncMock())
     redis.pipeline = MagicMock(return_value=redis_pipeline)
-    yield redis
+    yield redis"""
 
 
 @pytest.fixture
 def redis(redis_client):
     redis = RedisBackend()
-    redis.client = redis_client
-    yield redis
+    with patch.object(redis, "client", autospec=True):
+        yield redis
 
 
 class TestRedisBackend:
