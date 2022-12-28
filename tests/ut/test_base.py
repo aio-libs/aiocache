@@ -525,7 +525,7 @@ class TestConn:
 
     def test_conn_getattr(self, conn, mock_cache):
         assert conn.timeout == mock_cache.timeout
-        assert conn.namespace == conn.namespace
+        assert conn.namespace == mock_cache.namespace
         assert conn.serializer is mock_cache.serializer
 
     async def test_conn_context_manager(self, conn):
