@@ -44,13 +44,13 @@ class TestCache:
         assert await cache.set(Keys.KEY, "value") is True
 
     async def test_set_cancel_previous_ttl_handle(self, cache):
-        await cache.set(Keys.KEY, "value", ttl=1)
+        await cache.set(Keys.KEY, "value", ttl=2)
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.1)
         assert await cache.get(Keys.KEY) == "value"
-        await cache.set(Keys.KEY, "new_value", ttl=1)
+        await cache.set(Keys.KEY, "new_value", ttl=2)
 
-        await asyncio.sleep(0.6)
+        await asyncio.sleep(1)
         assert await cache.get(Keys.KEY) == "new_value"
 
     async def test_multi_set(self, cache):
