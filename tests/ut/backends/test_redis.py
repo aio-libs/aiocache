@@ -1,7 +1,7 @@
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
 
 import pytest
-from redis.asyncio import Redis
+from redis.asyncio.client import Pipeline
 from redis.exceptions import ResponseError
 from tests.utils import Keys
 
@@ -41,10 +41,15 @@ def redis():
     with patch.object(redis, "client", autospec=True) as m:
         # These methods actually return an awaitable.
         for method in (
-            "get", "mget", "set", "psetex", "setex", "execute_command", "exists",
+            "eval", "expire", "get", "psetex", "setex", "execute_command", "exists",
             "incrby", "persist", "delete", "keys", "flushdb",
         ):
             setattr(m, method, AsyncMock(return_value=None, spec_set=()))
+        m.mget = AsyncMock(return_value=[None], spec_set=())
+        m.set = AsyncMock(return_value=True, spec_set=())
+
+        m.pipeline.return_value = create_autospec(Pipeline, instance=True)
+        m.pipeline.return_value.__aenter__.return_value = m.pipeline.return_value
         yield redis
 
 
@@ -167,12 +172,13 @@ class TestRedisBackend:
     async def test_multi_set_with_ttl(self, redis):
         await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
         assert redis.client.pipeline.call_count == 1
-        redis.client.pipeline.execute_command.assert_called_with(
+        pipeline = redis.client.pipeline.return_value
+        pipeline.execute_command.assert_called_with(
             "MSET", Keys.KEY, "value", Keys.KEY_1, "random"
         )
-        redis.client.pipeline.expire.assert_any_call(Keys.KEY, time=1)
-        redis.client.pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
-        assert redis.client.pipeline.execute.call_count == 1
+        pipeline.expire.assert_any_call(Keys.KEY, time=1)
+        pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
+        assert pipeline.execute.call_count == 1
 
     async def test_add(self, redis):
         await redis._add(Keys.KEY, "value")

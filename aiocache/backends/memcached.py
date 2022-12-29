@@ -105,7 +105,7 @@ class MemcachedBackend(BaseCache):
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         value = await getattr(self.client, command)(*args, **kwargs)
-        if command in ["get", "multi_get"]:
+        if command in {"get", "multi_get"}:
             if encoding is not None and value is not None:
                 return value.decode(encoding)
         return value
