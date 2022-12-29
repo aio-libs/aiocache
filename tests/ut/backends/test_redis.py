@@ -44,7 +44,7 @@ def redis():
             "get", "mget", "set", "psetex", "setex", "execute_command", "exists",
             "incrby", "persist", "delete", "keys", "flushdb",
         ):
-            setattr(m, method, AsyncMock(spec_set=()))
+            setattr(m, method, AsyncMock(return_value=None, spec_set=()))
         yield redis
 
 
