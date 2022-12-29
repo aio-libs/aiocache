@@ -158,15 +158,15 @@ class TestRedisBackend:
             "MSET", Keys.KEY, "value", Keys.KEY_1, "random"
         )
 
-    async def test_multi_set_with_ttl(self, redis, redis_pipeline):
+    async def test_multi_set_with_ttl(self, redis):
         await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
         assert redis.client.pipeline.call_count == 1
-        redis_pipeline.execute_command.assert_called_with(
+        redis.client.pipeline.execute_command.assert_called_with(
             "MSET", Keys.KEY, "value", Keys.KEY_1, "random"
         )
-        redis_pipeline.expire.assert_any_call(Keys.KEY, time=1)
-        redis_pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
-        assert redis_pipeline.execute.call_count == 1
+        redis.client.pipeline.expire.assert_any_call(Keys.KEY, time=1)
+        redis.client.pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
+        assert redis.client.pipeline.execute.call_count == 1
 
     async def test_add(self, redis):
         await redis._add(Keys.KEY, "value")
