@@ -38,7 +38,13 @@ def redis_client(redis_pipeline):
 @pytest.fixture
 def redis():
     redis = RedisBackend()
-    with patch.object(redis, "client", autospec=True):
+    with patch.object(redis, "client", autospec=True) as m:
+        # These methods actually return an awaitable.
+        for method in (
+            "get", "mget", "set", "psetex", "setex", "execute_command", "exists",
+            "incrby", "persist", "delete", "keys", "flushdb",
+        ):
+            setattr(m, method, AsyncMock(spec_set=()))
         yield redis
 
 
