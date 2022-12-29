@@ -10,31 +10,6 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-"""@pytest.fixture
-def redis_pipeline():
-    pipeline = AsyncMock(name="redis_pipeline")
-    for method in ["execute_command", "pexpire", "expire"]:
-        setattr(pipeline, method, MagicMock())
-    for method in ["__aexit__", "execute"]:
-        setattr(pipeline, method, AsyncMock())
-
-    pipeline.__aenter__.return_value = pipeline
-    yield pipeline
-
-
-@pytest.fixture
-def redis_client(redis_pipeline):
-    # "Redis.get()" is not a coroutine, but its return value is.
-    redis = create_autospec(Redis)
-    for method in [
-        "get", "mget", "set", "psetex", "setex", "execute_command", "exists",
-        "incrby", "persist", "delete", "keys", "flushdb",
-    ]:
-        setattr(redis, method, AsyncMock())
-    redis.pipeline = MagicMock(return_value=redis_pipeline)
-    yield redis"""
-
-
 @pytest.fixture
 def redis():
     redis = RedisBackend()

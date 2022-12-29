@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import aiomcache
 import pytest
@@ -12,7 +12,16 @@ from aiocache.serializers import JsonSerializer
 @pytest.fixture
 def memcached():
     memcached = MemcachedBackend()
-    with patch.object(memcached, "client", autospec=True):
+    with patch.object(memcached, "client", autospec=True) as m:
+        # Autospec messes up the signature on the decorated methods.
+        for method in (
+            "get", "gets", "multi_get", "stats", "set", "cas", "replace",
+            "append", "prepend", "incr", "decr", "touch", "version", "flush_all"
+        ):
+            setattr(m, method, AsyncMock(return_value=None, spec_set=()))
+        m.add = AsyncMock(return_value=True, spec_set=())
+        m.delete = AsyncMock(return_value=True, spec_set=())
+
         yield memcached
 
 
