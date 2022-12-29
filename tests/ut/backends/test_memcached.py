@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import aiomcache
 import pytest
@@ -12,8 +12,8 @@ from aiocache.serializers import JsonSerializer
 @pytest.fixture
 def memcached():
     memcached = MemcachedBackend()
-    memcached.client = MagicMock(spec=aiomcache.Client)
-    yield memcached
+    with patch.object(memcached, "client", autospec=True):
+        yield memcached
 
 
 class TestMemcachedBackend:
