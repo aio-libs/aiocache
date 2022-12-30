@@ -6,7 +6,7 @@ import pytest
 from aiocache.backends.memory import SimpleMemoryBackend, SimpleMemoryCache
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
-from ..utils import Keys
+from ...utils import Keys
 
 
 @pytest.fixture
