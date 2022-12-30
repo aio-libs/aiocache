@@ -34,7 +34,7 @@ class TestCached:
         resp2 = await fn()
 
         assert await cache.get(Keys.KEY) == resp1 == resp2
-        await asyncio.sleep(2)
+        await asyncio.sleep(2.1)
         assert await cache.get(Keys.KEY) is None
 
     async def test_cached_key_builder(self, cache):
