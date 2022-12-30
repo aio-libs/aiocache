@@ -3,10 +3,6 @@ cov-report = true
 
 lint:
 	flake8 tests/ aiocache/
-	black -l 100 --check tests/ aiocache/
-
-format:
-	black -l 100 tests/ aiocache/
 
 install-dev:
 	pip install -e .[redis,memcached,msgpack,dev]

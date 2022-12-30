@@ -68,7 +68,7 @@ class HitMissRatioPlugin(BasePlugin):
     keys.
     """
 
-    async def post_get(self, client, key, took=0, ret=None):
+    async def post_get(self, client, key, took=0, ret=None, **kwargs):
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
             client.hit_miss_ratio["total"] = 0
@@ -82,7 +82,7 @@ class HitMissRatioPlugin(BasePlugin):
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
         )
 
-    async def post_multi_get(self, client, keys, took=0, ret=None):
+    async def post_multi_get(self, client, keys, took=0, ret=None, **kwargs):
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
             client.hit_miss_ratio["total"] = 0

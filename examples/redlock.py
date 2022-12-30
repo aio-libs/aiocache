@@ -32,12 +32,11 @@ async def concurrent():
     await asyncio.gather(my_view(), my_view(), my_view())
 
 
-def test_redis():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(concurrent())
-    loop.run_until_complete(cache.delete('key'))
-    loop.run_until_complete(cache.close())
+async def test_redis():
+    await concurrent()
+    await cache.delete("key")
+    await cache.close()
 
 
 if __name__ == '__main__':
-    test_redis()
+    asyncio.run(test_redis())

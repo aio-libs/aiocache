@@ -21,7 +21,7 @@ class RandomModel:
         return self.__dict__ == obj.__dict__
 
 
-class MarshmallowSerializer(Schema, BaseSerializer):
+class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
     int_type = fields.Integer()
     str_type = fields.String()
     dict_type = fields.Dict()
@@ -32,7 +32,7 @@ class MarshmallowSerializer(Schema, BaseSerializer):
     encoding = 'utf-8'
 
     @post_load
-    def build_my_type(self, data,  **kwargs):
+    def build_my_type(self, data, **kwargs):
         return RandomModel(**data)
 
     class Meta:
@@ -54,11 +54,10 @@ async def serializer():
     assert result.list_type == model.list_type
 
 
-def test_serializer():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(serializer())
-    loop.run_until_complete(cache.delete("key"))
+async def test_serializer():
+    await serializer()
+    await cache.delete("key")
 
 
 if __name__ == "__main__":
-    test_serializer()
+    asyncio.run(test_serializer())
