@@ -20,16 +20,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.9
-    - name: Cache PyPI
-      uses: actions/cache@v3
-      with:
-        key: pip-lint-${{ hashFiles('requirements-dev.txt') }}
-        path: ~/.cache/pip
-        restore-keys: |
-            pip-lint-
+        cache: 'pip'
+        cache-dependency-path: '**/requirements*.txt'
     - name: Pre-Commit hooks
       uses: pre-commit/action@v2.0.3
     - name: Install dependencies
@@ -89,20 +84,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Setup Python ${{ matrix.pyver }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.pyver }}
-    - name: Get pip cache dir
-      id: pip-cache
-      run: |
-        echo "::set-output name=dir::$(pip cache dir)"    # - name: Cache
-    - name: Cache PyPI
-      uses: actions/cache@v3
-      with:
-        key: pip-ci-${{ runner.os }}-${{ matrix.pyver }}-${{ matrix.ujson }}-${{ hashFiles('requirements-dev.txt') }}
-        path: ${{ steps.pip-cache.outputs.dir }}
-        restore-keys: |
-            pip-ci-${{ runner.os }}-${{ matrix.pyver }}-${{ matrix.ujson }}-
+        cache: 'pip'
+        cache-dependency-path: '**/requirements*.txt'
     - name: Install ujson
       if: ${{ matrix.ujson == 'ujson' }}
       run: pip install ujson
