@@ -27,9 +27,9 @@ Using a cache is as simple as
     >>> from aiocache import Cache
     >>> cache = Cache()
     >>> with asyncio.Runner() as runner:
-    >>>     runner.run(cache.set('key', 'value'))
+    >>>     runner.run(cache.set("key", "value"))
     True
-    >>>     runner.run(cache.get('key'))
+    >>>     runner.run(cache.get("key"))
     'value'
 
 Here we are using the :ref:`simplememorycache` but you can use any other listed in :ref:`caches`. All caches contain the same minimum interface which consists on the following functions:
