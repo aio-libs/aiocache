@@ -39,7 +39,7 @@ class TestRedisBackend:
         "max_connections": None,
     }
 
-    @patch("redis.asyncio.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup(self, mock_class):
         redis_backend = RedisBackend()
         kwargs = self.default_redis_kwargs.copy()
@@ -50,7 +50,7 @@ class TestRedisBackend:
         assert redis_backend.password is None
         assert redis_backend.pool_max_size is None
 
-    @patch("redis.asyncio.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup_override(self, mock_class):
         override = {"db": 2, "password": "pass"}
         redis_backend = RedisBackend(**override)
@@ -64,7 +64,7 @@ class TestRedisBackend:
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
-    @patch("redis.asyncio.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup_casts(self, mock_class):
         override = {
             "db": "2",

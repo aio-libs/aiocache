@@ -1,11 +1,29 @@
 import asyncio
 import os
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from contextlib import ExitStack
+from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
 
 import pytest
 from tests.utils import Keys
 
 from aiocache.base import API, BaseCache, _Conn
+from aiocache.plugins import BasePlugin
+from aiocache.serializers import StringSerializer
+
+
+@pytest.fixture
+def mock_cache():
+    """Return BaseCache instance with unimplemented methods mocked out."""
+    plugin = create_autospec(BasePlugin, instance=True)
+    cache = BaseCache(timeout=0.002, plugins=(plugin,))
+    methods = ("_add", "_get", "_set", "_multi_get", "_multi_set", "_delete", "_exists",
+               "_increment", "_expire", "_clear", "_raw", "_close", "acquire_conn",
+               "release_conn")
+    with ExitStack() as stack:
+        for f in methods:
+            stack.enter_context(patch.object(cache, f, autospec=True))
+        stack.enter_context(patch.object(cache, "_serializer", autospec=True))
+        yield cache
 
 
 class TestAPI:
@@ -48,7 +66,7 @@ class TestAPI:
             assert await dummy() == []
 
     async def test_timeout_no_timeout(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0
 
         @API.timeout
@@ -61,7 +79,7 @@ class TestAPI:
             assert wait_for.call_count == 0
 
     async def test_timeout_self(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0.002
 
         @API.timeout
@@ -72,7 +90,7 @@ class TestAPI:
             await dummy(self)
 
     async def test_timeout_kwarg_0(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0.002
 
         @API.timeout
@@ -83,7 +101,7 @@ class TestAPI:
         assert await dummy(self, timeout=0) is True
 
     async def test_timeout_kwarg_None(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0.002
 
         @API.timeout
@@ -94,7 +112,7 @@ class TestAPI:
         assert await dummy(self, timeout=None) is True
 
     async def test_timeout_kwarg(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
 
         @API.timeout
         async def dummy(self):
@@ -104,7 +122,7 @@ class TestAPI:
             await dummy(self, timeout=0.002)
 
     async def test_timeout_self_kwarg(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 5
 
         @API.timeout
@@ -115,14 +133,14 @@ class TestAPI:
             await dummy(self, timeout=0.003)
 
     async def test_plugins(self):
-        self = MagicMock()
-        plugin1 = MagicMock()
-        plugin1.pre_dummy = AsyncMock()
-        plugin1.post_dummy = AsyncMock()
-        plugin2 = MagicMock()
-        plugin2.pre_dummy = AsyncMock()
-        plugin2.post_dummy = AsyncMock()
-        self.plugins = [plugin1, plugin2]
+        self = MagicMock(spec_set=("plugins",))
+        plugin1 = MagicMock(spec_set=("pre_dummy", "post_dummy"))
+        plugin1.pre_dummy = AsyncMock(spec_set=())
+        plugin1.post_dummy = AsyncMock(spec_set=())
+        plugin2 = MagicMock(spec_set=("pre_dummy", "post_dummy"))
+        plugin2.pre_dummy = AsyncMock(spec_set=())
+        plugin2.post_dummy = AsyncMock(spec_set=())
+        self.plugins = (plugin1, plugin2)
 
         @API.plugins
         async def dummy(self, *args, **kwargs):
@@ -215,113 +233,101 @@ class TestBaseCache:
         assert cache.build_key(Keys.KEY, "namespace") == "x"
 
     async def test_add_ttl_cache_default(self, base_cache):
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value")
 
-        await base_cache.add(Keys.KEY, "value")
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
 
     async def test_add_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value")
 
-        await base_cache.add(Keys.KEY, "value")
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=10)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=10)
 
     async def test_add_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value", ttl=20)
 
-        await base_cache.add(Keys.KEY, "value", ttl=20)
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=20)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=20)
 
     async def test_add_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value", ttl=None)
 
-        await base_cache.add(Keys.KEY, "value", ttl=None)
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
 
     async def test_set_ttl_cache_default(self, base_cache):
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value")
 
-        await base_cache.set(Keys.KEY, "value")
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
+            )
 
     async def test_set_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value")
 
-        await base_cache.set(Keys.KEY, "value")
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=10
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=10
+            )
 
     async def test_set_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value", ttl=20)
 
-        await base_cache.set(Keys.KEY, "value", ttl=20)
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=20
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=20
+            )
 
     async def test_set_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value", ttl=None)
 
-        await base_cache.set(Keys.KEY, "value", ttl=None)
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
+            )
 
     async def test_multi_set_ttl_cache_default(self, base_cache):
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
+            )
 
     async def test_multi_set_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=10
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=10
+            )
 
     async def test_multi_set_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=20)
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=20)
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=20
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=20
+            )
 
     async def test_multi_set_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=None)
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=None)
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
+            )
 
 
 class TestCache:
@@ -535,7 +541,6 @@ class TestConn:
 
     async def test_inject_conn(self, conn):
         conn._conn = "connection"
-        conn._cache.dummy = AsyncMock()
-
+        conn._cache.dummy = AsyncMock(spec_set=())
         await _Conn._inject_conn("dummy")(conn, "a", b="b")
         conn._cache.dummy.assert_called_with("a", _conn=conn._conn, b="b")

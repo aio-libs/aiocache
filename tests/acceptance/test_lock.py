@@ -48,7 +48,7 @@ class TestRedLock:
         assert cache.get.call_count == 8
         assert cache.set.call_count == 1, cache.set.call_args_list
 
-    async def test_locking_dogpile_lease_expiration(self, mocker, cache):
+    async def test_locking_dogpile_lease_expiration(self, cache):
         async def dummy() -> None:
             res = await cache.get(Keys.KEY)
             assert res is None

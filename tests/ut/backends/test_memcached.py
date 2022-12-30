@@ -92,12 +92,12 @@ class TestMemcachedBackend:
         await memcached._set(Keys.KEY, "value", _cas_token="token")
         memcached._cas.assert_called_with(Keys.KEY, b"value", "token", ttl=0, _conn=None)
 
-    async def test_cas(self, mocker, memcached):
+    async def test_cas(self, memcached):
         memcached.client.cas.return_value = True
         assert await memcached._cas(Keys.KEY, b"value", "token", ttl=0) is True
         memcached.client.cas.assert_called_with(Keys.KEY, b"value", "token", exptime=0)
 
-    async def test_cas_fail(self, mocker, memcached):
+    async def test_cas_fail(self, memcached):
         memcached.client.cas.return_value = False
         assert await memcached._cas(Keys.KEY, b"value", "token", ttl=0) is False
         memcached.client.cas.assert_called_with(Keys.KEY, b"value", "token", exptime=0)

@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from tests.utils import Keys
@@ -47,8 +47,8 @@ class TestRedLock:
         await lock._acquire()
 
         # Mock .wait() to avoid unawaited coroutine warning.
-        with patch.object(RedLock._EVENTS[lock.key], "wait", Mock()):
-            with patch("asyncio.wait_for", side_effect=asyncio.TimeoutError):
+        with patch.object(RedLock._EVENTS[lock.key], "wait", autospec=True):
+            with patch("asyncio.wait_for", autospec=True, side_effect=asyncio.TimeoutError):
                 mock_cache._add.side_effect = ValueError
                 assert await lock._acquire() is None
 

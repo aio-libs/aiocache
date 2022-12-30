@@ -23,7 +23,7 @@ async def stub(arg: float, seconds: int = 0) -> str:
 class TestCached:
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, cache):
-        mocker.patch("aiocache.decorators._get_cache", return_value=cache)
+        mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
 
     async def test_cached_ttl(self, cache):
         @cached(ttl=1, key=Keys.KEY)
@@ -52,7 +52,7 @@ class TestCached:
 class TestCachedStampede:
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, cache):
-        mocker.patch("aiocache.decorators._get_cache", return_value=cache)
+        mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
 
     async def test_cached_stampede(self, mocker, cache):
         mocker.spy(cache, "get")
@@ -81,7 +81,7 @@ class TestCachedStampede:
         assert cache.get.call_count == 6
         assert cache.set.call_count == 3
 
-    async def test_locking_dogpile_task_cancellation(self, mocker, cache):
+    async def test_locking_dogpile_task_cancellation(self, cache):
         @cached_stampede()
         async def cancel_task():
             raise asyncio.CancelledError()
@@ -93,7 +93,7 @@ class TestCachedStampede:
 class TestMultiCachedDecorator:
     @pytest.fixture(autouse=True)
     def default_cache(self, mocker, cache):
-        mocker.patch("aiocache.decorators._get_cache", return_value=cache)
+        mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
 
     async def test_multi_cached(self, cache):
         multi_cached_decorator = multi_cached("keys")

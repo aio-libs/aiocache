@@ -4,10 +4,10 @@ if sys.version_info < (3, 8):
     # Missing AsyncMock on 3.7
     collect_ignore_glob = ["*"]
 
-    from unittest.mock import Mock
+    from unittest.mock import Mock, create_autospec
     AsyncMock = Mock
 else:
-    from unittest.mock import AsyncMock, Mock
+    from unittest.mock import AsyncMock, Mock, create_autospec
 
 import pytest
 
@@ -31,38 +31,12 @@ def reset_caches():
     )
 
 
-class MockCache(BaseCache):
-    def __init__(self):
-        super().__init__()
-        self._add = AsyncMock()
-        self._get = AsyncMock()
-        self._gets = AsyncMock()
-        self._set = AsyncMock()
-        self._multi_get = AsyncMock(return_value=["a", "b"])
-        self._multi_set = AsyncMock()
-        self._delete = AsyncMock()
-        self._exists = AsyncMock()
-        self._increment = AsyncMock()
-        self._expire = AsyncMock()
-        self._clear = AsyncMock()
-        self._raw = AsyncMock()
-        self._redlock_release = AsyncMock()
-        self.acquire_conn = AsyncMock()
-        self.release_conn = AsyncMock()
-        self._close = AsyncMock()
-
-
 @pytest.fixture
 def mock_cache(mocker):
-    cache = MockCache()
-    cache.timeout = 0.002
-    mocker.spy(cache, "_build_key")
-    for cmd in API.CMDS:
-        mocker.spy(cache, cmd.__name__)
-    mocker.spy(cache, "close")
-    cache.serializer = Mock(spec=BaseSerializer)
-    cache.serializer.encoding = "utf-8"
-    cache.plugins = [Mock(spec=BasePlugin)]
+    cache = create_autospec(BaseCache, instance=True)
+    #cache.timeout = 0.002
+    #cache.serializer.encoding = "utf-8"
+    #cache.plugins = [create_autospec(BasePlugin, instance=True)]
     return cache
 
 
