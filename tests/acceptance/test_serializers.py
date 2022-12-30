@@ -5,7 +5,7 @@ import pytest
 from marshmallow import Schema, fields, post_load
 
 try:
-    import ujson as json
+    import ujson as json  # noqa: I900
 except ImportError:
     import json  # type: ignore[no-redef]
 
