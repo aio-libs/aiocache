@@ -6,7 +6,7 @@ import pytest
 from aiocache.backends.memcached import MemcachedBackend, MemcachedCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
-from ..utils import Keys
+from ...utils import Keys
 
 
 @pytest.fixture
