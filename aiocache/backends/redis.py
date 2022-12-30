@@ -11,8 +11,7 @@ from aiocache.serializers import JsonSerializer
 _NOT_SET = object()
 
 
-class RedisBackend:
-
+class RedisBackend(BaseCache):
     RELEASE_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[1] then"
         " return redis.call('del',KEYS[1])"
@@ -182,7 +181,7 @@ class RedisBackend:
         await self.client.close()
 
 
-class RedisCache(RedisBackend, BaseCache):
+class RedisCache(RedisBackend):
     """
     Redis cache implementation with the following components as defaults:
         - serializer: :class:`aiocache.serializers.JsonSerializer`
@@ -207,8 +206,7 @@ class RedisCache(RedisBackend, BaseCache):
     NAME = "redis"
 
     def __init__(self, serializer=None, **kwargs):
-        super().__init__(**kwargs)
-        self.serializer = serializer or JsonSerializer()
+        super().__init__(serializer=serializer or JsonSerializer(), **kwargs)
 
     @classmethod
     def parse_uri_path(cls, path):

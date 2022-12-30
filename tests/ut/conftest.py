@@ -1,22 +1,18 @@
 import sys
-
-if sys.version_info < (3, 8):
-    # Missing AsyncMock on 3.7
-    collect_ignore_glob = ["*"]
-
-    from unittest.mock import Mock
-    AsyncMock = Mock
-else:
-    from unittest.mock import AsyncMock, Mock
+from contextlib import ExitStack
+from unittest.mock import create_autospec, patch
 
 import pytest
 
 from aiocache import caches
 from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.redis import RedisCache
-from aiocache.base import API, BaseCache
+from aiocache.base import BaseCache
 from aiocache.plugins import BasePlugin
-from aiocache.serializers import BaseSerializer
+
+if sys.version_info < (3, 8):
+    # Missing AsyncMock on 3.7
+    collect_ignore_glob = ["*"]
 
 
 @pytest.fixture(autouse=True)
@@ -31,39 +27,24 @@ def reset_caches():
     )
 
 
-class MockCache(BaseCache):
-    def __init__(self):
-        super().__init__()
-        self._add = AsyncMock()
-        self._get = AsyncMock()
-        self._gets = AsyncMock()
-        self._set = AsyncMock()
-        self._multi_get = AsyncMock(return_value=["a", "b"])
-        self._multi_set = AsyncMock()
-        self._delete = AsyncMock()
-        self._exists = AsyncMock()
-        self._increment = AsyncMock()
-        self._expire = AsyncMock()
-        self._clear = AsyncMock()
-        self._raw = AsyncMock()
-        self._redlock_release = AsyncMock()
-        self.acquire_conn = AsyncMock()
-        self.release_conn = AsyncMock()
-        self._close = AsyncMock()
+@pytest.fixture
+def mock_cache(mocker):
+    return create_autospec(BaseCache, instance=True)
 
 
 @pytest.fixture
-def mock_cache(mocker):
-    cache = MockCache()
-    cache.timeout = 0.002
-    mocker.spy(cache, "_build_key")
-    for cmd in API.CMDS:
-        mocker.spy(cache, cmd.__name__)
-    mocker.spy(cache, "close")
-    cache.serializer = Mock(spec=BaseSerializer)
-    cache.serializer.encoding = "utf-8"
-    cache.plugins = [Mock(spec=BasePlugin)]
-    return cache
+def mock_base_cache():
+    """Return BaseCache instance with unimplemented methods mocked out."""
+    plugin = create_autospec(BasePlugin, instance=True)
+    cache = BaseCache(timeout=0.002, plugins=(plugin,))
+    methods = ("_add", "_get", "_gets", "_set", "_multi_get", "_multi_set", "_delete",
+               "_exists", "_increment", "_expire", "_clear", "_raw", "_close",
+               "_redlock_release", "acquire_conn", "release_conn")
+    with ExitStack() as stack:
+        for f in methods:
+            stack.enter_context(patch.object(cache, f, autospec=True))
+        stack.enter_context(patch.object(cache, "_serializer", autospec=True))
+        yield cache
 
 
 @pytest.fixture
@@ -72,12 +53,12 @@ def base_cache():
 
 
 @pytest.fixture
-def redis_cache():
-    cache = RedisCache()
-    return cache
+async def redis_cache():
+    async with RedisCache() as cache:
+        yield cache
 
 
 @pytest.fixture
-def memcached_cache():
-    cache = MemcachedCache()
-    return cache
+async def memcached_cache():
+    async with MemcachedCache() as cache:
+        yield cache

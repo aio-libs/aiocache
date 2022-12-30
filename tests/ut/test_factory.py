@@ -47,7 +47,7 @@ class TestCache:
         assert Cache.MEMCACHED == MemcachedCache
 
     @pytest.mark.parametrize("cache_type", CACHE_NAMES)
-    def test_new(self, cache_type):
+    async def test_new(self, cache_type):
         kwargs = {"a": 1, "b": 2}
         cache_class = Cache.get_scheme_class(cache_type)
 
@@ -106,14 +106,15 @@ class TestCache:
         ],
     )
     def test_from_url_calls_cache_with_args(self, url, expected_args):
-        with patch("aiocache.factory.Cache") as mock:
+        with patch("aiocache.factory.Cache", autospec=True) as mock:
             Cache.from_url(url)
 
         mock.assert_called_once_with(mock.get_scheme_class.return_value, **expected_args)
 
     def test_calls_parse_uri_path_from_cache(self):
-        with patch("aiocache.factory.Cache") as mock:
-            mock.get_scheme_class.return_value.parse_uri_path = Mock(return_value={"arg1": "arg1"})
+        p_mock = Mock(spec_set=(), return_value={"arg1": "arg1"})
+        with patch("aiocache.factory.Cache", autospec=True) as mock:
+            mock.get_scheme_class.return_value.parse_uri_path = p_mock
             Cache.from_url("redis:///")
 
         mock.get_scheme_class.return_value.parse_uri_path.assert_called_once_with("/")
@@ -179,15 +180,6 @@ class TestCacheHandler:
         assert cache.endpoint == "127.0.0.10"
         assert cache.db == 10
 
-    def test_create_deprecated(self):
-        with patch("aiocache.factory.warnings.warn") as mock:
-            caches.create(cache="aiocache.SimpleMemoryCache")
-
-        mock.assert_called_once_with(
-            "Creating a cache with an explicit config is deprecated, use 'aiocache.Cache'",
-            DeprecationWarning,
-        )
-
     def test_retrieve_cache(self):
         caches.set_config(
             {
@@ -243,52 +235,6 @@ class TestCacheHandler:
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
-
-    def test_create_cache_str_no_alias(self):
-        cache = caches.create(cache="aiocache.RedisCache")
-
-        assert isinstance(cache, RedisCache)
-        assert cache.endpoint == "127.0.0.1"
-        assert cache.port == 6379
-
-    def test_create_cache_class_no_alias(self):
-        cache = caches.create(cache=RedisCache)
-
-        assert isinstance(cache, RedisCache)
-        assert cache.endpoint == "127.0.0.1"
-        assert cache.port == 6379
-
-    def test_create_cache_ensure_alias_or_cache(self):
-        with pytest.raises(TypeError):
-            caches.create()
-
-    def test_alias_config_is_reusable(self):
-        caches.set_config(
-            {
-                "default": {
-                    "cache": "aiocache.RedisCache",
-                    "endpoint": "127.0.0.10",
-                    "port": 6378,
-                    "serializer": {"class": "aiocache.serializers.PickleSerializer"},
-                    "plugins": [
-                        {"class": "aiocache.plugins.HitMissRatioPlugin"},
-                        {"class": "aiocache.plugins.TimingPlugin"},
-                    ],
-                },
-                "alt": {"cache": "aiocache.SimpleMemoryCache"},
-            }
-        )
-
-        default = caches.create(**caches.get_alias_config("default"))
-        alt = caches.create(**caches.get_alias_config("alt"))
-
-        assert isinstance(default, RedisCache)
-        assert default.endpoint == "127.0.0.10"
-        assert default.port == 6378
-        assert isinstance(default.serializer, PickleSerializer)
-        assert len(default.plugins) == 2
-
-        assert isinstance(alt, SimpleMemoryCache)
 
     def test_multiple_caches(self):
         caches.set_config(

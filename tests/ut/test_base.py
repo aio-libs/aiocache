@@ -48,7 +48,7 @@ class TestAPI:
             assert await dummy() == []
 
     async def test_timeout_no_timeout(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0
 
         @API.timeout
@@ -61,7 +61,7 @@ class TestAPI:
             assert wait_for.call_count == 0
 
     async def test_timeout_self(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0.002
 
         @API.timeout
@@ -72,7 +72,7 @@ class TestAPI:
             await dummy(self)
 
     async def test_timeout_kwarg_0(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0.002
 
         @API.timeout
@@ -83,7 +83,7 @@ class TestAPI:
         assert await dummy(self, timeout=0) is True
 
     async def test_timeout_kwarg_None(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 0.002
 
         @API.timeout
@@ -94,7 +94,7 @@ class TestAPI:
         assert await dummy(self, timeout=None) is True
 
     async def test_timeout_kwarg(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
 
         @API.timeout
         async def dummy(self):
@@ -104,7 +104,7 @@ class TestAPI:
             await dummy(self, timeout=0.002)
 
     async def test_timeout_self_kwarg(self):
-        self = MagicMock()
+        self = MagicMock(spec_set=("timeout",))
         self.timeout = 5
 
         @API.timeout
@@ -115,14 +115,14 @@ class TestAPI:
             await dummy(self, timeout=0.003)
 
     async def test_plugins(self):
-        self = MagicMock()
-        plugin1 = MagicMock()
-        plugin1.pre_dummy = AsyncMock()
-        plugin1.post_dummy = AsyncMock()
-        plugin2 = MagicMock()
-        plugin2.pre_dummy = AsyncMock()
-        plugin2.post_dummy = AsyncMock()
-        self.plugins = [plugin1, plugin2]
+        self = MagicMock(spec_set=("plugins",))
+        plugin1 = MagicMock(spec_set=("pre_dummy", "post_dummy"))
+        plugin1.pre_dummy = AsyncMock(spec_set=())
+        plugin1.post_dummy = AsyncMock(spec_set=())
+        plugin2 = MagicMock(spec_set=("pre_dummy", "post_dummy"))
+        plugin2.pre_dummy = AsyncMock(spec_set=())
+        plugin2.post_dummy = AsyncMock(spec_set=())
+        self.plugins = (plugin1, plugin2)
 
         @API.plugins
         async def dummy(self, *args, **kwargs):
@@ -215,113 +215,101 @@ class TestBaseCache:
         assert cache.build_key(Keys.KEY, "namespace") == "x"
 
     async def test_add_ttl_cache_default(self, base_cache):
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value")
 
-        await base_cache.add(Keys.KEY, "value")
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
 
     async def test_add_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value")
 
-        await base_cache.add(Keys.KEY, "value")
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=10)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=10)
 
     async def test_add_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value", ttl=20)
 
-        await base_cache.add(Keys.KEY, "value", ttl=20)
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=20)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=20)
 
     async def test_add_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._add = AsyncMock()
+        with patch.object(base_cache, "_add", autospec=True) as m:
+            await base_cache.add(Keys.KEY, "value", ttl=None)
 
-        await base_cache.add(Keys.KEY, "value", ttl=None)
-
-        base_cache._add.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
+            m.assert_called_once_with(Keys.KEY, "value", _conn=None, ttl=None)
 
     async def test_set_ttl_cache_default(self, base_cache):
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value")
 
-        await base_cache.set(Keys.KEY, "value")
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
+            )
 
     async def test_set_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value")
 
-        await base_cache.set(Keys.KEY, "value")
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=10
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=10
+            )
 
     async def test_set_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value", ttl=20)
 
-        await base_cache.set(Keys.KEY, "value", ttl=20)
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=20
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=20
+            )
 
     async def test_set_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._set = AsyncMock()
+        with patch.object(base_cache, "_set", autospec=True) as m:
+            await base_cache.set(Keys.KEY, "value", ttl=None)
 
-        await base_cache.set(Keys.KEY, "value", ttl=None)
-
-        base_cache._set.assert_called_once_with(
-            Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                Keys.KEY, "value", _cas_token=None, _conn=None, ttl=None
+            )
 
     async def test_multi_set_ttl_cache_default(self, base_cache):
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
+            )
 
     async def test_multi_set_ttl_default(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=10
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=10
+            )
 
     async def test_multi_set_ttl_overriden(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=20)
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=20)
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=20
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=20
+            )
 
     async def test_multi_set_ttl_none(self, base_cache):
         base_cache.ttl = 10
-        base_cache._multi_set = AsyncMock()
+        with patch.object(base_cache, "_multi_set", autospec=True) as m:
+            await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=None)
 
-        await base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=None)
-
-        base_cache._multi_set.assert_called_once_with(
-            [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
-        )
+            m.assert_called_once_with(
+                [(Keys.KEY, "value"), (Keys.KEY_1, "value1")], _conn=None, ttl=None
+            )
 
 
 class TestCache:
@@ -337,196 +325,197 @@ class TestCache:
     async def asleep(self, *args, **kwargs):
         await asyncio.sleep(0.005)
 
-    async def test_get(self, mock_cache):
-        await mock_cache.get(Keys.KEY)
+    async def test_get(self, mock_base_cache):
+        await mock_base_cache.get(Keys.KEY)
 
-        mock_cache._get.assert_called_with(
-            mock_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
+        mock_base_cache._get.assert_called_with(
+            mock_base_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
         )
-        assert mock_cache.plugins[0].pre_get.call_count == 1
-        assert mock_cache.plugins[0].post_get.call_count == 1
+        assert mock_base_cache.plugins[0].pre_get.call_count == 1
+        assert mock_base_cache.plugins[0].post_get.call_count == 1
 
-    async def test_get_timeouts(self, mock_cache):
-        mock_cache._get = self.asleep
+    async def test_get_timeouts(self, mock_base_cache):
+        mock_base_cache._get = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.get(Keys.KEY)
+            await mock_base_cache.get(Keys.KEY)
 
-    async def test_get_default(self, mock_cache):
-        mock_cache._serializer.loads.return_value = None
+    async def test_get_default(self, mock_base_cache):
+        mock_base_cache._serializer.loads.return_value = None
 
-        assert await mock_cache.get(Keys.KEY, default=1) == 1
+        assert await mock_base_cache.get(Keys.KEY, default=1) == 1
 
-    async def test_get_negative_default(self, mock_cache):
-        mock_cache._serializer.loads.return_value = False
+    async def test_get_negative_default(self, mock_base_cache):
+        mock_base_cache._serializer.loads.return_value = False
 
-        assert await mock_cache.get(Keys.KEY) is False
+        assert await mock_base_cache.get(Keys.KEY) is False
 
-    async def test_set(self, mock_cache):
-        await mock_cache.set(Keys.KEY, "value", ttl=2)
+    async def test_set(self, mock_base_cache):
+        await mock_base_cache.set(Keys.KEY, "value", ttl=2)
 
-        mock_cache._set.assert_called_with(
-            mock_cache._build_key(Keys.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY
+        mock_base_cache._set.assert_called_with(
+            mock_base_cache._build_key(Keys.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY
         )
-        assert mock_cache.plugins[0].pre_set.call_count == 1
-        assert mock_cache.plugins[0].post_set.call_count == 1
+        assert mock_base_cache.plugins[0].pre_set.call_count == 1
+        assert mock_base_cache.plugins[0].post_set.call_count == 1
 
-    async def test_set_timeouts(self, mock_cache):
-        mock_cache._set = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.set(Keys.KEY, "value")
-
-    async def test_add(self, mock_cache):
-        mock_cache._exists = AsyncMock(return_value=False)
-        await mock_cache.add(Keys.KEY, "value", ttl=2)
-
-        key = mock_cache._build_key(Keys.KEY)
-        mock_cache._add.assert_called_with(key, ANY, ttl=2, _conn=ANY)
-        assert mock_cache.plugins[0].pre_add.call_count == 1
-        assert mock_cache.plugins[0].post_add.call_count == 1
-
-    async def test_add_timeouts(self, mock_cache):
-        mock_cache._add = self.asleep
+    async def test_set_timeouts(self, mock_base_cache):
+        mock_base_cache._set = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.add(Keys.KEY, "value")
+            await mock_base_cache.set(Keys.KEY, "value")
 
-    async def test_mget(self, mock_cache):
-        await mock_cache.multi_get([Keys.KEY, Keys.KEY_1])
+    async def test_add(self, mock_base_cache):
+        mock_base_cache._exists = AsyncMock(return_value=False)
+        await mock_base_cache.add(Keys.KEY, "value", ttl=2)
 
-        mock_cache._multi_get.assert_called_with(
-            [mock_cache._build_key(Keys.KEY), mock_cache._build_key(Keys.KEY_1)],
+        key = mock_base_cache._build_key(Keys.KEY)
+        mock_base_cache._add.assert_called_with(key, ANY, ttl=2, _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_add.call_count == 1
+        assert mock_base_cache.plugins[0].post_add.call_count == 1
+
+    async def test_add_timeouts(self, mock_base_cache):
+        mock_base_cache._add = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.add(Keys.KEY, "value")
+
+    async def test_mget(self, mock_base_cache):
+        await mock_base_cache.multi_get([Keys.KEY, Keys.KEY_1])
+
+        mock_base_cache._multi_get.assert_called_with(
+            [mock_base_cache._build_key(Keys.KEY), mock_base_cache._build_key(Keys.KEY_1)],
             encoding=ANY,
             _conn=ANY,
         )
-        assert mock_cache.plugins[0].pre_multi_get.call_count == 1
-        assert mock_cache.plugins[0].post_multi_get.call_count == 1
+        assert mock_base_cache.plugins[0].pre_multi_get.call_count == 1
+        assert mock_base_cache.plugins[0].post_multi_get.call_count == 1
 
-    async def test_mget_timeouts(self, mock_cache):
-        mock_cache._multi_get = self.asleep
+    async def test_mget_timeouts(self, mock_base_cache):
+        mock_base_cache._multi_get = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.multi_get(Keys.KEY, "value")
+            await mock_base_cache.multi_get(Keys.KEY, "value")
 
-    async def test_mset(self, mock_cache):
-        await mock_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=2)
+    async def test_mset(self, mock_base_cache):
+        await mock_base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=2)
 
-        mock_cache._multi_set.assert_called_with(
-            [(mock_cache._build_key(Keys.KEY), ANY), (mock_cache._build_key(Keys.KEY_1), ANY)],
-            ttl=2,
-            _conn=ANY,
+        key = mock_base_cache._build_key(Keys.KEY)
+        key1 = mock_base_cache._build_key(Keys.KEY_1)
+        mock_base_cache._multi_set.assert_called_with(
+            [(key, ANY), (key1, ANY)], ttl=2, _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_multi_set.call_count == 1
+        assert mock_base_cache.plugins[0].post_multi_set.call_count == 1
+
+    async def test_mset_timeouts(self, mock_base_cache):
+        mock_base_cache._multi_set = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
+
+    async def test_exists(self, mock_base_cache):
+        await mock_base_cache.exists(Keys.KEY)
+
+        mock_base_cache._exists.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_exists.call_count == 1
+        assert mock_base_cache.plugins[0].post_exists.call_count == 1
+
+    async def test_exists_timeouts(self, mock_base_cache):
+        mock_base_cache._exists = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.exists(Keys.KEY)
+
+    async def test_increment(self, mock_base_cache):
+        await mock_base_cache.increment(Keys.KEY, 2)
+
+        key = mock_base_cache._build_key(Keys.KEY)
+        mock_base_cache._increment.assert_called_with(key, 2, _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_increment.call_count == 1
+        assert mock_base_cache.plugins[0].post_increment.call_count == 1
+
+    async def test_increment_timeouts(self, mock_base_cache):
+        mock_base_cache._increment = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.increment(Keys.KEY)
+
+    async def test_delete(self, mock_base_cache):
+        await mock_base_cache.delete(Keys.KEY)
+
+        mock_base_cache._delete.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_delete.call_count == 1
+        assert mock_base_cache.plugins[0].post_delete.call_count == 1
+
+    async def test_delete_timeouts(self, mock_base_cache):
+        mock_base_cache._delete = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.delete(Keys.KEY)
+
+    async def test_expire(self, mock_base_cache):
+        await mock_base_cache.expire(Keys.KEY, 1)
+        key = mock_base_cache._build_key(Keys.KEY)
+        mock_base_cache._expire.assert_called_with(key, 1, _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_expire.call_count == 1
+        assert mock_base_cache.plugins[0].post_expire.call_count == 1
+
+    async def test_expire_timeouts(self, mock_base_cache):
+        mock_base_cache._expire = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.expire(Keys.KEY, 0)
+
+    async def test_clear(self, mock_base_cache):
+        await mock_base_cache.clear(Keys.KEY)
+        mock_base_cache._clear.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        assert mock_base_cache.plugins[0].pre_clear.call_count == 1
+        assert mock_base_cache.plugins[0].post_clear.call_count == 1
+
+    async def test_clear_timeouts(self, mock_base_cache):
+        mock_base_cache._clear = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.clear(Keys.KEY)
+
+    async def test_raw(self, mock_base_cache):
+        await mock_base_cache.raw("get", Keys.KEY)
+        mock_base_cache._raw.assert_called_with(
+            "get", mock_base_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
         )
-        assert mock_cache.plugins[0].pre_multi_set.call_count == 1
-        assert mock_cache.plugins[0].post_multi_set.call_count == 1
+        assert mock_base_cache.plugins[0].pre_raw.call_count == 1
+        assert mock_base_cache.plugins[0].post_raw.call_count == 1
 
-    async def test_mset_timeouts(self, mock_cache):
-        mock_cache._multi_set = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]])
-
-    async def test_exists(self, mock_cache):
-        await mock_cache.exists(Keys.KEY)
-
-        mock_cache._exists.assert_called_with(mock_cache._build_key(Keys.KEY), _conn=ANY)
-        assert mock_cache.plugins[0].pre_exists.call_count == 1
-        assert mock_cache.plugins[0].post_exists.call_count == 1
-
-    async def test_exists_timeouts(self, mock_cache):
-        mock_cache._exists = self.asleep
+    async def test_raw_timeouts(self, mock_base_cache):
+        mock_base_cache._raw = self.asleep
 
         with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.exists(Keys.KEY)
+            await mock_base_cache.raw("clear")
 
-    async def test_increment(self, mock_cache):
-        await mock_cache.increment(Keys.KEY, 2)
+    async def test_close(self, mock_base_cache):
+        await mock_base_cache.close()
+        assert mock_base_cache._close.call_count == 1
 
-        mock_cache._increment.assert_called_with(mock_cache._build_key(Keys.KEY), 2, _conn=ANY)
-        assert mock_cache.plugins[0].pre_increment.call_count == 1
-        assert mock_cache.plugins[0].post_increment.call_count == 1
-
-    async def test_increment_timeouts(self, mock_cache):
-        mock_cache._increment = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.increment(Keys.KEY)
-
-    async def test_delete(self, mock_cache):
-        await mock_cache.delete(Keys.KEY)
-
-        mock_cache._delete.assert_called_with(mock_cache._build_key(Keys.KEY), _conn=ANY)
-        assert mock_cache.plugins[0].pre_delete.call_count == 1
-        assert mock_cache.plugins[0].post_delete.call_count == 1
-
-    async def test_delete_timeouts(self, mock_cache):
-        mock_cache._delete = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.delete(Keys.KEY)
-
-    async def test_expire(self, mock_cache):
-        await mock_cache.expire(Keys.KEY, 1)
-        mock_cache._expire.assert_called_with(mock_cache._build_key(Keys.KEY), 1, _conn=ANY)
-        assert mock_cache.plugins[0].pre_expire.call_count == 1
-        assert mock_cache.plugins[0].post_expire.call_count == 1
-
-    async def test_expire_timeouts(self, mock_cache):
-        mock_cache._expire = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.expire(Keys.KEY, 0)
-
-    async def test_clear(self, mock_cache):
-        await mock_cache.clear(Keys.KEY)
-        mock_cache._clear.assert_called_with(mock_cache._build_key(Keys.KEY), _conn=ANY)
-        assert mock_cache.plugins[0].pre_clear.call_count == 1
-        assert mock_cache.plugins[0].post_clear.call_count == 1
-
-    async def test_clear_timeouts(self, mock_cache):
-        mock_cache._clear = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.clear(Keys.KEY)
-
-    async def test_raw(self, mock_cache):
-        await mock_cache.raw("get", Keys.KEY)
-        mock_cache._raw.assert_called_with(
-            "get", mock_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
-        )
-        assert mock_cache.plugins[0].pre_raw.call_count == 1
-        assert mock_cache.plugins[0].post_raw.call_count == 1
-
-    async def test_raw_timeouts(self, mock_cache):
-        mock_cache._raw = self.asleep
-
-        with pytest.raises(asyncio.TimeoutError):
-            await mock_cache.raw("clear")
-
-    async def test_close(self, mock_cache):
-        await mock_cache.close()
-        assert mock_cache._close.call_count == 1
-
-    async def test_get_connection(self, mock_cache):
-        async with mock_cache.get_connection():
+    async def test_get_connection(self, mock_base_cache):
+        async with mock_base_cache.get_connection():
             pass
-        assert mock_cache.acquire_conn.call_count == 1
-        assert mock_cache.release_conn.call_count == 1
+        assert mock_base_cache.acquire_conn.call_count == 1
+        assert mock_base_cache.release_conn.call_count == 1
 
 
 @pytest.fixture
-def conn(mock_cache):
-    yield _Conn(mock_cache)
+def conn(mock_base_cache):
+    yield _Conn(mock_base_cache)
 
 
 class TestConn:
-    def test_conn(self, conn, mock_cache):
-        assert conn._cache == mock_cache
+    def test_conn(self, conn, mock_base_cache):
+        assert conn._cache == mock_base_cache
 
-    def test_conn_getattr(self, conn, mock_cache):
-        assert conn.timeout == mock_cache.timeout
-        assert conn.namespace == mock_cache.namespace
-        assert conn.serializer is mock_cache.serializer
+    def test_conn_getattr(self, conn, mock_base_cache):
+        assert conn.timeout == mock_base_cache.timeout
+        assert conn.namespace == mock_base_cache.namespace
+        assert conn.serializer is mock_base_cache.serializer
 
     async def test_conn_context_manager(self, conn):
         async with conn:
@@ -535,7 +524,6 @@ class TestConn:
 
     async def test_inject_conn(self, conn):
         conn._conn = "connection"
-        conn._cache.dummy = AsyncMock()
-
+        conn._cache.dummy = AsyncMock(spec_set=())
         await _Conn._inject_conn("dummy")(conn, "a", b="b")
         conn._cache.dummy.assert_called_with("a", _conn=conn._conn, b="b")

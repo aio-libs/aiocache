@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, MagicMock, create_autospec, patch
 
 import pytest
 from tests.utils import Keys
@@ -38,7 +38,7 @@ class TestSimpleMemoryBackend:
         await memory._set(Keys.KEY, "value")
         assert Keys.KEY not in memory._handlers
 
-    async def test_set_cancel_previous_ttl_handle(self, memory, mocker):
+    async def test_set_cancel_previous_ttl_handle(self, memory):
         with patch("asyncio.get_event_loop"):
             await memory._set(Keys.KEY, "value", ttl=0.1)
             memory._handlers[Keys.KEY].cancel.assert_not_called()
@@ -51,12 +51,12 @@ class TestSimpleMemoryBackend:
         assert Keys.KEY in memory._handlers
         assert isinstance(memory._handlers[Keys.KEY], asyncio.Handle)
 
-    async def test_set_cas_token(self, mocker, memory):
+    async def test_set_cas_token(self, memory):
         memory._cache.get.return_value = "old_value"
         assert await memory._set(Keys.KEY, "value", _cas_token="old_value") == 1
         SimpleMemoryBackend._cache.__setitem__.assert_called_with(Keys.KEY, "value")
 
-    async def test_set_cas_fail(self, mocker, memory):
+    async def test_set_cas_fail(self, memory):
         memory._cache.get.return_value = "value"
         assert await memory._set(Keys.KEY, "value", _cas_token="old_value") == 0
         assert SimpleMemoryBackend._cache.__setitem__.call_count == 0
@@ -114,7 +114,7 @@ class TestSimpleMemoryBackend:
         assert isinstance(memory._handlers.get(Keys.KEY), asyncio.Handle)
 
     async def test_expire_handle_ttl(self, memory):
-        fake = MagicMock()
+        fake = create_autospec(asyncio.TimerHandle, instance=True)
         SimpleMemoryBackend._handlers[Keys.KEY] = fake
         SimpleMemoryBackend._cache.__contains__.return_value = True
         await memory._expire(Keys.KEY, 1)
@@ -126,7 +126,7 @@ class TestSimpleMemoryBackend:
         assert await memory._expire(Keys.KEY, 1) is False
 
     async def test_delete(self, memory):
-        fake = MagicMock()
+        fake = create_autospec(asyncio.TimerHandle, instance=True)
         SimpleMemoryBackend._handlers[Keys.KEY] = fake
         await memory._delete(Keys.KEY)
         assert fake.cancel.call_count == 1
@@ -139,7 +139,7 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.pop.assert_called_with(Keys.KEY, None)
 
     async def test_delete_non_truthy(self, memory):
-        non_truthy = MagicMock()
+        non_truthy = MagicMock(spec_set=("__bool__",))
         non_truthy.__bool__.side_effect = ValueError("Does not implement truthiness")
 
         with pytest.raises(ValueError):

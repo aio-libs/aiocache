@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import create_autospec
 
 import pytest
 from tests.utils import Keys
@@ -10,9 +10,9 @@ from aiocache.plugins import BasePlugin, HitMissRatioPlugin, TimingPlugin
 class TestBasePlugin:
     async def test_interface_methods(self):
         for method in API.CMDS:
-            pre = await getattr(BasePlugin, "pre_{}".format(method.__name__))(MagicMock())
+            pre = await getattr(BasePlugin, "pre_{}".format(method.__name__))(None)
             assert pre is None
-            post = await getattr(BasePlugin, "post_{}".format(method.__name__))(MagicMock())
+            post = await getattr(BasePlugin, "post_{}".format(method.__name__))(None)
             assert post is None
 
     async def test_do_nothing(self):
@@ -51,7 +51,7 @@ class TestHitMissRatioPlugin:
         return HitMissRatioPlugin()
 
     async def test_post_get(self, plugin):
-        client = MagicMock(spec=BaseCache)
+        client = create_autospec(BaseCache, instance=True)
         await plugin.post_get(client, Keys.KEY)
 
         assert client.hit_miss_ratio["hits"] == 0
@@ -64,7 +64,7 @@ class TestHitMissRatioPlugin:
         assert client.hit_miss_ratio["hit_ratio"] == 0.5
 
     async def test_post_multi_get(self, plugin):
-        client = MagicMock(spec=BaseCache)
+        client = create_autospec(BaseCache, instance=True)
         await plugin.post_multi_get(client, [Keys.KEY, Keys.KEY_1], ret=[None, None])
 
         assert client.hit_miss_ratio["hits"] == 0

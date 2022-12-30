@@ -1,6 +1,5 @@
 import logging
 import urllib
-import warnings
 from copy import deepcopy
 from typing import Dict
 
@@ -19,7 +18,6 @@ def _class_from_string(class_path):
 
 
 def _create_cache(cache, serializer=None, plugins=None, **kwargs):
-
     if serializer is not None:
         cls = serializer.pop("class")
         cls = _class_from_string(cls) if isinstance(cls, str) else cls
@@ -174,32 +172,17 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias=None, cache=None, **kwargs):
-        """
-        Create a new cache. Either alias or cache params are required. You can use
-        kwargs to pass extra parameters to configure the cache.
+    def create(self, alias: str, **kwargs):
+        """Create a new cache.
 
-        .. deprecated:: 0.11.0
-            Only creating a cache passing an alias is supported. If you want to
-            create a cache passing explicit cache and kwargs use ``aiocache.Cache``.
+        You can use kwargs to pass extra parameters to configure the cache.
 
-        :param alias: str alias to pull configuration from
-        :param cache: str or class cache class to use for creating the
-            new cache (when no alias is used)
+        :param alias: alias to pull configuration from
         :return: New cache instance
         """
-        if alias:
-            config = self.get_alias_config(alias)
-        elif cache:
-            warnings.warn(
-                "Creating a cache with an explicit config is deprecated, use 'aiocache.Cache'",
-                DeprecationWarning,
-            )
-            config = {"cache": cache}
-        else:
-            raise TypeError("create call needs to receive an alias or a cache")
-        cache = _create_cache(**{**config, **kwargs})
-        return cache
+        config = self.get_alias_config(alias)
+        # TODO(PY39): **config | kwargs
+        return _create_cache(**{**config, **kwargs})
 
     def get_alias_config(self, alias):
         config = self.get_config()

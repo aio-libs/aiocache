@@ -1,6 +1,7 @@
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, create_autospec, patch
 
 import pytest
+from redis.asyncio.client import Pipeline
 from redis.exceptions import ResponseError
 from tests.utils import Keys
 
@@ -10,35 +11,21 @@ from aiocache.serializers import JsonSerializer
 
 
 @pytest.fixture
-def redis_pipeline():
-    pipeline = AsyncMock(name="redis_pipeline")
-    for method in ["execute_command", "pexpire", "expire"]:
-        setattr(pipeline, method, MagicMock())
-    for method in ["__aexit__", "execute"]:
-        setattr(pipeline, method, AsyncMock())
-
-    pipeline.__aenter__.return_value = pipeline
-    yield pipeline
-
-
-@pytest.fixture
-def redis_client(redis_pipeline):
-    # "Redis.get()" is not a coroutine, but its return value is.
-    redis = AsyncMock(name="redis_client")
-    for method in [
-        "get", "mget", "set", "psetex", "setex", "execute_command", "exists",
-        "incrby", "persist", "delete", "keys", "flushdb",
-    ]:
-        setattr(redis, method, AsyncMock())
-    redis.pipeline = MagicMock(return_value=redis_pipeline)
-    yield redis
-
-
-@pytest.fixture
-def redis(redis_client):
+def redis():
     redis = RedisBackend()
-    redis.client = redis_client
-    yield redis
+    with patch.object(redis, "client", autospec=True) as m:
+        # These methods actually return an awaitable.
+        for method in (
+            "eval", "expire", "get", "psetex", "setex", "execute_command", "exists",
+            "incrby", "persist", "delete", "keys", "flushdb",
+        ):
+            setattr(m, method, AsyncMock(return_value=None, spec_set=()))
+        m.mget = AsyncMock(return_value=[None], spec_set=())
+        m.set = AsyncMock(return_value=True, spec_set=())
+
+        m.pipeline.return_value = create_autospec(Pipeline, instance=True)
+        m.pipeline.return_value.__aenter__.return_value = m.pipeline.return_value
+        yield redis
 
 
 class TestRedisBackend:
@@ -52,7 +39,7 @@ class TestRedisBackend:
         "max_connections": None,
     }
 
-    @patch("redis.asyncio.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup(self, mock_class):
         redis_backend = RedisBackend()
         kwargs = self.default_redis_kwargs.copy()
@@ -63,7 +50,7 @@ class TestRedisBackend:
         assert redis_backend.password is None
         assert redis_backend.pool_max_size is None
 
-    @patch("redis.asyncio.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup_override(self, mock_class):
         override = {"db": 2, "password": "pass"}
         redis_backend = RedisBackend(**override)
@@ -77,7 +64,7 @@ class TestRedisBackend:
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
-    @patch("redis.asyncio.Redis", name="mock_class")
+    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup_casts(self, mock_class):
         override = {
             "db": "2",
@@ -106,45 +93,45 @@ class TestRedisBackend:
         assert await redis._get(Keys.KEY) == "value"
         redis.client.get.assert_called_with(Keys.KEY)
 
-    async def test_gets(self, mocker, redis, redis_client):
+    async def test_gets(self, mocker, redis):
         mocker.spy(redis, "_get")
         await redis._gets(Keys.KEY)
         redis._get.assert_called_with(Keys.KEY, encoding="utf-8", _conn=ANY)
 
-    async def test_set(self, redis, redis_client):
+    async def test_set(self, redis):
         await redis._set(Keys.KEY, "value")
-        redis_client.set.assert_called_with(Keys.KEY, "value")
+        redis.client.set.assert_called_with(Keys.KEY, "value")
 
         await redis._set(Keys.KEY, "value", ttl=1)
-        redis_client.setex.assert_called_with(Keys.KEY, 1, "value")
+        redis.client.setex.assert_called_with(Keys.KEY, 1, "value")
 
-    async def test_set_cas_token(self, mocker, redis, redis_client):
+    async def test_set_cas_token(self, mocker, redis):
         mocker.spy(redis, "_cas")
-        await redis._set(Keys.KEY, "value", _cas_token="old_value", _conn=redis_client)
+        await redis._set(Keys.KEY, "value", _cas_token="old_value", _conn=redis.client)
         redis._cas.assert_called_with(
-            Keys.KEY, "value", "old_value", ttl=None, _conn=redis_client
+            Keys.KEY, "value", "old_value", ttl=None, _conn=redis.client
         )
 
-    async def test_cas(self, mocker, redis, redis_client):
+    async def test_cas(self, mocker, redis):
         mocker.spy(redis, "_raw")
-        await redis._cas(Keys.KEY, "value", "old_value", ttl=10, _conn=redis_client)
+        await redis._cas(Keys.KEY, "value", "old_value", ttl=10, _conn=redis.client)
         redis._raw.assert_called_with(
             "eval",
             redis.CAS_SCRIPT,
             1,
             *[Keys.KEY, "value", "old_value", "EX", 10],
-            _conn=redis_client,
+            _conn=redis.client,
         )
 
-    async def test_cas_float_ttl(self, mocker, redis, redis_client):
+    async def test_cas_float_ttl(self, mocker, redis):
         mocker.spy(redis, "_raw")
-        await redis._cas(Keys.KEY, "value", "old_value", ttl=0.1, _conn=redis_client)
+        await redis._cas(Keys.KEY, "value", "old_value", ttl=0.1, _conn=redis.client)
         redis._raw.assert_called_with(
             "eval",
             redis.CAS_SCRIPT,
             1,
             *[Keys.KEY, "value", "old_value", "PX", 100],
-            _conn=redis_client,
+            _conn=redis.client,
         )
 
     async def test_multi_get(self, redis):
@@ -157,15 +144,16 @@ class TestRedisBackend:
             "MSET", Keys.KEY, "value", Keys.KEY_1, "random"
         )
 
-    async def test_multi_set_with_ttl(self, redis, redis_pipeline):
+    async def test_multi_set_with_ttl(self, redis):
         await redis._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
         assert redis.client.pipeline.call_count == 1
-        redis_pipeline.execute_command.assert_called_with(
+        pipeline = redis.client.pipeline.return_value
+        pipeline.execute_command.assert_called_with(
             "MSET", Keys.KEY, "value", Keys.KEY_1, "random"
         )
-        redis_pipeline.expire.assert_any_call(Keys.KEY, time=1)
-        redis_pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
-        assert redis_pipeline.execute.call_count == 1
+        pipeline.expire.assert_any_call(Keys.KEY, time=1)
+        pipeline.expire.assert_any_call(Keys.KEY_1, time=1)
+        assert pipeline.execute.call_count == 1
 
     async def test_add(self, redis):
         await redis._add(Keys.KEY, "value")
@@ -188,7 +176,7 @@ class TestRedisBackend:
         await redis._exists(Keys.KEY)
         redis.client.exists.assert_called_with(Keys.KEY)
 
-    async def test_increment(self, redis, redis_client):
+    async def test_increment(self, redis):
         await redis._increment(Keys.KEY, delta=2)
         redis.client.incrby.assert_called_with(Keys.KEY, 2)
 
@@ -203,9 +191,9 @@ class TestRedisBackend:
         redis.client.expire.assert_called_with(Keys.KEY, 1)
         await redis._increment(Keys.KEY, 2)
 
-    async def test_expire_0_ttl(self, redis, redis_client):
+    async def test_expire_0_ttl(self, redis):
         await redis._expire(Keys.KEY, ttl=0)
-        redis_client.persist.assert_called_with(Keys.KEY)
+        redis.client.persist.assert_called_with(Keys.KEY)
 
     async def test_delete(self, redis):
         await redis._delete(Keys.KEY)
