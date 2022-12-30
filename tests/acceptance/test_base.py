@@ -47,15 +47,15 @@ class TestCache:
         assert await cache.set(Keys.KEY, "value") is True
 
     async def test_set_cancel_previous_ttl_handle(self, cache):
-        await cache.set(Keys.KEY, "value", ttl=3)
+        await cache.set(Keys.KEY, "value", ttl=4)
 
-        await asyncio.sleep(1.6)
+        await asyncio.sleep(2.1)
         # Smaller ttl seems flaky, as if this call takes >0.5s...
         result = await cache.get(Keys.KEY)
         assert result == "value"
-        await cache.set(Keys.KEY, "new_value", ttl=3)
+        await cache.set(Keys.KEY, "new_value", ttl=4)
 
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(2)
         result = await cache.get(Keys.KEY)
         assert result == "new_value"
 
