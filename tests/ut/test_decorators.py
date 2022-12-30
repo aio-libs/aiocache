@@ -357,8 +357,11 @@ class TestMultiCached:
             namespace="test",
         )
 
+        def f():
+            """Dummy function. Not called."""
+
         assert mc.ttl == 1
-        assert mc.key_builder("key", lambda x: x) == "key"
+        assert mc.key_builder("key", f) == "key"
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
@@ -584,7 +587,7 @@ class TestMultiCached:
 
 def test_get_args_dict():
     def fn(a, b, *args, keys=None, **kwargs):
-        pass
+        """Dummy function."""
 
     args_dict = _get_args_dict(fn, ("a", "b", "c", "d"), {"what": "what"})
     assert args_dict == {"a": "a", "b": "b", "keys": None, "what": "what"}
