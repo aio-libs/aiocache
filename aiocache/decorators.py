@@ -205,12 +205,7 @@ class cached_stampede(cached):
 
 
 def _get_cache(cache=Cache.MEMORY, serializer=None, plugins=None, **cache_kwargs):
-    return Cache(
-        cache, 
-        serializer=serializer, 
-        plugins=plugins, 
-        **cache_kwargs,
-    )
+    return Cache(cache,  serializer=serializer,  plugins=plugins,  **cache_kwargs)
 
 
 def _get_args_dict(func, args, kwargs):
