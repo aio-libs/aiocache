@@ -2,7 +2,7 @@ import asyncio
 import inspect
 import random
 import sys
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
+from unittest.mock import ANY, create_autospec, patch
 
 import pytest
 
@@ -22,8 +22,8 @@ async def stub(*args, value=None, seconds=0, **kwargs):
 
 class TestCached:
     @pytest.fixture
-    def decorator(self, mocker, mock_cache):
-        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
+    def decorator(self, mock_cache):
+        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
             yield cached()
 
     @pytest.fixture
@@ -60,12 +60,12 @@ class TestCached:
         with pytest.raises(TypeError):
 
             @cached(wrong_param=1)
-            async def fn(n):
-                return n
+            async def fn() -> None:
+                """Dummy function."""
 
     def test_alias_takes_precedence(self, mock_cache):
         with patch(
-            "aiocache.decorators.caches.get", MagicMock(return_value=mock_cache)
+            "aiocache.decorators.caches.get", autospec=True, return_value=mock_cache
         ) as mock_get:
             c = cached(alias="default", cache=SimpleMemoryCache, namespace="test")
             c(stub)
@@ -95,9 +95,8 @@ class TestCached:
         decorator.key_builder = lambda *args, **kwargs: kwargs["market"].upper()
         assert decorator.get_cache_key(stub, (), {"market": "es"}) == "ES"
 
-    @pytest.mark.asyncio
     async def test_calls_get_and_returns(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=1)
+        decorator.cache.get.return_value = 1
 
         await decorator_call()
 
@@ -105,7 +104,6 @@ class TestCached:
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
-    @pytest.mark.asyncio
     async def test_cache_read_disabled(self, decorator, decorator_call):
         await decorator_call(cache_read=False)
 
@@ -113,9 +111,8 @@ class TestCached:
         assert decorator.cache.set.call_count == 1
         assert stub.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_cache_write_disabled(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=None)
+        decorator.cache.get.return_value = None
 
         await decorator_call(cache_write=False)
 
@@ -123,34 +120,29 @@ class TestCached:
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_disable_params_not_propagated(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=None)
+        decorator.cache.get.return_value = None
 
         await decorator_call(cache_read=False, cache_write=False)
 
         stub.assert_called_once_with()
 
-    @pytest.mark.asyncio
     async def test_get_from_cache_returns(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=1)
+        decorator.cache.get.return_value = 1
         assert await decorator.get_from_cache("key") == 1
 
-    @pytest.mark.asyncio
     async def test_get_from_cache_exception(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(side_effect=Exception)
+        decorator.cache.get.side_effect = Exception
         assert await decorator.get_from_cache("key") is None
 
-    @pytest.mark.asyncio
     async def test_get_from_cache_none(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=None)
+        decorator.cache.get.return_value = None
         assert await decorator.get_from_cache("key") is None
 
-    @pytest.mark.asyncio
     async def test_calls_fn_set_when_get_none(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "get_from_cache")
         mocker.spy(decorator, "set_in_cache")
-        decorator.cache.get = AsyncMock(return_value=None)
+        decorator.cache.get.return_value = None
 
         await decorator_call(value="value")
 
@@ -158,52 +150,43 @@ class TestCached:
         decorator.set_in_cache.assert_called_with("stub()[('value', 'value')]", "value")
         stub.assert_called_once_with(value="value")
 
-    @pytest.mark.asyncio
-    async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=None)
+    async def test_calls_fn_raises_exception(self, decorator, decorator_call):
+        decorator.cache.get.return_value = None
         stub.side_effect = Exception()
         with pytest.raises(Exception):
             assert await decorator_call()
 
-    @pytest.mark.asyncio
-    async def test_cache_write_waits_for_future(self, mocker, decorator, decorator_call):
-        decorator.get_from_cache = AsyncMock(return_value=None)
-        decorator.set_in_cache = AsyncMock()
-        await decorator_call()
+    async def test_cache_write_waits_for_future(self, decorator, decorator_call):
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=None) as m:
+            await decorator_call()
 
-        decorator.set_in_cache.assert_awaited()
+            m.assert_awaited()
 
-    @pytest.mark.asyncio
     async def test_cache_write_doesnt_wait_for_future(self, mocker, decorator, decorator_call):
-        decorator.get_from_cache = AsyncMock(return_value=None)
-        decorator.set_in_cache = AsyncMock()
-
-        with patch("aiocache.decorators.asyncio.ensure_future"):
-            await decorator_call(aiocache_wait_for_write=False, value="value")
+        mocker.spy(decorator, "set_in_cache")
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=None):
+            with patch("aiocache.decorators.asyncio.ensure_future", autospec=True):
+                await decorator_call(aiocache_wait_for_write=False, value="value")
 
         decorator.set_in_cache.assert_not_awaited()
         decorator.set_in_cache.assert_called_once_with("stub()[('value', 'value')]", "value")
 
-    @pytest.mark.asyncio
     async def test_set_calls_set(self, decorator, decorator_call):
         await decorator.set_in_cache("key", "value")
         decorator.cache.set.assert_called_with("key", "value", ttl=SENTINEL)
 
-    @pytest.mark.asyncio
     async def test_set_calls_set_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
         await decorator.set_in_cache("key", "value")
         decorator.cache.set.assert_called_with("key", "value", ttl=decorator.ttl)
 
-    @pytest.mark.asyncio
     async def test_set_catches_exception(self, decorator, decorator_call):
-        decorator.cache.set = AsyncMock(side_effect=Exception)
+        decorator.cache.set.side_effect = Exception
         assert await decorator.set_in_cache("key", "value") is None
 
-    @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
-        mock_cache.get = AsyncMock(return_value=None)
-        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        mock_cache.get.return_value = None
+        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
 
             @cached()
             async def fn(n):
@@ -213,27 +196,25 @@ class TestCached:
             assert await fn(2) == 2
             assert fn.cache == mock_cache
 
-    @pytest.mark.asyncio
     async def test_keeps_signature(self, mock_cache):
-        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
 
             @cached()
             async def what(self, a, b):
-                return "1"
+                """Dummy function."""
 
             assert what.__name__ == "what"
             assert str(inspect.signature(what)) == "(self, a, b)"
             assert inspect.getfullargspec(what.__wrapped__).args == ["self", "a", "b"]
 
-    @pytest.mark.asyncio
     async def test_reuses_cache_instance(self):
-        with patch("aiocache.decorators._get_cache") as get_c:
-            cache = MagicMock(spec=BaseCache)
+        with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
+            cache = create_autospec(BaseCache, instance=True)
             get_c.side_effect = [cache, None]
 
             @cached()
             async def what():
-                pass
+                """Dummy function."""
 
             await what()
             await what()
@@ -241,23 +222,22 @@ class TestCached:
             assert get_c.call_count == 1
             assert cache.get.call_count == 2
 
-    @pytest.mark.asyncio
     async def test_cache_per_function(self):
         @cached()
         async def foo():
-            pass
+            """First function."""
 
         @cached()
         async def bar():
-            pass
+            """Second function."""
 
         assert foo.cache != bar.cache
 
 
 class TestCachedStampede:
     @pytest.fixture
-    def decorator(self, mocker, mock_cache):
-        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
+    def decorator(self, mock_cache):
+        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
             yield cached_stampede()
 
     @pytest.fixture
@@ -294,9 +274,8 @@ class TestCachedStampede:
         assert c.lease == 3
         assert c._kwargs == {"namespace": "test"}
 
-    @pytest.mark.asyncio
     async def test_calls_get_and_returns(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=1)
+        decorator.cache.get.return_value = 1
 
         await decorator_call()
 
@@ -304,19 +283,17 @@ class TestCachedStampede:
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
-    @pytest.mark.asyncio
-    async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=None)
+    async def test_calls_fn_raises_exception(self, decorator, decorator_call):
+        decorator.cache.get.return_value = None
         stub.side_effect = Exception()
         with pytest.raises(Exception):
             assert await decorator_call()
 
-    @pytest.mark.asyncio
     async def test_calls_redlock(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(return_value=None)
-        lock = MagicMock(spec=RedLock)
+        decorator.cache.get.return_value = None
+        lock = create_autospec(RedLock, instance=True)
 
-        with patch("aiocache.decorators.RedLock", return_value=lock):
+        with patch("aiocache.decorators.RedLock", autospec=True, return_value=lock):
             await decorator_call(value="value")
 
             assert decorator.cache.get.call_count == 2
@@ -327,14 +304,13 @@ class TestCachedStampede:
             )
             stub.assert_called_once_with(value="value")
 
-    @pytest.mark.asyncio
     async def test_calls_locked_client(self, decorator, decorator_call):
-        decorator.cache.get = AsyncMock(side_effect=[None, None, None, "value"])
-        decorator.cache._add = AsyncMock(side_effect=[True, ValueError])
-        lock1 = MagicMock(spec=RedLock)
-        lock2 = MagicMock(spec=RedLock)
+        decorator.cache.get.side_effect = [None, None, None, "value"]
+        decorator.cache._add.side_effect = [True, ValueError]
+        lock1 = create_autospec(RedLock, instance=True)
+        lock2 = create_autospec(RedLock, instance=True)
 
-        with patch("aiocache.decorators.RedLock", side_effect=[lock1, lock2]):
+        with patch("aiocache.decorators.RedLock", autospec=True, side_effect=[lock1, lock2]):
             await asyncio.gather(decorator_call(value="value"), decorator_call(value="value"))
 
             assert decorator.cache.get.call_count == 4
@@ -355,8 +331,8 @@ async def stub_dict(*args, keys=None, **kwargs):
 
 class TestMultiCached:
     @pytest.fixture
-    def decorator(self, mocker, mock_cache):
-        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
+    def decorator(self, mock_cache):
+        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
             yield multi_cached(keys_from_attr="keys")
 
     @pytest.fixture
@@ -381,8 +357,11 @@ class TestMultiCached:
             namespace="test",
         )
 
+        def f():
+            """Dummy function. Not called."""
+
         assert mc.ttl == 1
-        assert mc.key_builder("key", lambda x: x) == "key"
+        assert mc.key_builder("key", f) == "key"
         assert mc.keys_from_attr == "keys"
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
@@ -393,12 +372,12 @@ class TestMultiCached:
         with pytest.raises(TypeError):
 
             @multi_cached(wrong_param=1)
-            async def fn(n):
-                return n
+            async def fn() -> None:
+                """Dummy function."""
 
     def test_alias_takes_precedence(self, mock_cache):
         with patch(
-            "aiocache.decorators.caches.get", MagicMock(return_value=mock_cache)
+            "aiocache.decorators.caches.get", autospec=True, return_value=mock_cache
         ) as mock_get:
             mc = multi_cached(
                 keys_from_attr="keys", alias="default", cache=SimpleMemoryCache, namespace="test"
@@ -420,7 +399,7 @@ class TestMultiCached:
 
     def test_get_cache_keys_arg_key_from_attr(self, decorator):
         def fake(keys, a=1, b=2):
-            pass
+            """Dummy function."""
 
         assert decorator.get_cache_keys(fake, (["a"]), {}) == (["a"], [["a"]], 0)
 
@@ -435,55 +414,47 @@ class TestMultiCached:
             -1,
         )
 
-    @pytest.mark.asyncio
     async def test_get_from_cache(self, decorator, decorator_call):
-        decorator.cache.multi_get = AsyncMock(return_value=[1, 2, 3])
+        decorator.cache.multi_get.return_value = [1, 2, 3]
 
         assert await decorator.get_from_cache("a", "b", "c") == [1, 2, 3]
         decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
 
-    @pytest.mark.asyncio
     async def test_get_from_cache_no_keys(self, decorator, decorator_call):
         assert await decorator.get_from_cache() == []
         assert decorator.cache.multi_get.call_count == 0
 
-    @pytest.mark.asyncio
     async def test_get_from_cache_exception(self, decorator, decorator_call):
-        decorator.cache.multi_get = AsyncMock(side_effect=Exception)
+        decorator.cache.multi_get.side_effect = Exception
 
         assert await decorator.get_from_cache("a", "b", "c") == [None, None, None]
         decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
 
-    @pytest.mark.asyncio
     async def test_get_from_cache_conn(self, decorator, decorator_call):
-        decorator._conn._conn = AsyncMock()
-        decorator.cache.multi_get = AsyncMock(return_value=[1, 2, 3])
+        decorator.cache.multi_get.return_value = [1, 2, 3]
 
         assert await decorator.get_from_cache("a", "b", "c") == [1, 2, 3]
         decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
 
-    @pytest.mark.asyncio
     async def test_calls_no_keys(self, decorator, decorator_call):
         await decorator_call(keys=[])
         assert decorator.cache.multi_get.call_count == 0
         assert stub_dict.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_returns_from_multi_set(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "get_from_cache")
         mocker.spy(decorator, "set_in_cache")
-        decorator.cache.multi_get = AsyncMock(return_value=[1, 2])
+        decorator.cache.multi_get.return_value = [1, 2]
 
         assert await decorator_call(1, keys=["a", "b"]) == {"a": 1, "b": 2}
         decorator.get_from_cache.assert_called_once_with("a", "b")
         assert decorator.set_in_cache.call_count == 0
         assert stub_dict.call_count == 0
 
-    @pytest.mark.asyncio
     async def test_calls_fn_multi_set_when_multi_get_none(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "get_from_cache")
         mocker.spy(decorator, "set_in_cache")
-        decorator.cache.multi_get = AsyncMock(return_value=[None, None])
+        decorator.cache.multi_get.return_value = [None, None]
 
         ret = await decorator_call(1, keys=["a", "b"], value="value")
 
@@ -491,43 +462,38 @@ class TestMultiCached:
         decorator.set_in_cache.assert_called_with(ret, stub_dict, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=["a", "b"], value="value")
 
-    @pytest.mark.asyncio
-    async def test_cache_write_waits_for_future(self, decorator, decorator_call):
-        decorator.get_from_cache = AsyncMock(return_value=[None, None])
-        decorator.set_in_cache = AsyncMock()
-        await decorator_call(1, keys=["a", "b"], value="value")
+    async def test_cache_write_waits_for_future(self, mocker, decorator, decorator_call):
+        mocker.spy(decorator, "set_in_cache")
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=[None, None]):
+            await decorator_call(1, keys=["a", "b"], value="value")
 
-        decorator.set_in_cache.assert_awaited()
+            decorator.set_in_cache.assert_awaited()
 
-    @pytest.mark.asyncio
-    async def test_cache_write_doesnt_wait_for_future(self, decorator, decorator_call):
-        decorator.get_from_cache = AsyncMock(return_value=[None, None])
-        decorator.set_in_cache = AsyncMock()
-
-        with patch("aiocache.decorators.asyncio.ensure_future"):
-            await decorator_call(1, keys=["a", "b"], value="value", aiocache_wait_for_write=False)
+    async def test_cache_write_doesnt_wait_for_future(self, mocker, decorator, decorator_call):
+        mocker.spy(decorator, "set_in_cache")
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=[None, None]):
+            with patch("aiocache.decorators.asyncio.ensure_future", autospec=True):
+                await decorator_call(1, keys=["a", "b"], value="value",
+                                     aiocache_wait_for_write=False)
 
         decorator.set_in_cache.assert_not_awaited()
         decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, stub_dict, ANY, ANY)
 
-    @pytest.mark.asyncio
     async def test_calls_fn_with_only_missing_keys(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "set_in_cache")
-        decorator.cache.multi_get = AsyncMock(return_value=[1, None])
+        decorator.cache.multi_get.return_value = [1, None]
 
         assert await decorator_call(1, keys=["a", "b"], value="value") == {"a": ANY, "b": ANY}
 
         decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, stub_dict, ANY, ANY)
         stub_dict.assert_called_once_with(1, keys=["b"], value="value")
 
-    @pytest.mark.asyncio
-    async def test_calls_fn_raises_exception(self, mocker, decorator, decorator_call):
-        decorator.cache.multi_get = AsyncMock(return_value=[None])
+    async def test_calls_fn_raises_exception(self, decorator, decorator_call):
+        decorator.cache.multi_get.return_value = [None]
         stub_dict.side_effect = Exception()
         with pytest.raises(Exception):
             assert await decorator_call(keys=[])
 
-    @pytest.mark.asyncio
     async def test_cache_read_disabled(self, decorator, decorator_call):
         await decorator_call(1, keys=["a", "b"], cache_read=False)
 
@@ -535,9 +501,8 @@ class TestMultiCached:
         assert decorator.cache.multi_set.call_count == 1
         assert stub_dict.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_cache_write_disabled(self, decorator, decorator_call):
-        decorator.cache.multi_get = AsyncMock(return_value=[None, None])
+        decorator.cache.multi_get.return_value = [None, None]
 
         await decorator_call(1, keys=["a", "b"], cache_write=False)
 
@@ -545,15 +510,13 @@ class TestMultiCached:
         assert decorator.cache.multi_set.call_count == 0
         assert stub_dict.call_count == 1
 
-    @pytest.mark.asyncio
     async def test_disable_params_not_propagated(self, decorator, decorator_call):
-        decorator.cache.multi_get = AsyncMock(return_value=[None, None])
+        decorator.cache.multi_get.return_value = [None, None]
 
         await decorator_call(1, keys=["a", "b"], cache_read=False, cache_write=False)
 
         stub_dict.assert_called_once_with(1, keys=["a", "b"])
 
-    @pytest.mark.asyncio
     async def test_set_in_cache(self, decorator, decorator_call):
         await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict, (), {})
 
@@ -562,23 +525,20 @@ class TestMultiCached:
         assert ("b", 2) in call_args
         assert decorator.cache.multi_set.call_args[1]["ttl"] is SENTINEL
 
-    @pytest.mark.asyncio
     async def test_set_in_cache_with_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
         await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict, (), {})
 
         assert decorator.cache.multi_set.call_args[1]["ttl"] == decorator.ttl
 
-    @pytest.mark.asyncio
     async def test_set_in_cache_exception(self, decorator, decorator_call):
-        decorator.cache.multi_set = AsyncMock(side_effect=Exception)
+        decorator.cache.multi_set.side_effect = Exception
 
         assert await decorator.set_in_cache({"a": 1, "b": 2}, stub_dict, (), {}) is None
 
-    @pytest.mark.asyncio
     async def test_decorate(self, mock_cache):
-        mock_cache.multi_get = AsyncMock(return_value=[None])
-        with patch("aiocache.decorators._get_cache", return_value=mock_cache):
+        mock_cache.multi_get.return_value = [None]
+        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
 
             @multi_cached(keys_from_attr="keys")
             async def fn(keys=None):
@@ -588,20 +548,18 @@ class TestMultiCached:
             assert await fn(["test"]) == {"test": 1}
             assert fn.cache == mock_cache
 
-    @pytest.mark.asyncio
     async def test_keeps_signature(self):
         @multi_cached(keys_from_attr="keys")
         async def what(self, keys=None, what=1):
-            return "1"
+            """Dummy function."""
 
         assert what.__name__ == "what"
         assert str(inspect.signature(what)) == "(self, keys=None, what=1)"
         assert inspect.getfullargspec(what.__wrapped__).args == ["self", "keys", "what"]
 
-    @pytest.mark.asyncio
     async def test_reuses_cache_instance(self):
-        with patch("aiocache.decorators._get_cache") as get_c:
-            cache = MagicMock(spec=BaseCache)
+        with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
+            cache = create_autospec(BaseCache, instance=True)
             cache.multi_get.return_value = [None]
             get_c.side_effect = [cache, None]
 
@@ -615,22 +573,21 @@ class TestMultiCached:
             assert get_c.call_count == 1
             assert cache.multi_get.call_count == 2
 
-    @pytest.mark.asyncio
     async def test_cache_per_function(self):
         @multi_cached("keys")
         async def foo():
-            pass
+            """First function."""
 
         @multi_cached("keys")
         async def bar():
-            pass
+            """Second function."""
 
         assert foo.cache != bar.cache
 
 
 def test_get_args_dict():
     def fn(a, b, *args, keys=None, **kwargs):
-        pass
+        """Dummy function."""
 
     args_dict = _get_args_dict(fn, ("a", "b", "c", "d"), {"what": "what"})
     assert args_dict == {"a": "a", "b": "b", "keys": None, "what": "what"}

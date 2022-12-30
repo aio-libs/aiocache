@@ -15,13 +15,12 @@ async def redis():
     assert await cache.raw("ttl", "main:expire_me") > 0
 
 
-def test_redis():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(redis())
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.delete("expire_me"))
-    loop.run_until_complete(cache.close())
+async def test_redis():
+    await redis()
+    await cache.delete("key")
+    await cache.delete("expire_me")
+    await cache.close()
 
 
 if __name__ == "__main__":
-    test_redis()
+    asyncio.run(test_redis())

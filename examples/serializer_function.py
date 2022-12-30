@@ -42,12 +42,11 @@ async def serializer_function():
     assert json.loads(await cache.raw("get", "main:key")) == {"y": 2.0, "x": 1.0}
 
 
-def test_serializer_function():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(serializer_function())
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.close())
+async def test_serializer_function():
+    await serializer_function()
+    await cache.delete("key")
+    await cache.close()
 
 
 if __name__ == "__main__":
-    test_serializer_function()
+    asyncio.run(test_serializer_function())

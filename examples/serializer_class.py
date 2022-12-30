@@ -43,12 +43,11 @@ async def serializer():
     assert len(compressed_value) < len(real_value.encode())
 
 
-def test_serializer():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(serializer())
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.close())
+async def test_serializer():
+    await serializer()
+    await cache.delete("key")
+    await cache.close()
 
 
 if __name__ == "__main__":
-    test_serializer()
+    asyncio.run(test_serializer())

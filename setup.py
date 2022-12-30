@@ -33,7 +33,7 @@ setup(
     packages=find_packages(),
     install_requires=None,
     extras_require={
-        "redis": ["aioredis>=1.3.0,<2.0"],
+        "redis": ["redis>=4.2.0"],
         "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
     },
