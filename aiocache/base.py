@@ -201,6 +201,9 @@ class BaseCache:
     async def _get(self, key, encoding, _conn=None):
         raise NotImplementedError()
 
+    async def _gets(self, key, encoding="utf-8", _conn=None):
+        raise NotImplementedError()
+
     @API.register
     @API.aiocache_enabled(fake_return=[])
     @API.timeout
@@ -463,6 +466,9 @@ class BaseCache:
         return ret
 
     async def _raw(self, command, *args, **kwargs):
+        raise NotImplementedError()
+
+    async def _redlock_release(self, key, value):
         raise NotImplementedError()
 
     @API.timeout

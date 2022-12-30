@@ -1,13 +1,11 @@
 import sys
+from contextlib import ExitStack
 
 if sys.version_info < (3, 8):
     # Missing AsyncMock on 3.7
     collect_ignore_glob = ["*"]
 
-    from unittest.mock import Mock, create_autospec
-    AsyncMock = Mock
-else:
-    from unittest.mock import AsyncMock, Mock, create_autospec
+from unittest.mock import AsyncMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -33,11 +31,22 @@ def reset_caches():
 
 @pytest.fixture
 def mock_cache(mocker):
-    cache = create_autospec(BaseCache, instance=True)
-    #cache.timeout = 0.002
-    #cache.serializer.encoding = "utf-8"
-    #cache.plugins = [create_autospec(BasePlugin, instance=True)]
-    return cache
+    return create_autospec(BaseCache, instance=True)
+
+
+@pytest.fixture
+def mock_base_cache():
+    """Return BaseCache instance with unimplemented methods mocked out."""
+    plugin = create_autospec(BasePlugin, instance=True)
+    cache = BaseCache(timeout=0.002, plugins=(plugin,))
+    methods = ("_add", "_get", "_gets", "_set", "_multi_get", "_multi_set", "_delete",
+               "_exists", "_increment", "_expire", "_clear", "_raw", "_close",
+               "_redlock_release", "acquire_conn", "release_conn")
+    with ExitStack() as stack:
+        for f in methods:
+            stack.enter_context(patch.object(cache, f, autospec=True))
+        stack.enter_context(patch.object(cache, "_serializer", autospec=True))
+        yield cache
 
 
 @pytest.fixture

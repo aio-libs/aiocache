@@ -139,7 +139,7 @@ class TestSimpleMemoryBackend:
         SimpleMemoryBackend._cache.pop.assert_called_with(Keys.KEY, None)
 
     async def test_delete_non_truthy(self, memory):
-        non_truthy = MagicMock(spec_set=())
+        non_truthy = MagicMock(spec_set=("__bool__",))
         non_truthy.__bool__.side_effect = ValueError("Does not implement truthiness")
 
         with pytest.raises(ValueError):
