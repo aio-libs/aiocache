@@ -112,8 +112,9 @@ class TestCache:
         mock.assert_called_once_with(mock.get_scheme_class.return_value, **expected_args)
 
     def test_calls_parse_uri_path_from_cache(self):
+        p_mock = Mock(spec_set=(), return_value={"arg1": "arg1"})
         with patch("aiocache.factory.Cache", autospec=True) as mock:
-            mock.get_scheme_class.return_value.parse_uri_path = Mock(spec_set=(), return_value={"arg1": "arg1"})
+            mock.get_scheme_class.return_value.parse_uri_path = p_mock
             Cache.from_url("redis:///")
 
         mock.get_scheme_class.return_value.parse_uri_path.assert_called_once_with("/")

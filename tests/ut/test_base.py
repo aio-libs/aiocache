@@ -400,11 +400,10 @@ class TestCache:
     async def test_mset(self, mock_base_cache):
         await mock_base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=2)
 
+        key = mock_base_cache._build_key(Keys.KEY)
+        key1 = mock_base_cache._build_key(Keys.KEY_1)
         mock_base_cache._multi_set.assert_called_with(
-            [(mock_base_cache._build_key(Keys.KEY), ANY), (mock_base_cache._build_key(Keys.KEY_1), ANY)],
-            ttl=2,
-            _conn=ANY,
-        )
+            [(key, ANY), (key1, ANY)], ttl=2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_multi_set.call_count == 1
         assert mock_base_cache.plugins[0].post_multi_set.call_count == 1
 
@@ -430,7 +429,8 @@ class TestCache:
     async def test_increment(self, mock_base_cache):
         await mock_base_cache.increment(Keys.KEY, 2)
 
-        mock_base_cache._increment.assert_called_with(mock_base_cache._build_key(Keys.KEY), 2, _conn=ANY)
+        key = mock_base_cache._build_key(Keys.KEY)
+        mock_base_cache._increment.assert_called_with(key, 2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_increment.call_count == 1
         assert mock_base_cache.plugins[0].post_increment.call_count == 1
 
@@ -455,7 +455,8 @@ class TestCache:
 
     async def test_expire(self, mock_base_cache):
         await mock_base_cache.expire(Keys.KEY, 1)
-        mock_base_cache._expire.assert_called_with(mock_base_cache._build_key(Keys.KEY), 1, _conn=ANY)
+        key = mock_base_cache._build_key(Keys.KEY)
+        mock_base_cache._expire.assert_called_with(key, 1, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_expire.call_count == 1
         assert mock_base_cache.plugins[0].post_expire.call_count == 1
 
