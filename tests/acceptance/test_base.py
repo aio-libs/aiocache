@@ -1,12 +1,12 @@
 import asyncio
 
 import pytest
-from tests.utils import Keys
 
 from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.backends.redis import RedisCache
 from aiocache.base import _Conn
+from ..utils import Keys
 
 
 class TestCache:

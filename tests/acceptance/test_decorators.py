@@ -3,9 +3,9 @@ import random
 from unittest import mock
 
 import pytest
-from tests.utils import Keys
 
 from aiocache import cached, cached_stampede, multi_cached
+from ..utils import Keys
 
 
 async def return_dict(keys=None):

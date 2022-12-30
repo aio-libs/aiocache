@@ -1,10 +1,10 @@
 from unittest.mock import create_autospec
 
 import pytest
-from tests.utils import Keys
 
 from aiocache.base import API, BaseCache
 from aiocache.plugins import BasePlugin, HitMissRatioPlugin, TimingPlugin
+from ..utils import Keys
 
 
 class TestBasePlugin:

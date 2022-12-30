@@ -3,10 +3,9 @@ import random
 
 import pytest
 from marshmallow import Schema, fields, post_load
-from tests.utils import Keys
 
 try:
-    import ujson as json
+    import ujson as json  # noqa: I900
 except ImportError:
     import json  # type: ignore[no-redef]
 
@@ -17,6 +16,7 @@ from aiocache.serializers import (
     PickleSerializer,
     StringSerializer,
 )
+from ..utils import Keys
 
 
 class MyType:

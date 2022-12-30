@@ -3,11 +3,11 @@ from unittest.mock import ANY, AsyncMock, create_autospec, patch
 import pytest
 from redis.asyncio.client import Pipeline
 from redis.exceptions import ResponseError
-from tests.utils import Keys
 
 from aiocache.backends.redis import RedisBackend, RedisCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
+from ...utils import Keys
 
 
 @pytest.fixture

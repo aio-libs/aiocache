@@ -2,11 +2,11 @@ import asyncio
 from unittest.mock import ANY, MagicMock, create_autospec, patch
 
 import pytest
-from tests.utils import Keys
 
 from aiocache.backends.memory import SimpleMemoryBackend, SimpleMemoryCache
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
+from ...utils import Keys
 
 
 @pytest.fixture

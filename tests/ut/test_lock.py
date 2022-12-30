@@ -2,9 +2,9 @@ import asyncio
 from unittest.mock import Mock, patch
 
 import pytest
-from tests.utils import Keys
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
+from ..utils import Keys
 
 
 class TestRedLock:
