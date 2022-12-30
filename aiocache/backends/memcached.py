@@ -6,8 +6,8 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-class MemcachedBackend:
-    def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, loop=None, **kwargs):
+class MemcachedBackend(BaseCache):
+    def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
@@ -105,7 +105,7 @@ class MemcachedBackend:
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         value = await getattr(self.client, command)(*args, **kwargs)
-        if command in ["get", "multi_get"]:
+        if command in {"get", "multi_get"}:
             if encoding is not None and value is not None:
                 return value.decode(encoding)
         return value
@@ -119,7 +119,7 @@ class MemcachedBackend:
         await self.client.close()
 
 
-class MemcachedCache(MemcachedBackend, BaseCache):
+class MemcachedCache(MemcachedBackend):
     """
     Memcached cache implementation with the following components as defaults:
         - serializer: :class:`aiocache.serializers.JsonSerializer`
@@ -141,8 +141,7 @@ class MemcachedCache(MemcachedBackend, BaseCache):
     NAME = "memcached"
 
     def __init__(self, serializer=None, **kwargs):
-        super().__init__(**kwargs)
-        self.serializer = serializer or JsonSerializer()
+        super().__init__(serializer=serializer or JsonSerializer(), **kwargs)
 
     @classmethod
     def parse_uri_path(cls, path):

@@ -46,14 +46,13 @@ async def run():
     print(cache.profiling)
 
 
-def test_run():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run())
-    loop.run_until_complete(cache.delete("a"))
-    loop.run_until_complete(cache.delete("b"))
-    loop.run_until_complete(cache.delete("c"))
-    loop.run_until_complete(cache.delete("d"))
+async def test_run():
+    await run()
+    await cache.delete("a")
+    await cache.delete("b")
+    await cache.delete("c")
+    await cache.delete("d")
 
 
 if __name__ == "__main__":
-    test_run()
+    asyncio.run(test_run())

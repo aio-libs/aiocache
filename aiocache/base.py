@@ -3,7 +3,8 @@ import functools
 import logging
 import os
 import time
-from typing import Callable, Set
+from types import TracebackType
+from typing import Callable, Optional, Set, Type
 
 from aiocache import serializers
 
@@ -198,6 +199,9 @@ class BaseCache:
         return value if value is not None else default
 
     async def _get(self, key, encoding, _conn=None):
+        raise NotImplementedError()
+
+    async def _gets(self, key, encoding="utf-8", _conn=None):
         raise NotImplementedError()
 
     @API.register
@@ -464,6 +468,9 @@ class BaseCache:
     async def _raw(self, command, *args, **kwargs):
         raise NotImplementedError()
 
+    async def _redlock_release(self, key, value):
+        raise NotImplementedError()
+
     @API.timeout
     async def close(self, *args, _conn=None, **kwargs):
         """
@@ -499,6 +506,15 @@ class BaseCache:
 
     async def release_conn(self, conn):
         pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(
+        self, exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException], tb: Optional[TracebackType]
+    ) -> None:
+        await self.close()
 
 
 class _Conn:

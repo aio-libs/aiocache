@@ -18,12 +18,11 @@ async def complex_object():
     assert my_object.y == 2
 
 
-def test_python_object():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(complex_object())
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.close())
+async def test_python_object():
+    await complex_object()
+    await cache.delete("key")
+    await cache.close()
 
 
 if __name__ == "__main__":
-    test_python_object()
+    asyncio.run(test_python_object())
