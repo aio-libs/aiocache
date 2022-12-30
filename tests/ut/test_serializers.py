@@ -148,7 +148,7 @@ class TestMsgPackSerializer:
         assert serializer.encoding == "utf-8"
 
     def test_init_fails_if_msgpack_not_installed(self):
-        with mock.patch("aiocache.serializers.serializers.msgpack", autospec=True):
+        with mock.patch("aiocache.serializers.serializers.msgpack", None):
             with pytest.raises(RuntimeError):
                 MsgPackSerializer()
             assert JsonSerializer(), "Other serializers should still initialize"
