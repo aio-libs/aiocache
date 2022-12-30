@@ -5,7 +5,6 @@ from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
 
 class TestHitMissRatioPlugin:
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "data, ratio",
         [
@@ -30,7 +29,6 @@ class TestHitMissRatioPlugin:
             == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
 
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "data, ratio",
         [
@@ -55,7 +53,6 @@ class TestHitMissRatioPlugin:
             == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
 
-    @pytest.mark.asyncio
     async def test_set_and_get_using_namespace(self, memory_cache):
         memory_cache.plugins = [HitMissRatioPlugin()]
         key = "A"
@@ -67,7 +64,6 @@ class TestHitMissRatioPlugin:
 
 
 class TestTimingPlugin:
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "data, ratio",
         [

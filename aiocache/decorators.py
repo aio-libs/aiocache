@@ -1,10 +1,10 @@
 import asyncio
-import inspect
 import functools
+import inspect
 import logging
 
-from aiocache import Cache, caches
 from aiocache.base import SENTINEL
+from aiocache.factory import Cache, caches
 from aiocache.lock import RedLock
 
 
@@ -13,17 +13,18 @@ logger = logging.getLogger(__name__)
 
 class cached:
     """
-    Caches the functions return value into a key generated with module_name, function_name and args.
-    The cache is available in the function object as ``<function_name>.cache``.
+    Caches the functions return value into a key generated with module_name, function_name
+    and args. The cache is available in the function object as ``<function_name>.cache``.
 
     In some cases you will need to send more args to configure the cache object.
     An example would be endpoint and port for the Redis cache. You can send those args as
     kwargs and they will be propagated accordingly.
 
-    Only one cache instance is created per decorated call. If you expect high concurrency of calls
-    to the same function, you should adapt the pool size as needed.
+    Only one cache instance is created per decorated call. If you expect high concurrency of
+    calls to the same function, you should adapt the pool size as needed.
 
-    Extra args that are injected in the function that you can use to control the cache behavior are:
+    Extra args that are injected in the function that you can use to control the cache
+    behavior are:
 
         - ``cache_read``: Controls whether the function call will try to read from cache first or
                           not. Enabled by default.
@@ -45,9 +46,9 @@ class cached:
         If its None, default one from the cache backend is used.
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
-    :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored. Same cache identified by alias is used on every call. If you need
-        a per function cache, specify the parameters explicitly without using alias.
+    :param alias: str specifying the alias to load the config from. If alias is passed, other
+        config parameters are ignored. Same cache identified by alias is used on every call. If
+        you need a per function cache, specify the parameters explicitly without using alias.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
@@ -63,7 +64,7 @@ class cached:
         plugins=None,
         alias=None,
         noself=False,
-        **kwargs
+        **kwargs,
     ):
         self.ttl = ttl
         self.key = key
@@ -85,7 +86,7 @@ class cached:
                 cache=self._cache,
                 serializer=self._serializer,
                 plugins=self._plugins,
-                **self._kwargs
+                **self._kwargs,
             )
 
         @functools.wraps(f)
@@ -111,7 +112,8 @@ class cached:
             if aiocache_wait_for_write:
                 await self.set_in_cache(key, result)
             else:
-                asyncio.ensure_future(self.set_in_cache(key, result))
+                # TODO: Use aiojobs to avoid warnings.
+                asyncio.create_task(self.set_in_cache(key, result))
 
         return result
 
@@ -132,12 +134,12 @@ class cached:
             + str(ordered_kwargs)
         )
 
-    async def get_from_cache(self, key):
+    async def get_from_cache(self, key: str):
         try:
-            value = await self.cache.get(key)
-            return value
+            return await self.cache.get(key)
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", key)
+        return None
 
     async def set_in_cache(self, key, value):
         try:
@@ -172,8 +174,8 @@ class cached_stampede(cached):
         Default is JsonSerializer.
     :param plugins: list plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
-    :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored. New cache is created every time.
+    :param alias: str specifying the alias to load the config from. If alias is passed,
+        other config parameters are ignored. New cache is created every time.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
@@ -226,8 +228,8 @@ class multi_cached:
 
     The cache is available in the function object as ``<function_name>.cache``.
 
-    If key_builder is passed, before storing the key, it will be transformed according to the output
-    of the function.
+    If key_builder is passed, before storing the key, it will be transformed according to the
+    output of the function.
 
     If the attribute specified to be the key is an empty list, the cache will be ignored and
     the function will be called as expected.
@@ -235,7 +237,8 @@ class multi_cached:
     Only one cache instance is created per decorated function. If you expect high concurrency
     of calls to the same function, you should adapt the pool size as needed.
 
-    Extra args that are injected in the function that you can use to control the cache behavior are:
+    Extra args that are injected in the function that you can use to control the cache
+    behavior are:
 
         - ``cache_read``: Controls whether the function call will try to read from cache first or
                           not. Enabled by default.
@@ -256,9 +259,10 @@ class multi_cached:
         If its None, default one from the cache backend is used.
     :param plugins: plugins to use when calling the cmd hooks
         Default is pulled from the cache class being used.
-    :param alias: str specifying the alias to load the config from. If alias is passed, other config
-        parameters are ignored. Same cache identified by alias is used on every call. If you need
-        a per function cache, specify the parameters explicitly without using alias.
+    :param alias: str specifying the alias to load the config from. If alias is passed,
+        other config parameters are ignored. Same cache identified by alias is used on
+        every call. If you need a per function cache, specify the parameters explicitly
+        without using alias.
     """
 
     def __init__(
@@ -270,7 +274,7 @@ class multi_cached:
         serializer=None,
         plugins=None,
         alias=None,
-        **kwargs
+        **kwargs,
     ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
@@ -291,7 +295,7 @@ class multi_cached:
                 cache=self._cache,
                 serializer=self._serializer,
                 plugins=self._plugins,
-                **self._kwargs
+                **self._kwargs,
             )
 
         @functools.wraps(f)
@@ -332,7 +336,8 @@ class multi_cached:
             if aiocache_wait_for_write:
                 await self.set_in_cache(result, f, args, kwargs)
             else:
-                asyncio.ensure_future(self.set_in_cache(result, f, args, kwargs))
+                # TODO: Use aiojobs to avoid warnings.
+                asyncio.create_task(self.set_in_cache(result, f, args, kwargs))
 
         return result
 

@@ -1,6 +1,12 @@
 # CHANGELOG
 
 
+## 0.12.0 (2023-xx-xx)
+
+* Add ``async with`` support to ``BaseCache``.
+* Remove deprecated ``loop`` parameters.
+* Remove deprecated ``cache`` parameter from ``create()``.
+
 ## 0.11.1 (2019-07-31)
 
 * Don't hardcode import redis and memcached in factory [#461](https://github.com/argaen/aiocache/issues/461) - Manuel Miranda

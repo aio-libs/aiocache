@@ -24,12 +24,12 @@ Using a cache is as simple as
 .. code-block:: python
 
     >>> import asyncio
-    >>> loop = asyncio.get_event_loop()
     >>> from aiocache import Cache
     >>> cache = Cache()
-    >>> loop.run_until_complete(cache.set('key', 'value'))
+    >>> with asyncio.Runner() as runner:
+    >>>     runner.run(cache.set("key", "value"))
     True
-    >>> loop.run_until_complete(cache.get('key'))
+    >>>     runner.run(cache.get("key"))
     'value'
 
 Here we are using the :ref:`simplememorycache` but you can use any other listed in :ref:`caches`. All caches contain the same minimum interface which consists on the following functions:

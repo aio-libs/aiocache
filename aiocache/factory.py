@@ -1,11 +1,11 @@
-from copy import deepcopy
 import logging
 import urllib
-import warnings
+from copy import deepcopy
+from typing import Dict
 
-from aiocache.exceptions import InvalidCacheType
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
+from aiocache.exceptions import InvalidCacheType
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,6 @@ def _class_from_string(class_path):
 
 
 def _create_cache(cache, serializer=None, plugins=None, **kwargs):
-
     if serializer is not None:
         cls = serializer.pop("class")
         cls = _class_from_string(cls) if isinstance(cls, str) else cls
@@ -61,12 +60,10 @@ class Cache:
     MEMCACHED = AIOCACHE_CACHES.get("memcached")
 
     def __new__(cls, cache_class=MEMORY, **kwargs):
-        try:
-            assert issubclass(cache_class, BaseCache)
-        except AssertionError as e:
+        if not issubclass(cache_class, BaseCache):
             raise InvalidCacheType(
                 "Invalid cache type, you can only use {}".format(list(AIOCACHE_CACHES.keys()))
-            ) from e
+            )
         instance = cache_class.__new__(cache_class, **kwargs)
         instance.__init__(**kwargs)
         return instance
@@ -97,12 +94,12 @@ class Cache:
         a more advanced usage using queryparams to configure the cache:
 
         >>> from aiocache import Cache
-        >>> cache = Cache.from_url('redis://localhost:10/1?pool_min_size=1')
+        >>> cache = Cache.from_url('redis://localhost:10/1?pool_max_size=1')
         >>> cache
         RedisCache (localhost:10)
         >>> cache.db
         1
-        >>> cache.pool_min_size
+        >>> cache.pool_max_size
         1
 
         :param url: string identifying the resource uri of the cache to connect to
@@ -128,7 +125,7 @@ class Cache:
 
 class CacheHandler:
 
-    _config = {
+    _config: Dict[str, Dict[str, object]] = {
         "default": {
             "cache": "aiocache.SimpleMemoryCache",
             "serializer": {"class": "aiocache.serializers.StringSerializer"},
@@ -138,7 +135,7 @@ class CacheHandler:
     def __init__(self):
         self._caches = {}
 
-    def add(self, alias: str, config: dict) -> None:
+    def add(self, alias: str, config: Dict[str, object]) -> None:
         """
         Add a cache to the current config. If the key already exists, it
         will overwrite it::
@@ -155,7 +152,7 @@ class CacheHandler:
         """
         self._config[alias] = config
 
-    def get(self, alias: str):
+    def get(self, alias: str) -> object:
         """
         Retrieve cache identified by alias. Will return always the same instance
 
@@ -175,32 +172,17 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias=None, cache=None, **kwargs):
-        """
-        Create a new cache. Either alias or cache params are required. You can use
-        kwargs to pass extra parameters to configure the cache.
+    def create(self, alias: str, **kwargs):
+        """Create a new cache.
 
-        .. deprecated:: 0.11.0
-            Only creating a cache passing an alias is supported. If you want to
-            create a cache passing explicit cache and kwargs use ``aiocache.Cache``.
+        You can use kwargs to pass extra parameters to configure the cache.
 
-        :param alias: str alias to pull configuration from
-        :param cache: str or class cache class to use for creating the
-            new cache (when no alias is used)
+        :param alias: alias to pull configuration from
         :return: New cache instance
         """
-        if alias:
-            config = self.get_alias_config(alias)
-        elif cache:
-            warnings.warn(
-                "Creating a cache with an explicit config is deprecated, use 'aiocache.Cache'",
-                DeprecationWarning,
-            )
-            config = {"cache": cache}
-        else:
-            raise TypeError("create call needs to receive an alias or a cache")
-        cache = _create_cache(**{**config, **kwargs})
-        return cache
+        config = self.get_alias_config(alias)
+        # TODO(PY39): **config | kwargs
+        return _create_cache(**{**config, **kwargs})
 
     def get_alias_config(self, alias):
         config = self.get_config()

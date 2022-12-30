@@ -1,17 +1,9 @@
+import asyncio
+
 import pytest
+from tests.utils import Keys
 
 from aiocache import Cache, caches
-from aiocache.backends.redis import RedisBackend
-
-
-def pytest_configure():
-    """
-    Before pytest_namespace was being used to set the keys for
-    testing but the feature was removed
-    https://docs.pytest.org/en/latest/deprecations.html#pytest-namespace
-    """
-    pytest.KEY = "key"
-    pytest.KEY_1 = "random"
 
 
 @pytest.fixture(autouse=True)
@@ -27,44 +19,27 @@ def reset_caches():
     )
 
 
-@pytest.fixture(autouse=True)
-def reset_redis_pools():
-    RedisBackend.pools = {}
+@pytest.fixture
+async def redis_cache():
+    async with Cache(Cache.REDIS, namespace="test") as cache:
+        yield cache
+        await asyncio.gather(*(cache.delete(k) for k in Keys))
 
 
 @pytest.fixture
-def redis_cache(event_loop):
-    cache = Cache(Cache.REDIS, namespace="test")
-    yield cache
-
-    event_loop.run_until_complete(cache.delete(pytest.KEY))
-    event_loop.run_until_complete(cache.delete(pytest.KEY_1))
-    event_loop.run_until_complete(cache.delete(pytest.KEY + "-lock"))
-    event_loop.run_until_complete(cache.close())
+async def memory_cache():
+    async with Cache(namespace="test") as cache:
+        yield cache
+        await asyncio.gather(*(cache.delete(k) for k in Keys))
 
 
 @pytest.fixture
-def memory_cache(event_loop):
-    cache = Cache(namespace="test")
-    yield cache
-
-    event_loop.run_until_complete(cache.delete(pytest.KEY))
-    event_loop.run_until_complete(cache.delete(pytest.KEY_1))
-    event_loop.run_until_complete(cache.delete(pytest.KEY + "-lock"))
-    event_loop.run_until_complete(cache.close())
+async def memcached_cache():
+    async with Cache(Cache.MEMCACHED, namespace="test") as cache:
+        yield cache
+        await asyncio.gather(*(cache.delete(k) for k in Keys))
 
 
-@pytest.fixture
-def memcached_cache(event_loop):
-    cache = Cache(Cache.MEMCACHED, namespace="test")
-    yield cache
-
-    event_loop.run_until_complete(cache.delete(pytest.KEY))
-    event_loop.run_until_complete(cache.delete(pytest.KEY_1))
-    event_loop.run_until_complete(cache.delete(pytest.KEY + "-lock"))
-    event_loop.run_until_complete(cache.close())
-
-
-@pytest.fixture(params=["redis_cache", "memory_cache", "memcached_cache"])
+@pytest.fixture(params=("redis_cache", "memory_cache", "memcached_cache"))
 def cache(request):
     return request.getfixturevalue(request.param)

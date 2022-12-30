@@ -1,8 +1,10 @@
-import os
-import time
+import asyncio
 import functools
 import logging
-import asyncio
+import os
+import time
+from types import TracebackType
+from typing import Callable, Optional, Set, Type
 
 from aiocache import serializers
 
@@ -14,7 +16,7 @@ SENTINEL = object()
 
 class API:
 
-    CMDS = set()
+    CMDS: Set[Callable[..., object]] = set()
 
     @classmethod
     def register(cls, func):
@@ -95,13 +97,15 @@ class BaseCache:
         list.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
-    :param key_builder: alternative callable to build the key. Receives the key and the namespace as
-        params and should return something that can be used as key by the underlying backend.
+    :param key_builder: alternative callable to build the key. Receives the key and the namespace
+        as params and should return something that can be used as key by the underlying backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     :param ttl: int the expiration time in seconds to use as a default in all operations of
         the backend. It can be overriden in the specific calls.
     """
+
+    NAME: str
 
     def __init__(
         self, serializer=None, plugins=None, namespace=None, key_builder=None, timeout=5, ttl=None
@@ -195,6 +199,9 @@ class BaseCache:
         return value if value is not None else default
 
     async def _get(self, key, encoding, _conn=None):
+        raise NotImplementedError()
+
+    async def _gets(self, key, encoding="utf-8", _conn=None):
         raise NotImplementedError()
 
     @API.register
@@ -461,6 +468,9 @@ class BaseCache:
     async def _raw(self, command, *args, **kwargs):
         raise NotImplementedError()
 
+    async def _redlock_release(self, key, value):
+        raise NotImplementedError()
+
     @API.timeout
     async def close(self, *args, _conn=None, **kwargs):
         """
@@ -496,6 +506,15 @@ class BaseCache:
 
     async def release_conn(self, conn):
         pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(
+        self, exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException], tb: Optional[TracebackType]
+    ) -> None:
+        await self.close()
 
 
 class _Conn:

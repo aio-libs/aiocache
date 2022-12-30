@@ -1,23 +1,23 @@
 import logging
+from typing import Dict, Type
 
-from .backends.memory import SimpleMemoryCache
 from ._version import __version__
-
+from .backends.memory import SimpleMemoryCache
+from .base import BaseCache
 
 logger = logging.getLogger(__name__)
 
-AIOCACHE_CACHES = {SimpleMemoryCache.NAME: SimpleMemoryCache}
-
+AIOCACHE_CACHES: Dict[str, Type[BaseCache]] = {SimpleMemoryCache.NAME: SimpleMemoryCache}
 
 try:
-    import aioredis
+    import redis
 except ImportError:
-    logger.debug("aioredis not installed, RedisCache unavailable")
+    logger.debug("redis not installed, RedisCache unavailable")
 else:
     from aiocache.backends.redis import RedisCache
 
     AIOCACHE_CACHES[RedisCache.NAME] = RedisCache
-    del aioredis
+    del redis
 
 try:
     import aiomcache
@@ -29,9 +29,8 @@ else:
     AIOCACHE_CACHES[MemcachedCache.NAME] = MemcachedCache
     del aiomcache
 
-
-from .factory import caches, Cache  # noqa: E402
-from .decorators import cached, cached_stampede, multi_cached  # noqa: E402
+from .decorators import cached, cached_stampede, multi_cached  # noqa: E402,I202
+from .factory import Cache, caches  # noqa: E402
 
 
 __all__ = (

@@ -1,0 +1,22 @@
+[flake8]
+enable-extensions = G
+max-doc-length = 90
+max-line-length = 90
+select = A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,B901,B902,B903,B950
+# E226: Missing whitespace around arithmetic operators can help group things together.
+# E501,W505: Superseeded by B950 (from Bugbear)
+# E722: Superseeded by B001 (from Bugbear)
+# W503: Mutually exclusive with W504.
+ignore = E226,E501,E722,W503,W505
+per-file-ignores =
+    # S*: Bandit security checks not useful in tests.
+    tests/*:S
+
+# flake8-import-order
+application-import-names = aiocache
+import-order-style = pycharm
+
+# flake8-quotes
+inline-quotes = "
+# flake8-requirements
+requirements-file = requirements-dev.txt
