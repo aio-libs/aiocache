@@ -40,16 +40,10 @@ class RedisBackend(BaseCache):
         password=None,
         pool_min_size=_NOT_SET,
         pool_max_size=None,
-        loop=None,
         create_connection_timeout=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if loop is not None:
-            warnings.warn(
-                "Parameter 'loop' has been deprecated since aiocache 0.12",
-                DeprecationWarning,
-            )
         if pool_min_size is not _NOT_SET:
             warnings.warn(
                 "Parameter 'pool_min_size' is deprecated since aiocache 0.12",

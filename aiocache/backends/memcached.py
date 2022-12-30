@@ -7,7 +7,7 @@ from aiocache.serializers import JsonSerializer
 
 
 class MemcachedBackend(BaseCache):
-    def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, loop=None, **kwargs):
+    def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = endpoint
         self.port = port
