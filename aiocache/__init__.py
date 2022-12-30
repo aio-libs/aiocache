@@ -12,7 +12,7 @@ AIOCACHE_CACHES: Dict[str, Type[BaseCache]] = {SimpleMemoryCache.NAME: SimpleMem
 try:
     import redis
 except ImportError:
-    logger.info("redis not installed, RedisCache unavailable")
+    logger.debug("redis not installed, RedisCache unavailable")
 else:
     from aiocache.backends.redis import RedisCache
 
@@ -22,7 +22,7 @@ else:
 try:
     import aiomcache
 except ImportError:
-    logger.info("aiomcache not installed, Memcached unavailable")
+    logger.debug("aiomcache not installed, Memcached unavailable")
 else:
     from aiocache.backends.memcached import MemcachedCache
 
