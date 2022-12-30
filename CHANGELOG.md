@@ -4,6 +4,7 @@
 ## 0.12.0 (2023-xx-xx)
 
 * Add ``async with`` support to ``BaseCache``.
+* Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
 
 ## 0.11.1 (2019-07-31)

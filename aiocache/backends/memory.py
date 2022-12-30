@@ -5,7 +5,7 @@ from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
 
-class SimpleMemoryBackend:
+class SimpleMemoryBackend(BaseCache):
     """
     Wrapper around dict operations to use it as a cache backend
     """
@@ -34,7 +34,7 @@ class SimpleMemoryBackend:
 
         SimpleMemoryBackend._cache[key] = value
         if ttl:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
@@ -69,7 +69,7 @@ class SimpleMemoryBackend:
             if handle:
                 handle.cancel()
             if ttl:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
             return True
 
@@ -108,7 +108,7 @@ class SimpleMemoryBackend:
         return 0
 
 
-class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
+class SimpleMemoryCache(SimpleMemoryBackend):
     """
     Memory cache implementation with the following components as defaults:
         - serializer: :class:`aiocache.serializers.NullSerializer`
@@ -127,8 +127,7 @@ class SimpleMemoryCache(SimpleMemoryBackend, BaseCache):
     NAME = "memory"
 
     def __init__(self, serializer=None, **kwargs):
-        super().__init__(**kwargs)
-        self.serializer = serializer or NullSerializer()
+        super().__init__(serializer=serializer or NullSerializer(), **kwargs)
 
     @classmethod
     def parse_uri_path(cls, path):

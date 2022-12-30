@@ -20,21 +20,21 @@ def reset_caches():
 
 
 @pytest.fixture
-async def redis_cache(event_loop):
+async def redis_cache():
     async with Cache(Cache.REDIS, namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in Keys))
 
 
 @pytest.fixture
-async def memory_cache(event_loop):
+async def memory_cache():
     async with Cache(namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in Keys))
 
 
 @pytest.fixture
-async def memcached_cache(event_loop):
+async def memcached_cache():
     async with Cache(Cache.MEMCACHED, namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in Keys))

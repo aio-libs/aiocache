@@ -51,17 +51,16 @@ async def alt_cache():
     await cache.close()
 
 
-def test_alias():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(default_cache())
-    loop.run_until_complete(alt_cache())
+async def test_alias():
+    await default_cache()
+    await alt_cache()
 
     cache = Cache(Cache.REDIS)
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.close())
+    await cache.delete("key")
+    await cache.close()
 
-    loop.run_until_complete(caches.get('default').close())
+    await caches.get("default").close()
 
 
 if __name__ == "__main__":
-    test_alias()
+    asyncio.run(test_alias())
