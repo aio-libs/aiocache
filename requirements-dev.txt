@@ -2,8 +2,8 @@
 
 aiomcache==0.8.0
 aiohttp==3.8.3
-flake8==4.0.1
-flake8-bandit==3.0.0
+flake8==5.0.4
+flake8-bandit==4.1.1
 flake8-bugbear==22.12.6
 flake8-import-order==0.18.1
 #flake8-requirements==1.5.2
