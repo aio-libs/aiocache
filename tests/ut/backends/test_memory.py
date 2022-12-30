@@ -39,12 +39,11 @@ class TestSimpleMemoryBackend:
         assert Keys.KEY not in memory._handlers
 
     async def test_set_cancel_previous_ttl_handle(self, memory):
-        with patch("asyncio.get_event_loop"):
-            await memory._set(Keys.KEY, "value", ttl=0.1)
-            memory._handlers[Keys.KEY].cancel.assert_not_called()
+        await memory._set(Keys.KEY, "value", ttl=0.1)
+        memory._handlers[Keys.KEY].cancel.assert_not_called()
 
-            await memory._set(Keys.KEY, "new_value", ttl=0.1)
-            memory._handlers[Keys.KEY].cancel.assert_called_once_with()
+        await memory._set(Keys.KEY, "new_value", ttl=0.1)
+        memory._handlers[Keys.KEY].cancel.assert_called_once_with()
 
     async def test_set_ttl_handle(self, memory):
         await memory._set(Keys.KEY, "value", ttl=100)

@@ -34,7 +34,7 @@ class SimpleMemoryBackend(BaseCache):
 
         SimpleMemoryBackend._cache[key] = value
         if ttl:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
@@ -69,7 +69,7 @@ class SimpleMemoryBackend(BaseCache):
             if handle:
                 handle.cancel()
             if ttl:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
             return True
 

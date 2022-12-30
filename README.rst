@@ -61,12 +61,12 @@ Using a cache is as simple as
 .. code-block:: python
 
     >>> import asyncio
-    >>> loop = asyncio.get_event_loop()
     >>> from aiocache import Cache
     >>> cache = Cache(Cache.MEMORY) # Here you can also use Cache.REDIS and Cache.MEMCACHED, default is Cache.MEMORY
-    >>> loop.run_until_complete(cache.set('key', 'value'))
+    >>> with asyncio.Runner() as runner:
+    >>>     runner.run(cache.set('key', 'value'))
     True
-    >>> loop.run_until_complete(cache.get('key'))
+    >>>     runner.run(cache.get('key'))
     'value'
 
 Or as a decorator
@@ -92,16 +92,15 @@ Or as a decorator
         return Result("content", 200)
 
 
-    def run():
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(cached_call())
-        loop.run_until_complete(cached_call())
-        loop.run_until_complete(cached_call())
+    async def run():
+        await cached_call()
+        await cached_call()
+        await cached_call()
         cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
-        loop.run_until_complete(cache.delete("key"))
+        await cache.delete("key")
 
     if __name__ == "__main__":
-        run()
+        asyncio.run(run())
 
 The recommended approach to instantiate a new cache is using the `Cache` constructor. However you can also instantiate directly using `aiocache.RedisCache`, `aiocache.SimpleMemoryCache` or `aiocache.MemcachedCache`.
 
@@ -150,16 +149,15 @@ You can also setup cache aliases so its easy to reuse configurations
       assert await cache.get("key") == "value"
 
 
-  def test_alias():
-      loop = asyncio.get_event_loop()
-      loop.run_until_complete(default_cache())
-      loop.run_until_complete(alt_cache())
+  async def test_alias():
+      await default_cache()
+      await alt_cache()
 
-      loop.run_until_complete(caches.get('redis_alt').delete("key"))
+      await caches.get("redis_alt").delete("key")
 
 
   if __name__ == "__main__":
-      test_alias()
+      asyncio.run(test_alias())
 
 
 How does it work
