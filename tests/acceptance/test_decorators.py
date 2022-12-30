@@ -57,7 +57,7 @@ class TestCachedStampede:
     async def test_cached_stampede(self, mocker, cache):
         mocker.spy(cache, "get")
         mocker.spy(cache, "set")
-        decorator = cached_stampede(ttl=10, lease=2)
+        decorator = cached_stampede(ttl=10, lease=3)
 
         await asyncio.gather(decorator(stub)(0.5), decorator(stub)(0.5))
 
