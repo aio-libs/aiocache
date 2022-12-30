@@ -1,5 +1,5 @@
 -e .[dev,redis,memcached,msgpack]
-aiohttp==3.8.1
+aiohttp==3.8.3
 flake8==4.0.1
 flake8-bandit==3.0.0
 flake8-bugbear==22.1.11
@@ -8,7 +8,7 @@ flake8-import-order==0.18.1
 marshmallow==3.15
 mypy==0.940; implementation_name=="cpython"
 pytest==7.0.1
-pytest-asyncio==0.18.2
+pytest-asyncio==0.20.3
 pytest-cov==3.0.0
 pytest-mock==3.7
 types-redis==4.3.21.6
