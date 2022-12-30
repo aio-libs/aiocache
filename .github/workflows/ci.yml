@@ -105,7 +105,7 @@ jobs:
     - name: Run functional tests
       run: bash examples/run_all.sh
     - name: Upload coverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         flags: unit
