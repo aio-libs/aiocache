@@ -1,9 +1,9 @@
 import asyncio
 
 import pytest
-from tests.utils import Keys
 
 from aiocache import Cache, caches
+from ..utils import Keys
 
 
 @pytest.fixture(autouse=True)
