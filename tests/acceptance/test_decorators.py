@@ -26,7 +26,7 @@ class TestCached:
         mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
 
     async def test_cached_ttl(self, cache):
-        @cached(ttl=1, key=Keys.KEY)
+        @cached(ttl=2, key=Keys.KEY)
         async def fn():
             return str(random.randint(1, 50))
 
@@ -34,7 +34,7 @@ class TestCached:
         resp2 = await fn()
 
         assert await cache.get(Keys.KEY) == resp1 == resp2
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
         assert await cache.get(Keys.KEY) is None
 
     async def test_cached_key_builder(self, cache):
