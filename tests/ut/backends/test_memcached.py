@@ -2,11 +2,11 @@ from unittest.mock import AsyncMock, patch
 
 import aiomcache
 import pytest
-from tests.utils import Keys
 
 from aiocache.backends.memcached import MemcachedBackend, MemcachedCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
+from ..utils import Keys
 
 
 @pytest.fixture
