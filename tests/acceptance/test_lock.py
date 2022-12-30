@@ -1,10 +1,10 @@
 import asyncio
 
 import pytest
-from tests.utils import Keys
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
 from aiocache.serializers import StringSerializer
+from ..utils import Keys
 
 
 @pytest.fixture
