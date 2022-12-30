@@ -33,8 +33,7 @@ class TestRedLock:
 
         async def dummy():
             res = await cache.get(Keys.KEY)
-            if res is not None:
-                return res
+            assert res is None
 
             async with RedLock(cache, Keys.KEY, lease=5):
                 res = await cache.get(Keys.KEY)
