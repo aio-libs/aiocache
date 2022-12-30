@@ -38,7 +38,7 @@ class TestRedLock:
             async with RedLock(cache, Keys.KEY, lease=5):
                 res = await cache.get(Keys.KEY)
                 if res is not None:
-                    return res
+                    return
                 await asyncio.sleep(0.1)
                 await cache.set(Keys.KEY, "value")
 
