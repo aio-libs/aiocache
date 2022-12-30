@@ -6,7 +6,7 @@ flake8-bugbear==22.1.11
 flake8-import-order==0.18.1
 #flake8-requirements==1.5.2
 marshmallow==3.15
-mypy==0.940; implementation_name=="cpython"
+mypy==0.991; implementation_name=="cpython"
 pytest==7.0.1
 pytest-asyncio==0.20.3
 pytest-cov==3.0.0
