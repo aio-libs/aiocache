@@ -2,7 +2,7 @@ import asyncio
 import inspect
 import random
 import sys
-from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
+from unittest.mock import ANY, create_autospec, patch
 
 import pytest
 
@@ -164,7 +164,7 @@ class TestCached:
 
     async def test_cache_write_doesnt_wait_for_future(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "set_in_cache")
-        with patch.object(decorator, "get_from_cache", autospec=True, return_value=None) as m:
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=None):
             with patch("aiocache.decorators.asyncio.ensure_future", autospec=True):
                 await decorator_call(aiocache_wait_for_write=False, value="value")
 
@@ -305,8 +305,8 @@ class TestCachedStampede:
             stub.assert_called_once_with(value="value")
 
     async def test_calls_locked_client(self, decorator, decorator_call):
-        decorator.cache.get.side_effect=[None, None, None, "value"]
-        decorator.cache._add.side_effect=[True, ValueError]
+        decorator.cache.get.side_effect = [None, None, None, "value"]
+        decorator.cache._add.side_effect = [True, ValueError]
         lock1 = create_autospec(RedLock, instance=True)
         lock2 = create_autospec(RedLock, instance=True)
 
@@ -428,7 +428,6 @@ class TestMultiCached:
         decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
 
     async def test_get_from_cache_conn(self, decorator, decorator_call):
-        #decorator._conn._conn = AsyncMock()
         decorator.cache.multi_get.return_value = [1, 2, 3]
 
         assert await decorator.get_from_cache("a", "b", "c") == [1, 2, 3]

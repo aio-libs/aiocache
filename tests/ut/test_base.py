@@ -1,6 +1,6 @@
 import asyncio
 import os
-from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 from tests.utils import Keys

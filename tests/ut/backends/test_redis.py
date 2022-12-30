@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock, MagicMock, create_autospec, patch
+from unittest.mock import ANY, AsyncMock, create_autospec, patch
 
 import pytest
 from redis.asyncio.client import Pipeline

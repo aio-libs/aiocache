@@ -1,23 +1,18 @@
 import sys
 from contextlib import ExitStack
-
-if sys.version_info < (3, 8):
-    # Missing AsyncMock on 3.7
-    collect_ignore_glob = ["*"]
-
-    from unittest.mock import Mock, create_autospec, patch
-    AsyncMock = Mock
-else:
-    from unittest.mock import AsyncMock, Mock, create_autospec, patch
+from unittest.mock import Mock, create_autospec, patch
 
 import pytest
 
 from aiocache import caches
 from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.redis import RedisCache
-from aiocache.base import API, BaseCache
+from aiocache.base import BaseCache
 from aiocache.plugins import BasePlugin
-from aiocache.serializers import BaseSerializer
+
+if sys.version_info < (3, 8):
+    # Missing AsyncMock on 3.7
+    collect_ignore_glob = ["*"]
 
 
 @pytest.fixture(autouse=True)
