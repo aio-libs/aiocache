@@ -1,6 +1,6 @@
 import sys
 from contextlib import ExitStack
-from unittest.mock import Mock, create_autospec, patch
+from unittest.mock import create_autospec, patch
 
 import pytest
 
