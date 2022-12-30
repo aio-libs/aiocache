@@ -3,9 +3,9 @@ import os
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
-from tests.utils import Keys
 
 from aiocache.base import API, BaseCache, _Conn
+from ..utils import Keys
 
 
 class TestAPI:
