@@ -42,11 +42,11 @@ async def serializer_function():
     assert json.loads(await cache.raw("get", "main:key")) == {"y": 2.0, "x": 1.0}
 
 
-async def test_serializer_function():
+async def main() -> None:
     await serializer_function()
     await cache.delete("key")
     await cache.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(test_serializer_function())
+    asyncio.run(main())
