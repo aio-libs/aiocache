@@ -19,7 +19,7 @@ class CompressionSerializer(BaseSerializer):
         return compressed
 
     def loads(self, value):
-        print("I've retrieved:\n{}".format(value))
+        print("I've retrieved:\n{!r}".format(value))
         decompressed = zlib.decompress(value).decode()
         print("But I'm returning:\n{}".format(decompressed))
         return decompressed
