@@ -2,13 +2,10 @@
 
 pushd "$(dirname "$0")"
 
-for f in `find . -name '*.py' -not -path "./frameworks/*"`; do
+for f in *.py; do
   echo "########## Running $f #########"
   # ResourceWarning fails to exit 1, so we grep for warnings.
-  python -bb -We -X dev $f 2>&1 | tee /dev/stderr | ( ! fgrep -i 'warning' > /dev/null ) || exit 1
-  if [ ${PIPESTATUS[0]} -ne 0 ]; then
-    exit 1
-  fi
+  python -bb -We -X dev -c "import asyncio, os, sys, ${f%.*}; sys.unraisablehook = lambda: os._exit(1); asyncio.run(${f%.*}.main())" || exit 1
   echo;echo;echo
 done
 
