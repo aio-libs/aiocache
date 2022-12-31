@@ -15,7 +15,7 @@ class CompressionSerializer(BaseSerializer):
     def dumps(self, value):
         print("I've received:\n{}".format(value))
         compressed = zlib.compress(value.encode())
-        print("But I'm storing:\n{}".format(compressed.decode("utf-8")))
+        print("But I'm storing:\n{}".format(str(compressed)))
         return compressed
 
     def loads(self, value):
