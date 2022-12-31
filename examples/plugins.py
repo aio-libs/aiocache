@@ -46,7 +46,7 @@ async def run():
     print(cache.profiling)
 
 
-async def test_run():
+async def main() -> None:
     await run()
     await cache.delete("a")
     await cache.delete("b")
@@ -55,4 +55,4 @@ async def test_run():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_run())
+    asyncio.run(main())
