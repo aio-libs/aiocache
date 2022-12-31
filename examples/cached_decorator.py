@@ -15,7 +15,7 @@ async def cached_call():
     return Result("content", 200)
 
 
-async def test_cached():
+async def main() -> None:
     async with Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main") as cache:
         await cached_call()
         exists = await cache.exists("key")
@@ -24,4 +24,4 @@ async def test_cached():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_cached())
+    asyncio.run(main())
