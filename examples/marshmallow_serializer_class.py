@@ -54,10 +54,10 @@ async def serializer():
     assert result.list_type == model.list_type
 
 
-async def test_serializer():
+async def main() -> None:
     await serializer()
     await cache.delete("key")
 
 
 if __name__ == "__main__":
-    asyncio.run(test_serializer())
+    asyncio.run(main())
