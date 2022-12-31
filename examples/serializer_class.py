@@ -43,11 +43,11 @@ async def serializer():
     assert len(compressed_value) < len(real_value.encode())
 
 
-async def test_serializer():
+async def main() -> None:
     await serializer()
     await cache.delete("key")
     await cache.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(test_serializer())
+    asyncio.run(main())
