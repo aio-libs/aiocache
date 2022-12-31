@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict
+from typing import Dict
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
@@ -13,7 +13,7 @@ class SimpleMemoryBackend(BaseCache):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._cache: Dict[str, Any] = {}
+        self._cache: Dict[str, object] = {}
         self._handlers: Dict[str, asyncio.TimerHandle] = {}
 
     async def _get(self, key, encoding="utf-8", _conn=None):
