@@ -28,7 +28,7 @@ jobs:
     - name: Pre-Commit hooks
       uses: pre-commit/action@v3.0.0
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements-dev.txt
     - name: Install itself
@@ -93,7 +93,7 @@ jobs:
       if: ${{ matrix.ujson == 'ujson' }}
       run: pip install ujson
     - name: Install dependencies
-      uses: py-actions/py-dependency-install@v3
+      uses: py-actions/py-dependency-install@v4
       with:
         path: requirements-dev.txt
     - name: Run unittests
