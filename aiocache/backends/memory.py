@@ -35,7 +35,7 @@ class SimpleMemoryBackend(BaseCache):
         self._cache[key] = value
         if ttl:
             loop = asyncio.get_running_loop()
-            SimpleMemoryBackend._handlers[key] = loop.call_later(ttl, self.__delete, key)
+            self._handlers[key] = loop.call_later(ttl, self.__delete, key)
         return True
 
     async def _multi_set(self, pairs, ttl=None, _conn=None):
