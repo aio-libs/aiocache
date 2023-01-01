@@ -10,7 +10,7 @@ flake8-requirements==1.5.3
 marshmallow==3.19.0
 msgpack==1.0.4
 mypy==0.991; implementation_name=="cpython"
-pytest==7.0.1
+pytest==7.2.0
 pytest-asyncio==0.20.3
 pytest-cov==4.0.0
 pytest-mock==3.10.0
