@@ -11,16 +11,15 @@ from ...utils import Keys
 
 @pytest.fixture
 def memory(mocker):
-    SimpleMemoryBackend._handlers = {}
-    SimpleMemoryBackend._cache = {}
-    mocker.spy(SimpleMemoryBackend, "_cache")
-    return SimpleMemoryBackend()
+    memory = SimpleMemoryBackend()
+    mocker.spy(memory, "_cache")
+    return memory
 
 
 class TestSimpleMemoryBackend:
     async def test_get(self, memory):
         await memory._get(Keys.KEY)
-        SimpleMemoryBackend._cache.get.assert_called_with(Keys.KEY)
+        memory._cache.get.assert_called_with(Keys.KEY)
 
     async def test_gets(self, mocker, memory):
         mocker.spy(memory, "_get")
@@ -29,7 +28,7 @@ class TestSimpleMemoryBackend:
 
     async def test_set(self, memory):
         await memory._set(Keys.KEY, "value")
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(Keys.KEY, "value")
+        memory._cache.__setitem__.assert_called_with(Keys.KEY, "value")
 
     async def test_set_no_ttl_no_handle(self, memory):
         await memory._set(Keys.KEY, "value", ttl=0)
@@ -54,22 +53,22 @@ class TestSimpleMemoryBackend:
     async def test_set_cas_token(self, memory):
         memory._cache.get.return_value = "old_value"
         assert await memory._set(Keys.KEY, "value", _cas_token="old_value") == 1
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(Keys.KEY, "value")
+        memory._cache.__setitem__.assert_called_with(Keys.KEY, "value")
 
     async def test_set_cas_fail(self, memory):
         memory._cache.get.return_value = "value"
         assert await memory._set(Keys.KEY, "value", _cas_token="old_value") == 0
-        assert SimpleMemoryBackend._cache.__setitem__.call_count == 0
+        assert memory._cache.__setitem__.call_count == 0
 
     async def test_multi_get(self, memory):
         await memory._multi_get([Keys.KEY, Keys.KEY_1])
-        SimpleMemoryBackend._cache.get.assert_any_call(Keys.KEY)
-        SimpleMemoryBackend._cache.get.assert_any_call(Keys.KEY_1)
+        memory._cache.get.assert_any_call(Keys.KEY)
+        memory._cache.get.assert_any_call(Keys.KEY_1)
 
     async def test_multi_set(self, memory):
         await memory._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")])
-        SimpleMemoryBackend._cache.__setitem__.assert_any_call(Keys.KEY, "value")
-        SimpleMemoryBackend._cache.__setitem__.assert_any_call(Keys.KEY_1, "random")
+        memory._cache.__setitem__.assert_any_call(Keys.KEY, "value")
+        memory._cache.__setitem__.assert_any_call(Keys.KEY_1, "random")
 
     async def test_add(self, memory, mocker):
         mocker.spy(memory, "_set")
@@ -77,66 +76,66 @@ class TestSimpleMemoryBackend:
         memory._set.assert_called_with(Keys.KEY, "value", ttl=None)
 
     async def test_add_existing(self, memory):
-        SimpleMemoryBackend._cache.__contains__.return_value = True
+        memory._cache.__contains__.return_value = True
         with pytest.raises(ValueError):
             await memory._add(Keys.KEY, "value")
 
     async def test_exists(self, memory):
         await memory._exists(Keys.KEY)
-        SimpleMemoryBackend._cache.__contains__.assert_called_with(Keys.KEY)
+        memory._cache.__contains__.assert_called_with(Keys.KEY)
 
     async def test_increment(self, memory):
         await memory._increment(Keys.KEY, 2)
-        SimpleMemoryBackend._cache.__contains__.assert_called_with(Keys.KEY)
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(Keys.KEY, 2)
+        memory._cache.__contains__.assert_called_with(Keys.KEY)
+        memory._cache.__setitem__.assert_called_with(Keys.KEY, 2)
 
     async def test_increment_missing(self, memory):
-        SimpleMemoryBackend._cache.__contains__.return_value = True
-        SimpleMemoryBackend._cache.__getitem__.return_value = 2
+        memory._cache.__contains__.return_value = True
+        memory._cache.__getitem__.return_value = 2
         await memory._increment(Keys.KEY, 2)
-        SimpleMemoryBackend._cache.__getitem__.assert_called_with(Keys.KEY)
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(Keys.KEY, 4)
+        memory._cache.__getitem__.assert_called_with(Keys.KEY)
+        memory._cache.__setitem__.assert_called_with(Keys.KEY, 4)
 
     async def test_increment_typerror(self, memory):
-        SimpleMemoryBackend._cache.__contains__.return_value = True
-        SimpleMemoryBackend._cache.__getitem__.return_value = "asd"
+        memory._cache.__contains__.return_value = True
+        memory._cache.__getitem__.return_value = "asd"
         with pytest.raises(TypeError):
             await memory._increment(Keys.KEY, 2)
 
     async def test_expire_no_handle_no_ttl(self, memory):
-        SimpleMemoryBackend._cache.__contains__.return_value = True
+        memory._cache.__contains__.return_value = True
         await memory._expire(Keys.KEY, 0)
         assert memory._handlers.get(Keys.KEY) is None
 
     async def test_expire_no_handle_ttl(self, memory):
-        SimpleMemoryBackend._cache.__contains__.return_value = True
+        memory._cache.__contains__.return_value = True
         await memory._expire(Keys.KEY, 1)
         assert isinstance(memory._handlers.get(Keys.KEY), asyncio.Handle)
 
     async def test_expire_handle_ttl(self, memory):
         fake = create_autospec(asyncio.TimerHandle, instance=True)
-        SimpleMemoryBackend._handlers[Keys.KEY] = fake
-        SimpleMemoryBackend._cache.__contains__.return_value = True
+        memory._handlers[Keys.KEY] = fake
+        memory._cache.__contains__.return_value = True
         await memory._expire(Keys.KEY, 1)
         assert fake.cancel.call_count == 1
         assert isinstance(memory._handlers.get(Keys.KEY), asyncio.Handle)
 
     async def test_expire_missing(self, memory):
-        SimpleMemoryBackend._cache.__contains__.return_value = False
+        memory._cache.__contains__.return_value = False
         assert await memory._expire(Keys.KEY, 1) is False
 
     async def test_delete(self, memory):
         fake = create_autospec(asyncio.TimerHandle, instance=True)
-        SimpleMemoryBackend._handlers[Keys.KEY] = fake
+        memory._handlers[Keys.KEY] = fake
         await memory._delete(Keys.KEY)
         assert fake.cancel.call_count == 1
-        assert Keys.KEY not in SimpleMemoryBackend._handlers
-        SimpleMemoryBackend._cache.pop.assert_called_with(Keys.KEY, None)
+        assert Keys.KEY not in memory._handlers
+        memory._cache.pop.assert_called_with(Keys.KEY, None)
 
     async def test_delete_missing(self, memory):
-        SimpleMemoryBackend._cache.pop.return_value = None
+        memory._cache.pop.return_value = None
         await memory._delete(Keys.KEY)
-        SimpleMemoryBackend._cache.pop.assert_called_with(Keys.KEY, None)
+        memory._cache.pop.assert_called_with(Keys.KEY, None)
 
     async def test_delete_non_truthy(self, memory):
         non_truthy = MagicMock(spec_set=("__bool__",))
@@ -145,44 +144,44 @@ class TestSimpleMemoryBackend:
         with pytest.raises(ValueError):
             bool(non_truthy)
 
-        SimpleMemoryBackend._cache.pop.return_value = non_truthy
+        memory._cache.pop.return_value = non_truthy
         await memory._delete(Keys.KEY)
 
         assert non_truthy.__bool__.call_count == 1
-        SimpleMemoryBackend._cache.pop.assert_called_with(Keys.KEY, None)
+        memory._cache.pop.assert_called_with(Keys.KEY, None)
 
     async def test_clear_namespace(self, memory):
-        SimpleMemoryBackend._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
+        memory._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
         await memory._clear("nm")
-        assert SimpleMemoryBackend._cache.pop.call_count == 2
-        SimpleMemoryBackend._cache.pop.assert_any_call("nma", None)
-        SimpleMemoryBackend._cache.pop.assert_any_call("nmb", None)
+        assert memory._cache.pop.call_count == 2
+        memory._cache.pop.assert_any_call("nma", None)
+        memory._cache.pop.assert_any_call("nmb", None)
 
     async def test_clear_no_namespace(self, memory):
-        SimpleMemoryBackend._handlers = "asdad"
-        SimpleMemoryBackend._cache = "asdad"
+        memory._handlers = "asdad"
+        memory._cache = "asdad"
         await memory._clear()
-        SimpleMemoryBackend._handlers = {}
-        SimpleMemoryBackend._cache = {}
+        memory._handlers = {}
+        memory._cache = {}
 
     async def test_raw(self, memory):
         await memory._raw("get", Keys.KEY)
-        SimpleMemoryBackend._cache.get.assert_called_with(Keys.KEY)
+        memory._cache.get.assert_called_with(Keys.KEY)
 
         await memory._set(Keys.KEY, "value")
-        SimpleMemoryBackend._cache.__setitem__.assert_called_with(Keys.KEY, "value")
+        memory._cache.__setitem__.assert_called_with(Keys.KEY, "value")
 
     async def test_redlock_release(self, memory):
-        SimpleMemoryBackend._cache.get.return_value = "lock"
+        memory._cache.get.return_value = "lock"
         assert await memory._redlock_release(Keys.KEY, "lock") == 1
-        SimpleMemoryBackend._cache.get.assert_called_with(Keys.KEY)
-        SimpleMemoryBackend._cache.pop.assert_called_with(Keys.KEY)
+        memory._cache.get.assert_called_with(Keys.KEY)
+        memory._cache.pop.assert_called_with(Keys.KEY)
 
     async def test_redlock_release_nokey(self, memory):
-        SimpleMemoryBackend._cache.get.return_value = None
+        memory._cache.get.return_value = None
         assert await memory._redlock_release(Keys.KEY, "lock") == 0
-        SimpleMemoryBackend._cache.get.assert_called_with(Keys.KEY)
-        assert SimpleMemoryBackend._cache.pop.call_count == 0
+        memory._cache.get.assert_called_with(Keys.KEY)
+        assert memory._cache.pop.call_count == 0
 
 
 class TestSimpleMemoryCache:

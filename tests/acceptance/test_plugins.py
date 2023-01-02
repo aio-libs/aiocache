@@ -1,6 +1,5 @@
 import pytest
 
-from aiocache.backends.memory import SimpleMemoryBackend
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
 
@@ -17,7 +16,7 @@ class TestHitMissRatioPlugin:
     async def test_get_hit_miss_ratio(self, memory_cache, data, ratio):
         keys = ["a", "b", "c", "d", "e", "f"]
         memory_cache.plugins = [HitMissRatioPlugin()]
-        SimpleMemoryBackend._cache = data
+        memory_cache._cache = data
 
         for key in keys:
             await memory_cache.get(key)
@@ -41,7 +40,7 @@ class TestHitMissRatioPlugin:
     async def test_multi_get_hit_miss_ratio(self, memory_cache, data, ratio):
         keys = ["a", "b", "c", "d", "e", "f"]
         memory_cache.plugins = [HitMissRatioPlugin()]
-        SimpleMemoryBackend._cache = data
+        memory_cache._cache = data
 
         for key in keys:
             await memory_cache.multi_get([key])
@@ -76,7 +75,7 @@ class TestTimingPlugin:
     async def test_get_avg_min_max(self, memory_cache, data, ratio):
         keys = ["a", "b", "c", "d", "e", "f"]
         memory_cache.plugins = [TimingPlugin()]
-        SimpleMemoryBackend._cache = data
+        memory_cache._cache = data
 
         for key in keys:
             await memory_cache.get(key)
