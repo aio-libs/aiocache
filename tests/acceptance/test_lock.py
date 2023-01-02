@@ -4,7 +4,7 @@ import pytest
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
 from aiocache.serializers import StringSerializer
-from ..utils import Keys, KEY_LOCK
+from ..utils import KEY_LOCK, Keys
 
 
 @pytest.fixture
