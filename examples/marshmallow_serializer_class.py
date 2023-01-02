@@ -1,6 +1,7 @@
 import random
 import string
 import asyncio
+from typing import Any
 
 from marshmallow import fields, Schema, post_load
 
@@ -22,6 +23,10 @@ class RandomModel:
 
 
 class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
+    def __init__(self, encoding: str = "utf-8", *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        BaseSerializer.__init__(self, encoding=encoding)
+
     int_type = fields.Integer()
     str_type = fields.String()
     dict_type = fields.Dict()
