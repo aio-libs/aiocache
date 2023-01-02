@@ -41,5 +41,4 @@ __all__ = (
     "cached_stampede",
     "multi_cached",
     *(c.__name__ for c in AIOCACHE_CACHES.values()),
-    "__version__",
 )
