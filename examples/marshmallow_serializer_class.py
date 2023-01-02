@@ -22,11 +22,7 @@ class RandomModel:
         return self.__dict__ == obj.__dict__
 
 
-class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
-    def __init__(self, *args: Any, encoding: str = "utf-8", **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        BaseSerializer.__init__(self, encoding=encoding)
-
+class RandomSchema(Schema):
     int_type = fields.Integer()
     str_type = fields.String()
     dict_type = fields.Dict()
@@ -38,6 +34,18 @@ class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
 
     class Meta:
         strict = True
+
+
+class MarshmallowSerializer(BaseSerializer):
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.schema = RandomSchema()
+
+    def dumps(self, value: Any) -> str:
+        return self.schema.dumps(value)
+
+    def loads(self, value: str) -> Any:
+        return self.schema.loads(value)
 
 
 cache = Cache(serializer=MarshmallowSerializer(), namespace="main")
