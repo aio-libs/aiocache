@@ -6,6 +6,7 @@
 * Add ``async with`` support to ``BaseCache``.
 * Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
+* Use ``str()`` in ``_build_key()`` to ensure consistency of enum keys between different Python versions (if using enum keys, upgrading to 0.12 may invalidate existing caches due to key values changing).
 
 ## 0.11.1 (2019-07-31)
 

@@ -113,16 +113,17 @@ class TestMultiCachedDecorator:
         assert await cache.exists(Keys.KEY) is True
 
     async def test_multi_cached_key_builder(self, cache):
+        # TODO(PY311): Remove str() calls
         def build_key(key, f, self, keys, market="ES"):
-            return "{}_{}_{}".format(f.__name__, key, market)
+            return "{}_{}_{}".format(f.__name__, str(key), market)
 
         @multi_cached(keys_from_attr="keys", key_builder=build_key)
         async def fn(self, keys, market="ES"):
             return {Keys.KEY: 1, Keys.KEY_1: 2}
 
         await fn("self", keys=[Keys.KEY, Keys.KEY_1])
-        assert await cache.exists("fn_" + Keys.KEY + "_ES") is True
-        assert await cache.exists("fn_" + Keys.KEY_1 + "_ES") is True
+        assert await cache.exists("fn_" + str(Keys.KEY) + "_ES") is True
+        assert await cache.exists("fn_" + str(Keys.KEY_1) + "_ES") is True
 
     async def test_fn_with_args(self, cache):
         @multi_cached("keys")

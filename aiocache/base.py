@@ -489,10 +489,14 @@ class BaseCache:
         pass
 
     def _build_key(self, key, namespace=None):
+        # TODO(PY311): Remove str() calls.
+        # str() is needed to ensure consistent results when using enums between
+        # Python 3.11+ and older releases due to changed __format__() method:
+        # https://docs.python.org/3/whatsnew/3.11.html#enum
         if namespace is not None:
-            return "{}{}".format(namespace, key)
+            return "{}{}".format(namespace, str(key))
         if self.namespace is not None:
-            return "{}{}".format(self.namespace, key)
+            return "{}{}".format(self.namespace, str(key))
         return key
 
     def _get_ttl(self, ttl):
