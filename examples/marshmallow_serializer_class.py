@@ -32,10 +32,6 @@ class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
     dict_type = fields.Dict()
     list_type = fields.List(fields.Integer())
 
-    # marshmallow Schema class doesn't play nicely with multiple inheritance and won't call
-    # BaseSerializer.__init__
-    encoding = 'utf-8'
-
     @post_load
     def build_my_type(self, data, **kwargs):
         return RandomModel(**data)
