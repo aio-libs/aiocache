@@ -31,13 +31,13 @@ class BaseSerializer(ABC):
 
     # TODO(PY38): Positional-only
     @abstractmethod
-    def dumps(self, value: Any) -> str:
-        raise NotImplementedError("dumps method must be implemented")
+    def dumps(self, value: Any) -> Any:
+        """Serialise the value to be stored in the backend."""
 
     # TODO(PY38): Positional-only
     @abstractmethod
-    def loads(self, value: str) -> Any:
-        raise NotImplementedError("loads method must be implemented")
+    def loads(self, value: Any) -> Any:
+        """Decode the value retrieved from the backend."""
 
 
 class NullSerializer(BaseSerializer):
