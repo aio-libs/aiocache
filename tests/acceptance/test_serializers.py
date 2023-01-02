@@ -30,18 +30,8 @@ class MyType:
         return self.__dict__ == obj.__dict__
 
 
-class MyTypeSchema(Schema, BaseSerializer):
-    def __init__(self, *args: Any, encoding: str = "utf-8", **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        BaseSerializer.__init__(self, encoding=encoding)
-
+class MySchema(Schema):
     r = fields.Integer()
-
-    def dumps(self, *args, **kwargs):
-        return super().dumps(*args, **kwargs)
-
-    def loads(self, *args, **kwargs):
-        return super().loads(*args, **kwargs)
 
     @post_load
     def build_my_type(self, data, **kwargs):
@@ -49,6 +39,18 @@ class MyTypeSchema(Schema, BaseSerializer):
 
     class Meta:
         strict = True
+
+
+class MyTypeSchema(Schema, BaseSerializer):
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.schema = MySchema()
+
+    def dumps(self, value: Any) -> str:
+        return self.schema.dumps(value)
+
+    def loads(self, value: str) -> Any:
+        return self.schema.loads(value)
 
 
 class TestNullSerializer:
