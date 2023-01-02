@@ -1,9 +1,8 @@
 import asyncio
-from typing import AsyncIterator
 
 import pytest
 
-from aiocache import BaseCache, Cache, caches
+from aiocache import Cache, caches
 from ..utils import Keys, KEY_LOCK
 
 
