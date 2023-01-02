@@ -30,8 +30,11 @@ class MyType:
 
 
 class MyTypeSchema(Schema, BaseSerializer):
+    def __init__(self, *args: Any, encoding: str = "utf-8", **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        BaseSerializer.__init__(self, encoding=encoding)
+
     r = fields.Integer()
-    encoding = "utf-8"
 
     def dumps(self, *args, **kwargs):
         return super().dumps(*args, **kwargs)
