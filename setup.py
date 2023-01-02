@@ -1,17 +1,15 @@
 import re
-import os
+from pathlib import Path
 
 from setuptools import setup, find_packages
 
-with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "aiocache/__init__.py")) as fp:
-    try:
-        version = re.findall(r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
-    except IndexError:
-        raise RuntimeError("Unable to determine version.")
+p = Path(__file__).with_name("aiocache") / "__init__.py"
+try:
+    version = re.findall(r"^__version__ = \"([^']+)\"\r?$", p.read_text(), re.M)[0]
+except IndexError:
+    raise RuntimeError("Unable to determine version.")
 
-
-with open("README.rst", encoding="utf8") as f:
-    readme = f.read()
+readme = Path(__file__).with_name("README.rst").read_text()
 
 
 setup(
