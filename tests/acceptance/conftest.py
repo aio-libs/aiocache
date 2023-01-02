@@ -1,9 +1,10 @@
 import asyncio
+from typing import AsyncIterator
 
 import pytest
 
-from aiocache import Cache, caches
-from ..utils import Keys
+from aiocache import BaseCache, Cache, caches
+from ..utils import Keys, KEY_LOCK
 
 
 @pytest.fixture(autouse=True)
@@ -19,25 +20,25 @@ def reset_caches():
     )
 
 
+async def _cache(cls_: BaseCache) -> AsyncIterator[Cache]:
+    async with Cache(cls_, namespace="test") as cache
+        yield cache
+        await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
+
+
 @pytest.fixture
 async def redis_cache():
-    async with Cache(Cache.REDIS, namespace="test") as cache:
-        yield cache
-        await asyncio.gather(*(cache.delete(k) for k in Keys))
+    yield from _cache(Cache.REDIS)
 
 
 @pytest.fixture
 async def memory_cache():
-    async with Cache(namespace="test") as cache:
-        yield cache
-        await asyncio.gather(*(cache.delete(k) for k in Keys))
+    yield from _cache(Cache.MEMORY)
 
 
 @pytest.fixture
 async def memcached_cache():
-    async with Cache(Cache.MEMCACHED, namespace="test") as cache:
-        yield cache
-        await asyncio.gather(*(cache.delete(k) for k in Keys))
+    yield from _cache(Cache.MEMCACHED)
 
 
 @pytest.fixture(params=("redis_cache", "memory_cache", "memcached_cache"))
