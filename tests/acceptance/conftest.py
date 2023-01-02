@@ -21,7 +21,7 @@ def reset_caches():
 
 
 async def _cache(cls_: BaseCache) -> AsyncIterator[Cache]:
-    async with Cache(cls_, namespace="test") as cache
+    async with Cache(cls_, namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
