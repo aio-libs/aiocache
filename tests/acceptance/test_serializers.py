@@ -1,5 +1,6 @@
 import pickle
 import random
+from typing import Any
 
 import pytest
 from marshmallow import Schema, fields, post_load
