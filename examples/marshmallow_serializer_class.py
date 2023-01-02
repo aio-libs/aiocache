@@ -23,7 +23,7 @@ class RandomModel:
 
 
 class MarshmallowSerializer(Schema, BaseSerializer):  # type: ignore[misc]
-    def __init__(self, encoding: str = "utf-8", *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, encoding: str = "utf-8", **kwargs: Any):
         super().__init__(*args, **kwargs)
         BaseSerializer.__init__(self, encoding=encoding)
 
