@@ -10,7 +10,6 @@ for f in `find . -name '*.py' -not -path "./frameworks/*"`; do
   if [ ${PIPESTATUS[0]} -ne 0 ]; then
     exit 1
   fi
-  echo;echo;echo
 done
 
 popd
