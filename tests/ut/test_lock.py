@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
-from ..utils import Keys
+from ..utils import Keys, KEY_LOCK
 
 
 class TestRedLock:
@@ -15,27 +15,27 @@ class TestRedLock:
 
     async def test_acquire(self, mock_base_cache, lock):
         await lock._acquire()
-        mock_base_cache._add.assert_called_with(Keys.KEY_LOCK, lock._value, ttl=20)
-        assert lock._EVENTS[Keys.KEY_LOCK].is_set() is False
+        mock_base_cache._add.assert_called_with(KEY_LOCK, lock._value, ttl=20)
+        assert lock._EVENTS[KEY_LOCK].is_set() is False
 
     async def test_release(self, mock_base_cache, lock):
         mock_base_cache._redlock_release.return_value = True
         await lock._acquire()
         await lock._release()
-        mock_base_cache._redlock_release.assert_called_with(Keys.KEY_LOCK, lock._value)
-        assert Keys.KEY_LOCK not in lock._EVENTS
+        mock_base_cache._redlock_release.assert_called_with(KEY_LOCK, lock._value)
+        assert KEY_LOCK not in lock._EVENTS
 
     async def test_release_no_acquire(self, mock_base_cache, lock):
         mock_base_cache._redlock_release.return_value = False
-        assert Keys.KEY_LOCK not in lock._EVENTS
+        assert KEY_LOCK not in lock._EVENTS
         await lock._release()
-        assert Keys.KEY_LOCK not in lock._EVENTS
+        assert KEY_LOCK not in lock._EVENTS
 
     async def test_context_manager(self, mock_base_cache, lock):
         async with lock:
             pass
-        mock_base_cache._add.assert_called_with(Keys.KEY_LOCK, lock._value, ttl=20)
-        mock_base_cache._redlock_release.assert_called_with(Keys.KEY_LOCK, lock._value)
+        mock_base_cache._add.assert_called_with(KEY_LOCK, lock._value, ttl=20)
+        mock_base_cache._redlock_release.assert_called_with(KEY_LOCK, lock._value)
 
     async def test_raises_exceptions(self, mock_base_cache, lock):
         mock_base_cache._redlock_release.return_value = True
@@ -62,18 +62,18 @@ class TestRedLock:
         lock_2 = RedLock(mock_base_cache, Keys.KEY, 20)
         mock_base_cache._add.side_effect = [True, ValueError(), ValueError()]
         await lock._acquire()
-        event = lock._EVENTS[Keys.KEY_LOCK]
+        event = lock._EVENTS[KEY_LOCK]
 
-        assert Keys.KEY_LOCK in lock._EVENTS
-        assert Keys.KEY_LOCK in lock_1._EVENTS
-        assert Keys.KEY_LOCK in lock_2._EVENTS
+        assert KEY_LOCK in lock._EVENTS
+        assert KEY_LOCK in lock_1._EVENTS
+        assert KEY_LOCK in lock_2._EVENTS
         assert not event.is_set()
 
         await asyncio.gather(lock_1._acquire(), lock._release(), lock_2._acquire())
 
-        assert Keys.KEY_LOCK not in lock._EVENTS
-        assert Keys.KEY_LOCK not in lock_1._EVENTS
-        assert Keys.KEY_LOCK not in lock_2._EVENTS
+        assert KEY_LOCK not in lock._EVENTS
+        assert KEY_LOCK not in lock_1._EVENTS
+        assert KEY_LOCK not in lock_2._EVENTS
         assert event.is_set()
 
 
