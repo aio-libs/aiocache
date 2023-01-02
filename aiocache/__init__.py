@@ -34,6 +34,7 @@ from .factory import Cache, caches  # noqa: E402
 
 
 __all__ = (
+    "BaseCache",
     "caches",
     "Cache",
     "cached",
