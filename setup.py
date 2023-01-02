@@ -3,7 +3,7 @@ import os
 
 from setuptools import setup, find_packages
 
-with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "aiocache/_version.py")) as fp:
+with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "aiocache/__init__.py")) as fp:
     try:
         version = re.findall(r"^__version__ = \"([^']+)\"\r?$", fp.read(), re.M)[0]
     except IndexError:
