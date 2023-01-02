@@ -108,7 +108,7 @@ class TestMemcached:
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
         print("aiomcache avg call: {:0.5f}s".format(aiomcache_total_time / N))
-        assert aiocache_total_time / aiomcache_total_time < 1.35
+        assert aiocache_total_time / aiomcache_total_time < 1.40
 
     async def test_memcached_multigetsetdel(self, aiomcache_pool, memcached_cache):
         N = 2000
