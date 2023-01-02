@@ -4,7 +4,7 @@ import pytest
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
 from aiocache.serializers import StringSerializer
-from ..utils import Keys
+from ..utils import Keys, KEY_LOCK
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ class TestRedLock:
     async def test_acquire(self, cache, lock):
         cache.serializer = StringSerializer()
         async with lock:
-            assert await cache.get(Keys.KEY_LOCK) == lock._value
+            assert await cache.get(KEY_LOCK) == lock._value
 
     async def test_release_does_nothing_when_no_lock(self, lock):
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
@@ -24,7 +24,7 @@ class TestRedLock:
     async def test_acquire_release(self, cache, lock):
         async with lock:
             pass
-        assert await cache.get(Keys.KEY_LOCK) is None
+        assert await cache.get(KEY_LOCK) is None
 
     async def test_locking_dogpile(self, mocker, cache):
         mocker.spy(cache, "get")
