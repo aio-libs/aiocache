@@ -253,7 +253,8 @@ class TestRedisCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test:" + Keys.KEY], ["", Keys.KEY], ["my_ns", "my_ns:" + Keys.KEY]),
+        # TODO(PY311): Remove str()
+        ([None, "test:" + str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns:" + str(Keys.KEY)]),
     )
     def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
         assert redis_cache.build_key(Keys.KEY, namespace=namespace) == expected
