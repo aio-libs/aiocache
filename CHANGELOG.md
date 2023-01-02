@@ -10,6 +10,7 @@
 * Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
 * Allow keyword arguments in ``TimingPlugin`` methods.
+* Use ``str()`` in ``_build_key()`` to ensure consistency of enum keys between different Python versions (if using enum keys, upgrading to 0.12 may invalidate existing caches due to key values changing).
 * Fix ``.clear()`` breaking when no keys are present.
 * Fix ``from aiocache import *``.
 * Fix ``.delete()`` when values are falsy.
