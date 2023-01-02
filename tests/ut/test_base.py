@@ -205,6 +205,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
+        # TODO(PY311): Remove str()
         ([None, "test" + str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
