@@ -1,5 +1,6 @@
 import logging
 import pickle  # noqa: S403
+from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ except ImportError:
 _NOT_SET = object()
 
 
-class BaseSerializer:
+class BaseSerializer(ABC):
 
     DEFAULT_ENCODING: Optional[str] = "utf-8"
 
@@ -29,10 +30,12 @@ class BaseSerializer:
         super().__init__(*args, **kwargs)
 
     # TODO(PY38): Positional-only
+    @abstractmethod
     def dumps(self, value: Any) -> str:
         raise NotImplementedError("dumps method must be implemented")
 
     # TODO(PY38): Positional-only
+    @abstractmethod
     def loads(self, value: str) -> Any:
         raise NotImplementedError("loads method must be implemented")
 
