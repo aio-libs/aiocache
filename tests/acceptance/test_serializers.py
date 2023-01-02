@@ -41,7 +41,7 @@ class MySchema(Schema):
         strict = True
 
 
-class MyTypeSchema(Schema, BaseSerializer):
+class MyTypeSchema(BaseSerializer):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.schema = MySchema()
