@@ -126,10 +126,10 @@ jobs:
 
   deploy:
    name: Deploy
-   runs-on: ubuntu-latest
-   needs: test
-   # Run only on pushing a tag
+   environment: release
    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+   needs: [check]
+   runs-on: ubuntu-latest
    steps:
    - name: Checkout
      uses: actions/checkout@v3
