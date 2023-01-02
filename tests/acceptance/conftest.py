@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from aiocache import Cache, caches
-from ..utils import Keys, KEY_LOCK
+from ..utils import KEY_LOCK, Keys
 
 
 @pytest.fixture(autouse=True)
