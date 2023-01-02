@@ -1,6 +1,5 @@
 import pytest
 
-from aiocache.backends.memory import SimpleMemoryBackend
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
 
