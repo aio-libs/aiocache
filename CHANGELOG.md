@@ -1,11 +1,18 @@
 # CHANGELOG
 
 
-## 0.12.0 (2023-xx-xx)
+## 0.12.0 (2023-01-06)
 
 * Add ``async with`` support to ``BaseCache``.
+* Add initial typing support.
+* Migrate to ``redis`` library (``aioredis`` is no longer supported).
+* ``SimpleMemoryBackend`` now has a cache per instance, rather than a global cache.
 * Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
+* Allow keyword arguments in ``TimingPlugin`` methods.
+* Fix ``.clear()`` breaking when no keys are present.
+* Fix ``from aiocache import *``.
+* Fix ``.delete()`` when values are falsy.
 
 ## 0.11.1 (2019-07-31)
 
