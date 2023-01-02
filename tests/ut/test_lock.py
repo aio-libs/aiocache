@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from aiocache.lock import OptimisticLock, OptimisticLockError, RedLock
-from ..utils import Keys, KEY_LOCK
+from ..utils import KEY_LOCK, Keys
 
 
 class TestRedLock:
