@@ -48,6 +48,35 @@ class TestCached:
         await fn("self", 1, 3)
         assert await cache.exists(build_key(fn, "self", 1, 3)) is True
 
+    async def test_cached_without_namespace(self, cache):
+        """Default cache key is created when no namespace is provided"""
+        @cached(namespace=None)
+        async def fn():
+            return "1"
+        decorated_fn = cached(fn, namespace=None)
+        
+        await fn()
+        assert await cache.exists(
+            decorated_fn.get_cache_key(fn, args=(), kwargs={})
+            ) is True
+
+    async def test_cached_with_namespace(self, cache):
+        """Cache key is prefixed with provided namespace"""
+        key_prefix="ns_test"
+
+        @cached(namespace=key_prefix)
+        async def ns_fn():
+            return "1"
+        decorated_ns_fn = cached(ns_fn, namespace=key_prefix)
+        
+        await ns_fn()
+        assert await cache.exists(
+            decorated_ns_fn.get_cache_key(ns_fn, args=(), kwargs={})
+            ) is True
+        assert decorated_ns_fn.get_cache_key(
+            ns_fn, args=(), kwargs={},
+            ).startswith(key_prefix)
+
 
 class TestCachedStampede:
     @pytest.fixture(autouse=True)
