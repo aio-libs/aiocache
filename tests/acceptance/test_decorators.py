@@ -61,7 +61,7 @@ class TestCached:
 
     async def test_cached_with_namespace(self, cache):
         """Cache key is prefixed with provided namespace"""
-        key_prefix = "ns_test"
+        key_prefix = cache.namespace
 
         @cached(namespace=key_prefix)
         async def ns_fn():
