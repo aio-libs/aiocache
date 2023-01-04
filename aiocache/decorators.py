@@ -177,6 +177,11 @@ class cached_stampede(cached):
         key_from_attr param. If key and key_from_attr are not passed, it will use module_name
         + function_name + args + kwargs
     :param key_from_attr: str arg or kwarg name from the function to use as a key.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is None
+    :param key_builder: Callable that allows to build the function dynamically. It receives
+        the function plus same args and kwargs passed to the function.
+        This behavior is necessarily different than ``BaseCache.build_key()``
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -201,7 +206,8 @@ class cached_stampede(cached):
         if value is not None:
             return value
 
-        async with RedLock(self.cache, key, self.lease):
+        async with RedLock(
+                self.cache, key, self.lease, namespace=self._namespace):
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
