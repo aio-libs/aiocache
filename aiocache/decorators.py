@@ -147,7 +147,8 @@ class cached:
             namespace = self._kwargs.get("namespace", None)
             await self.cache.set(key, value, namespace=namespace, ttl=self.ttl)
         except Exception:
-            logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
+            logger.exception(
+                "Couldn't set %s in key %s, unexpected error", value, key)
 
 
 class cached_stampede(cached):
