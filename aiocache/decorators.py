@@ -270,8 +270,11 @@ class multi_cached:
 
     :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
         as keys to index in the cache.
-    :param key_builder: Callable that allows to change the format of the keys before storing.
-        Receives the key the function and same args and kwargs as the called function.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is None
+    :param key_builder: Callable that allows to build the function dynamically. It receives
+        the function plus same args and kwargs passed to the function.
+        This behavior is necessarily different than ``BaseCache.build_key()``
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
@@ -288,6 +291,7 @@ class multi_cached:
     def __init__(
         self,
         keys_from_attr,
+        namespace=None,
         key_builder=None,
         ttl=SENTINEL,
         cache=Cache.MEMORY,
@@ -304,6 +308,7 @@ class multi_cached:
 
         self._cache = cache
         self._serializer = serializer
+        self._namespace = namespace
         self._plugins = plugins
         self._kwargs = kwargs
 
@@ -314,6 +319,7 @@ class multi_cached:
             self.cache = _get_cache(
                 cache=self._cache,
                 serializer=self._serializer,
+                namespace=self._namespace,
                 plugins=self._plugins,
                 **self._kwargs,
             )
@@ -376,20 +382,22 @@ class multi_cached:
         return keys, new_args, keys_index
 
     async def get_from_cache(self, *keys):
+        namespace = self.cache.namespace
         if not keys:
             return []
         try:
-            values = await self.cache.multi_get(keys)
+            values = await self.cache.multi_get(keys, namespace=namespace)
             return values
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", keys)
             return [None] * len(keys)
 
     async def set_in_cache(self, result, fn, fn_args, fn_kwargs):
+        namespace = self.cache.namespace
         try:
             await self.cache.multi_set(
                 [(self.key_builder(k, fn, *fn_args, **fn_kwargs), v) for k, v in result.items()],
-                ttl=self.ttl,
+                namespace=namespace, ttl=self.ttl,
             )
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)
