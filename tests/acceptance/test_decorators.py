@@ -85,10 +85,12 @@ class TestCachedStampede:
 
         await asyncio.gather(decorator(stub)(0.5), decorator(stub)(0.5))
 
-        cache.get.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]", namespace=cache.namespace)
+        cache.get.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]",
+                                     namespace=cache.namespace)
         assert cache.get.call_count == 4
         cache.set.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]",
-            mock.ANY, ttl=10, namespace=cache.namespace)
+                                     mock.ANY, ttl=10,
+                                     namespace=cache.namespace)
         assert cache.set.call_count == 1, cache.set.call_args_list
 
     async def test_locking_dogpile_lease_expiration(self, mocker, cache):
