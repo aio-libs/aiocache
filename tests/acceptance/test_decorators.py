@@ -56,9 +56,8 @@ class TestCached:
         decorated_fn = cached(fn, namespace=None)
         
         await fn()
-        assert await cache.exists(
-            decorated_fn.get_cache_key(fn, args=(), kwargs={})
-            ) is True
+        key = decorated_fn.get_cache_key(fn, args=(), kwargs={})
+        assert await cache.exists(key) is True
 
     async def test_cached_with_namespace(self, cache):
         """Cache key is prefixed with provided namespace"""
@@ -70,12 +69,9 @@ class TestCached:
         decorated_ns_fn = cached(ns_fn, namespace=key_prefix)
         
         await ns_fn()
-        assert await cache.exists(
-            decorated_ns_fn.get_cache_key(ns_fn, args=(), kwargs={})
-            ) is True
-        assert decorated_ns_fn.get_cache_key(
-            ns_fn, args=(), kwargs={},
-            ).startswith(key_prefix)
+        key = decorated_ns_fn.get_cache_key(ns_fn, args=(), kwargs={})
+        assert await cache.exists(key) is True
+        assert key.startswith(key_prefix)
 
 
 class TestCachedStampede:
