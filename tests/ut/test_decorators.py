@@ -54,7 +54,8 @@ class TestCached:
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
-        assert c._kwargs == {"namespace": "test"}
+        assert c._namespace == "test"
+        assert c._kwargs == {}
 
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
@@ -100,7 +101,7 @@ class TestCached:
 
         await decorator_call()
 
-        decorator.cache.get.assert_called_with("stub()[]")
+        decorator.cache.get.assert_called_with("stub()[]", namespace="test")
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
@@ -173,12 +174,14 @@ class TestCached:
 
     async def test_set_calls_set(self, decorator, decorator_call):
         await decorator.set_in_cache("key", "value")
-        decorator.cache.set.assert_called_with("key", "value", ttl=SENTINEL)
+        decorator.cache.set.assert_called_with(
+            "key", "value", namespace="test", ttl=SENTINEL)
 
     async def test_set_calls_set_ttl(self, decorator, decorator_call):
         decorator.ttl = 10
         await decorator.set_in_cache("key", "value")
-        decorator.cache.set.assert_called_with("key", "value", ttl=decorator.ttl)
+        decorator.cache.set.assert_called_with(
+            "key", "value", namespace="test", ttl=decorator.ttl)
 
     async def test_set_catches_exception(self, decorator, decorator_call):
         decorator.cache.set.side_effect = Exception
@@ -209,7 +212,7 @@ class TestCached:
 
     async def test_reuses_cache_instance(self):
         with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
-            cache = create_autospec(BaseCache, instance=True)
+            cache = create_autospec(BaseCache, instance=True, namespace="test")
             get_c.side_effect = [cache, None]
 
             @cached()
@@ -272,14 +275,15 @@ class TestCachedStampede:
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
         assert c.lease == 3
-        assert c._kwargs == {"namespace": "test"}
+        assert c._namespace == "test"
+        assert c._kwargs == {}
 
     async def test_calls_get_and_returns(self, decorator, decorator_call):
         decorator.cache.get.return_value = 1
 
         await decorator_call()
 
-        decorator.cache.get.assert_called_with("stub()[]")
+        decorator.cache.get.assert_called_with("stub()[]", namespace="test")
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
@@ -291,7 +295,7 @@ class TestCachedStampede:
 
     async def test_calls_redlock(self, decorator, decorator_call):
         decorator.cache.get.return_value = None
-        lock = create_autospec(RedLock, instance=True)
+        lock = create_autospec(RedLock, instance=True, namespace="test")
 
         with patch("aiocache.decorators.RedLock", autospec=True, return_value=lock):
             await decorator_call(value="value")
@@ -300,15 +304,16 @@ class TestCachedStampede:
             assert lock.__aenter__.call_count == 1
             assert lock.__aexit__.call_count == 1
             decorator.cache.set.assert_called_with(
-                "stub()[('value', 'value')]", "value", ttl=SENTINEL
+                "stub()[('value', 'value')]", "value",
+                namespace="test", ttl=SENTINEL
             )
             stub.assert_called_once_with(value="value")
 
     async def test_calls_locked_client(self, decorator, decorator_call):
         decorator.cache.get.side_effect = [None, None, None, "value"]
         decorator.cache._add.side_effect = [True, ValueError]
-        lock1 = create_autospec(RedLock, instance=True)
-        lock2 = create_autospec(RedLock, instance=True)
+        lock1 = create_autospec(RedLock, instance=True, namespace="test")
+        lock2 = create_autospec(RedLock, instance=True, namespace="test")
 
         with patch("aiocache.decorators.RedLock", autospec=True, side_effect=[lock1, lock2]):
             await asyncio.gather(decorator_call(value="value"), decorator_call(value="value"))
@@ -319,7 +324,8 @@ class TestCachedStampede:
             assert lock2.__aenter__.call_count == 1
             assert lock2.__aexit__.call_count == 1
             decorator.cache.set.assert_called_with(
-                "stub()[('value', 'value')]", "value", ttl=SENTINEL
+                "stub()[('value', 'value')]", "value",
+                namespace="test", ttl=SENTINEL
             )
             assert stub.call_count == 1
 
@@ -366,7 +372,8 @@ class TestMultiCached:
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
         assert mc._serializer is None
-        assert mc._kwargs == {"namespace": "test"}
+        assert mc._namespace == "test"
+        assert mc._kwargs == {}
 
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
@@ -418,7 +425,8 @@ class TestMultiCached:
         decorator.cache.multi_get.return_value = [1, 2, 3]
 
         assert await decorator.get_from_cache("a", "b", "c") == [1, 2, 3]
-        decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
+        decorator.cache.multi_get.assert_called_with(("a", "b", "c"),
+                                                     namespace="test")
 
     async def test_get_from_cache_no_keys(self, decorator, decorator_call):
         assert await decorator.get_from_cache() == []
@@ -428,13 +436,15 @@ class TestMultiCached:
         decorator.cache.multi_get.side_effect = Exception
 
         assert await decorator.get_from_cache("a", "b", "c") == [None, None, None]
-        decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
+        decorator.cache.multi_get.assert_called_with(("a", "b", "c"),
+                                                     namespace="test")
 
     async def test_get_from_cache_conn(self, decorator, decorator_call):
         decorator.cache.multi_get.return_value = [1, 2, 3]
 
         assert await decorator.get_from_cache("a", "b", "c") == [1, 2, 3]
-        decorator.cache.multi_get.assert_called_with(("a", "b", "c"))
+        decorator.cache.multi_get.assert_called_with(("a", "b", "c"),
+                                                     namespace="test")
 
     async def test_calls_no_keys(self, decorator, decorator_call):
         await decorator_call(keys=[])
@@ -559,7 +569,7 @@ class TestMultiCached:
 
     async def test_reuses_cache_instance(self):
         with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
-            cache = create_autospec(BaseCache, instance=True)
+            cache = create_autospec(BaseCache, instance=True, namespace="test")
             cache.multi_get.return_value = [None]
             get_c.side_effect = [cache, None]
 
