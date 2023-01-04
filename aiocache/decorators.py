@@ -38,8 +38,11 @@ class cached:
     :param key: str value to set as key for the function return. Takes precedence over
         key_builder param. If key and key_builder are not passed, it will use module_name
         + function_name + args + kwargs
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is None
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
+        This behavior is necessarily different than ``BaseCache.build_key()``
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -58,6 +61,7 @@ class cached:
         self,
         ttl=SENTINEL,
         key=None,
+        namespace=None,
         key_builder=None,
         cache=Cache.MEMORY,
         serializer=None,
@@ -75,6 +79,7 @@ class cached:
 
         self._cache = cache
         self._serializer = serializer
+        self._namespace = namespace
         self._plugins = plugins
         self._kwargs = kwargs
 
@@ -85,6 +90,7 @@ class cached:
             self.cache = _get_cache(
                 cache=self._cache,
                 serializer=self._serializer,
+                namespace=self._namespace,
                 plugins=self._plugins,
                 **self._kwargs,
             )
@@ -135,7 +141,7 @@ class cached:
         )
 
     async def get_from_cache(self, key):
-        namespace = self._kwargs.get("namespace", None)
+        namespace = self.cache.namespace
         try:
             return await self.cache.get(key, namespace=namespace)
         except Exception:
@@ -143,7 +149,7 @@ class cached:
         return None
 
     async def set_in_cache(self, key, value):
-        namespace = self._kwargs.get("namespace", None)
+        namespace = self.cache.namespace
         try:
             await self.cache.set(key, value, namespace=namespace, ttl=self.ttl)
         except Exception:
