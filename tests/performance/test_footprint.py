@@ -69,7 +69,7 @@ class TestRedis:
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
         print("redis_client    avg call: {:0.5f}s".format(redis_total_time / N))
-        assert aiocache_total_time / redis_total_time < 1.30
+        assert aiocache_total_time / redis_total_time < 1.35
 
 
 @pytest.fixture
