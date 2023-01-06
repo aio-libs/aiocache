@@ -140,21 +140,18 @@ class cached:
             + str(ordered_kwargs)
         )
 
-    async def get_from_cache(self, key):
-        namespace = self.cache.namespace
+    async def get_from_cache(self, key: str):
         try:
-            return await self.cache.get(key, namespace=namespace)
+            return await self.cache.get(key)
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", key)
         return None
 
     async def set_in_cache(self, key, value):
-        namespace = self.cache.namespace
         try:
-            await self.cache.set(key, value, namespace=namespace, ttl=self.ttl)
+            await self.cache.set(key, value, ttl=self.ttl)
         except Exception:
-            logger.exception(
-                "Couldn't set %s in key %s, unexpected error", value, key)
+            logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
 
 
 class cached_stampede(cached):
@@ -206,8 +203,7 @@ class cached_stampede(cached):
         if value is not None:
             return value
 
-        async with RedLock(
-                self.cache, key, self.lease, namespace=self._namespace):
+        async with RedLock(self.cache, key, self.lease):
             value = await self.get_from_cache(key)
             if value is not None:
                 return value
@@ -220,12 +216,7 @@ class cached_stampede(cached):
 
 
 def _get_cache(cache=Cache.MEMORY, serializer=None, plugins=None, **cache_kwargs):
-    return Cache(
-        cache,
-        serializer=serializer,
-        plugins=plugins,
-        **cache_kwargs,
-    )
+    return Cache(cache, serializer=serializer, plugins=plugins, **cache_kwargs)
 
 
 def _get_args_dict(func, args, kwargs):
@@ -382,22 +373,20 @@ class multi_cached:
         return keys, new_args, keys_index
 
     async def get_from_cache(self, *keys):
-        namespace = self.cache.namespace
         if not keys:
             return []
         try:
-            values = await self.cache.multi_get(keys, namespace=namespace)
+            values = await self.cache.multi_get(keys)
             return values
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", keys)
             return [None] * len(keys)
 
     async def set_in_cache(self, result, fn, fn_args, fn_kwargs):
-        namespace = self.cache.namespace
         try:
             await self.cache.multi_set(
                 [(self.key_builder(k, fn, *fn_args, **fn_kwargs), v) for k, v in result.items()],
-                namespace=namespace, ttl=self.ttl,
+                ttl=self.ttl,
             )
         except Exception:
             logger.exception("Couldn't set %s, unexpected error", result)

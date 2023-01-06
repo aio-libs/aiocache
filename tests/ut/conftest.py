@@ -29,7 +29,7 @@ def reset_caches():
 
 @pytest.fixture
 def mock_cache(mocker):
-    return create_autospec(BaseCache, instance=True, namespace="test")
+    return create_autospec(BaseCache, instance=True)
 
 
 @pytest.fixture

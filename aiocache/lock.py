@@ -62,10 +62,9 @@ class RedLock:
 
     _EVENTS: Dict[str, asyncio.Event] = {}
 
-    def __init__(self, client: BaseCache, key: str, lease: Union[int, float],
-                 namespace=None):
+    def __init__(self, client: BaseCache, key: str, lease: Union[int, float]):
         self.client = client
-        self.key = self.client._build_key(key + "-lock", namespace=namespace)
+        self.key = self.client._build_key(key + "-lock")
         self.lease = lease
         self._value = ""
 
