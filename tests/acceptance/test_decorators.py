@@ -53,10 +53,10 @@ class TestCached:
         @cached(namespace=None)
         async def fn():
             return "1"
-        decorated_fn = cached(fn, namespace=None)
 
         await fn()
-        key = decorated_fn.get_cache_key(fn, args=(), kwargs={})
+        decorator = cached(namespace=None)
+        key = decorator.get_cache_key(fn, args=(), kwargs={})
         assert await cache.exists(key, namespace=None) is True
 
     async def test_cached_with_namespace(self, cache):
@@ -66,10 +66,10 @@ class TestCached:
         @cached(namespace=key_prefix)
         async def ns_fn():
             return "1"
-        decorated_ns_fn = cached(ns_fn, namespace=key_prefix)
 
         await ns_fn()
-        key = decorated_ns_fn.get_cache_key(ns_fn, args=(), kwargs={})
+        decorator = cached(namespace=key_prefix)
+        key = decorator.get_cache_key(ns_fn, args=(), kwargs={})
         assert await cache.exists(key, namespace=key_prefix) is True
 
 
