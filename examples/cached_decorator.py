@@ -52,7 +52,7 @@ caches.add(
 async def test_cached_alias_build_key():
     """Decorate a function with an aliased cache that uses a namespace"""
     async with caches.get("custom") as cache:  # This always returns the same instance
-        @cached(alias="custom")
+        @cached(alias="custom", namespace="ignored", serializer="ignored", plugins="ignored")
         async def custom_cached_call():
             return "result"
 
