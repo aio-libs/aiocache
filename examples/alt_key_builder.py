@@ -4,11 +4,11 @@
     with different meanings.
     1. Custom ``key_builder`` for a cache -- Prepends a namespace to the key
     2. Custom ``key_builder`` for a cache decorator -- Creates a cache key from
-       the decorated callable and thr callable's arguments
+        the decorated callable and thr callable's arguments
 
     --------------------------------------------------------------------------
     1. A custom ``key_builder`` for a cache can manipulate the name of a
-       cache key; for example to meet naming requirements of the backend. 
+        cache key; for example to meet naming requirements of the backend. 
     
     ``key_builder`` can also optionally mark the key as belonging to a 
     namespace group. This enables commonly used key names to be disambiguated 
@@ -31,9 +31,9 @@
 
     --------------------------------------------------------------------------
     2. Custom ``key_builder`` for a cache decorator automatically generates a
-       cache key from the call signature of the decorated callable. It does 
-       not accept a ``namespace`` parameter, and it should not add a 
-       naemspace to the key that it outputs.
+        cache key from the call signature of the decorated callable. It does 
+        not accept a ``namespace`` parameter, and it should not add a 
+        naemspace to the key that it outputs.
 
     Args:
         func (callable): name of the decorated callable
