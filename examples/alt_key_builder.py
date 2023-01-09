@@ -120,8 +120,7 @@ async def demo_cache_key_builders(namespace=None):
 
         for raw_key, return_value in zip(
                 ("key_1", "key_2", "key_3"),
-                ("val_1", "val_2", "val_3"),
-                ):
+                ("val_1", "val_2", "val_3")):
             await cache.set(raw_key, return_value, namespace=namespace)
             exists = await cache.exists(raw_key, namespace=namespace)
             assert exists is True
