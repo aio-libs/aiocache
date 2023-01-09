@@ -215,6 +215,88 @@ class TestBaseCache:
         cache = BaseCache(key_builder=lambda key, namespace: "x")
         assert cache.build_key(Keys.KEY, "namespace") == "x"
 
+    @pytest.mark.parametrize(
+        "namespace, expected",
+        # TODO(PY311): Remove str()
+        ([None, str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns:" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+    )
+    def test_alt_build_key_override_namespace(self, namespace, expected):
+        """Custom key_builder overrides namespace of cache"""
+        def build_key(key, namespace=None):
+            # TODO(PY311): Remove str()
+            ns = namespace if namespace is not None else ''
+            sep = ':' if namespace else ''
+            return f'{ns}{sep}{str(key)}'
+
+        cache = BaseCache(key_builder=build_key, namespace="test")
+        assert cache.build_key(Keys.KEY, namespace=namespace) == expected
+
+    @pytest.mark.parametrize(
+        "init_namespace, expected",
+        # TODO(PY311): Remove str()
+        ([None, str(Keys.KEY)], ["", str(Keys.KEY)], ["test", "test:" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+    )
+    async def test_alt_build_key_default_namespace(self, init_namespace, expected):
+        """Custom key_builder for cache with or without namespace specified.
+
+            Cache member functions that accept a ``namespace`` parameter
+            should default to using ``self.namespace`` if the ``namespace``
+            argument is ``None``.
+
+            This enables a cache to correctly build keys when the cache is
+            initialized with both a ``namespace`` and a ``key_builder``,
+            even when that cache is supplied to a lock or to a decorator
+            using the ``alias`` argument.
+        """
+        def build_key(key, namespace=None):
+            # TODO(PY311): Remove str()
+            ns = namespace if namespace is not None else ''
+            sep = ':' if namespace else ''
+            return f'{ns}{sep}{str(key)}'
+
+        cache = BaseCache(key_builder=build_key, namespace=init_namespace)
+
+        # Verify that private members are called with the correct ns_key
+        with patch.object(cache, "_add", autospec=True) as _add:
+            await cache.add(Keys.KEY, "value")
+            _add.assert_called_once_with(expected, "value", _conn=None, ttl=None)
+
+            with patch.object(cache, "_get", autospec=True) as _get:
+                await cache.get(Keys.KEY)
+                _get.assert_called_once_with(
+                    expected, _conn=None, encoding=cache.serializer.encoding)
+
+            with patch.object(cache, "_multi_get", autospec=True) as _multi_get:
+                await cache.multi_get([Keys.KEY])
+                _multi_get.assert_called_once_with(
+                    [expected], _conn=None, encoding=cache.serializer.encoding)
+
+            with patch.object(cache, "_set", autospec=True) as _set:
+                await cache.set(Keys.KEY, "value")
+                _set.assert_called_once_with(
+                    expected, "value", _conn=None, ttl=None, _cas_token=None)
+
+            with patch.object(cache, "_multi_set", autospec=True) as _multi_set:
+                await cache.multi_set([(Keys.KEY, "value")])
+                _multi_set.assert_called_once_with(
+                    [(expected, "value")], _conn=None, ttl=None)
+
+            with patch.object(cache, "_exists", autospec=True) as _exists:
+                await cache.exists(Keys.KEY)
+                _exists.assert_called_once_with(expected, _conn=None)
+
+            with patch.object(cache, "_increment", autospec=True) as _increment:
+                await cache.increment(Keys.KEY)
+                _increment.assert_called_once_with(expected, delta=1, _conn=None)
+
+            with patch.object(cache, "_delete", autospec=True) as _delete:
+                await cache.delete(Keys.KEY)
+                _delete.assert_called_once_with(expected, _conn=None)
+
+            with patch.object(cache, "_expire", autospec=True) as _expire:
+                await cache.expire(Keys.KEY, 0)
+                _expire.assert_called_once_with(expected, 0, _conn=None)
+
     async def test_add_ttl_cache_default(self, base_cache):
         with patch.object(base_cache, "_add", autospec=True) as m:
             await base_cache.add(Keys.KEY, "value")
