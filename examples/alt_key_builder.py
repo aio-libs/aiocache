@@ -1,6 +1,6 @@
 """alt_key_builder.py
 
-    ``key_builder`` is used in two contexts within ``aiocache``, 
+    ``key_builder`` is used in two contexts within ``aiocache``,
     with different meanings.
     1. Custom ``key_builder`` for a cache -- Prepends a namespace to the key
     2. Custom ``key_builder`` for a cache decorator -- Creates a cache key from
@@ -8,14 +8,14 @@
 
     --------------------------------------------------------------------------
     1. A custom ``key_builder`` for a cache can manipulate the name of a
-       cache key; for example to meet naming requirements of the backend. 
-    
-    ``key_builder`` can also optionally mark the key as belonging to a 
-    namespace group. This enables commonly used key names to be disambiguated 
-    by their ``namespace`` value. It also enables bulk operation on cache keys, 
+       cache key; for example to meet naming requirements of the backend.
+
+    ``key_builder`` can also optionally mark the key as belonging to a
+    namespace group. This enables commonly used key names to be disambiguated
+    by their ``namespace`` value. It also enables bulk operation on cache keys,
     such as expiring all keys in the same namespace.
-    
-    ``key_builder`` is expected (but not required) to prefix the passed key 
+
+    ``key_builder`` is expected (but not required) to prefix the passed key
     argument with the namespace argument. After initializing the cache object,
     the key builder can be accessed via the cache's ``build_key`` member.
 
@@ -26,13 +26,13 @@
     Returns:
         By default, ``cache.build_key()`` returns ``f'{namespace}{sep}{key}'``,
         where some backends might include an optional separator, ``sep``.
-        Some backends might strip or replace illegal characters, and encode 
+        Some backends might strip or replace illegal characters, and encode
         the result before returning it. Typically str or bytes.
 
     --------------------------------------------------------------------------
     2. Custom ``key_builder`` for a cache decorator automatically generates a
-       cache key from the call signature of the decorated callable. It does 
-       not accept a ``namespace`` parameter, and it should not add a 
+       cache key from the call signature of the decorated callable. It does
+       not accept a ``namespace`` parameter, and it should not add a
        naemspace to the key that it outputs.
 
     Args:
@@ -43,7 +43,6 @@
     Returns (str):
         By default, the output key is a concatenation of the module and name
         of ``func`` + the positional arguments + the sorted keyword arguments.
-
 """
 import asyncio
 from typing import List, Dict
