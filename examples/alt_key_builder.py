@@ -82,7 +82,8 @@ def fixed_key(key, namespace=None):
 
 async def demo_cache_key_builders(namespace=None):
     """Demonstrate usage and behavior of the custom key_builder functions"""
-    async with Cache(Cache.MEMORY, key_builder=ensure_no_spaces) as cache:
+    cache_ns = "cache_namespace"
+    async with Cache(Cache.MEMORY, key_builder=ensure_no_spaces, namespace=cache_ns) as cache:
         raw_key = "Key With Unwanted Spaces"
         return_value = 42
         await cache.add(raw_key, return_value, namespace=namespace)
@@ -92,6 +93,12 @@ async def demo_cache_key_builders(namespace=None):
         assert ' ' not in custom_key
         if namespace is not None:
             assert custom_key.startswith(namespace)
+        else:
+            # Using cache.namespace instead
+            exists = await cache.exists(raw_key, namespace=cache_ns)
+            assert exists is True
+            custom_key = cache.build_key(raw_key, namespace=cache_ns)
+            assert custom_key.startswith(cache_ns)
         cached_value = await cache.get(raw_key, namespace=namespace)
         assert cached_value == return_value
         await cache.delete(raw_key, namespace=namespace)
