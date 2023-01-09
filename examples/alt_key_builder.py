@@ -4,11 +4,11 @@
     with different meanings.
     1. Custom ``key_builder`` for a cache -- Prepends a namespace to the key
     2. Custom ``key_builder`` for a cache decorator -- Creates a cache key from
-        the decorated callable and thr callable's arguments
+       the decorated callable and thr callable's arguments
 
     --------------------------------------------------------------------------
     1. A custom ``key_builder`` for a cache can manipulate the name of a
-        cache key; for example to meet naming requirements of the backend. 
+       cache key; for example to meet naming requirements of the backend. 
     
     ``key_builder`` can also optionally mark the key as belonging to a 
     namespace group. This enables commonly used key names to be disambiguated 
@@ -31,9 +31,9 @@
 
     --------------------------------------------------------------------------
     2. Custom ``key_builder`` for a cache decorator automatically generates a
-        cache key from the call signature of the decorated callable. It does 
-        not accept a ``namespace`` parameter, and it should not add a 
-        naemspace to the key that it outputs.
+       cache key from the call signature of the decorated callable. It does 
+       not accept a ``namespace`` parameter, and it should not add a 
+       naemspace to the key that it outputs.
 
     Args:
         func (callable): name of the decorated callable
@@ -121,7 +121,7 @@ async def demo_cache_key_builders(namespace=None):
         for raw_key, return_value in zip(
                 ("key_1", "key_2", "key_3"),
                 ("val_1", "val_2", "val_3"),
-            ):
+                ):
             await cache.set(raw_key, return_value, namespace=namespace)
             exists = await cache.exists(raw_key, namespace=namespace)
             assert exists is True
@@ -176,14 +176,12 @@ def hashed_args(*args, **kwargs):
             key += tuple(hashed_args(_arg) for _arg in arg)
         elif isinstance(arg, Dict):
             key += tuple(sorted(
-                (_key, hashed_args(_value)) 
-                    for (_key, _value) in arg.items()
+                (_key, hashed_args(_value)) for (_key, _value) in arg.items()
             ))
         else:
             key += (arg, )
     key += tuple(sorted(
-        (_key, hashed_args(_value)) 
-            for (_key, _value) in kwargs.items()
+        (_key, hashed_args(_value)) for (_key, _value) in kwargs.items()
     ))
     return key
 
