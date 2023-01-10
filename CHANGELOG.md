@@ -3,18 +3,18 @@
 
 ## 0.12.0 (2023-01-13)
 
-* Add ``async with`` support to ``BaseCache``.
-* Add initial typing support.
-* Migrate to ``redis`` library (``aioredis`` is no longer supported).
+* Added ``async with`` support to ``BaseCache``.
+* Added initial typing support.
+* Migrated to ``redis`` library (``aioredis`` is no longer supported).
 * ``SimpleMemoryBackend`` now has a cache per instance, rather than a global cache.
 * Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569) -- Padraic Shafer
-* Remove deprecated ``loop`` parameters.
-* Remove deprecated ``cache`` parameter from ``create()``.
-* Allow keyword arguments in ``TimingPlugin`` methods.
-* Fix inconsistent enum keys between different Python versions. -- Padraic Shafer
-* Fix ``.clear()`` breaking when no keys are present.
-* Fix ``from aiocache import *``.
-* Fix ``.delete()`` when values are falsy.
+* Removed deprecated ``loop`` parameters.
+* Removed deprecated ``cache`` parameter from ``create()``.
+* Added support for keyword arguments in ``TimingPlugin`` methods.
+* Fixed inconsistent enum keys between different Python versions. -- Padraic Shafer
+* Fixed ``.clear()`` breaking when no keys are present.
+* Fixed ``from aiocache import *``.
+* Fixed ``.delete()`` when values are falsy.
 
 ## 0.11.1 (2019-07-31)
 
