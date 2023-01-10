@@ -1,7 +1,7 @@
 # CHANGELOG
 
 
-## 0.12.0 (2023-01-06)
+## 0.12.0 (2023-01-13)
 
 * Add ``async with`` support to ``BaseCache``.
 * Add initial typing support.
