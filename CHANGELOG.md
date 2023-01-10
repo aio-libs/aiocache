@@ -7,11 +7,12 @@
 * Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
 * Use ``str()`` in ``_build_key()`` to ensure consistency of enum keys between different Python versions (if using enum keys, upgrading to 0.12 may invalidate existing caches due to key values changing).
-* Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569)
- `BaseCache.build_key` uses `namespace` argument if provided, otherwise it uses `self.namespace`.
- Cache locks use `client.build_key` rather than `client._build_key`.
- Include examples of using a custom `key_builder` when creating a cache.
- Warn when decorator parameters are unused because alias takes precedence.
+* Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569) - Padraic Shafer
+    * `BaseCache.build_key` uses `namespace` argument if provided,
+    otherwise it uses `self.namespace`.
+    * Cache locks use `client.build_key` rather than `client._build_key`.
+    * Include examples of using a custom `key_builder` when creating a cache.
+    * Warn when decorator parameters are unused because alias takes precedence.
 
 ## 0.11.1 (2019-07-31)
 
