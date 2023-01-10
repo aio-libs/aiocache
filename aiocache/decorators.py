@@ -309,6 +309,9 @@ class multi_cached:
     def __call__(self, f):
         if self.alias:
             self.cache = caches.get(self.alias)
+            for arg in ("serializer", "namespace", "plugins"):
+                if getattr(self, f'_{arg}', None) is not None:
+                    logger.warning(f"Using cache alias; ignoring '{arg}' argument.")
         else:
             self.cache = _get_cache(
                 cache=self._cache,
