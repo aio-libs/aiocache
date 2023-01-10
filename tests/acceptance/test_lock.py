@@ -12,29 +12,28 @@ def lock(cache):
     return RedLock(cache, Keys.KEY, 20)
 
 
-@pytest.fixture
-def custom_redis_cache(mocker, redis_cache):
-    def build_key(key, namespace=None):
-        return "custom_key"
+def build_key(key, namespace=None):
+    return "custom_key"
 
+
+def build_key_bytes(key, namespace=None):
+    return b"custom_key"
+
+
+@pytest.fixture
+def custom_redis_cache(mocker, redis_cache, build_key=build_key):
     mocker.patch.object(redis_cache, "build_key", new=build_key)
     yield redis_cache
 
 
 @pytest.fixture
-def custom_memory_cache(mocker, memory_cache):
-    def build_key(key, namespace=None):
-        return "custom_key"
-
+def custom_memory_cache(mocker, memory_cache, build_key=build_key):
     mocker.patch.object(memory_cache, "build_key", new=build_key)
     yield memory_cache
 
 
 @pytest.fixture
-def custom_memcached_cache(mocker, memcached_cache):
-    def build_key(key, namespace=None):
-        return b"custom_key"
-
+def custom_memcached_cache(mocker, memcached_cache, build_key=build_key_bytes):
     mocker.patch.object(memcached_cache, "build_key", new=build_key)
     yield memcached_cache
 
