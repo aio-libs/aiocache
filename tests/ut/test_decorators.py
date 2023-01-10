@@ -46,6 +46,7 @@ class TestCached:
             alias=None,
             noself=False,
             namespace="test",
+            unused_kwarg="unused",
         )
 
         assert c.ttl == 1
@@ -54,7 +55,8 @@ class TestCached:
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
-        assert c._kwargs == {"namespace": "test"}
+        assert c._namespace == "test"
+        assert c._kwargs == {"unused_kwarg": "unused"}
 
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
@@ -263,6 +265,7 @@ class TestCachedStampede:
             alias=None,
             noself=False,
             namespace="test",
+            unused_kwarg="unused",
         )
 
         assert c.ttl == 1
@@ -272,7 +275,8 @@ class TestCachedStampede:
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
         assert c.lease == 3
-        assert c._kwargs == {"namespace": "test"}
+        assert c._namespace == "test"
+        assert c._kwargs == {"unused_kwarg": "unused"}
 
     async def test_calls_get_and_returns(self, decorator, decorator_call):
         decorator.cache.get.return_value = 1
@@ -355,6 +359,7 @@ class TestMultiCached:
             plugins=None,
             alias=None,
             namespace="test",
+            unused_kwarg="unused",
         )
 
         def f():
@@ -366,7 +371,8 @@ class TestMultiCached:
         assert mc.cache is None
         assert mc._cache == SimpleMemoryCache
         assert mc._serializer is None
-        assert mc._kwargs == {"namespace": "test"}
+        assert mc._namespace == "test"
+        assert mc._kwargs == {"unused_kwarg": "unused"}
 
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
