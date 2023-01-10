@@ -3,6 +3,7 @@ import functools
 import logging
 import os
 import time
+from enum import Enum
 from types import TracebackType
 from typing import Callable, Optional, Set, Type
 
@@ -162,7 +163,8 @@ class BaseCache:
         """
         start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
 
         await self._add(ns_key, dumps(value), ttl=self._get_ttl(ttl), _conn=_conn)
 
@@ -191,7 +193,8 @@ class BaseCache:
         """
         start = time.monotonic()
         loads = loads_fn or self._serializer.loads
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
 
         value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
 
@@ -222,8 +225,9 @@ class BaseCache:
         """
         start = time.monotonic()
         loads = loads_fn or self._serializer.loads
+        ns = namespace if namespace is not None else self.namespace
 
-        ns_keys = [self.build_key(key, namespace=namespace) for key in keys]
+        ns_keys = [self.build_key(key, namespace=ns) for key in keys]
         values = [
             loads(value)
             for value in await self._multi_get(
@@ -266,7 +270,8 @@ class BaseCache:
         """
         start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
 
         res = await self._set(
             ns_key, dumps(value), ttl=self._get_ttl(ttl), _cas_token=_cas_token, _conn=_conn
@@ -299,10 +304,11 @@ class BaseCache:
         """
         start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
+        ns = namespace if namespace is not None else self.namespace
 
         tmp_pairs = []
         for key, value in pairs:
-            tmp_pairs.append((self.build_key(key, namespace=namespace), dumps(value)))
+            tmp_pairs.append((self.build_key(key, namespace=ns), dumps(value)))
 
         await self._multi_set(tmp_pairs, ttl=self._get_ttl(ttl), _conn=_conn)
 
@@ -333,7 +339,8 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
         ret = await self._delete(ns_key, _conn=_conn)
         logger.debug("DELETE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -357,7 +364,8 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
         ret = await self._exists(ns_key, _conn=_conn)
         logger.debug("EXISTS %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -384,7 +392,8 @@ class BaseCache:
         :raises: :class:`TypeError` if value is not incrementable
         """
         start = time.monotonic()
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
         ret = await self._increment(ns_key, delta, _conn=_conn)
         logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -409,7 +418,8 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        ns_key = self.build_key(key, namespace=namespace)
+        ns = namespace if namespace is not None else self.namespace
+        ns_key = self.build_key(key, namespace=ns)
         ret = await self._expire(ns_key, ttl, _conn=_conn)
         logger.debug("EXPIRE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -489,14 +499,10 @@ class BaseCache:
         pass
 
     def _build_key(self, key, namespace=None):
-        # TODO(PY311): Remove str() calls.
-        # str() is needed to ensure consistent results when using enums between
-        # Python 3.11+ and older releases due to changed __format__() method:
-        # https://docs.python.org/3/whatsnew/3.11.html#enum
         if namespace is not None:
-            return "{}{}".format(namespace, str(key))
+            return "{}{}".format(namespace, _ensure_key(key))
         if self.namespace is not None:
-            return "{}{}".format(self.namespace, str(key))
+            return "{}{}".format(self.namespace, _ensure_key(key))
         return key
 
     def _get_ttl(self, ttl):
@@ -542,6 +548,13 @@ class _Conn:
             return await getattr(self._cache, cmd_name)(*args, _conn=self._conn, **kwargs)
 
         return _do_inject_conn
+
+
+def _ensure_key(key):
+    if isinstance(key, Enum):
+        return key.value
+    else:
+        return key
 
 
 for cmd in API.CMDS:

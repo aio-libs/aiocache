@@ -7,10 +7,11 @@
 * Add initial typing support.
 * Migrate to ``redis`` library (``aioredis`` is no longer supported).
 * ``SimpleMemoryBackend`` now has a cache per instance, rather than a global cache.
+* Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569) -- Padraic Shafer
 * Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
 * Allow keyword arguments in ``TimingPlugin`` methods.
-* Use ``str()`` in ``_build_key()`` to ensure consistency of enum keys between different Python versions (if using enum keys, upgrading to 0.12 may invalidate existing caches due to key values changing).
+* Fix inconsistent enum keys between different Python versions. -- Padraic Shafer
 * Fix ``.clear()`` breaking when no keys are present.
 * Fix ``from aiocache import *``.
 * Fix ``.delete()`` when values are falsy.

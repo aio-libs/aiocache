@@ -64,7 +64,7 @@ class RedLock:
 
     def __init__(self, client: BaseCache, key: str, lease: Union[int, float]):
         self.client = client
-        self.key = self.client._build_key(key + "-lock")
+        self.key = self.client.build_key(key + "-lock")
         self.lease = lease
         self._value = ""
 
@@ -136,7 +136,7 @@ class OptimisticLock:
     def __init__(self, client: BaseCache, key: str):
         self.client = client
         self.key = key
-        self.ns_key = self.client._build_key(key)
+        self.ns_key = self.client.build_key(key)
         self._token = None
 
     async def __aenter__(self):

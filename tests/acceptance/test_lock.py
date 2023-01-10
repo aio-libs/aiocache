@@ -12,6 +12,32 @@ def lock(cache):
     return RedLock(cache, Keys.KEY, 20)
 
 
+def build_key(key, namespace=None):
+    return "custom_key"
+
+
+def build_key_bytes(key, namespace=None):
+    return b"custom_key"
+
+
+@pytest.fixture
+def custom_redis_cache(mocker, redis_cache, build_key=build_key):
+    mocker.patch.object(redis_cache, "build_key", new=build_key)
+    yield redis_cache
+
+
+@pytest.fixture
+def custom_memory_cache(mocker, memory_cache, build_key=build_key):
+    mocker.patch.object(memory_cache, "build_key", new=build_key)
+    yield memory_cache
+
+
+@pytest.fixture
+def custom_memcached_cache(mocker, memcached_cache, build_key=build_key_bytes):
+    mocker.patch.object(memcached_cache, "build_key", new=build_key)
+    yield memcached_cache
+
+
 class TestRedLock:
     async def test_acquire(self, cache, lock):
         cache.serializer = StringSerializer()
@@ -75,6 +101,15 @@ class TestMemoryRedLock:
     def lock(self, memory_cache):
         return RedLock(memory_cache, Keys.KEY, 20)
 
+    async def test_acquire_key_builder(self, custom_memory_cache, lock):
+        async with lock:
+            assert await custom_memory_cache.get(KEY_LOCK) == lock._value
+
+    async def test_acquire_release_key_builder(self, custom_memory_cache, lock):
+        async with lock:
+            assert await custom_memory_cache.get(KEY_LOCK) is not None
+        assert await custom_memory_cache.get(KEY_LOCK) is None
+
     async def test_release_wrong_token_fails(self, lock):
         await lock.__aenter__()
         lock._value = "random"
@@ -97,6 +132,17 @@ class TestRedisRedLock:
     def lock(self, redis_cache):
         return RedLock(redis_cache, Keys.KEY, 20)
 
+    async def test_acquire_key_builder(self, custom_redis_cache, lock):
+        custom_redis_cache.serializer = StringSerializer()
+        async with lock:
+            assert await custom_redis_cache.get(KEY_LOCK) == lock._value
+
+    async def test_acquire_release_key_builder(self, custom_redis_cache, lock):
+        custom_redis_cache.serializer = StringSerializer()
+        async with lock:
+            assert await custom_redis_cache.get(KEY_LOCK) is not None
+        assert await custom_redis_cache.get(KEY_LOCK) is None
+
     async def test_release_wrong_token_fails(self, lock):
         await lock.__aenter__()
         lock._value = "random"
@@ -118,6 +164,17 @@ class TestMemcachedRedLock:
     @pytest.fixture
     def lock(self, memcached_cache):
         return RedLock(memcached_cache, Keys.KEY, 20)
+
+    async def test_acquire_key_builder(self, custom_memcached_cache, lock):
+        custom_memcached_cache.serializer = StringSerializer()
+        async with lock:
+            assert await custom_memcached_cache.get(KEY_LOCK) == lock._value
+
+    async def test_acquire_release_key_builder(self, custom_memcached_cache, lock):
+        custom_memcached_cache.serializer = StringSerializer()
+        async with lock:
+            assert await custom_memcached_cache.get(KEY_LOCK) is not None
+        assert await custom_memcached_cache.get(KEY_LOCK) is None
 
     async def test_release_wrong_token_succeeds_meh(self, lock):
         await lock.__aenter__()
@@ -183,6 +240,12 @@ class TestMemoryOptimisticLock:
     def lock(self, memory_cache):
         return OptimisticLock(memory_cache, Keys.KEY)
 
+    async def test_acquire_key_builder(self, custom_memory_cache, lock):
+        await custom_memory_cache.set(Keys.KEY, "value")
+        async with lock:
+            assert await custom_memory_cache.get(KEY_LOCK) == lock._token
+        await custom_memory_cache.delete(Keys.KEY, "value")
+
     async def test_check_and_set_with_float_ttl(self, memory_cache, lock):
         await memory_cache.set(Keys.KEY, "previous_value")
         async with lock as locked:
@@ -196,6 +259,13 @@ class TestRedisOptimisticLock:
     @pytest.fixture
     def lock(self, redis_cache):
         return OptimisticLock(redis_cache, Keys.KEY)
+
+    async def test_acquire_key_builder(self, custom_redis_cache, lock):
+        custom_redis_cache.serializer = StringSerializer()
+        await custom_redis_cache.set(Keys.KEY, "value")
+        async with lock:
+            assert await custom_redis_cache.get(KEY_LOCK) == lock._token
+        await custom_redis_cache.delete(Keys.KEY, "value")
 
     async def test_check_and_set_with_float_ttl(self, redis_cache, lock):
         await redis_cache.set(Keys.KEY, "previous_value")

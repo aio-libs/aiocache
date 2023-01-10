@@ -4,7 +4,7 @@ import aiomcache
 import pytest
 
 from aiocache.backends.memcached import MemcachedBackend, MemcachedCache
-from aiocache.base import BaseCache
+from aiocache.base import BaseCache, _ensure_key
 from aiocache.serializers import JsonSerializer
 from ...utils import Keys
 
@@ -249,8 +249,7 @@ class TestMemcachedCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        # TODO(PY311): Remove str()
-        ([None, "test" + str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test" + _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_build_key_bytes(self, set_test_namespace, memcached_cache, namespace, expected):
         assert memcached_cache.build_key(Keys.KEY, namespace=namespace) == expected.encode()
