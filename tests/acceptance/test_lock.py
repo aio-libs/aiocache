@@ -12,6 +12,33 @@ def lock(cache):
     return RedLock(cache, Keys.KEY, 20)
 
 
+@pytest.fixture
+def custom_redis_cache(mocker, redis_cache):
+    def build_key(key, namespace=None):
+        return "custom_key"
+
+    mocker.patch.object(redis_cache, "build_key", new=build_key)
+    yield redis_cache
+
+
+@pytest.fixture
+def custom_memory_cache(mocker, memory_cache):
+    def build_key(key, namespace=None):
+        return "custom_key"
+
+    mocker.patch.object(memory_cache, "build_key", new=build_key)
+    yield memory_cache
+
+
+@pytest.fixture
+def custom_memcached_cache(mocker, memcached_cache):
+    def build_key(key, namespace=None):
+        return b"custom_key"
+
+    mocker.patch.object(memcached_cache, "build_key", new=build_key)
+    yield memcached_cache
+
+
 class TestRedLock:
     async def test_acquire(self, cache, lock):
         cache.serializer = StringSerializer()
@@ -75,14 +102,6 @@ class TestMemoryRedLock:
     def lock(self, memory_cache):
         return RedLock(memory_cache, Keys.KEY, 20)
 
-    @pytest.fixture
-    def custom_memory_cache(self, mocker, memory_cache):
-        def build_key(key, namespace=None):
-            return "custom_key"
-
-        mocker.patch.object(memory_cache, "build_key", new=build_key)
-        yield memory_cache
-
     async def test_acquire_key_builder(self, custom_memory_cache, lock):
         async with lock:
             assert await custom_memory_cache.get(KEY_LOCK) == lock._value
@@ -113,14 +132,6 @@ class TestRedisRedLock:
     @pytest.fixture
     def lock(self, redis_cache):
         return RedLock(redis_cache, Keys.KEY, 20)
-
-    @pytest.fixture
-    def custom_redis_cache(self, mocker, redis_cache):
-        def build_key(key, namespace=None):
-            return "custom_key"
-
-        mocker.patch.object(redis_cache, "build_key", new=build_key)
-        yield redis_cache
 
     async def test_acquire_key_builder(self, custom_redis_cache, lock):
         custom_redis_cache.serializer = StringSerializer()
@@ -154,14 +165,6 @@ class TestMemcachedRedLock:
     @pytest.fixture
     def lock(self, memcached_cache):
         return RedLock(memcached_cache, Keys.KEY, 20)
-
-    @pytest.fixture
-    async def custom_memcached_cache(self, mocker, memcached_cache):
-        def build_key(key, namespace=None):
-            return b"custom_key"
-
-        mocker.patch.object(memcached_cache, "build_key", new=build_key)
-        yield memcached_cache
 
     async def test_acquire_key_builder(self, custom_memcached_cache, lock):
         custom_memcached_cache.serializer = StringSerializer()
@@ -238,14 +241,6 @@ class TestMemoryOptimisticLock:
     def lock(self, memory_cache):
         return OptimisticLock(memory_cache, Keys.KEY)
 
-    @pytest.fixture
-    def custom_memory_cache(self, mocker, memory_cache):
-        def build_key(key, namespace=None):
-            return "custom_key"
-
-        mocker.patch.object(memory_cache, "build_key", new=build_key)
-        yield memory_cache
-
     async def test_acquire_key_builder(self, custom_memory_cache, lock):
         await custom_memory_cache.set(Keys.KEY, "value")
         async with lock:
@@ -265,14 +260,6 @@ class TestRedisOptimisticLock:
     @pytest.fixture
     def lock(self, redis_cache):
         return OptimisticLock(redis_cache, Keys.KEY)
-
-    @pytest.fixture
-    def custom_redis_cache(self, mocker, redis_cache):
-        def build_key(key, namespace=None):
-            return "custom_key"
-
-        mocker.patch.object(redis_cache, "build_key", new=build_key)
-        yield redis_cache
 
     async def test_acquire_key_builder(self, custom_redis_cache, lock):
         custom_redis_cache.serializer = StringSerializer()
