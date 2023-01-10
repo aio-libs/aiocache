@@ -1,7 +1,10 @@
-from enum import Enum
+try:
+    from enum import StrEnum
+except ImportError:
+    from strenum import StrEnum
 
 
-class Keys(str, Enum):
+class Keys(StrEnum):
     KEY: str = "key"
     KEY_1: str = "random"
 
