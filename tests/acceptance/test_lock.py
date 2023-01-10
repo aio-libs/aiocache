@@ -76,13 +76,12 @@ class TestMemoryRedLock:
         return RedLock(memory_cache, Keys.KEY, 20)
 
     @pytest.fixture
-    def set_key_builder(self, memory_cache):
+    def custom_memory_cache(self, memory_cache):
         def build_key(key, namespace=None):
             return "custom_key"
 
-        memory_cache.build_key = build_key
-        yield
-        memory_cache.build_key = memory_cache._build_key
+        with patch.object(memory_cache, "build_key", new=build_key):
+            yield memory_cache
 
     async def test_acquire_key_builder(self, set_key_builder, memory_cache, lock):
         async with lock:
@@ -160,7 +159,7 @@ class TestMemcachedRedLock:
     @pytest.fixture
     def set_key_builder(self, memcached_cache):
         def build_key(key, namespace=None):
-            return "custom_key".encode()
+            return b"custom_key"
 
         memcached_cache.build_key = build_key
         yield

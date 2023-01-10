@@ -220,9 +220,9 @@ class TestBaseCache:
         """Custom key_builder for cache"""
         def build_key(key, namespace=None):
             # TODO(PY311): Remove str()
-            ns = namespace if namespace is not None else ''
-            sep = ':' if namespace else ''
-            return f'{ns}{sep}{str(key)}'
+            ns = namespace if namespace is not None else ""
+            sep = ":" if namespace else ""
+            return f"{ns}{sep}{str(key)}"
 
         cache = BaseCache(key_builder=build_key, namespace=init_namespace)
         return cache
@@ -246,14 +246,14 @@ class TestBaseCache:
             self, init_namespace, alt_base_cache, expected):
         """Custom key_builder for cache with or without namespace specified.
 
-            Cache member functions that accept a ``namespace`` parameter
-            should default to using ``self.namespace`` if the ``namespace``
-            argument is ``None``.
+        Cache member functions that accept a ``namespace`` parameter
+        should default to using ``self.namespace`` if the ``namespace``
+        argument is ``None``.
 
-            This enables a cache to correctly build keys when the cache is
-            initialized with both a ``namespace`` and a ``key_builder``,
-            even when that cache is supplied to a lock or to a decorator
-            using the ``alias`` argument.
+        This enables a cache to correctly build keys when the cache is
+        initialized with both a ``namespace`` and a ``key_builder``,
+        even when that cache is supplied to a lock or to a decorator
+        using the ``alias`` argument.
         """
         cache = alt_base_cache
         cache.namespace = init_namespace

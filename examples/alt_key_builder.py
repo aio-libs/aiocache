@@ -4,7 +4,7 @@
     with different meanings.
     1. Custom ``key_builder`` for a cache -- Prepends a namespace to the key
     2. Custom ``key_builder`` for a cache decorator -- Creates a cache key from
-       the decorated callable and thr callable's arguments
+       the decorated callable and the callable's arguments
 
     --------------------------------------------------------------------------
     1. A custom ``key_builder`` for a cache can manipulate the name of a
