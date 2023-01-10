@@ -219,11 +219,10 @@ class RedisCache(RedisBackend):
         return options
 
     def _build_key(self, key, namespace=None):
-        # TODO(PY311): Remove str()
         if namespace is not None:
-            return "{}{}{}".format(namespace, ":" if namespace else "", str(key))
+            return f'{namespace}{":" if namespace else ""}{key}'
         if self.namespace is not None:
-            return "{}{}{}".format(self.namespace, ":" if self.namespace else "", str(key))
+            return f'{self.namespace}{":" if self.namespace else ""}{key}'
         return key
 
     def __repr__(self):  # pragma: no cover
