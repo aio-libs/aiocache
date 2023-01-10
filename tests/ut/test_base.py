@@ -4,7 +4,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from aiocache.base import API, BaseCache, _Conn
+from aiocache.base import API, BaseCache, _Conn, _ensure_key
 from ..utils import Keys
 
 
@@ -205,8 +205,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        # TODO(PY311): Remove str()
-        ([None, "test" + str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test" + _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
         assert base_cache.build_key(Keys.KEY, namespace=namespace) == expected
@@ -219,18 +218,16 @@ class TestBaseCache:
     def alt_base_cache(self, init_namespace="test"):
         """Custom key_builder for cache"""
         def build_key(key, namespace=None):
-            # TODO(PY311): Remove str()
             ns = namespace if namespace is not None else ""
             sep = ":" if namespace else ""
-            return f"{ns}{sep}{str(key)}"
+            return f"{ns}{sep}{_ensure_key(key)}"
 
         cache = BaseCache(key_builder=build_key, namespace=init_namespace)
         return cache
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        # TODO(PY311): Remove str()
-        ([None, str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns:" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_alt_build_key_override_namespace(self, alt_base_cache, namespace, expected):
         """Custom key_builder overrides namespace of cache"""
@@ -239,8 +236,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "init_namespace, expected",
-        # TODO(PY311): Remove str()
-        ([None, str(Keys.KEY)], ["", str(Keys.KEY)], ["test", "test:" + str(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["test", "test:" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     async def test_alt_build_key_default_namespace(
             self, init_namespace, alt_base_cache, expected):

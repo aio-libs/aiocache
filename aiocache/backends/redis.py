@@ -4,7 +4,7 @@ import warnings
 import redis.asyncio as redis
 from redis.exceptions import ResponseError as IncrbyException
 
-from aiocache.base import BaseCache
+from aiocache.base import BaseCache, _ensure_key
 from aiocache.serializers import JsonSerializer
 
 
@@ -219,11 +219,12 @@ class RedisCache(RedisBackend):
         return options
 
     def _build_key(self, key, namespace=None):
-        # TODO(PY311): Remove str()
         if namespace is not None:
-            return "{}{}{}".format(namespace, ":" if namespace else "", str(key))
+            return "{}{}{}".format(
+                namespace, ":" if namespace else "", _ensure_key(key))
         if self.namespace is not None:
-            return "{}{}{}".format(self.namespace, ":" if self.namespace else "", str(key))
+            return "{}{}{}".format(
+                self.namespace, ":" if self.namespace else "", _ensure_key(key))
         return key
 
     def __repr__(self):  # pragma: no cover

@@ -6,7 +6,8 @@
 * Add ``async with`` support to ``BaseCache``.
 * Remove deprecated ``loop`` parameters.
 * Remove deprecated ``cache`` parameter from ``create()``.
-* Use ``str()`` in ``_build_key()`` to ensure consistency of enum keys between different Python versions (if using enum keys, upgrading to 0.12 may invalidate existing caches due to key values changing).
+* Use ``base._ensure_key()`` in ``_build_key()`` to ensure consistency of enum
+keys between different Python versions. [#633](https://github.com/aio-libs/aiocache/issues/633) -- Padraic Shafer
 * Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569) - Padraic Shafer
     * `BaseCache.build_key` uses `namespace` argument if provided,
     otherwise it uses `self.namespace`.

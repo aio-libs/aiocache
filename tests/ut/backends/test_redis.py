@@ -5,7 +5,7 @@ from redis.asyncio.client import Pipeline
 from redis.exceptions import ResponseError
 
 from aiocache.backends.redis import RedisBackend, RedisCache
-from aiocache.base import BaseCache
+from aiocache.base import BaseCache, _ensure_key
 from aiocache.serializers import JsonSerializer
 from ...utils import Keys
 
@@ -253,8 +253,7 @@ class TestRedisCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        # TODO(PY311): Remove str()
-        ([None, "test:" + str(Keys.KEY)], ["", str(Keys.KEY)], ["my_ns", "my_ns:" + str(Keys.KEY)]),  # noqa: B950
+        ([None, "test:" + _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + _ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
         assert redis_cache.build_key(Keys.KEY, namespace=namespace) == expected
