@@ -235,18 +235,26 @@ def _get_args_dict(func, args, kwargs):
 class multi_cached:
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
-    of the dict-like object returned by the function. Note that in this decorator, the function
-    name is not prefixed in the key when stored so, if there is another function returning a dict
-    with same keys, they will be overwritten. To avoid this, use a specific namespace in each
-    cache decorator or pass a key_builder.
+    of the dict-like object returned by the function. The keys of the returned data should match
+    or be mappable to a sequence or iterable that is passed as an argument to the decorated
+    callable. The name of that argument is passed to this decorator via the parameter
+    ``keys_from_attr``. ``keys_from_attr`` can be the name of a positional or keyword argument.
+
+    If the argument specified by ``keys_from_attr`` is an empty list, the cache will be ignored
+    and the function will be called. If only some of the keys in ``keys_from_attr``are cached
+    (and ``cache_read`` is True) those values will be fetched from the cache, and only the
+    uncached keys will be passed to the callable via the argument specified by ``keys_from_attr``.
+
+    By default, the callable's name and call signature are not incorporated into the cache key,
+    so if there is another cached function returning a dict with same keys, those keys will be
+    overwritten. To avoid this, use a specific ``namespace`` in each cache decorator or pass a
+    ``key_builder``.
+
+    If ``key_builder`` is passed, then the values of ``keys_from_attr`` will be transformed
+    before requesting them from the cache. Equivalently, the keys in the dict-like mapping
+    returned by the decorated callable will be transformed before storing them in the cache.
 
     The cache is available in the function object as ``<function_name>.cache``.
-
-    If key_builder is passed, before storing the key, it will be transformed according to the
-    output of the function.
-
-    If the attribute specified to be the key is an empty list, the cache will be ignored and
-    the function will be called as expected.
 
     Only one cache instance is created per decorated function. If you expect high concurrency
     of calls to the same function, you should adapt the pool size as needed.
@@ -262,13 +270,16 @@ class multi_cached:
                                        value in the cache to be written. If set to False, the write
                                        happens in the background. Enabled by default
 
-    :param keys_from_attr: arg or kwarg name from the function containing an iterable to use
-        as keys to index in the cache.
+    :param keys_from_attr: name of the arg or kwarg in the decorated callable that contains
+        an iterable that corresponds to the keys returned by the decorated callable.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
-    :param key_builder: Callable that allows to build the function dynamically. It receives
-        the function plus same args and kwargs passed to the function.
-        This behavior is necessarily different than ``BaseCache.build_key()``
+    :param key_builder: Callable that enables mapping the ``keys_from_attr`` keys to the keys
+        in the dict-like structure that is returned by the callable; executed before accessing
+        the cache for storage/retrieval. Receives a key from the iterable corresponding to
+        ``keys_from_attr``, the callable, and the positional and keyword arguments that were
+        passed to the decorated callable. This behavior is necessarily different than both
+        ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
