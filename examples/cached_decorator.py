@@ -15,14 +15,13 @@ async def cached_call():
     return Result("content", 200)
 
 
-def test_cached():
-    cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(cached_call())
-    assert loop.run_until_complete(cache.exists("key")) is True
-    loop.run_until_complete(cache.delete("key"))
-    loop.run_until_complete(cache.close())
+async def test_cached():
+    async with Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main") as cache:
+        await cached_call()
+        exists = await cache.exists("key")
+        assert exists is True
+        await cache.delete("key")
 
 
 if __name__ == "__main__":
-    test_cached()
+    asyncio.run(test_cached())

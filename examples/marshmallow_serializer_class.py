@@ -54,11 +54,10 @@ async def serializer():
     assert result.list_type == model.list_type
 
 
-def test_serializer():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(serializer())
-    loop.run_until_complete(cache.delete("key"))
+async def test_serializer():
+    await serializer()
+    await cache.delete("key")
 
 
 if __name__ == "__main__":
-    test_serializer()
+    asyncio.run(test_serializer())

@@ -23,23 +23,22 @@ async def multi_cached_keys(keys=None):
 cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
 
 
-def test_multi_cached():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(multi_cached_ids(ids=['a', 'b']))
-    loop.run_until_complete(multi_cached_ids(ids=['a', 'c']))
-    loop.run_until_complete(multi_cached_keys(keys=['d']))
+async def test_multi_cached():
+    await multi_cached_ids(ids=("a", "b"))
+    await multi_cached_ids(ids=("a", "c"))
+    await multi_cached_keys(keys=("d",))
 
-    assert loop.run_until_complete(cache.exists('a'))
-    assert loop.run_until_complete(cache.exists('b'))
-    assert loop.run_until_complete(cache.exists('c'))
-    assert loop.run_until_complete(cache.exists('d'))
+    assert await cache.exists("a")
+    assert await cache.exists("b")
+    assert await cache.exists("c")
+    assert await cache.exists("d")
 
-    loop.run_until_complete(cache.delete("a"))
-    loop.run_until_complete(cache.delete("b"))
-    loop.run_until_complete(cache.delete("c"))
-    loop.run_until_complete(cache.delete("d"))
-    loop.run_until_complete(cache.close())
+    await cache.delete("a")
+    await cache.delete("b")
+    await cache.delete("c")
+    await cache.delete("d")
+    await cache.close()
 
 
 if __name__ == "__main__":
-    test_multi_cached()
+    asyncio.run(test_multi_cached())

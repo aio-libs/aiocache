@@ -1,23 +1,17 @@
 import pytest
 
 from aiocache import Cache
-from aiocache.backends.redis import RedisBackend
-
-# TODO: Update aioredis and fix tests.
-collect_ignore_glob = ["*"]
 
 
 @pytest.fixture
-def redis_cache(event_loop):
-    cache = Cache(Cache.REDIS, namespace="test", pool_max_size=1)
-    yield cache
-
-    for _, pool in RedisBackend.pools.items():
-        pool.close()
-        event_loop.run_until_complete(pool.wait_closed())
+async def redis_cache():
+    # redis connection pool raises ConnectionError but doesn't wait for conn reuse
+    #  when exceeding max pool size.
+    async with Cache(Cache.REDIS, namespace="test", pool_max_size=1) as cache:
+        yield cache
 
 
 @pytest.fixture
-def memcached_cache():
-    cache = Cache(Cache.MEMCACHED, namespace="test", pool_size=1)
-    yield cache
+async def memcached_cache():
+    async with Cache(Cache.MEMCACHED, namespace="test", pool_size=1) as cache:
+        yield cache

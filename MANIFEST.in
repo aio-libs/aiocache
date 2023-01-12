@@ -1,0 +1,13 @@
+include CHANGELOG.md
+include LICENSE
+include README.rst
+include Makefile
+include requirements.txt
+include requirements-dev.txt
+include setup.cfg
+include .coveragerc
+graft aiocache
+graft docs
+graft examples
+graft tests
+global-exclude *.pyc

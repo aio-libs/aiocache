@@ -5,7 +5,7 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    import ujson as json
+    import ujson as json  # noqa: I900
 except ImportError:
     logger.debug("ujson module not found, using json")
     import json  # type: ignore[no-redef]
