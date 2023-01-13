@@ -1,20 +1,20 @@
 # CHANGELOG
 
 
-## 0.12.0 (2023-xx-xx)
+## 0.12.0 (2023-01-13)
 
-* Add ``async with`` support to ``BaseCache``.
-* Remove deprecated ``loop`` parameters.
-* Remove deprecated ``cache`` parameter from ``create()``.
-* Use ``base._ensure_key()`` in ``_build_key()`` to ensure consistency of enum
-keys between different Python versions. [#633](https://github.com/aio-libs/aiocache/issues/633) -- Padraic Shafer
+* Added ``async with`` support to ``BaseCache``.
+* Added initial typing support.
+* Migrated to ``redis`` library (``aioredis`` is no longer supported).
+* ``SimpleMemoryBackend`` now has a cache per instance, rather than a global cache.
 * Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569) -- Padraic Shafer
-    * `BaseCache.build_key` uses `namespace` argument if provided,
-    otherwise it uses `self.namespace`.
-    * Cache locks use `client.build_key` rather than `client._build_key`.
-    * Include examples of using a custom `key_builder` when creating a cache.
-    * Warn when decorator parameters are unused because alias takes precedence.
-* Clarify `__init__` params for decorator `multi_cached` [#636](https://github.com/aio-libs/aiocache/issues/636) -- Padraic Shafer
+* Removed deprecated ``loop`` parameters.
+* Removed deprecated ``cache`` parameter from ``create()``.
+* Added support for keyword arguments in ``TimingPlugin`` methods.
+* Fixed inconsistent enum keys between different Python versions. -- Padraic Shafer
+* Fixed ``.clear()`` breaking when no keys are present.
+* Fixed ``from aiocache import *``.
+* Fixed ``.delete()`` when values are falsy.
 
 ## 0.11.1 (2019-07-31)
 

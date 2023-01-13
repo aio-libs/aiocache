@@ -1,9 +1,10 @@
 import logging
 from typing import Dict, Type
 
-from ._version import __version__
 from .backends.memory import SimpleMemoryCache
 from .base import BaseCache
+
+__version__ = "0.12.0"
 
 logger = logging.getLogger(__name__)
 
@@ -40,5 +41,4 @@ __all__ = (
     "cached_stampede",
     "multi_cached",
     *(c.__name__ for c in AIOCACHE_CACHES.values()),
-    "__version__",
 )
