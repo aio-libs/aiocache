@@ -593,9 +593,12 @@ class TestMultiCached:
     async def test_key_builder(self):
         @multi_cached("keys", key_builder=lambda key, _, keys: key + 1)
         async def incr(keys=None):
-            return {k: k + 1 for k in keys}
+            return {k: k * 3 for k in keys}
         
-        assert incr(keys=[1]) == {1: 3}
+        assert await incr(keys=(1,)) == {1: 3}
+        cached_value = await incr.cache.get(2)
+        assert cached_value == 3
+        assert not await incr.cache.exists(1)
 
 
 def test_get_args_dict():
