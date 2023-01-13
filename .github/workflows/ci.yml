@@ -140,9 +140,9 @@ jobs:
      run: |
        python -m build
    - name: Make Release
-     uses: aio-libs/create-release@v1
+     uses: aio-libs/create-release@v1.3.3
      with:
-       changes_file: CHANGES.txt
+       changes_file: CHANGES.rst
        name: aiocache
        version_file: aiocache/__init__.py
        github_token: ${{ secrets.GITHUB_TOKEN }}

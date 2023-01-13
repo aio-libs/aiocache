@@ -1,27 +1,33 @@
-# CHANGELOG
+=======
+CHANGES
+=======
 
+.. towncrier release notes start
 
-## 0.12.0 (2023-xx-xx)
+0.12.0 (2023-01-13)
+===================
 
-* Add ``async with`` support to ``BaseCache``.
-* Remove deprecated ``loop`` parameters.
-* Remove deprecated ``cache`` parameter from ``create()``.
-* Use ``base._ensure_key()`` in ``_build_key()`` to ensure consistency of enum
-keys between different Python versions. [#633](https://github.com/aio-libs/aiocache/issues/633) -- Padraic Shafer
+* Added ``async with`` support to ``BaseCache``.
+* Added initial typing support.
+* Migrated to ``redis`` library (``aioredis`` is no longer supported).
+* ``SimpleMemoryBackend`` now has a cache per instance, rather than a global cache.
 * Improved support for ``build_key(key, namespace)`` [#569](https://github.com/aio-libs/aiocache/issues/569) -- Padraic Shafer
-    * `BaseCache.build_key` uses `namespace` argument if provided,
-    otherwise it uses `self.namespace`.
-    * Cache locks use `client.build_key` rather than `client._build_key`.
-    * Include examples of using a custom `key_builder` when creating a cache.
-    * Warn when decorator parameters are unused because alias takes precedence.
-* Clarify `__init__` params for decorator `multi_cached` [#636](https://github.com/aio-libs/aiocache/issues/636) -- Padraic Shafer
+* Removed deprecated ``loop`` parameters.
+* Removed deprecated ``cache`` parameter from ``create()``.
+* Added support for keyword arguments in ``TimingPlugin`` methods.
+* Fixed inconsistent enum keys between different Python versions. -- Padraic Shafer
+* Fixed ``.clear()`` breaking when no keys are present.
+* Fixed ``from aiocache import *``.
+* Fixed ``.delete()`` when values are falsy.
 
-## 0.11.1 (2019-07-31)
+0.11.1 (2019-07-31)
+===================
 
 * Don't hardcode import redis and memcached in factory [#461](https://github.com/argaen/aiocache/issues/461) - Manuel Miranda
 
 
-## 0.11.0 (2019-07-31)
+0.11.0 (2019-07-31)
+===================
 
 * Support str for timeout and ttl [#454](https://github.com/argaen/aiocache/issues/454) - Manuel Miranda
 
@@ -42,7 +48,8 @@ keys between different Python versions. [#633](https://github.com/aio-libs/aioca
 * Add Cache class factory [#430](https://github.com/argaen/aiocache/issues/430) - Manuel Miranda
 
 
-## 0.10.1 (2018-11-15)
+0.10.1 (2018-11-15)
+===================
 
 * Cancel the previous ttl timer if exists when setting a new value in the in-memory cache [#424](https://github.com/argaen/aiocache/issues/424) - Minh Tu Le
 
@@ -55,12 +62,16 @@ keys between different Python versions. [#633](https://github.com/aio-libs/aioca
 * Format code with black [#410](https://github.com/argaen/aiocache/issues/410) - Manuel Miranda
 
 
-## 0.10.0 (2018-06-17)
+0.10.0 (2018-06-17)
+===================
 
 * Cache can be disabled in decorated functions using `cache_read` and `cache_write` [#404](https://github.com/argaen/aiocache/issues/404) - Josep Cugat
 
 * Cache constructor can receive now default ttl [#405](https://github.com/argaen/aiocache/issues/405) - Josep Cugat
-## 0.9.1 (2018-04-27)
+
+
+0.9.1 (2018-04-27)
+==================
 
 * Single deploy step [#395](https://github.com/argaen/aiocache/issues/395) - Manuel Miranda
 
@@ -69,7 +80,8 @@ keys between different Python versions. [#633](https://github.com/aio-libs/aioca
 * Lazy load redis asyncio.Lock [#397](https://github.com/argaen/aiocache/issues/397) - Jordi Soucheiron
 
 
-## 0.9.0 (2018-04-24)
+0.9.0 (2018-04-24)
+==================
 
 * Bug #389/propagate redlock exceptions [#394](https://github.com/argaen/aiocache/issues/394) - Manuel Miranda
   ___aexit__ was returning whether asyncio Event was removed or not. In
@@ -91,7 +103,8 @@ raise always any exception raised from inside_
 * Fixed spelling error in serializers.py [#371](https://github.com/argaen/aiocache/issues/371) - Jared Shields
 
 
-## 0.8.0 (2017-11-08)
+0.8.0 (2017-11-08)
+==================
 
 * Add pypy support in build pipeline [#359](https://github.com/argaen/aiocache/issues/359) - Manuel Miranda
 
@@ -108,25 +121,24 @@ raise always any exception raised from inside_
 * Add key_builder param to caches to customize keys [#315](https://github.com/argaen/aiocache/issues/315) - Manuel Miranda
 
 
-## 0.7.2 (2017-07-23)
-
-#### Other
+0.7.2 (2017-07-23)
+==================
 
 * Add key_builder param to caches to customize keys [#310](https://github.com/argaen/aiocache/issues/310) - Manuel Miranda
 
 * Propagate correct message on memcached connector error [#309](https://github.com/argaen/aiocache/issues/309) - Manuel Miranda
 
 
-
-## 0.7.1 (2017-07-15)
-
+0.7.1 (2017-07-15)
+==================
 
 * Remove explicit loop usages [#305](https://github.com/argaen/aiocache/issues/305) - Manuel Miranda
 
 * Remove bad logging configuration [#304](https://github.com/argaen/aiocache/issues/304) - Manuel Miranda
 
 
-## 0.7.0 (2017-07-01)
+0.7.0 (2017-07-01)
+==================
 
 * Upgrade to aioredis 0.3.3. - Manuel Miranda
 
@@ -152,9 +164,9 @@ and it behaves as expected._
 
 * Removed settings module. - Manuel Miranda
 
-## 0.6.1 (2017-06-12)
 
-#### Other
+0.6.1 (2017-06-12)
+==================
 
 * Removed connection reusage for decorators [#267](https://github.com/argaen/aiocache/issues/267)- Manuel Miranda (thanks @dmzkrsk)
   _when decorated function is costly connections where being kept while
@@ -168,10 +180,11 @@ when saving the keys_
 * Updated aioredis (0.3.1) and aiomcache (0.5.2) versions - Manuel Miranda
 
 
+0.6.0 (2017-06-05)
+==================
 
-## 0.6.0 (2017-06-05)
-
-#### New
+New
++++
 
 * Cached supports stampede locking [#249](https://github.com/argaen/aiocache/issues/249) - Manuel Miranda
 
@@ -188,7 +201,8 @@ when saving the keys_
 * `caches.create` works without alias [#253](https://github.com/argaen/aiocache/issues/253) - Manuel Miranda
 
 
-#### Changes
+Changes
++++++++
 
 * Decorators use JsonSerializer by default now [#258](https://github.com/argaen/aiocache/issues/258) - Manuel Miranda
 
@@ -208,7 +222,8 @@ there is big expected concurrency for that given function_
 cache if needed (same behavior for  aiomcache and ofc memory)_
 
 
-## 0.5.2
+0.5.2
+=====
 
 * Reuse connection context manager [#225](https://github.com/argaen/aiocache/issues/225) [argaen]
 * Add performance footprint tests [#228](https://github.com/argaen/aiocache/issues/228) [argaen]
@@ -217,13 +232,15 @@ cache if needed (same behavior for  aiomcache and ofc memory)_
 * Added performance concurrency tests [#216](https://github.com/argaen/aiocache/issues/216) [argaen]
 
 
-## 0.5.1
+0.5.1
+=====
 
 * Deprecate settings module [#215](https://github.com/argaen/aiocache/issues/215) [argaen]
 * Decorators support introspection [#213](https://github.com/argaen/aiocache/issues/213) [argaen]
 
 
-## 0.5.0 (2017-04-29)
+0.5.0 (2017-04-29)
+==================
 
 * Removed pool reusage for redis. A new one
   is created for each instance [argaen]
@@ -240,7 +257,8 @@ cache if needed (same behavior for  aiomcache and ofc memory)_
 * Added example for compression serializer [#179](https://github.com/argaen/aiocache/issues/179) [argaen]
 * Added BasePlugin.add_hook helper [#173](https://github.com/argaen/aiocache/issues/173) [argaen]
 
-#### Breaking
+Breaking
+++++++++
 
 * Refactored how settings and defaults work. Now
   aliases are the only way. [#193](https://github.com/argaen/aiocache/issues/193) [argaen]
@@ -249,7 +267,8 @@ cache if needed (same behavior for  aiomcache and ofc memory)_
   when using DefaultSerializer [#191](https://github.com/argaen/aiocache/issues/191) [argaen]
 
 
-## 0.3.3 (2017-04-06)
+0.3.3 (2017-04-06)
+==================
 
 * Added CHANGELOG and release process [#172](https://github.com/argaen/aiocache/issues/172) [argaen]
 * Added pool_min_size pool_max_size to redisbackend [#167](https://github.com/argaen/aiocache/issues/167) [argaen]
@@ -258,13 +277,15 @@ cache if needed (same behavior for  aiomcache and ofc memory)_
 * Cache instance in decorators is built in every call [#135](https://github.com/argaen/aiocache/issues/135) [argaen]
 
 
-## 0.3.1 (2017-02-13)
+0.3.1 (2017-02-13)
+==================
 
 * Changed add redis to use set with not existing flag [#119](https://github.com/argaen/aiocache/issues/119) [argaen]
 * Memcached multi_set with ensure_future [#114](https://github.com/argaen/aiocache/issues/114) [argaen]
 
 
-## 0.3.0 (2017-01-12)
+0.3.0 (2017-01-12)
+==================
 
 * Fixed asynctest issues for timeout tests [#109](https://github.com/argaen/aiocache/issues/109) [argaen]
 * Created new API class [#108](https://github.com/argaen/aiocache/issues/108)
