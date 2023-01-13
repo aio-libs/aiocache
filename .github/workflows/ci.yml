@@ -142,7 +142,7 @@ jobs:
    - name: Make Release
      uses: aio-libs/create-release@v1.3.3
      with:
-       changes_file: CHANGES.txt
+       changes_file: CHANGELOG.md
        name: aiocache
        version_file: aiocache/__init__.py
        github_token: ${{ secrets.GITHUB_TOKEN }}
