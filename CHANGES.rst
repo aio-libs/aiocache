@@ -183,7 +183,8 @@ when saving the keys_
 0.6.0 (2017-06-05)
 ==================
 
-#### New
+New
++++
 
 * Cached supports stampede locking [#249](https://github.com/argaen/aiocache/issues/249) - Manuel Miranda
 
@@ -200,7 +201,8 @@ when saving the keys_
 * `caches.create` works without alias [#253](https://github.com/argaen/aiocache/issues/253) - Manuel Miranda
 
 
-#### Changes
+Changes
++++++++
 
 * Decorators use JsonSerializer by default now [#258](https://github.com/argaen/aiocache/issues/258) - Manuel Miranda
 
@@ -255,7 +257,8 @@ cache if needed (same behavior for  aiomcache and ofc memory)_
 * Added example for compression serializer [#179](https://github.com/argaen/aiocache/issues/179) [argaen]
 * Added BasePlugin.add_hook helper [#173](https://github.com/argaen/aiocache/issues/173) [argaen]
 
-#### Breaking
+Breaking
+++++++++
 
 * Refactored how settings and defaults work. Now
   aliases are the only way. [#193](https://github.com/argaen/aiocache/issues/193) [argaen]
