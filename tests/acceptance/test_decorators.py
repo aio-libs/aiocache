@@ -27,7 +27,7 @@ class TestCached:
         mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
 
     async def test_cached_ttl(self, cache):
-        @cached(ttl=2, key=Keys.KEY)
+        @cached(ttl=2, key_builder=lambda *args, **kw: Keys.KEY)
         async def fn():
             return str(random.randint(1, 50))
 
