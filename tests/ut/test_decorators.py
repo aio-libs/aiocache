@@ -595,7 +595,6 @@ class TestMultiCached:
         async def f(keys=None):
             return {k: k * 3 for k in keys}
 
-
         assert await f(keys=(1,)) == {1: 3}
         cached_value = await f.cache.get(2)
         assert cached_value == 3
