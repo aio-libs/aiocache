@@ -49,7 +49,7 @@ async def test_multi_cached():
     await cache.delete("d")
     await cache.close()
 
-    await multi_cached_key_builders(keys=(1, 2))
+    await multi_cached_key_builders(keys=(1, 2)) == {1: "Z", 2: "Y"}
 
 
 if __name__ == "__main__":

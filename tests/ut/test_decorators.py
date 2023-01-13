@@ -590,6 +590,13 @@ class TestMultiCached:
 
         assert foo.cache != bar.cache
 
+    async def test_key_builder(self):
+        @multi_cached("keys", key_builder=lambda key, _, keys: key + 1)
+        async def incr(keys=None):
+            return {k: k + 1 for k in keys}
+        
+        assert incr(keys=[1]) == {1: 3}
+
 
 def test_get_args_dict():
     def fn(a, b, *args, keys=None, **kwargs):
