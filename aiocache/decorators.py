@@ -35,9 +35,6 @@ class cached:
                                        happens in the background. Enabled by default
 
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
-    :param key: str value to set as key for the function return. Takes precedence over
-        key_builder param. If key and key_builder are not passed, it will use module_name
-        + function_name + args + kwargs
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
     :param key_builder: Callable that allows to build the function dynamically. It receives
@@ -60,7 +57,6 @@ class cached:
     def __init__(
         self,
         ttl=SENTINEL,
-        key=None,
         namespace=None,
         key_builder=None,
         cache=Cache.MEMORY,
@@ -71,7 +67,6 @@ class cached:
         **kwargs,
     ):
         self.ttl = ttl
-        self.key = key
         self.key_builder = key_builder
         self.noself = noself
         self.alias = alias
@@ -127,8 +122,6 @@ class cached:
         return result
 
     def get_cache_key(self, f, args, kwargs):
-        if self.key:
-            return self.key
         if self.key_builder:
             return self.key_builder(f, *args, **kwargs)
 
@@ -173,9 +166,6 @@ class cached_stampede(cached):
         If 0 or None, no locking happens (default is 2). redis and memory backends support
         float ttls
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
-    :param key: str value to set as key for the function return. Takes precedence over
-        key_from_attr param. If key and key_from_attr are not passed, it will use module_name
-        + function_name + args + kwargs
     :param key_from_attr: str arg or kwarg name from the function to use as a key.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
