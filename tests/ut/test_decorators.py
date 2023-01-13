@@ -39,7 +39,6 @@ class TestCached:
     def test_init(self):
         c = cached(
             ttl=1,
-            key="key",
             key_builder="fn",
             cache=SimpleMemoryCache,
             plugins=None,
@@ -50,7 +49,6 @@ class TestCached:
         )
 
         assert c.ttl == 1
-        assert c.key == "key"
         assert c.key_builder == "fn"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
@@ -258,7 +256,6 @@ class TestCachedStampede:
         c = cached_stampede(
             lease=3,
             ttl=1,
-            key="key",
             key_builder="fn",
             cache=SimpleMemoryCache,
             plugins=None,
@@ -269,7 +266,6 @@ class TestCachedStampede:
         )
 
         assert c.ttl == 1
-        assert c.key == "key"
         assert c.key_builder == "fn"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
