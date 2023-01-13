@@ -395,26 +395,27 @@ class TestMultiCached:
 
     def test_get_cache_keys(self, decorator):
         keys = decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"]})
-        assert keys == (["a", "b"], [], -1)
+        assert keys == (["a", "b"], ["a", "b"], [], -1)
 
     def test_get_cache_keys_empty_list(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {"keys": []}) == ([], [], -1)
+        assert decorator.get_cache_keys(stub_dict, (), {"keys": []}) == ([], [], [], -1)
 
     def test_get_cache_keys_missing_kwarg(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {}) == ([], [], -1)
+        assert decorator.get_cache_keys(stub_dict, (), {}) == ([], [], [], -1)
 
     def test_get_cache_keys_arg_key_from_attr(self, decorator):
         def fake(keys, a=1, b=2):
             """Dummy function."""
 
-        assert decorator.get_cache_keys(fake, (["a"]), {}) == (["a"], [["a"]], 0)
+        assert decorator.get_cache_keys(fake, (["a"],), {}) == (["a"], ["a"], [["a"]], 0)
 
     def test_get_cache_keys_with_none(self, decorator):
-        assert decorator.get_cache_keys(stub_dict, (), {"keys": None}) == ([], [], -1)
+        assert decorator.get_cache_keys(stub_dict, (), {"keys": None}) == ([], [], [], -1)
 
     def test_get_cache_keys_with_key_builder(self, decorator):
         decorator.key_builder = lambda key, *args, **kwargs: kwargs["market"] + "_" + key.upper()
         assert decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"], "market": "ES"}) == (
+            ["a", "b"],
             ["ES_A", "ES_B"],
             [],
             -1,
@@ -589,6 +590,16 @@ class TestMultiCached:
             """Second function."""
 
         assert foo.cache != bar.cache
+
+    async def test_key_builder(self):
+        @multi_cached("keys", key_builder=lambda key, _, keys: key + 1)
+        async def f(keys=None):
+            return {k: k * 3 for k in keys}
+
+        assert await f(keys=(1,)) == {1: 3}
+        cached_value = await f.cache.get(2)
+        assert cached_value == 3
+        assert not await f.cache.exists(1)
 
 
 def test_get_args_dict():
