@@ -39,7 +39,7 @@ class TestCached:
     def test_init(self):
         c = cached(
             ttl=1,
-            key_builder="fn",
+            key_builder=lambda *args, **kw: "fn",
             cache=SimpleMemoryCache,
             plugins=None,
             alias=None,
@@ -256,7 +256,7 @@ class TestCachedStampede:
         c = cached_stampede(
             lease=3,
             ttl=1,
-            key_builder="fn",
+            key_builder=lambda *args, **kw: "fn",
             cache=SimpleMemoryCache,
             plugins=None,
             alias=None,
