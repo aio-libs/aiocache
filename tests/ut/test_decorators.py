@@ -49,7 +49,7 @@ class TestCached:
         )
 
         assert c.ttl == 1
-        assert c.key_builder == "fn"
+        assert c.key_builder() == "key"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
@@ -74,8 +74,7 @@ class TestCached:
             assert c.cache is mock_cache
 
     def test_get_cache_key_with_key(self, decorator):
-        decorator.key = "key"
-        decorator.key_builder = "fn"
+        decorator.key_builder = lambda *args, **kw: "key"
         assert decorator.get_cache_key(stub, (1, 2), {"a": 1, "b": 2}) == "key"
 
     def test_get_cache_key_without_key_and_attr(self, decorator):
@@ -266,7 +265,7 @@ class TestCachedStampede:
         )
 
         assert c.ttl == 1
-        assert c.key_builder == "fn"
+        assert c.key_builder() == "key"
         assert c.cache is None
         assert c._cache == SimpleMemoryCache
         assert c._serializer is None
