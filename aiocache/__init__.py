@@ -4,7 +4,7 @@ from typing import Dict, Type
 from .backends.memory import SimpleMemoryCache
 from .base import BaseCache
 
-__version__ = "0.12.0"
+__version__ = "1.0.0a0"
 
 logger = logging.getLogger(__name__)
 
