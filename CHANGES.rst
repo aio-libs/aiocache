@@ -16,6 +16,7 @@ There are a number backwards-incompatible changes. These tips should help migrat
 * When using the ``key_builder`` parameter in ``@multicached``, the function will now return the original, unmodified keys, only using the transformed keys in the cache (this has always been the documented behaviour, but not the implementation behaviour).
 * ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.
 
+
 0.12.0 (2023-01-13)
 ===================
 
@@ -31,6 +32,7 @@ There are a number backwards-incompatible changes. These tips should help migrat
 * Fixed ``.clear()`` breaking when no keys are present.
 * Fixed ``from aiocache import *``.
 * Fixed ``.delete()`` when values are falsy.
+
 
 0.11.1 (2019-07-31)
 ===================
