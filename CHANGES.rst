@@ -4,6 +4,17 @@ CHANGES
 
 .. towncrier release notes start
 
+1.0.0 (2023-xx-xx)
+==================
+
+Migration instructions
+++++++++++++++++++++++
+
+There are a number backwards-incompatible changes. These tips should help migrate from an older release:
+
+* The ``key`` parameter has been removed from the ``cached`` decorator. The behaviour can be easily reimplemented with ``key_builder=lambda *a, **kw: "foo"``
+* ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.
+
 0.12.0 (2023-01-13)
 ===================
 
