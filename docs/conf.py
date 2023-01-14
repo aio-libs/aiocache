@@ -67,7 +67,7 @@ author = "Manuel Miranda"
 
 _path = Path(__file__).parent.parent / "aiocache/__init__.py"
 try:
-    version = re.findall(r"^__version__ = \"([^']+)\"\r?$", _path.read_text())[0]
+    version = re.findall(r'__version__ = "(.+?)"', _path.read_text())[0]
     release = version
 except IndexError:
     raise RuntimeError("Unable to determine version.")
