@@ -4,6 +4,19 @@ CHANGES
 
 .. towncrier release notes start
 
+1.0.0 (2023-xx-xx)
+==================
+
+Migration instructions
+++++++++++++++++++++++
+
+There are a number of backwards-incompatible changes. These points should help with migrating from an older release:
+
+* The ``key`` parameter has been removed from the ``cached`` decorator. The behaviour can be easily reimplemented with ``key_builder=lambda *a, **kw: "foo"``
+* When using the ``key_builder`` parameter in ``@multicached``, the function will now return the original, unmodified keys, only using the transformed keys in the cache (this has always been the documented behaviour, but not the implemented behaviour).
+* ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.
+
+
 0.12.0 (2023-01-13)
 ===================
 
@@ -19,6 +32,7 @@ CHANGES
 * Fixed ``.clear()`` breaking when no keys are present.
 * Fixed ``from aiocache import *``.
 * Fixed ``.delete()`` when values are falsy.
+
 
 0.11.1 (2019-07-31)
 ===================
