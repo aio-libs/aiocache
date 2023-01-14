@@ -224,9 +224,9 @@ def _get_args_dict(func, args, kwargs):
 class multi_cached:
     """
     Only supports functions that return dict-like structures. This decorator caches each key/value
-    of the dict-like object returned by the function. The keys of the returned data should match
-    or be mappable to a sequence or iterable that is passed as an argument to the decorated
-    callable. The name of that argument is passed to this decorator via the parameter
+    of the dict-like object returned by the function. The dict keys of the returned data should
+    match the set of keys that are passed to the decorated callable in an iterable object.
+    The name of that argument is passed to this decorator via the parameter
     ``keys_from_attr``. ``keys_from_attr`` can be the name of a positional or keyword argument.
 
     If the argument specified by ``keys_from_attr`` is an empty list, the cache will be ignored
@@ -260,14 +260,13 @@ class multi_cached:
                                        happens in the background. Enabled by default
 
     :param keys_from_attr: name of the arg or kwarg in the decorated callable that contains
-        an iterable that corresponds to the keys returned by the decorated callable.
+        an iterable that yields the keys returned by the decorated callable.
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
-    :param key_builder: Callable that enables mapping the ``keys_from_attr`` keys to the keys
-        in the dict-like structure that is returned by the callable; executed before accessing
-        the cache for storage/retrieval. Receives a key from the iterable corresponding to
-        ``keys_from_attr``, the callable, and the positional and keyword arguments that were
-        passed to the decorated callable. This behavior is necessarily different than both
+    :param key_builder: Callable that enables mapping the decorated function's keys to the keys
+        used by the cache. Receives a key from the iterable corresponding to
+        ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
+        that were passed to the decorated callable. This behavior is necessarily different than
         ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
