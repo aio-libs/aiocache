@@ -65,7 +65,7 @@ author = "Manuel Miranda"
 # built documents.
 #
 
-_path = Path(__file__).parent.parent / "aiocache/_version.py"
+_path = Path(__file__).parent.parent / "aiocache/__init__.py"
 try:
     version = re.findall(r"^__version__ = \"([^']+)\"\r?$", _path.read_text())[0]
     release = version
