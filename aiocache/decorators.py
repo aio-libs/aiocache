@@ -82,7 +82,7 @@ class cached:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
                 if getattr(self, f'_{arg}', None) is not None:
-                    logger.warning(f"Using cache alias; ignoring '{arg}' argument.")
+                    logger.warning(f"Using cache alias; ignoring {arg!r} argument.")
         else:
             self.cache = _get_cache(
                 cache=self._cache,
@@ -310,7 +310,7 @@ class multi_cached:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
                 if getattr(self, f'_{arg}', None) is not None:
-                    logger.warning(f"Using cache alias; ignoring '{arg}' argument.")
+                    logger.warning(f"Using cache alias; ignoring {arg!r} argument.")
         else:
             self.cache = _get_cache(
                 cache=self._cache,
