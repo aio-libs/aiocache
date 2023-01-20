@@ -292,6 +292,11 @@ class multi_cached:
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
         that were passed to the decorated callable. This behavior is necessarily different than
         ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
+    :param value_checker: dict of callables that allows to control which keys should not
+        be cached based on corresponding value check. The dict keys are set of keys to
+        be checked while the dict value is callable which takes corresponding result value
+        (result[key])  and returns boolean indicating whether cache that (key, value)
+        pair or not.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
@@ -310,6 +315,7 @@ class multi_cached:
         keys_from_attr,
         namespace=None,
         key_builder=None,
+        value_checker=None,
         ttl=SENTINEL,
         cache=Cache.MEMORY,
         serializer=None,
@@ -319,6 +325,7 @@ class multi_cached:
     ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
+        self.value_checker = value_checker
         self.ttl = ttl
         self.alias = alias
         self.cache = None
@@ -378,12 +385,17 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
+        result2cache = self.filter_cache_keys(result) if self.value_checker else result
+
+        if not result2cache:
+            return result
+
         if cache_write:
             if aiocache_wait_for_write:
-                await self.set_in_cache(result, f, args, kwargs)
+                await self.set_in_cache(result2cache, f, args, kwargs)
             else:
                 # TODO: Use aiojobs to avoid warnings.
-                asyncio.create_task(self.set_in_cache(result, f, args, kwargs))
+                asyncio.create_task(self.set_in_cache(result2cache, f, args, kwargs))
 
         return result
 
@@ -399,6 +411,17 @@ class multi_cached:
             keys_index = args_names.index(self.keys_from_attr)
 
         return orig_keys, cache_keys, new_args, keys_index
+
+    def filter_cache_keys(self, res):
+        if not isinstance(self.value_checker, dict):
+            raise TypeError('value_checker should have dict type')
+
+        common_keys = res.keys() & self.value_checker.keys()
+
+        if not common_keys:
+            return res
+
+        return {k: res[k] for k in common_keys if self.value_checker[k](res[k])}
 
     async def get_from_cache(self, *keys):
         if not keys:
