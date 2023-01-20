@@ -39,6 +39,10 @@ class cached:
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
+    :param value_checker: Callable that allows to control whether the return
+        value to be cached or not. The callable receives the return value of the
+        wrapped function and should return the boolean indicating whether
+        to cache the result or not.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -58,6 +62,7 @@ class cached:
         ttl=SENTINEL,
         namespace=None,
         key_builder=None,
+        value_checker=None,
         cache=Cache.MEMORY,
         serializer=None,
         plugins=None,
@@ -67,6 +72,7 @@ class cached:
     ):
         self.ttl = ttl
         self.key_builder = key_builder
+        self.value_checker = value_checker
         self.noself = noself
         self.alias = alias
         self.cache = None
@@ -110,6 +116,13 @@ class cached:
                 return value
 
         result = await f(*args, **kwargs)
+
+        if self.value_checker:
+            if not isinstance(self.value_checker(result), bool):
+                raise TypeError('value_checker callable should return bool')
+
+            if not self.value_checker(result):
+                return result
 
         if cache_write:
             if aiocache_wait_for_write:
@@ -171,6 +184,10 @@ class cached_stampede(cached):
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
+    :param value_checker: Callable that allows to control whether the return
+        value to be cached or not. The callable receives the return value of the
+        wrapped function and should return the boolean indicating whether
+        to cache the result or not.
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -201,6 +218,13 @@ class cached_stampede(cached):
                 return value
 
             result = await f(*args, **kwargs)
+
+            if self.value_checker:
+                if not isinstance(self.value_checker(result), bool):
+                    raise TypeError('value_checker callable should return bool')
+
+                if not self.value_checker(result):
+                    return result
 
             await self.set_in_cache(key, result)
 
