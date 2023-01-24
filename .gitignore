@@ -86,10 +86,6 @@ ENV/
 # Spyder project settings
 .spyderproject
 
-# IDE project files
-.idea/
-.vscode/
-
 # Rope project settings
 .ropeproject
 

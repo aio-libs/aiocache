@@ -39,10 +39,10 @@ class cached:
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
-    :param value_checker: Callable that allows to control whether the return
-        value to be cached or not. The callable receives the return value of the
-        wrapped function and should return the boolean indicating whether
-        to cache the result or not.
+    :param skip_cache_func: Callable that receives the result after calling the
+        wrapped function and should return `True` if the value should skip the
+        cache (or `False` to store in the cache).
+        e.g. to avoid caching `None` results: `lambda r: r is None`
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -62,7 +62,7 @@ class cached:
         ttl=SENTINEL,
         namespace=None,
         key_builder=None,
-        value_checker=None,
+        skip_cache_func=lambda x: False,
         cache=Cache.MEMORY,
         serializer=None,
         plugins=None,
@@ -72,7 +72,7 @@ class cached:
     ):
         self.ttl = ttl
         self.key_builder = key_builder
-        self.value_checker = value_checker
+        self.skip_cache_func = skip_cache_func
         self.noself = noself
         self.alias = alias
         self.cache = None
@@ -117,12 +117,8 @@ class cached:
 
         result = await f(*args, **kwargs)
 
-        if self.value_checker:
-            if not isinstance(self.value_checker(result), bool):
-                raise TypeError('value_checker callable should return bool')
-
-            if not self.value_checker(result):
-                return result
+        if self.skip_cache_func(result):
+            return result
 
         if cache_write:
             if aiocache_wait_for_write:
@@ -184,10 +180,10 @@ class cached_stampede(cached):
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
-    :param value_checker: Callable that allows to control whether the return
-        value to be cached or not. The callable receives the return value of the
-        wrapped function and should return the boolean indicating whether
-        to cache the result or not.
+    :param skip_cache_func: Callable that receives the result after calling the
+        wrapped function and should return `True` if the value should skip the
+        cache (or `False` to store in the cache).
+        e.g. to avoid caching `None` results: `lambda r: r is None`
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -219,12 +215,8 @@ class cached_stampede(cached):
 
             result = await f(*args, **kwargs)
 
-            if self.value_checker:
-                if not isinstance(self.value_checker(result), bool):
-                    raise TypeError('value_checker callable should return bool')
-
-                if not self.value_checker(result):
-                    return result
+            if self.skip_cache_func(result):
+                return result
 
             await self.set_in_cache(key, result)
 
@@ -292,11 +284,11 @@ class multi_cached:
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
         that were passed to the decorated callable. This behavior is necessarily different than
         ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
-    :param value_checker: dict of callables that allows to control which keys should not
-        be cached based on corresponding value check. The dict keys are set of keys to
-        be checked while the dict value is callable which takes corresponding result value
-        (result[key])  and returns boolean indicating whether cache that (key, value)
-        pair or not.
+    :param skip_cache_keys: dict of callables that allows to perform value-based filtering
+        for the `result` of wrapped function. The dict keys are set of keys to
+        be checked while the dict value is callable which takes corresponding value
+        (result[key]) . The callable should return True if this (key, value) pair should
+        be skipped (or `False` to store in the cache).
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
@@ -315,7 +307,7 @@ class multi_cached:
         keys_from_attr,
         namespace=None,
         key_builder=None,
-        value_checker=None,
+        skip_cache_func=None,
         ttl=SENTINEL,
         cache=Cache.MEMORY,
         serializer=None,
@@ -325,7 +317,7 @@ class multi_cached:
     ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
-        self.value_checker = value_checker
+        self.skip_cache_func = skip_cache_func if skip_cache_func is not None else {}
         self.ttl = ttl
         self.alias = alias
         self.cache = None
@@ -385,7 +377,7 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
-        result2cache = self.filter_cache_keys(result) if self.value_checker else result
+        result2cache = self.filter_cache_keys(result) if self.skip_cache_func else result
 
         if not result2cache:
             return result
@@ -413,15 +405,14 @@ class multi_cached:
         return orig_keys, cache_keys, new_args, keys_index
 
     def filter_cache_keys(self, res):
-        if not isinstance(self.value_checker, dict):
-            raise TypeError('value_checker should have dict type')
-
-        common_keys = res.keys() & self.value_checker.keys()
+        common_keys = res.keys() & self.skip_cache_func.keys()
 
         if not common_keys:
             return res
 
-        return {k: res[k] for k in common_keys if self.value_checker[k](res[k])}
+        return {
+            k: res[k] for k in common_keys if not self.skip_cache_func[k](res[k])
+        }
 
     async def get_from_cache(self, *keys):
         if not keys:
