@@ -284,11 +284,9 @@ class multi_cached:
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
         that were passed to the decorated callable. This behavior is necessarily different than
         ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
-    :param skip_cache_keys: dict of callables that allows to perform value-based filtering
-        for the `result` of wrapped function. The dict keys are set of keys to
-        be checked while the dict value is callable which takes corresponding value
-        (result[key]) . The callable should return True if this (key, value) pair should
-        be skipped (or `False` to store in the cache).
+    :param skip_cache_keys: Callable that receives both key and value and returns True
+        if that key-value pair should not be cached (or False to store in cache).
+        The keys and values to be passed are taken from the wrapped function result.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
@@ -307,7 +305,7 @@ class multi_cached:
         keys_from_attr,
         namespace=None,
         key_builder=None,
-        skip_cache_func=None,
+        skip_cache_func=lambda k, v: False,
         ttl=SENTINEL,
         cache=Cache.MEMORY,
         serializer=None,
@@ -317,7 +315,7 @@ class multi_cached:
     ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
-        self.skip_cache_func = skip_cache_func if skip_cache_func is not None else {}
+        self.skip_cache_func = skip_cache_func
         self.ttl = ttl
         self.alias = alias
         self.cache = None
@@ -377,7 +375,7 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
-        result2cache = self.filter_cache_keys(result) if self.skip_cache_func else result
+        result2cache = {k: v for k, v in result.items() if self.skip_cache_func(k, v)}
 
         if not result2cache:
             return result
@@ -403,16 +401,6 @@ class multi_cached:
             keys_index = args_names.index(self.keys_from_attr)
 
         return orig_keys, cache_keys, new_args, keys_index
-
-    def filter_cache_keys(self, res):
-        common_keys = res.keys() & self.skip_cache_func.keys()
-
-        if not common_keys:
-            return res
-
-        return {
-            k: res[k] for k in common_keys if not self.skip_cache_func[k](res[k])
-        }
 
     async def get_from_cache(self, *keys):
         if not keys:
