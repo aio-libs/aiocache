@@ -375,7 +375,7 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
-        result2cache = {k: v for k, v in result.items() if self.skip_cache_func(k, v)}
+        result2cache = {k: v for k, v in result.items() if not self.skip_cache_func(k, v)}
 
         if not result2cache:
             return result
