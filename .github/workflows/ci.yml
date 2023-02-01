@@ -140,7 +140,7 @@ jobs:
      run: |
        python -m build
    - name: Make Release
-     uses: aio-libs/create-release@v1.3.3
+     uses: aio-libs/create-release@v1.6.6
      with:
        changes_file: CHANGES.rst
        name: aiocache
