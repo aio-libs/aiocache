@@ -173,6 +173,19 @@ class TestMultiCachedDecorator:
         assert await cache.exists("fn_" + _ensure_key(Keys.KEY) + "_ES") is True
         assert await cache.exists("fn_" + _ensure_key(Keys.KEY_1) + "_ES") is True
 
+    async def test_multi_cached_skip_keys(self, cache):
+        @multi_cached(keys_from_attr="keys", skip_cache_func=lambda _, v: v is None)
+        async def multi_sk_fn(keys, values):
+            return {k: v for k, v in zip(keys, values)}
+
+        res = await multi_sk_fn(keys=[Keys.KEY, Keys.KEY_1], values=[42, None])
+        assert res
+        assert Keys.KEY in res and Keys.KEY_1 in res
+
+        assert await cache.exists(Keys.KEY) is True
+        assert await cache.get(Keys.KEY) == res[Keys.KEY]
+        assert await cache.exists(Keys.KEY_1) is not True
+
     async def test_fn_with_args(self, cache):
         @multi_cached("keys")
         async def fn(keys, *args):
