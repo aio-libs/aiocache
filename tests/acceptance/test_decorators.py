@@ -61,7 +61,7 @@ class TestCached:
         key = cached().get_cache_key(sk_func, args=(1,), kwargs={})
 
         assert key
-        assert await cache.exists(key) is True
+        assert await cache.exists(key)
         assert await cache.get(key) == res
 
         arg = -1
@@ -71,7 +71,7 @@ class TestCached:
         key = cached().get_cache_key(sk_func, args=(-1,), kwargs={})
 
         assert key
-        assert await cache.exists(key) is not True
+        assert not await cache.exists(key)
 
     async def test_cached_without_namespace(self, cache):
         """Default cache key is created when no namespace is provided"""
@@ -182,9 +182,9 @@ class TestMultiCachedDecorator:
         assert res
         assert Keys.KEY in res and Keys.KEY_1 in res
 
-        assert await cache.exists(Keys.KEY) is True
+        assert await cache.exists(Keys.KEY)
         assert await cache.get(Keys.KEY) == res[Keys.KEY]
-        assert await cache.exists(Keys.KEY_1) is not True
+        assert not await cache.exists(Keys.KEY_1)
 
     async def test_fn_with_args(self, cache):
         @multi_cached("keys")
