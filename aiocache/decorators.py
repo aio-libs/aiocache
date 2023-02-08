@@ -375,17 +375,17 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
-        result2cache = {k: v for k, v in result.items() if not self.skip_cache_func(k, v)}
+        to_cache = {k: v for k, v in result.items() if not self.skip_cache_func(k, v)}
 
-        if not result2cache:
+        if not to_cache:
             return result
 
         if cache_write:
             if aiocache_wait_for_write:
-                await self.set_in_cache(result2cache, f, args, kwargs)
+                await self.set_in_cache(to_cache, f, args, kwargs)
             else:
                 # TODO: Use aiojobs to avoid warnings.
-                asyncio.create_task(self.set_in_cache(result2cache, f, args, kwargs))
+                asyncio.create_task(self.set_in_cache(to_cache, f, args, kwargs))
 
         return result
 
