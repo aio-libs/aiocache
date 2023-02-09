@@ -39,6 +39,10 @@ class cached:
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
+    :param skip_cache_func: Callable that receives the result after calling the
+        wrapped function and should return `True` if the value should skip the
+        cache (or `False` to store in the cache).
+        e.g. to avoid caching `None` results: `lambda r: r is None`
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -58,6 +62,7 @@ class cached:
         ttl=SENTINEL,
         namespace=None,
         key_builder=None,
+        skip_cache_func=lambda x: False,
         cache=Cache.MEMORY,
         serializer=None,
         plugins=None,
@@ -67,6 +72,7 @@ class cached:
     ):
         self.ttl = ttl
         self.key_builder = key_builder
+        self.skip_cache_func = skip_cache_func
         self.noself = noself
         self.alias = alias
         self.cache = None
@@ -110,6 +116,9 @@ class cached:
                 return value
 
         result = await f(*args, **kwargs)
+
+        if self.skip_cache_func(result):
+            return result
 
         if cache_write:
             if aiocache_wait_for_write:
@@ -171,6 +180,10 @@ class cached_stampede(cached):
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
+    :param skip_cache_func: Callable that receives the result after calling the
+        wrapped function and should return `True` if the value should skip the
+        cache (or `False` to store in the cache).
+        e.g. to avoid caching `None` results: `lambda r: r is None`
     :param cache: cache class to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
@@ -201,6 +214,9 @@ class cached_stampede(cached):
                 return value
 
             result = await f(*args, **kwargs)
+
+            if self.skip_cache_func(result):
+                return result
 
             await self.set_in_cache(key, result)
 
@@ -268,6 +284,9 @@ class multi_cached:
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
         that were passed to the decorated callable. This behavior is necessarily different than
         ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
+    :param skip_cache_keys: Callable that receives both key and value and returns True
+        if that key-value pair should not be cached (or False to store in cache).
+        The keys and values to be passed are taken from the wrapped function result.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
@@ -286,6 +305,7 @@ class multi_cached:
         keys_from_attr,
         namespace=None,
         key_builder=None,
+        skip_cache_func=lambda k, v: False,
         ttl=SENTINEL,
         cache=Cache.MEMORY,
         serializer=None,
@@ -295,6 +315,7 @@ class multi_cached:
     ):
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
+        self.skip_cache_func = skip_cache_func
         self.ttl = ttl
         self.alias = alias
         self.cache = None
@@ -354,12 +375,17 @@ class multi_cached:
         result = await f(*new_args, **kwargs)
         result.update(partial)
 
+        to_cache = {k: v for k, v in result.items() if not self.skip_cache_func(k, v)}
+
+        if not to_cache:
+            return result
+
         if cache_write:
             if aiocache_wait_for_write:
-                await self.set_in_cache(result, f, args, kwargs)
+                await self.set_in_cache(to_cache, f, args, kwargs)
             else:
                 # TODO: Use aiojobs to avoid warnings.
-                asyncio.create_task(self.set_in_cache(result, f, args, kwargs))
+                asyncio.create_task(self.set_in_cache(to_cache, f, args, kwargs))
 
         return result
 
