@@ -49,8 +49,9 @@ class TestCached:
         await fn("self", 1, 3)
         assert await cache.exists(build_key(fn, "self", 1, 3)) is True
 
-    async def test_cached_skip_cache_func(self, cache):
-        @cached(skip_cache_func=lambda r: r is None)
+    @pytest.mark.parametrize("decorator", (cached, cached_stampede))
+    async def test_cached_skip_cache_func(self, cache, decorator):
+        @decorator(skip_cache_func=lambda r: r is None)
         async def sk_func(x):
             return x if x > 0 else None
 
@@ -58,7 +59,7 @@ class TestCached:
         res = await sk_func(arg)
         assert res
 
-        key = cached().get_cache_key(sk_func, args=(1,), kwargs={})
+        key = decorator().get_cache_key(sk_func, args=(1,), kwargs={})
 
         assert key
         assert await cache.exists(key)
@@ -68,7 +69,7 @@ class TestCached:
 
         await sk_func(arg)
 
-        key = cached().get_cache_key(sk_func, args=(-1,), kwargs={})
+        key = decorator().get_cache_key(sk_func, args=(-1,), kwargs={})
 
         assert key
         assert not await cache.exists(key)
