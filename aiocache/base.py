@@ -114,7 +114,7 @@ class BaseCache:
         self.timeout = float(timeout) if timeout is not None else timeout
         self.namespace = namespace
         self.ttl = float(ttl) if ttl is not None else ttl
-        self.build_key = key_builder or self._build_key
+        self._build_key = key_builder or (lambda key, ns: "{}{}".format(ns or "", key))
 
         self._serializer = None
         self.serializer = serializer or serializers.StringSerializer()
@@ -163,8 +163,7 @@ class BaseCache:
         """
         start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
 
         await self._add(ns_key, dumps(value), ttl=self._get_ttl(ttl), _conn=_conn)
 
@@ -193,8 +192,7 @@ class BaseCache:
         """
         start = time.monotonic()
         loads = loads_fn or self._serializer.loads
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
 
         value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
 
@@ -225,9 +223,8 @@ class BaseCache:
         """
         start = time.monotonic()
         loads = loads_fn or self._serializer.loads
-        ns = namespace if namespace is not None else self.namespace
 
-        ns_keys = [self.build_key(key, namespace=ns) for key in keys]
+        ns_keys = [self.build_key(key, namespace=namespace) for key in keys]
         values = [
             loads(value)
             for value in await self._multi_get(
@@ -270,8 +267,7 @@ class BaseCache:
         """
         start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
 
         res = await self._set(
             ns_key, dumps(value), ttl=self._get_ttl(ttl), _cas_token=_cas_token, _conn=_conn
@@ -304,11 +300,10 @@ class BaseCache:
         """
         start = time.monotonic()
         dumps = dumps_fn or self._serializer.dumps
-        ns = namespace if namespace is not None else self.namespace
 
         tmp_pairs = []
         for key, value in pairs:
-            tmp_pairs.append((self.build_key(key, namespace=ns), dumps(value)))
+            tmp_pairs.append((self.build_key(key, namespace=namespace), dumps(value)))
 
         await self._multi_set(tmp_pairs, ttl=self._get_ttl(ttl), _conn=_conn)
 
@@ -339,8 +334,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
         ret = await self._delete(ns_key, _conn=_conn)
         logger.debug("DELETE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -364,8 +358,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
         ret = await self._exists(ns_key, _conn=_conn)
         logger.debug("EXISTS %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -392,8 +385,7 @@ class BaseCache:
         :raises: :class:`TypeError` if value is not incrementable
         """
         start = time.monotonic()
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
         ret = await self._increment(ns_key, delta, _conn=_conn)
         logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -418,8 +410,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        ns = namespace if namespace is not None else self.namespace
-        ns_key = self.build_key(key, namespace=ns)
+        ns_key = self.build_key(key, namespace=namespace)
         ret = await self._expire(ns_key, ttl, _conn=_conn)
         logger.debug("EXPIRE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
@@ -498,12 +489,9 @@ class BaseCache:
     async def _close(self, *args, **kwargs):
         pass
 
-    def _build_key(self, key, namespace=None):
-        if namespace is not None:
-            return "{}{}".format(namespace, _ensure_key(key))
-        if self.namespace is not None:
-            return "{}{}".format(self.namespace, _ensure_key(key))
-        return key
+    def build_key(self, key, namespace=None):
+        ns = namespace if namespace is not None else self.namespace
+        return self._build_key(_ensure_key(key), namespace=ns)
 
     def _get_ttl(self, ttl):
         return ttl if ttl is not SENTINEL else self.ttl
