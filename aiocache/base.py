@@ -114,7 +114,7 @@ class BaseCache:
         self.timeout = float(timeout) if timeout is not None else timeout
         self.namespace = namespace
         self.ttl = float(ttl) if ttl is not None else ttl
-        self._build_key = key_builder or (lambda key, ns: "{}{}".format(ns or "", key))
+        self._build_key = key_builder or self._build_key_default
 
         self._serializer = None
         self.serializer = serializer or serializers.StringSerializer()
@@ -492,6 +492,9 @@ class BaseCache:
     def build_key(self, key, namespace=None):
         ns = namespace if namespace is not None else self.namespace
         return self._build_key(_ensure_key(key), namespace=ns)
+    
+    def _build_key_default(self, key, namespace=None):
+        return "{}{}".format(namespace or "", key)
 
     def _get_ttl(self, ttl):
         return ttl if ttl is not SENTINEL else self.ttl
