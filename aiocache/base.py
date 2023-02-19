@@ -492,7 +492,7 @@ class BaseCache:
     def build_key(self, key, namespace=None):
         ns = namespace if namespace is not None else self.namespace
         return self._build_key(_ensure_key(key), namespace=ns)
-    
+
     def _build_key_default(self, key, namespace=None):
         return "{}{}".format(namespace or "", key)
 

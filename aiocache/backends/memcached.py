@@ -147,8 +147,8 @@ class MemcachedCache(MemcachedBackend):
     def parse_uri_path(cls, path):
         return {}
 
-    def _build_key(self, key, namespace=None):
-        ns_key = super()._build_key(key, namespace=namespace).replace(" ", "_")
+    def build_key(self, key, namespace=None):
+        ns_key = super().build_key(key, namespace=namespace).replace(" ", "_")
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover
