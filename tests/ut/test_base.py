@@ -4,8 +4,8 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from aiocache.base import API, BaseCache, _Conn, _ensure_key
-from ..utils import Keys
+from aiocache.base import API, BaseCache, _Conn
+from ..utils import Keys, ensure_key
 
 
 class TestAPI:
@@ -205,7 +205,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test" + _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
         assert base_cache.build_key(Keys.KEY, namespace=namespace) == expected
@@ -219,14 +219,14 @@ class TestBaseCache:
         """Custom key_builder for cache"""
         def build_key(key, namespace=None):
             sep = ":" if namespace else ""
-            return f'{namespace or ""}{sep}{_ensure_key(key)}'
+            return f'{namespace or ""}{sep}{ensure_key(key)}'
 
         cache = BaseCache(key_builder=build_key, namespace=init_namespace)
         return cache
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test:" + _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test:" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     def test_alt_build_key_override_namespace(self, alt_base_cache, namespace, expected):
         """Custom key_builder overrides namespace of cache"""
@@ -235,7 +235,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "init_namespace, expected",
-        ([None, _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["test", "test:" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["test", "test:" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
     async def test_alt_build_key_default_namespace(
             self, init_namespace, alt_base_cache, expected):

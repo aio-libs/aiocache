@@ -490,8 +490,9 @@ class BaseCache:
         pass
 
     def build_key(self, key, namespace=None):
+        key_name = key.value if isinstance(key, Enum) else key
         ns = namespace if namespace is not None else self.namespace
-        return self._build_key(_ensure_key(key), namespace=ns)
+        return self._build_key(key_name, namespace=ns)
 
     def _build_key_default(self, key, namespace=None):
         return "{}{}".format(namespace or "", key)
@@ -539,13 +540,6 @@ class _Conn:
             return await getattr(self._cache, cmd_name)(*args, _conn=self._conn, **kwargs)
 
         return _do_inject_conn
-
-
-def _ensure_key(key):
-    if isinstance(key, Enum):
-        return key.value
-    else:
-        return key
 
 
 for cmd in API.CMDS:
