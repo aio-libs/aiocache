@@ -428,7 +428,7 @@ class TestCache:
         await mock_base_cache.get(Keys.KEY)
 
         mock_base_cache._get.assert_called_with(
-            mock_base_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
+            mock_base_cache.build_key(Keys.KEY), encoding=ANY, _conn=ANY
         )
         assert mock_base_cache.plugins[0].pre_get.call_count == 1
         assert mock_base_cache.plugins[0].post_get.call_count == 1
@@ -453,7 +453,7 @@ class TestCache:
         await mock_base_cache.set(Keys.KEY, "value", ttl=2)
 
         mock_base_cache._set.assert_called_with(
-            mock_base_cache._build_key(Keys.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY
+            mock_base_cache.build_key(Keys.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY
         )
         assert mock_base_cache.plugins[0].pre_set.call_count == 1
         assert mock_base_cache.plugins[0].post_set.call_count == 1
@@ -468,7 +468,7 @@ class TestCache:
         mock_base_cache._exists = AsyncMock(return_value=False)
         await mock_base_cache.add(Keys.KEY, "value", ttl=2)
 
-        key = mock_base_cache._build_key(Keys.KEY)
+        key = mock_base_cache.build_key(Keys.KEY)
         mock_base_cache._add.assert_called_with(key, ANY, ttl=2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_add.call_count == 1
         assert mock_base_cache.plugins[0].post_add.call_count == 1
@@ -483,7 +483,7 @@ class TestCache:
         await mock_base_cache.multi_get([Keys.KEY, Keys.KEY_1])
 
         mock_base_cache._multi_get.assert_called_with(
-            [mock_base_cache._build_key(Keys.KEY), mock_base_cache._build_key(Keys.KEY_1)],
+            [mock_base_cache.build_key(Keys.KEY), mock_base_cache.build_key(Keys.KEY_1)],
             encoding=ANY,
             _conn=ANY,
         )
@@ -499,8 +499,8 @@ class TestCache:
     async def test_mset(self, mock_base_cache):
         await mock_base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=2)
 
-        key = mock_base_cache._build_key(Keys.KEY)
-        key1 = mock_base_cache._build_key(Keys.KEY_1)
+        key = mock_base_cache.build_key(Keys.KEY)
+        key1 = mock_base_cache.build_key(Keys.KEY_1)
         mock_base_cache._multi_set.assert_called_with(
             [(key, ANY), (key1, ANY)], ttl=2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_multi_set.call_count == 1
@@ -515,7 +515,7 @@ class TestCache:
     async def test_exists(self, mock_base_cache):
         await mock_base_cache.exists(Keys.KEY)
 
-        mock_base_cache._exists.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        mock_base_cache._exists.assert_called_with(mock_base_cache.build_key(Keys.KEY), _conn=ANY)
         assert mock_base_cache.plugins[0].pre_exists.call_count == 1
         assert mock_base_cache.plugins[0].post_exists.call_count == 1
 
@@ -528,7 +528,7 @@ class TestCache:
     async def test_increment(self, mock_base_cache):
         await mock_base_cache.increment(Keys.KEY, 2)
 
-        key = mock_base_cache._build_key(Keys.KEY)
+        key = mock_base_cache.build_key(Keys.KEY)
         mock_base_cache._increment.assert_called_with(key, 2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_increment.call_count == 1
         assert mock_base_cache.plugins[0].post_increment.call_count == 1
@@ -542,7 +542,7 @@ class TestCache:
     async def test_delete(self, mock_base_cache):
         await mock_base_cache.delete(Keys.KEY)
 
-        mock_base_cache._delete.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        mock_base_cache._delete.assert_called_with(mock_base_cache.build_key(Keys.KEY), _conn=ANY)
         assert mock_base_cache.plugins[0].pre_delete.call_count == 1
         assert mock_base_cache.plugins[0].post_delete.call_count == 1
 
@@ -554,7 +554,7 @@ class TestCache:
 
     async def test_expire(self, mock_base_cache):
         await mock_base_cache.expire(Keys.KEY, 1)
-        key = mock_base_cache._build_key(Keys.KEY)
+        key = mock_base_cache.build_key(Keys.KEY)
         mock_base_cache._expire.assert_called_with(key, 1, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_expire.call_count == 1
         assert mock_base_cache.plugins[0].post_expire.call_count == 1
@@ -567,7 +567,7 @@ class TestCache:
 
     async def test_clear(self, mock_base_cache):
         await mock_base_cache.clear(Keys.KEY)
-        mock_base_cache._clear.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        mock_base_cache._clear.assert_called_with(mock_base_cache.build_key(Keys.KEY), _conn=ANY)
         assert mock_base_cache.plugins[0].pre_clear.call_count == 1
         assert mock_base_cache.plugins[0].post_clear.call_count == 1
 
@@ -580,7 +580,7 @@ class TestCache:
     async def test_raw(self, mock_base_cache):
         await mock_base_cache.raw("get", Keys.KEY)
         mock_base_cache._raw.assert_called_with(
-            "get", mock_base_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
+            "get", mock_base_cache.build_key(Keys.KEY), encoding=ANY, _conn=ANY
         )
         assert mock_base_cache.plugins[0].pre_raw.call_count == 1
         assert mock_base_cache.plugins[0].post_raw.call_count == 1
