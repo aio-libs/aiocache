@@ -99,7 +99,7 @@ class BaseCache:
     :param namespace: string to use as default prefix for the key used in all operations of
         the backend. Default is None
     :param key_builder: alternative callable to build the key. Receives the key and the namespace
-        as params and should return a string that can be used as key by the underlying backend.
+        as params and should return a string that can be used as a key by the underlying backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5. Use 0 or None if you want to disable it.
     :param ttl: int the expiration time in seconds to use as a default in all operations of
