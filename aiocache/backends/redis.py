@@ -47,7 +47,7 @@ class RedisBackend(BaseCache):
         if pool_min_size is not _NOT_SET:
             warnings.warn(
                 "Parameter 'pool_min_size' is deprecated since aiocache 0.12",
-                DeprecationWarning,
+                DeprecationWarning, stacklevel=2
             )
 
         self.endpoint = endpoint
