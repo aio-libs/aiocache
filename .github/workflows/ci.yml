@@ -34,6 +34,8 @@ jobs:
     - name: Install itself
       run: |
         pip install .
+    - name: Mypy
+      run: mypy
     - name: Run linter
       run: |
         make lint
