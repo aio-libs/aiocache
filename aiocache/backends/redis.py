@@ -1,11 +1,12 @@
 import itertools
 import warnings
+from typing import Callable, Optional
 
 import redis.asyncio as redis
 from redis.exceptions import ResponseError as IncrbyException
 
 from aiocache.base import BaseCache
-from aiocache.serializers import JsonSerializer
+from aiocache.serializers import BaseSerializer, JsonSerializer
 
 
 _NOT_SET = object()
@@ -186,7 +187,7 @@ class RedisCache(RedisBackend):
     :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None.
+        the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     :param endpoint: str with the endpoint to connect to. Default is "127.0.0.1".
@@ -199,8 +200,19 @@ class RedisCache(RedisBackend):
 
     NAME = "redis"
 
-    def __init__(self, serializer=None, **kwargs):
-        super().__init__(serializer=serializer or JsonSerializer(), **kwargs)
+    def __init__(
+        self,
+        serializer: Optional[BaseSerializer] = None,
+        namespace: str = "",
+        key_builder: Optional[Callable[[str, str], str]] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            serializer=serializer or JsonSerializer(),
+            namespace=namespace,
+            key_builder=key_builder or (
+                lambda key, namespace="": f"{namespace}:{key}" if namespace else key),
+            **kwargs)
 
     @classmethod
     def parse_uri_path(cls, path):
@@ -218,8 +230,8 @@ class RedisCache(RedisBackend):
             options["db"] = db
         return options
 
-    def _build_key_default(self, key, namespace=None):
-        return "{}{}{}".format(namespace or "", ":" if namespace else "", key)
+    def _build_key_default(self, key: str, namespace: str = "") -> str:
+        return f"{namespace}:{key}" if namespace else key
 
     def __repr__(self):  # pragma: no cover
         return "RedisCache ({}:{})".format(self.endpoint, self.port)

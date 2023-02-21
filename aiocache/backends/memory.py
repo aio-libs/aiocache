@@ -118,7 +118,7 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None.
+        the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """

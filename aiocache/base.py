@@ -5,9 +5,10 @@ import os
 import time
 from enum import Enum
 from types import TracebackType
-from typing import Callable, Optional, Set, Type
+from typing import Any, Callable, List, Optional, Set, Type
 
-from aiocache import serializers
+# from aiocache.plugins import BasePlugin
+from aiocache.serializers import BaseSerializer, StringSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ class BaseCache:
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes. Default is empty
         list.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None
+        the backend. Default is an empty string, "".
     :param key_builder: alternative callable to build the key. Receives the key and the namespace
         as params and should return a string that can be used as a key by the underlying backend.
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
@@ -109,18 +110,26 @@ class BaseCache:
     NAME: str
 
     def __init__(
-        self, serializer=None, plugins=None, namespace=None, key_builder=None, timeout=5, ttl=None
+        self,
+        serializer: Optional[BaseSerializer] = None,
+        plugins: Optional[List[Any]] = None,  # aiocache.plugins depends on aiocache.base
+        namespace: str = "",
+        key_builder: Optional[Callable[[str, str], str]] = None,
+        timeout: Optional[float] = 5,
+        ttl: Optional[float] = None,
     ):
-        self.timeout = float(timeout) if timeout is not None else timeout
-        self.namespace = namespace
-        self.ttl = float(ttl) if ttl is not None else ttl
-        self._build_key = key_builder or self._build_key_default
+        self.timeout: Optional[float] = float(timeout) if timeout is not None else None
+        self.ttl: Optional[float] = float(ttl) if ttl is not None else None
 
-        self._serializer = None
-        self.serializer = serializer or serializers.StringSerializer()
+        self.namespace: str = namespace
+        self._build_key: Callable[[str, str], str] = key_builder or (
+            lambda key, namespace="": f"{namespace}{key}")
 
-        self._plugins = None
-        self.plugins = plugins or []
+        self._serializer: Optional[BaseSerializer] = None
+        self.serializer: BaseSerializer = serializer or StringSerializer()
+
+        self._plugins: List[Any] = None
+        self.plugins: List[Any] = plugins or []
 
     @property
     def serializer(self):
@@ -489,13 +498,13 @@ class BaseCache:
     async def _close(self, *args, **kwargs):
         pass
 
-    def build_key(self, key, namespace=None):
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
         key_name = key.value if isinstance(key, Enum) else key
         ns = namespace if namespace is not None else self.namespace
         return self._build_key(key_name, namespace=ns)
 
-    def _build_key_default(self, key, namespace=None):
-        return "{}{}".format(namespace or "", key)
+    def _build_key_default(self, key: str, namespace: str = "") -> str:
+        return f"{namespace}{key}"
 
     def _get_ttl(self, ttl):
         return ttl if ttl is not SENTINEL else self.ttl

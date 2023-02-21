@@ -35,7 +35,7 @@ class cached:
 
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None
+        the backend. Default is an empty string, "".
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
@@ -176,7 +176,7 @@ class cached_stampede(cached):
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key_from_attr: str arg or kwarg name from the function to use as a key.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None
+        the backend. Default is an empty string, "".
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
         This behavior is necessarily different than ``BaseCache.build_key()``
@@ -278,7 +278,7 @@ class multi_cached:
     :param keys_from_attr: name of the arg or kwarg in the decorated callable that contains
         an iterable that yields the keys returned by the decorated callable.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None
+        the backend. Default is an empty string, "".
     :param key_builder: Callable that enables mapping the decorated function's keys to the keys
         used by the cache. Receives a key from the iterable corresponding to
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
