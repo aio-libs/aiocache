@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import cast, Optional, Union
 
 import aiomcache
 
@@ -7,6 +7,7 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
+# class MemcachedBackend(BaseCache[str]):
 class MemcachedBackend(BaseCache):
     def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, **kwargs):
         super().__init__(**kwargs)
@@ -120,6 +121,7 @@ class MemcachedBackend(BaseCache):
         await self.client.close()
 
 
+# class MemcachedCache(Generic[CacheKeyType], MemcachedBackend):
 class MemcachedCache(MemcachedBackend):
     """
     Memcached cache implementation with the following components as defaults:
@@ -140,7 +142,9 @@ class MemcachedCache(MemcachedBackend):
     """
 
     NAME = "memcached"
+    KeyType = Union[bytes, bytes]  # Workaround: TypeAlias not in python <= 3.10
 
+    # def __init__(self, serializer=None, *, key_type: CacheKeyType = bytes, **kwargs):
     def __init__(self, serializer=None, **kwargs):
         super().__init__(serializer=serializer or JsonSerializer(), **kwargs)
 
@@ -148,8 +152,12 @@ class MemcachedCache(MemcachedBackend):
     def parse_uri_path(cls, path):
         return {}
 
-    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
-        ns_key = super().build_key(key, namespace=namespace).replace(" ", "_")
+    # def build_key(self, key: str, namespace: Optional[str] = None) -> CacheKeyType:
+    #     ns_key = super().build_key(key, namespace=namespace).replace(" ", "_")
+    #     return str.encode(ns_key)
+
+    def build_key(self, key: str, namespace: Optional[str] = None) -> KeyType:
+        ns_key = cast(str, super().build_key(key, namespace=namespace)).replace(" ", "_")
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover

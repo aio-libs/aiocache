@@ -1,10 +1,11 @@
 import asyncio
-from typing import Dict
+from typing import Dict, Union
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
 
+# class SimpleMemoryBackend(BaseCache[str]):
 class SimpleMemoryBackend(BaseCache):
     """
     Wrapper around dict operations to use it as a cache backend
@@ -124,6 +125,7 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     """
 
     NAME = "memory"
+    KeyType = Union[str, str]  # Workaround: TypeAlias not in python <= 3.10
 
     def __init__(self, serializer=None, **kwargs):
         super().__init__(serializer=serializer or NullSerializer(), **kwargs)

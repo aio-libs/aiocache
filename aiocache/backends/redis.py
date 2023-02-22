@@ -1,17 +1,20 @@
 import itertools
 import warnings
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, TYPE_CHECKING, Union
 
 import redis.asyncio as redis
 from redis.exceptions import ResponseError as IncrbyException
 
+if TYPE_CHECKING:
+    from aiocache.serializers import BaseSerializer
 from aiocache.base import BaseCache
-from aiocache.serializers import BaseSerializer, JsonSerializer
+from aiocache.serializers import JsonSerializer
 
 
 _NOT_SET = object()
 
 
+# class RedisBackend(BaseCache[str]):
 class RedisBackend(BaseCache):
     RELEASE_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[1] then"
@@ -199,20 +202,23 @@ class RedisCache(RedisBackend):
     """
 
     NAME = "redis"
+    KeyType = Union[str, str]  # Workaround: TypeAlias not in python <= 3.10
 
     def __init__(
         self,
-        serializer: Optional[BaseSerializer] = None,
+        serializer: "Optional[BaseSerializer]" = None,
         namespace: str = "",
         key_builder: Optional[Callable[[str, str], str]] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         super().__init__(
             serializer=serializer or JsonSerializer(),
             namespace=namespace,
             key_builder=key_builder or (
-                lambda key, namespace="": f"{namespace}:{key}" if namespace else key),
-            **kwargs)
+                lambda key, namespace: f"{namespace}:{key}" if namespace else key
+            ),
+            **kwargs,
+        )
 
     @classmethod
     def parse_uri_path(cls, path):
@@ -229,9 +235,6 @@ class RedisCache(RedisBackend):
         if db:
             options["db"] = db
         return options
-
-    def _build_key_default(self, key: str, namespace: str = "") -> str:
-        return f"{namespace}:{key}" if namespace else key
 
     def __repr__(self):  # pragma: no cover
         return "RedisCache ({}:{})".format(self.endpoint, self.port)

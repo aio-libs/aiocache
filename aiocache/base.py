@@ -5,15 +5,18 @@ import os
 import time
 from enum import Enum
 from types import TracebackType
-from typing import Any, Callable, List, Optional, Set, Type
+from typing import Callable, List, Optional, Set, Type, TYPE_CHECKING, Union
 
-# from aiocache.plugins import BasePlugin
-from aiocache.serializers import BaseSerializer, StringSerializer
+if TYPE_CHECKING:
+    from aiocache.plugins import BasePlugin
+    from aiocache.serializers import BaseSerializer
+from aiocache.serializers import StringSerializer
 
 
 logger = logging.getLogger(__name__)
 
 SENTINEL = object()
+# CacheKeyType = TypeVar("KeyType", bound=Union[str, bytes])
 
 
 class API:
@@ -88,6 +91,7 @@ class API:
         return _plugins
 
 
+# class BaseCache(Generic[CacheKeyType]):
 class BaseCache:
     """
     Base class that agregates the common logic for the different caches that may exist. Cache
@@ -108,28 +112,29 @@ class BaseCache:
     """
 
     NAME: str
+    KeyType = Union[str, bytes]
 
     def __init__(
         self,
-        serializer: Optional[BaseSerializer] = None,
-        plugins: Optional[List[Any]] = None,  # aiocache.plugins depends on aiocache.base
+        serializer: "Optional[BaseSerializer]" = None,
+        plugins: "Optional[List[BasePlugin]]" = None,
         namespace: str = "",
         key_builder: Optional[Callable[[str, str], str]] = None,
         timeout: Optional[float] = 5,
         ttl: Optional[float] = None,
+        # *,
+        # key_type: CacheKeyType = str,
     ):
-        self.timeout: Optional[float] = float(timeout) if timeout is not None else None
-        self.ttl: Optional[float] = float(ttl) if ttl is not None else None
+        self.timeout = float(timeout) if timeout is not None else None
+        self.ttl = float(ttl) if ttl is not None else None
 
         self.namespace: str = namespace
         self._build_key: Callable[[str, str], str] = key_builder or (
-            lambda key, namespace="": f"{namespace}{key}")
+            lambda key, namespace: f"{namespace}{key}"
+        )
 
-        self._serializer: Optional[BaseSerializer] = None
-        self.serializer: BaseSerializer = serializer or StringSerializer()
-
-        self._plugins: List[Any] = None
-        self.plugins: List[Any] = plugins or []
+        self._serializer = serializer or StringSerializer()
+        self._plugins = plugins or []
 
     @property
     def serializer(self):
@@ -171,7 +176,7 @@ class BaseCache:
             - :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        dumps = dumps_fn or self._serializer.dumps
+        dumps = dumps_fn or self.serializer.dumps
         ns_key = self.build_key(key, namespace=namespace)
 
         await self._add(ns_key, dumps(value), ttl=self._get_ttl(ttl), _conn=_conn)
@@ -200,7 +205,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        loads = loads_fn or self._serializer.loads
+        loads = loads_fn or self.serializer.loads
         ns_key = self.build_key(key, namespace=namespace)
 
         value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
@@ -231,7 +236,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        loads = loads_fn or self._serializer.loads
+        loads = loads_fn or self.serializer.loads
 
         ns_keys = [self.build_key(key, namespace=namespace) for key in keys]
         values = [
@@ -275,7 +280,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        dumps = dumps_fn or self._serializer.dumps
+        dumps = dumps_fn or self.serializer.dumps
         ns_key = self.build_key(key, namespace=namespace)
 
         res = await self._set(
@@ -308,7 +313,7 @@ class BaseCache:
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
-        dumps = dumps_fn or self._serializer.dumps
+        dumps = dumps_fn or self.serializer.dumps
 
         tmp_pairs = []
         for key, value in pairs:
@@ -498,13 +503,11 @@ class BaseCache:
     async def _close(self, *args, **kwargs):
         pass
 
-    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+    # def build_key(self, key: str, namespace: Optional[str] = None) -> CacheKeyType:
+    def build_key(self, key: str, namespace: Optional[str] = None) -> KeyType:
         key_name = key.value if isinstance(key, Enum) else key
-        ns = namespace if namespace is not None else self.namespace
-        return self._build_key(key_name, namespace=ns)
-
-    def _build_key_default(self, key: str, namespace: str = "") -> str:
-        return f"{namespace}{key}"
+        ns = self.namespace if namespace is None else namespace
+        return self._build_key(key_name, ns)
 
     def _get_ttl(self, ttl):
         return ttl if ttl is not SENTINEL else self.ttl

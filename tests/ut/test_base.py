@@ -214,31 +214,25 @@ class TestBaseCache:
         cache = BaseCache(key_builder=lambda key, namespace: "x")
         assert cache.build_key(Keys.KEY, "namespace") == "x"
 
-    @pytest.fixture
-    def alt_base_cache(self, init_namespace="test"):
+    def alt_build_key(self, key, namespace):
         """Custom key_builder for cache"""
-        def build_key(key, namespace=None):
-            sep = ":" if namespace else ""
-            return f'{namespace or ""}{sep}{ensure_key(key)}'
-
-        cache = BaseCache(key_builder=build_key, namespace=init_namespace)
-        return cache
+        sep = ":" if namespace else ""
+        return f"{namespace}{sep}{ensure_key(key)}"
 
     @pytest.mark.parametrize(
         "namespace, expected",
         ([None, "test:" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
-    def test_alt_build_key_override_namespace(self, alt_base_cache, namespace, expected):
+    def test_alt_build_key_override_namespace(self, namespace, expected):
         """Custom key_builder overrides namespace of cache"""
-        cache = alt_base_cache
+        cache = BaseCache(key_builder=self.alt_build_key, namespace="test")
         assert cache.build_key(Keys.KEY, namespace=namespace) == expected
 
     @pytest.mark.parametrize(
-        "init_namespace, expected",
+        "namespace, expected",
         ([None, ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["test", "test:" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
     )
-    async def test_alt_build_key_default_namespace(
-            self, init_namespace, alt_base_cache, expected):
+    async def test_alt_build_key_default_namespace(self, namespace, expected):
         """Custom key_builder for cache with or without namespace specified.
 
         Cache member functions that accept a ``namespace`` parameter
@@ -250,8 +244,7 @@ class TestBaseCache:
         even when that cache is supplied to a lock or to a decorator
         using the ``alias`` argument.
         """
-        cache = alt_base_cache
-        cache.namespace = init_namespace
+        cache = BaseCache(key_builder=self.alt_build_key, namespace=namespace)
 
         # Verify that private members are called with the correct ns_key
         await self._assert_add__alt_build_key_default_namespace(cache, expected)
