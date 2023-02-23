@@ -3,9 +3,10 @@ import functools
 import logging
 import os
 import time
+from abc import abstractmethod
 from enum import Enum
 from types import TracebackType
-from typing import Callable, List, Optional, Set, Type, TYPE_CHECKING, Union
+from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
 
 if TYPE_CHECKING:
     from aiocache.plugins import BasePlugin
@@ -16,7 +17,7 @@ from aiocache.serializers import StringSerializer
 logger = logging.getLogger(__name__)
 
 SENTINEL = object()
-# CacheKeyType = TypeVar("KeyType", bound=Union[str, bytes])
+CacheKeyType = TypeVar("CacheKeyType", bound=Union[str, bytes])
 
 
 class API:
@@ -91,8 +92,7 @@ class API:
         return _plugins
 
 
-# class BaseCache(Generic[CacheKeyType]):
-class BaseCache:
+class BaseCache(Generic[CacheKeyType]):
     """
     Base class that agregates the common logic for the different caches that may exist. Cache
     related available options are:
@@ -112,7 +112,6 @@ class BaseCache:
     """
 
     NAME: str
-    KeyType = Union[str, bytes]
 
     def __init__(
         self,
@@ -122,8 +121,6 @@ class BaseCache:
         key_builder: Optional[Callable[[str, str], str]] = None,
         timeout: Optional[float] = 5,
         ttl: Optional[float] = None,
-        # *,
-        # key_type: CacheKeyType = str,
     ):
         self.timeout = float(timeout) if timeout is not None else None
         self.ttl = float(ttl) if ttl is not None else None
@@ -503,8 +500,11 @@ class BaseCache:
     async def _close(self, *args, **kwargs):
         pass
 
-    # def build_key(self, key: str, namespace: Optional[str] = None) -> CacheKeyType:
-    def build_key(self, key: str, namespace: Optional[str] = None) -> KeyType:
+    @abstractmethod
+    def build_key(self, key: str, namespace: Optional[str] = None) -> CacheKeyType:
+        raise NotImplementedError()
+
+    def _str_build_key(self, key: str, namespace: Optional[str] = None) -> str:
         key_name = key.value if isinstance(key, Enum) else key
         ns = self.namespace if namespace is None else namespace
         return self._build_key(key_name, ns)

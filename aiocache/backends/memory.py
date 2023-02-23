@@ -1,18 +1,18 @@
 import asyncio
-from typing import Dict, Union
+from typing import Dict
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
 
-# class SimpleMemoryBackend(BaseCache[str]):
-class SimpleMemoryBackend(BaseCache):
+class SimpleMemoryBackend(BaseCache[str]):
     """
     Wrapper around dict operations to use it as a cache backend
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.build_key = self._str_build_key
 
         self._cache: Dict[str, object] = {}
         self._handlers: Dict[str, asyncio.TimerHandle] = {}
@@ -125,7 +125,6 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     """
 
     NAME = "memory"
-    KeyType = Union[str, str]  # Workaround: TypeAlias not in python <= 3.10
 
     def __init__(self, serializer=None, **kwargs):
         super().__init__(serializer=serializer or NullSerializer(), **kwargs)
@@ -133,3 +132,6 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     @classmethod
     def parse_uri_path(cls, path):
         return {}
+
+    # def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+    #     return self._str_build_key(key, namespace)
