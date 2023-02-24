@@ -6,7 +6,7 @@ import time
 from abc import abstractmethod
 from enum import Enum
 from types import TracebackType
-from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar, Union
+from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
 
 if TYPE_CHECKING:
     from aiocache.plugins import BasePlugin
@@ -17,7 +17,7 @@ from aiocache.serializers import StringSerializer
 logger = logging.getLogger(__name__)
 
 SENTINEL = object()
-CacheKeyType = TypeVar("CacheKeyType", bound=Union[str, bytes])
+CacheKeyType = TypeVar("CacheKeyType")
 
 
 class API:
