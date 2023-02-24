@@ -8,8 +8,8 @@ import redis.asyncio as redis
 
 
 @pytest.fixture
-async def redis_client() -> AsyncGenerator[redis.Redis[Any], None]:
-    r: redis.Redis[Any]
+async def redis_client() -> "AsyncGenerator[redis.Redis[Any], None]":
+    r: "redis.Redis[Any]"
     async with redis.Redis(host="127.0.0.1", port=6379, max_connections=1) as r:
         yield r
 
