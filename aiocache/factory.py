@@ -172,12 +172,12 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias, **kwargs):
+    def create(self, alias: str, **kwargs):
         """Create a new cache.
 
         You can use kwargs to pass extra parameters to configure the cache.
 
-        :param alias (str): alias to pull configuration from
+        :param alias: alias to pull configuration from
         :return: New cache instance
         """
         config = self.get_alias_config(alias)

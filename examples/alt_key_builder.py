@@ -24,11 +24,10 @@
         namespace (str, optional): Prefix to add to the key. Defaults to "".
 
     Returns:
-        (str or bytes)
         By default, ``cache.build_key()`` returns ``f'{namespace}{sep}{key}'``,
         where some backends might include an optional separator, ``sep``.
         Some backends might strip or replace illegal characters, and encode
-        the result before returning it.
+        the result before returning it. Typically str or bytes.
 
     --------------------------------------------------------------------------
     2. Custom ``key_builder`` for a cache decorator automatically generates a

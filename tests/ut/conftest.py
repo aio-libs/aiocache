@@ -29,7 +29,6 @@ def reset_caches():
 
 @pytest.fixture
 def mock_cache(mocker):
-    # TODO: Is there need for a separate BaseCache[bytes] fixture?
     return create_autospec(BaseCache[str]())
 
 
