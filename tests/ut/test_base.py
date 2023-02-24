@@ -197,9 +197,9 @@ class TestBaseCache:
     async def test_release_conn(self, base_cache):
         assert await base_cache.release_conn("mock") is None
 
-    def test_generic_build_key(self, generic_base_cache):
+    def test_abstract_build_key(self, abstract_base_cache):
         with pytest.raises(NotImplementedError):
-            generic_base_cache.build_key(Keys.KEY)
+            abstract_base_cache.build_key(Keys.KEY)
 
     @pytest.fixture
     def set_test_namespace(self, base_cache):

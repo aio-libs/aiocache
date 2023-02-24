@@ -36,7 +36,6 @@ def mock_cache(mocker):
 @pytest.fixture
 def mock_base_cache():
     """Return BaseCache instance with unimplemented methods mocked out."""
-    # TODO: Is there need for a separate BaseCache[bytes] fixture?
     plugin = create_autospec(BasePlugin, instance=True)
     cache = BaseCache[str](timeout=0.002, plugins=(plugin,))
     methods = ("_add", "_get", "_gets", "_set", "_multi_get", "_multi_set", "_delete",
@@ -51,7 +50,7 @@ def mock_base_cache():
 
 
 @pytest.fixture
-def generic_base_cache():
+def abstract_base_cache():
     # TODO: Is there need for a separate BaseCache[bytes] fixture?
     return BaseCache[str]()
 
