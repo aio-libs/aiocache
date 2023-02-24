@@ -221,7 +221,7 @@ class TestBaseCache:
         ([None, "test" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
-        assert base_cache.build_key(Keys.KEY, namespace=namespace) == expected
+        assert base_cache.build_key(Keys.KEY, namespace) == expected
 
     def patch_str_build_key(self, cache: BaseCache[str]) -> None:
         """Implement build_key() on BaseCache[str] as if it were subclassed"""
@@ -246,7 +246,7 @@ class TestBaseCache:
         """Custom key_builder overrides namespace of cache"""
         cache = BaseCache[str](key_builder=self.alt_build_key, namespace="test")
         self.patch_str_build_key(cache)
-        assert cache.build_key(Keys.KEY, namespace=namespace) == expected
+        assert cache.build_key(Keys.KEY, namespace) == expected
 
     @pytest.mark.parametrize(
         "namespace, expected",

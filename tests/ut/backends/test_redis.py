@@ -256,7 +256,7 @@ class TestRedisCache:
         ([None, "test:" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_build_key_double_dot(self, set_test_namespace, redis_cache, namespace, expected):
-        assert redis_cache.build_key(Keys.KEY, namespace=namespace) == expected
+        assert redis_cache.build_key(Keys.KEY, namespace) == expected
 
     def test_build_key_no_namespace(self, redis_cache):
         assert redis_cache.build_key(Keys.KEY, namespace=None) == Keys.KEY
