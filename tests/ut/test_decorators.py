@@ -60,7 +60,7 @@ class TestCached:
         with pytest.raises(TypeError):
 
             @cached(wrong_param=1)
-            async def fn() -> None:
+            async def fn():
                 """Dummy function."""
 
     def test_alias_takes_precedence(self, mock_cache):
@@ -373,7 +373,7 @@ class TestMultiCached:
         with pytest.raises(TypeError):
 
             @multi_cached(wrong_param=1)
-            async def fn() -> None:
+            async def fn():
                 """Dummy function."""
 
     def test_alias_takes_precedence(self, mock_cache):
