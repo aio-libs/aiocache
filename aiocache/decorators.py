@@ -144,7 +144,7 @@ class cached:
             + str(ordered_kwargs)
         )
 
-    async def get_from_cache(self, key: str):
+    async def get_from_cache(self, key):
         try:
             return await self.cache.get(key)
         except Exception:

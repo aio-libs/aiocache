@@ -197,7 +197,7 @@ class TestBaseCache:
     async def test_release_conn(self, base_cache):
         assert await base_cache.release_conn("mock") is None
 
-    def test_build_key(self, generic_base_cache):
+    def test_generic_build_key(self, generic_base_cache):
         with pytest.raises(NotImplementedError):
             generic_base_cache.build_key(Keys.KEY)
 
@@ -227,7 +227,7 @@ class TestBaseCache:
         """Implement build_key() on BaseCache[str] as if it were subclassed"""
         cache.build_key = cache._str_build_key
         return
-        
+
     def test_alt_build_key(self):
         cache = BaseCache[str](key_builder=lambda key, namespace: "x")
         self.patch_str_build_key(cache)

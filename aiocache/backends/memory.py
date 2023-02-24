@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict
+from typing import Dict, Optional
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
@@ -12,7 +12,10 @@ class SimpleMemoryBackend(BaseCache[str]):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.build_key = self._str_build_key
+        # Assigning build_key here is clear and avoids the extra stack frame
+        # from nesting the call to _str_build_key() in an override of build_key()
+        # ...but mypy needs the override definition to recognize a concrete class
+        # self.build_key = self._str_build_key  # Simple, but not mypy-friendly
 
         self._cache: Dict[str, object] = {}
         self._handlers: Dict[str, asyncio.TimerHandle] = {}
@@ -133,5 +136,5 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     def parse_uri_path(cls, path):
         return {}
 
-    # def build_key(self, key: str, namespace: Optional[str] = None) -> str:
-    #     return self._str_build_key(key, namespace)
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return self._str_build_key(key, namespace)
