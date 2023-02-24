@@ -118,7 +118,7 @@ class BaseCache(Generic[CacheKeyType]):
         serializer: "Optional[BaseSerializer]" = None,
         plugins: "Optional[List[BasePlugin]]" = None,
         namespace: str = "",
-        key_builder: Optional[Callable[[str, str], str]] = None,
+        key_builder: Callable[[str, str], str] = lambda key, namespace: f"{namespace}{key}",
         timeout: Optional[float] = 5,
         ttl: Optional[float] = None,
     ):
@@ -126,9 +126,7 @@ class BaseCache(Generic[CacheKeyType]):
         self.ttl = float(ttl) if ttl is not None else None
 
         self.namespace: str = namespace
-        self._build_key: Callable[[str, str], str] = key_builder or (
-            lambda key, namespace: f"{namespace}{key}"
-        )
+        self._build_key = key_builder
 
         self._serializer = serializer or StringSerializer()
         self._plugins = plugins or []
