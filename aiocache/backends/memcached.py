@@ -120,7 +120,6 @@ class MemcachedBackend(BaseCache[bytes]):
         await self.client.close()
 
 
-# class MemcachedCache(MemcachedBackend):
 class MemcachedCache(MemcachedBackend):
     """
     Memcached cache implementation with the following components as defaults:

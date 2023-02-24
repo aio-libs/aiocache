@@ -12,10 +12,6 @@ class SimpleMemoryBackend(BaseCache[str]):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Assigning build_key here is clear and avoids the extra stack frame
-        # from nesting the call to _str_build_key() in an override of build_key()
-        # ...but mypy needs the override definition to recognize a concrete class
-        # self.build_key = self._str_build_key  # Simple, but not mypy-friendly
 
         self._cache: Dict[str, object] = {}
         self._handlers: Dict[str, asyncio.TimerHandle] = {}

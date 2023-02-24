@@ -47,10 +47,6 @@ class RedisBackend(BaseCache[str]):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        # Assigning build_key here is clear and avoids the extra stack frame
-        # from nesting the call to _str_build_key() in an override of build_key()
-        # ...but mypy needs the override definition to recognize a concrete class
-        # self.build_key = self._str_build_key  # Simple, but not mypy-friendly
         if pool_min_size is not _NOT_SET:
             warnings.warn(
                 "Parameter 'pool_min_size' is deprecated since aiocache 0.12",
