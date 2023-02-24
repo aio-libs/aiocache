@@ -209,7 +209,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "None" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "None" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_str_build_key(self, set_test_namespace, namespace, expected):
         # TODO: Runtime check for namespace=None: Raise ValueError or replace with ""?
@@ -218,14 +218,14 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
         assert base_cache.build_key(Keys.KEY, namespace=namespace) == expected
 
     def patch_str_build_key(self, cache: BaseCache[str]) -> None:
         """Implement build_key() on BaseCache[str] as if it were subclassed"""
-        cache.build_key = cache._str_build_key
+        cache.build_key = cache._str_build_key  # type: ignore[assignment]
         return
 
     def test_alt_build_key(self):
@@ -240,7 +240,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test:" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test:" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_alt_build_key_override_namespace(self, namespace, expected):
         """Custom key_builder overrides namespace of cache"""
@@ -250,7 +250,7 @@ class TestBaseCache:
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "None" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["test", "test:" + ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "None" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["test", "test:" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     async def test_alt_build_key_default_namespace(self, namespace, expected):
         """Custom key_builder for cache with or without namespace specified.
