@@ -21,13 +21,14 @@
 
     Args:
         key (str): undecorated key name
-        namespace (str, optional): Prefix to add to the key. Defaults to None.
+        namespace (str, optional): Prefix to add to the key. Defaults to "".
 
     Returns:
+        (str or bytes)
         By default, ``cache.build_key()`` returns ``f'{namespace}{sep}{key}'``,
         where some backends might include an optional separator, ``sep``.
         Some backends might strip or replace illegal characters, and encode
-        the result before returning it. Typically str or bytes.
+        the result before returning it.
 
     --------------------------------------------------------------------------
     2. Custom ``key_builder`` for a cache decorator automatically generates a
@@ -59,21 +60,21 @@ async def demo_key_builders():
 # 1. Custom ``key_builder`` for a cache
 # -------------------------------------
 
-def ensure_no_spaces(key, namespace=None, replace='_'):
+def ensure_no_spaces(key, namespace, replace='_'):
     """Prefix key with namespace; replace each space with ``replace``"""
-    aggregate_key = f"{namespace or ''}{key}"
+    aggregate_key = f"{namespace}{key}"
     custom_key = aggregate_key.replace(' ', replace)
     return custom_key
 
 
-def bytes_key(key, namespace=None):
+def bytes_key(key, namespace):
     """Prefix key with namespace; convert output to bytes"""
-    aggregate_key = f"{namespace or ''}{key}"
+    aggregate_key = f"{namespace}{key}"
     custom_key = aggregate_key.encode()
     return custom_key
 
 
-def fixed_key(key, namespace=None):
+def fixed_key(key, namespace):
     """Ignore input, generate a fixed key"""
     unchanging_key = "universal key"
     return unchanging_key
