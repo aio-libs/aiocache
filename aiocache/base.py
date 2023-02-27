@@ -119,7 +119,7 @@ class BaseCache(Generic[CacheKeyType]):
         serializer: Optional["BaseSerializer"] = None,
         plugins: Optional[List["BasePlugin"]] = None,
         namespace: str = "",
-        key_builder: Callable[[str, str], str] = lambda key, namespace: f"{namespace}{key}",
+        key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}{k}",
         timeout: Optional[float] = 5,
         ttl: Optional[float] = None,
     ):
