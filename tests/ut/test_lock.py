@@ -86,7 +86,7 @@ class TestOptimisticLock:
         assert lock.client == mock_base_cache
         assert lock._token is None
         assert lock.key == Keys.KEY
-        assert lock.ns_key == mock_base_cache._build_key(Keys.KEY)
+        assert lock.ns_key == mock_base_cache.build_key(Keys.KEY)
 
     async def test_aenter_returns_lock(self, lock):
         assert await lock.__aenter__() is lock

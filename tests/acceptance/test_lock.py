@@ -200,7 +200,7 @@ class TestOptimisticLock:
     async def test_acquire(self, cache, lock):
         await cache.set(Keys.KEY, "value")
         async with lock:
-            assert lock._token == await cache._gets(cache._build_key(Keys.KEY))
+            assert lock._token == await cache._gets(cache.build_key(Keys.KEY))
 
     async def test_release_does_nothing(self, lock):
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None

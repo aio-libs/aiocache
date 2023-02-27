@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import aiomcache
 
@@ -6,7 +7,7 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-class MemcachedBackend(BaseCache):
+class MemcachedBackend(BaseCache[bytes]):
     def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, **kwargs):
         super().__init__(**kwargs)
         self.endpoint = endpoint
@@ -130,7 +131,7 @@ class MemcachedCache(MemcachedBackend):
     :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None
+        the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     :param endpoint: str with the endpoint to connect to. Default is 127.0.0.1.
@@ -147,8 +148,8 @@ class MemcachedCache(MemcachedBackend):
     def parse_uri_path(cls, path):
         return {}
 
-    def _build_key(self, key, namespace=None):
-        ns_key = super()._build_key(key, namespace=namespace).replace(" ", "_")
+    def build_key(self, key: str, namespace: Optional[str] = None) -> bytes:
+        ns_key = self._str_build_key(key, namespace).replace(" ", "_")
         return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover

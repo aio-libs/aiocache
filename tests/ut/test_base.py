@@ -4,8 +4,8 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from aiocache.base import API, BaseCache, _Conn, _ensure_key
-from ..utils import Keys
+from aiocache.base import API, BaseCache, _Conn
+from ..utils import Keys, ensure_key
 
 
 class TestAPI:
@@ -137,11 +137,11 @@ class TestAPI:
 
 class TestBaseCache:
     def test_str_ttl(self):
-        cache = BaseCache(ttl="1.5")
+        cache = BaseCache[str](ttl="1.5")
         assert cache.ttl == 1.5
 
     def test_str_timeout(self):
-        cache = BaseCache(timeout="1.5")
+        cache = BaseCache[str](timeout="1.5")
         assert cache.timeout == 1.5
 
     async def test_add(self, base_cache):
@@ -197,49 +197,62 @@ class TestBaseCache:
     async def test_release_conn(self, base_cache):
         assert await base_cache.release_conn("mock") is None
 
+    def test_abstract_build_key(self, abstract_base_cache):
+        with pytest.raises(NotImplementedError):
+            abstract_base_cache.build_key(Keys.KEY)
+
     @pytest.fixture
     def set_test_namespace(self, base_cache):
         base_cache.namespace = "test"
         yield
-        base_cache.namespace = None
+        base_cache.namespace = ""
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, "test" + _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "None" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # noqa: B950
+    )
+    def test_str_build_key(self, set_test_namespace, namespace, expected):
+        # TODO: Runtime check for namespace=None: Raise ValueError or replace with ""?
+        cache = BaseCache[str](namespace=namespace)
+        assert cache._str_build_key(Keys.KEY) == expected
+
+    @pytest.mark.parametrize(
+        "namespace, expected",
+        ([None, "test" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
-        assert base_cache.build_key(Keys.KEY, namespace=namespace) == expected
+        assert base_cache.build_key(Keys.KEY, namespace) == expected
+
+    def patch_str_build_key(self, cache: BaseCache[str]) -> None:
+        """Implement build_key() on BaseCache[str] as if it were subclassed"""
+        cache.build_key = cache._str_build_key  # type: ignore[assignment]
+        return
 
     def test_alt_build_key(self):
-        cache = BaseCache(key_builder=lambda key, namespace: "x")
+        cache = BaseCache[str](key_builder=lambda key, namespace: "x")
+        self.patch_str_build_key(cache)
         assert cache.build_key(Keys.KEY, "namespace") == "x"
 
-    @pytest.fixture
-    def alt_base_cache(self, init_namespace="test"):
+    def alt_build_key(self, key, namespace):
         """Custom key_builder for cache"""
-        def build_key(key, namespace=None):
-            ns = namespace if namespace is not None else ""
-            sep = ":" if namespace else ""
-            return f"{ns}{sep}{_ensure_key(key)}"
-
-        cache = BaseCache(key_builder=build_key, namespace=init_namespace)
-        return cache
+        sep = ":" if namespace else ""
+        return f"{namespace}{sep}{ensure_key(key)}"
 
     @pytest.mark.parametrize(
         "namespace, expected",
-        ([None, _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        ([None, "test:" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["my_ns", "my_ns:" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
-    def test_alt_build_key_override_namespace(self, alt_base_cache, namespace, expected):
+    def test_alt_build_key_override_namespace(self, namespace, expected):
         """Custom key_builder overrides namespace of cache"""
-        cache = alt_base_cache
-        assert cache.build_key(Keys.KEY, namespace=namespace) == expected
+        cache = BaseCache[str](key_builder=self.alt_build_key, namespace="test")
+        self.patch_str_build_key(cache)
+        assert cache.build_key(Keys.KEY, namespace) == expected
 
     @pytest.mark.parametrize(
-        "init_namespace, expected",
-        ([None, _ensure_key(Keys.KEY)], ["", _ensure_key(Keys.KEY)], ["test", "test:" + _ensure_key(Keys.KEY)]),  # type: ignore[attr-defined]  # noqa: B950
+        "namespace, expected",
+        ([None, "None" + ensure_key(Keys.KEY)], ["", ensure_key(Keys.KEY)], ["test", "test:" + ensure_key(Keys.KEY)]),  # noqa: B950
     )
-    async def test_alt_build_key_default_namespace(
-            self, init_namespace, alt_base_cache, expected):
+    async def test_alt_build_key_default_namespace(self, namespace, expected):
         """Custom key_builder for cache with or without namespace specified.
 
         Cache member functions that accept a ``namespace`` parameter
@@ -251,8 +264,8 @@ class TestBaseCache:
         even when that cache is supplied to a lock or to a decorator
         using the ``alias`` argument.
         """
-        cache = alt_base_cache
-        cache.namespace = init_namespace
+        cache = BaseCache[str](key_builder=self.alt_build_key, namespace=namespace)
+        self.patch_str_build_key(cache)
 
         # Verify that private members are called with the correct ns_key
         await self._assert_add__alt_build_key_default_namespace(cache, expected)
@@ -429,7 +442,7 @@ class TestCache:
         await mock_base_cache.get(Keys.KEY)
 
         mock_base_cache._get.assert_called_with(
-            mock_base_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
+            mock_base_cache.build_key(Keys.KEY), encoding=ANY, _conn=ANY
         )
         assert mock_base_cache.plugins[0].pre_get.call_count == 1
         assert mock_base_cache.plugins[0].post_get.call_count == 1
@@ -454,7 +467,7 @@ class TestCache:
         await mock_base_cache.set(Keys.KEY, "value", ttl=2)
 
         mock_base_cache._set.assert_called_with(
-            mock_base_cache._build_key(Keys.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY
+            mock_base_cache.build_key(Keys.KEY), ANY, ttl=2, _cas_token=None, _conn=ANY
         )
         assert mock_base_cache.plugins[0].pre_set.call_count == 1
         assert mock_base_cache.plugins[0].post_set.call_count == 1
@@ -469,7 +482,7 @@ class TestCache:
         mock_base_cache._exists = AsyncMock(return_value=False)
         await mock_base_cache.add(Keys.KEY, "value", ttl=2)
 
-        key = mock_base_cache._build_key(Keys.KEY)
+        key = mock_base_cache.build_key(Keys.KEY)
         mock_base_cache._add.assert_called_with(key, ANY, ttl=2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_add.call_count == 1
         assert mock_base_cache.plugins[0].post_add.call_count == 1
@@ -484,7 +497,7 @@ class TestCache:
         await mock_base_cache.multi_get([Keys.KEY, Keys.KEY_1])
 
         mock_base_cache._multi_get.assert_called_with(
-            [mock_base_cache._build_key(Keys.KEY), mock_base_cache._build_key(Keys.KEY_1)],
+            [mock_base_cache.build_key(Keys.KEY), mock_base_cache.build_key(Keys.KEY_1)],
             encoding=ANY,
             _conn=ANY,
         )
@@ -500,8 +513,8 @@ class TestCache:
     async def test_mset(self, mock_base_cache):
         await mock_base_cache.multi_set([[Keys.KEY, "value"], [Keys.KEY_1, "value1"]], ttl=2)
 
-        key = mock_base_cache._build_key(Keys.KEY)
-        key1 = mock_base_cache._build_key(Keys.KEY_1)
+        key = mock_base_cache.build_key(Keys.KEY)
+        key1 = mock_base_cache.build_key(Keys.KEY_1)
         mock_base_cache._multi_set.assert_called_with(
             [(key, ANY), (key1, ANY)], ttl=2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_multi_set.call_count == 1
@@ -516,7 +529,7 @@ class TestCache:
     async def test_exists(self, mock_base_cache):
         await mock_base_cache.exists(Keys.KEY)
 
-        mock_base_cache._exists.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        mock_base_cache._exists.assert_called_with(mock_base_cache.build_key(Keys.KEY), _conn=ANY)
         assert mock_base_cache.plugins[0].pre_exists.call_count == 1
         assert mock_base_cache.plugins[0].post_exists.call_count == 1
 
@@ -529,7 +542,7 @@ class TestCache:
     async def test_increment(self, mock_base_cache):
         await mock_base_cache.increment(Keys.KEY, 2)
 
-        key = mock_base_cache._build_key(Keys.KEY)
+        key = mock_base_cache.build_key(Keys.KEY)
         mock_base_cache._increment.assert_called_with(key, 2, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_increment.call_count == 1
         assert mock_base_cache.plugins[0].post_increment.call_count == 1
@@ -543,7 +556,7 @@ class TestCache:
     async def test_delete(self, mock_base_cache):
         await mock_base_cache.delete(Keys.KEY)
 
-        mock_base_cache._delete.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        mock_base_cache._delete.assert_called_with(mock_base_cache.build_key(Keys.KEY), _conn=ANY)
         assert mock_base_cache.plugins[0].pre_delete.call_count == 1
         assert mock_base_cache.plugins[0].post_delete.call_count == 1
 
@@ -555,7 +568,7 @@ class TestCache:
 
     async def test_expire(self, mock_base_cache):
         await mock_base_cache.expire(Keys.KEY, 1)
-        key = mock_base_cache._build_key(Keys.KEY)
+        key = mock_base_cache.build_key(Keys.KEY)
         mock_base_cache._expire.assert_called_with(key, 1, _conn=ANY)
         assert mock_base_cache.plugins[0].pre_expire.call_count == 1
         assert mock_base_cache.plugins[0].post_expire.call_count == 1
@@ -568,7 +581,7 @@ class TestCache:
 
     async def test_clear(self, mock_base_cache):
         await mock_base_cache.clear(Keys.KEY)
-        mock_base_cache._clear.assert_called_with(mock_base_cache._build_key(Keys.KEY), _conn=ANY)
+        mock_base_cache._clear.assert_called_with(mock_base_cache.build_key(Keys.KEY), _conn=ANY)
         assert mock_base_cache.plugins[0].pre_clear.call_count == 1
         assert mock_base_cache.plugins[0].post_clear.call_count == 1
 
@@ -581,7 +594,7 @@ class TestCache:
     async def test_raw(self, mock_base_cache):
         await mock_base_cache.raw("get", Keys.KEY)
         mock_base_cache._raw.assert_called_with(
-            "get", mock_base_cache._build_key(Keys.KEY), encoding=ANY, _conn=ANY
+            "get", mock_base_cache.build_key(Keys.KEY), encoding=ANY, _conn=ANY
         )
         assert mock_base_cache.plugins[0].pre_raw.call_count == 1
         assert mock_base_cache.plugins[0].post_raw.call_count == 1

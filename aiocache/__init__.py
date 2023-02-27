@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Type
+from typing import Any, Dict, Type
 
 from .backends.memory import SimpleMemoryCache
 from .base import BaseCache
@@ -8,7 +8,7 @@ __version__ = "1.0.0a0"
 
 logger = logging.getLogger(__name__)
 
-AIOCACHE_CACHES: Dict[str, Type[BaseCache]] = {SimpleMemoryCache.NAME: SimpleMemoryCache}
+AIOCACHE_CACHES: Dict[str, Type[BaseCache[Any]]] = {SimpleMemoryCache.NAME: SimpleMemoryCache}
 
 try:
     import redis

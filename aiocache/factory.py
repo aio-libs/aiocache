@@ -172,7 +172,7 @@ class CacheHandler:
         self._caches[alias] = cache
         return cache
 
-    def create(self, alias: str, **kwargs):
+    def create(self, alias, **kwargs):
         """Create a new cache.
 
         You can use kwargs to pass extra parameters to configure the cache.

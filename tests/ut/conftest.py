@@ -29,14 +29,14 @@ def reset_caches():
 
 @pytest.fixture
 def mock_cache(mocker):
-    return create_autospec(BaseCache())
+    return create_autospec(BaseCache[str]())
 
 
 @pytest.fixture
 def mock_base_cache():
     """Return BaseCache instance with unimplemented methods mocked out."""
     plugin = create_autospec(BasePlugin, instance=True)
-    cache = BaseCache(timeout=0.002, plugins=(plugin,))
+    cache = BaseCache[str](timeout=0.002, plugins=(plugin,))
     methods = ("_add", "_get", "_gets", "_set", "_multi_get", "_multi_set", "_delete",
                "_exists", "_increment", "_expire", "_clear", "_raw", "_close",
                "_redlock_release", "acquire_conn", "release_conn")
@@ -44,12 +44,22 @@ def mock_base_cache():
         for f in methods:
             stack.enter_context(patch.object(cache, f, autospec=True))
         stack.enter_context(patch.object(cache, "_serializer", autospec=True))
+        stack.enter_context(patch.object(cache, "build_key", cache._str_build_key))
         yield cache
 
 
 @pytest.fixture
+def abstract_base_cache():
+    # TODO: Is there need for a separate BaseCache[bytes] fixture?
+    return BaseCache[str]()
+
+
+@pytest.fixture
 def base_cache():
-    return BaseCache()
+    # TODO: Is there need for a separate BaseCache[bytes] fixture?
+    cache = BaseCache[str]()
+    cache.build_key = cache._str_build_key
+    return cache
 
 
 @pytest.fixture

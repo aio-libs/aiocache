@@ -1,16 +1,17 @@
 import asyncio
-from typing import Dict
+from typing import Any, Dict, Optional
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
 
-class SimpleMemoryBackend(BaseCache):
+class SimpleMemoryBackend(BaseCache[str]):
     """
     Wrapper around dict operations to use it as a cache backend
     """
 
-    def __init__(self, **kwargs):
+    # TODO(PY312): https://peps.python.org/pep-0692/
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
         self._cache: Dict[str, object] = {}
@@ -118,7 +119,7 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None.
+        the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     """
@@ -131,3 +132,6 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     @classmethod
     def parse_uri_path(cls, path):
         return {}
+
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return self._str_build_key(key, namespace)
