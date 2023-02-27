@@ -12,7 +12,7 @@ Migration instructions
 
 There are a number of backwards-incompatible changes. These points should help with migrating from an older release:
 
-* The ``key_builder`` parameter now expects a callback which accepts 2 strings and returns a string in all cache implementations, making the builders simpler and interchangeable.
+* The ``key_builder`` parameter for caches now expects a callback which accepts 2 strings and returns a string in all cache implementations, making the builders simpler and interchangeable.
 * The ``key`` parameter has been removed from the ``cached`` decorator. The behaviour can be easily reimplemented with ``key_builder=lambda *a, **kw: "foo"``
 * When using the ``key_builder`` parameter in ``@multicached``, the function will now return the original, unmodified keys, only using the transformed keys in the cache (this has always been the documented behaviour, but not the implemented behaviour).
 * ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.

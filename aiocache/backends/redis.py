@@ -207,15 +207,13 @@ class RedisCache(RedisBackend):
         self,
         serializer: Optional["BaseSerializer"] = None,
         namespace: str = "",
-        key_builder: Optional[Callable[[str, str], str]] = None,
+        key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
         **kwargs: Any,
     ):
         super().__init__(
             serializer=serializer or JsonSerializer(),
             namespace=namespace,
-            key_builder=key_builder or (
-                lambda key, namespace: f"{namespace}:{key}" if namespace else key
-            ),
+            key_builder=key_builder,
             **kwargs,
         )
 
