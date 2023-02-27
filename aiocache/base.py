@@ -8,10 +8,11 @@ from enum import Enum
 from types import TracebackType
 from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
 
-if TYPE_CHECKING:
+from aiocache.serializers import StringSerializer
+
+if TYPE_CHECKING:  # pragma: no cover
     from aiocache.plugins import BasePlugin
     from aiocache.serializers import BaseSerializer
-from aiocache.serializers import StringSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -115,8 +116,8 @@ class BaseCache(Generic[CacheKeyType]):
 
     def __init__(
         self,
-        serializer: "Optional[BaseSerializer]" = None,
-        plugins: "Optional[List[BasePlugin]]" = None,
+        serializer: Optional["BaseSerializer"] = None,
+        plugins: Optional[List["BasePlugin"]] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda key, namespace: f"{namespace}{key}",
         timeout: Optional[float] = 5,
@@ -125,7 +126,7 @@ class BaseCache(Generic[CacheKeyType]):
         self.timeout = float(timeout) if timeout is not None else None
         self.ttl = float(ttl) if ttl is not None else None
 
-        self.namespace: str = namespace
+        self.namespace = namespace
         self._build_key = key_builder
 
         self._serializer = serializer or StringSerializer()
@@ -503,6 +504,7 @@ class BaseCache(Generic[CacheKeyType]):
         raise NotImplementedError()
 
     def _str_build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        """Simple key builder that can be used in subclasses for build_key()."""
         key_name = key.value if isinstance(key, Enum) else key
         ns = self.namespace if namespace is None else namespace
         return self._build_key(key_name, ns)
