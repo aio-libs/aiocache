@@ -17,6 +17,7 @@ There are a number of backwards-incompatible changes. These points should help w
 * When using the ``key_builder`` parameter in ``@multicached``, the function will now return the original, unmodified keys, only using the transformed keys in the cache (this has always been the documented behaviour, but not the implemented behaviour).
 * ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.
 * If subclassing ``BaseCache`` to implement a custom backend:
+
   * The cache key type used by the backend must now be specified when inheriting (e.g. ``BaseCache[str]`` typically).
   * The ``build_key()`` method must now be defined (this should generally involve calling ``self._str_build_key()`` as a helper).
 
