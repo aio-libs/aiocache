@@ -59,7 +59,7 @@ async def demo_key_builders():
 # 1. Custom ``key_builder`` for a cache
 # -------------------------------------
 
-def ensure_no_spaces(key, namespace, replace='_'):
+def ensure_no_spaces(key, namespace, replace="_"):
     """Prefix key with namespace; replace each space with ``replace``"""
     aggregate_key = f"{namespace}{key}"
     custom_key = aggregate_key.replace(' ', replace)
