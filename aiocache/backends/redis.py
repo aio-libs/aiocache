@@ -5,10 +5,11 @@ from typing import Any, Callable, Optional, TYPE_CHECKING
 import redis.asyncio as redis
 from redis.exceptions import ResponseError as IncrbyException
 
-if TYPE_CHECKING:
-    from aiocache.serializers import BaseSerializer
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
+
+if TYPE_CHECKING:  # pragma: no cover
+    from aiocache.serializers import BaseSerializer
 
 
 _NOT_SET = object()
@@ -204,7 +205,7 @@ class RedisCache(RedisBackend):
 
     def __init__(
         self,
-        serializer: "Optional[BaseSerializer]" = None,
+        serializer: Optional["BaseSerializer"] = None,
         namespace: str = "",
         key_builder: Optional[Callable[[str, str], str]] = None,
         **kwargs: Any,
