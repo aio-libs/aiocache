@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
@@ -10,7 +10,8 @@ class SimpleMemoryBackend(BaseCache[str]):
     Wrapper around dict operations to use it as a cache backend
     """
 
-    def __init__(self, **kwargs):
+    # TODO(PY312): https://peps.python.org/pep-0692/
+    def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
 
         self._cache: Dict[str, object] = {}
