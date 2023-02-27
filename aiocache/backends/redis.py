@@ -1,17 +1,21 @@
 import itertools
 import warnings
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import redis.asyncio as redis
 from redis.exceptions import ResponseError as IncrbyException
 
-from aiocache.base import BaseCache, _ensure_key
+from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
+
+if TYPE_CHECKING:  # pragma: no cover
+    from aiocache.serializers import BaseSerializer
 
 
 _NOT_SET = object()
 
 
-class RedisBackend(BaseCache):
+class RedisBackend(BaseCache[str]):
     RELEASE_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[1] then"
         " return redis.call('del',KEYS[1])"
@@ -186,7 +190,7 @@ class RedisCache(RedisBackend):
     :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
     :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
     :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is None.
+        the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
     :param endpoint: str with the endpoint to connect to. Default is "127.0.0.1".
@@ -199,8 +203,21 @@ class RedisCache(RedisBackend):
 
     NAME = "redis"
 
-    def __init__(self, serializer=None, **kwargs):
-        super().__init__(serializer=serializer or JsonSerializer(), **kwargs)
+    def __init__(
+        self,
+        serializer: Optional["BaseSerializer"] = None,
+        namespace: str = "",
+        key_builder: Optional[Callable[[str, str], str]] = None,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            serializer=serializer or JsonSerializer(),
+            namespace=namespace,
+            key_builder=key_builder or (
+                lambda key, namespace: f"{namespace}:{key}" if namespace else key
+            ),
+            **kwargs,
+        )
 
     @classmethod
     def parse_uri_path(cls, path):
@@ -218,14 +235,8 @@ class RedisCache(RedisBackend):
             options["db"] = db
         return options
 
-    def _build_key(self, key, namespace=None):
-        if namespace is not None:
-            return "{}{}{}".format(
-                namespace, ":" if namespace else "", _ensure_key(key))
-        if self.namespace is not None:
-            return "{}{}{}".format(
-                self.namespace, ":" if self.namespace else "", _ensure_key(key))
-        return key
-
     def __repr__(self):  # pragma: no cover
         return "RedisCache ({}:{})".format(self.endpoint, self.port)
+
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return self._str_build_key(key, namespace)

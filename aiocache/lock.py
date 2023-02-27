@@ -1,11 +1,11 @@
 import asyncio
 import uuid
-from typing import Any, Dict, Union
+from typing import Any, Dict, Generic, Union
 
-from aiocache.base import BaseCache
+from aiocache.base import BaseCache, CacheKeyType
 
 
-class RedLock:
+class RedLock(Generic[CacheKeyType]):
     """
     Implementation of `Redlock <https://redis.io/topics/distlock>`_
     with a single instance because aiocache is focused on single
@@ -62,7 +62,7 @@ class RedLock:
 
     _EVENTS: Dict[str, asyncio.Event] = {}
 
-    def __init__(self, client: BaseCache, key: str, lease: Union[int, float]):
+    def __init__(self, client: BaseCache[CacheKeyType], key: str, lease: Union[int, float]):
         self.client = client
         self.key = self.client.build_key(key + "-lock")
         self.lease = lease
@@ -96,7 +96,7 @@ class RedLock:
             RedLock._EVENTS.pop(self.key).set()
 
 
-class OptimisticLock:
+class OptimisticLock(Generic[CacheKeyType]):
     """
     Implementation of
     `optimistic lock <https://en.wikipedia.org/wiki/Optimistic_concurrency_control>`_
@@ -133,7 +133,7 @@ class OptimisticLock:
     If the lock is created with an unexisting key, there will never be conflicts.
     """
 
-    def __init__(self, client: BaseCache, key: str):
+    def __init__(self, client: BaseCache[CacheKeyType], key: str):
         self.client = client
         self.key = key
         self.ns_key = self.client.build_key(key)

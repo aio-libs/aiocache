@@ -5,8 +5,7 @@ from unittest import mock
 import pytest
 
 from aiocache import cached, cached_stampede, multi_cached
-from aiocache.base import _ensure_key
-from ..utils import Keys
+from ..utils import Keys, ensure_key
 
 
 async def return_dict(keys=None):
@@ -164,15 +163,15 @@ class TestMultiCachedDecorator:
 
     async def test_multi_cached_key_builder(self, cache):
         def build_key(key, f, self, keys, market="ES"):
-            return "{}_{}_{}".format(f.__name__, _ensure_key(key), market)
+            return "{}_{}_{}".format(f.__name__, ensure_key(key), market)
 
         @multi_cached(keys_from_attr="keys", key_builder=build_key)
         async def fn(self, keys, market="ES"):
             return {Keys.KEY: 1, Keys.KEY_1: 2}
 
         await fn("self", keys=[Keys.KEY, Keys.KEY_1])
-        assert await cache.exists("fn_" + _ensure_key(Keys.KEY) + "_ES") is True
-        assert await cache.exists("fn_" + _ensure_key(Keys.KEY_1) + "_ES") is True
+        assert await cache.exists("fn_" + ensure_key(Keys.KEY) + "_ES") is True
+        assert await cache.exists("fn_" + ensure_key(Keys.KEY_1) + "_ES") is True
 
     async def test_multi_cached_skip_keys(self, cache):
         @multi_cached(keys_from_attr="keys", skip_cache_func=lambda _, v: v is None)

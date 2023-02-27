@@ -7,3 +7,10 @@ class Keys(str, Enum):
 
 
 KEY_LOCK = Keys.KEY + "-lock"
+
+
+def ensure_key(key):
+    if isinstance(key, Enum):
+        return key.value
+    else:
+        return key
