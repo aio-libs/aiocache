@@ -12,17 +12,13 @@ Migration instructions
 
 There are a number of backwards-incompatible changes. These points should help with migrating from an older release:
 
+* The ``key_builder`` parameter now expects a callback which accepts 2 strings and returns a string in all cache implementations, making the builders simpler and interchangeable.
 * The ``key`` parameter has been removed from the ``cached`` decorator. The behaviour can be easily reimplemented with ``key_builder=lambda *a, **kw: "foo"``
 * When using the ``key_builder`` parameter in ``@multicached``, the function will now return the original, unmodified keys, only using the transformed keys in the cache (this has always been the documented behaviour, but not the implemented behaviour).
 * ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.
-* Each backend cache implementation must specify the data type of its cache key,
-``CachKeyType``, when deriving from ``BaseCache[CachKeyType]``. The abstract method,
-``build_key()`` must be defined and return a cache key of the corresponding type.
-* The logic for encoding a cache key and selecting the key's namespace is now expected to be
-encapsulated in the ``build_key(key, namespace)`` member of backend cache implementations
-that are derived from ``BaseCache[CachKeyType]``. Now instantiating a cache with a custom
-``key_builder`` argument simply requires that function to return any string that maps from the
-``key`` and ``namespace`` parameters (which are also strings).
+* If subclassing ``BaseCache`` to implement a custom backend:
+  * The cache key type used by the backend must now be specified when inheriting (e.g. ``BaseCache[str]`` typically).
+  * The ``build_key()`` method must now be defined (this should generally involve calling ``self._str_build_key()`` as a helper).
 
 
 0.12.0 (2023-01-13)
