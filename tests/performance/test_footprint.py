@@ -1,5 +1,6 @@
 import platform
 import time
+from typing import AsyncIterator
 
 import aiomcache
 import pytest
@@ -7,8 +8,8 @@ import redis.asyncio as redis
 
 
 @pytest.fixture
-async def redis_client() -> redis.Redis:
-    async with redis.Redis(host="127.0.0.1", port=6379, max_connections=1) as r:
+async def redis_client() -> AsyncIterator[redis.Redis[str]]:
+    async with redis.Redis[str](host="127.0.0.1", port=6379, max_connections=1) as r:
         yield r
 
 
