@@ -29,7 +29,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Framework :: AsyncIO",
     ],
-    packages=("aiohttp_jinja2",),
+    packages=("aiocache",),
     install_requires=None,
     extras_require={
         "redis": ["redis>=4.2.0"],
