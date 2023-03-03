@@ -29,7 +29,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Framework :: AsyncIO",
     ],
-    packages=find_packages(),
+    packages=find_packages(include="aiocache*"),
     install_requires=None,
     extras_require={
         "redis": ["redis>=4.2.0"],
