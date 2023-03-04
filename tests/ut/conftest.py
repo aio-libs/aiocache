@@ -1,15 +1,13 @@
 import sys
 from contextlib import ExitStack
-from unittest.mock import create_autospec, AsyncMock, patch
+from unittest.mock import create_autospec, patch
 
 import pytest
 
 from aiocache import caches
 from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.redis import RedisCache
-from aiocache.base import BaseCache
 from aiocache.plugins import BasePlugin
-
 from ..utils import AbstractBaseCache, ConcreteBaseCache
 
 if sys.version_info < (3, 8):
@@ -39,10 +37,6 @@ def mock_base_cache():
     """Return BaseCache instance with unimplemented methods mocked out."""
     plugin = create_autospec(BasePlugin, instance=True)
     cache = ConcreteBaseCache(timeout=0.002, plugins=(plugin,))
-    # cache = AsyncMock(BaseCache)
-    # cache.timeout = 0.002
-    # cache.plugins = (plugin,)
-    # cache._serializer = None
     methods = ("_add", "_get", "_gets", "_set", "_multi_get", "_multi_set", "_delete",
                "_exists", "_increment", "_expire", "_clear", "_raw", "_close",
                "_redlock_release", "acquire_conn", "release_conn")

@@ -70,7 +70,6 @@ class AbstractBaseCache(BaseCache[str]):
         return await super()._close(*args, **kwargs)
 
 
-# class ConcreteBaseCache(BaseCache[str]):
 class ConcreteBaseCache(AbstractBaseCache):
     """BaseCache that can be mocked for tests"""
     def __init__(self, *args, **kwargs):
@@ -78,45 +77,3 @@ class ConcreteBaseCache(AbstractBaseCache):
 
     def build_key(self, key: str, namespace: Optional[str] = None) -> str:
         return self._str_build_key(key, namespace)
-
-    # async def _add(self, key, value, ttl, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _get(self, key, encoding, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _gets(self, key, encoding="utf-8", _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _multi_get(self, keys, encoding, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _set(self, key, value, ttl, _cas_token=None, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _multi_set(self, pairs, ttl, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _delete(self, key, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _exists(self, key, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _increment(self, key, delta, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _expire(self, key, ttl, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _clear(self, namespace, _conn=None):
-    #     raise NotImplementedError()
-
-    # async def _raw(self, command, *args, **kwargs):
-    #     raise NotImplementedError()
-
-    # async def _redlock_release(self, key, value):
-    #     raise NotImplementedError()
-
-    # async def _close(self, *args, **kwargs):
-    #     pass
