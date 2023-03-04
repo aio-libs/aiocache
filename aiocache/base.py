@@ -509,9 +509,8 @@ class BaseCache(Generic[CacheKeyType], ABC):
         logger.debug("CLOSE (%.4f)s", time.monotonic() - start)
         return ret
 
-    @abstractmethod
     async def _close(self, *args, **kwargs):
-        raise NotImplementedError()
+        pass
 
     @abstractmethod
     def build_key(self, key: str, namespace: Optional[str] = None) -> CacheKeyType:

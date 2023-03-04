@@ -66,9 +66,6 @@ class AbstractBaseCache(BaseCache[str]):
     async def _redlock_release(self, key, value):
         return await super()._redlock_release(key, value)
 
-    async def _close(self, *args, **kwargs):
-        return await super()._close(*args, **kwargs)
-
 
 class ConcreteBaseCache(AbstractBaseCache):
     """BaseCache that can be mocked for tests"""
