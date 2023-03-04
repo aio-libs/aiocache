@@ -107,6 +107,9 @@ class SimpleMemoryBackend(BaseCache[str]):
 
         return 0
 
+    async def _close(self, *args, **kwargs):
+        pass
+
 
 class SimpleMemoryCache(SimpleMemoryBackend):
     """
