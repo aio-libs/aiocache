@@ -3,7 +3,7 @@ import functools
 import logging
 import os
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from types import TracebackType
 from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
@@ -93,7 +93,7 @@ class API:
         return _plugins
 
 
-class BaseCache(Generic[CacheKeyType]):
+class BaseCache(Generic[CacheKeyType], ABC):
     """
     Base class that agregates the common logic for the different caches that may exist. Cache
     related available options are:
@@ -180,6 +180,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("ADD %s %s (%.4f)s", ns_key, True, time.monotonic() - start)
         return True
 
+    @abstractmethod
     async def _add(self, key, value, ttl, _conn=None):
         raise NotImplementedError()
 
@@ -209,9 +210,11 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.monotonic() - start)
         return value if value is not None else default
 
+    @abstractmethod
     async def _get(self, key, encoding, _conn=None):
         raise NotImplementedError()
 
+    @abstractmethod
     async def _gets(self, key, encoding="utf-8", _conn=None):
         raise NotImplementedError()
 
@@ -250,6 +253,7 @@ class BaseCache(Generic[CacheKeyType]):
         )
         return values
 
+    @abstractmethod
     async def _multi_get(self, keys, encoding, _conn=None):
         raise NotImplementedError()
 
@@ -286,6 +290,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("SET %s %d (%.4f)s", ns_key, True, time.monotonic() - start)
         return res
 
+    @abstractmethod
     async def _set(self, key, value, ttl, _cas_token=None, _conn=None):
         raise NotImplementedError()
 
@@ -325,6 +330,7 @@ class BaseCache(Generic[CacheKeyType]):
         )
         return True
 
+    @abstractmethod
     async def _multi_set(self, pairs, ttl, _conn=None):
         raise NotImplementedError()
 
@@ -349,6 +355,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("DELETE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _delete(self, key, _conn=None):
         raise NotImplementedError()
 
@@ -373,6 +380,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("EXISTS %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _exists(self, key, _conn=None):
         raise NotImplementedError()
 
@@ -400,6 +408,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("INCREMENT %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _increment(self, key, delta, _conn=None):
         raise NotImplementedError()
 
@@ -425,6 +434,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("EXPIRE %s %d (%.4f)s", ns_key, ret, time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _expire(self, key, ttl, _conn=None):
         raise NotImplementedError()
 
@@ -448,6 +458,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _clear(self, namespace, _conn=None):
         raise NotImplementedError()
 
@@ -476,9 +487,11 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("%s (%.4f)s", command, time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _raw(self, command, *args, **kwargs):
         raise NotImplementedError()
 
+    @abstractmethod
     async def _redlock_release(self, key, value):
         raise NotImplementedError()
 
@@ -496,6 +509,7 @@ class BaseCache(Generic[CacheKeyType]):
         logger.debug("CLOSE (%.4f)s", time.monotonic() - start)
         return ret
 
+    @abstractmethod
     async def _close(self, *args, **kwargs):
         pass
 
