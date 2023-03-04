@@ -16,6 +16,7 @@ There are a number of backwards-incompatible changes. These points should help w
 * The ``key`` parameter has been removed from the ``cached`` decorator. The behaviour can be easily reimplemented with ``key_builder=lambda *a, **kw: "foo"``
 * When using the ``key_builder`` parameter in ``@multicached``, the function will now return the original, unmodified keys, only using the transformed keys in the cache (this has always been the documented behaviour, but not the implemented behaviour).
 * ``BaseSerializer`` is now an ``ABC``, so cannot be instantiated directly.
+* ``BaseCache`` is now an ``ABC``, so cannot be instantiated directly.
 * If subclassing ``BaseCache`` to implement a custom backend:
 
   * The cache key type used by the backend must now be specified when inheriting (e.g. ``BaseCache[str]`` typically).
