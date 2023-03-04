@@ -511,7 +511,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
 
     @abstractmethod
     async def _close(self, *args, **kwargs):
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def build_key(self, key: str, namespace: Optional[str] = None) -> CacheKeyType:

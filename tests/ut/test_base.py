@@ -189,7 +189,8 @@ class TestBaseCache:
             await base_cache._raw("get", Keys.KEY)
 
     async def test_close(self, base_cache):
-        assert await base_cache._close() is None
+        with pytest.raises(NotImplementedError):
+            await base_cache._close()
 
     async def test_acquire_conn(self, base_cache):
         assert await base_cache.acquire_conn() == base_cache
