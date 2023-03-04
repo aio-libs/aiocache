@@ -1,12 +1,19 @@
+from typing import Optional
 from unittest.mock import AsyncMock, patch
 
 import aiomcache
 import pytest
 
-from aiocache.backends.memcached import MemcachedBackend, MemcachedCache
+from aiocache.backends.memcached import MemcachedBackend as _MemcachedBackend, MemcachedCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 from ...utils import Keys, ensure_key
+
+
+class MemcachedBackend(_MemcachedBackend):
+    """Define a concrete version of the abstract class, MemcachedBackend"""
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return super().build_key(key, namespace)
 
 
 @pytest.fixture

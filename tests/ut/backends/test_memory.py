@@ -1,12 +1,21 @@
 import asyncio
+from typing import Optional
 from unittest.mock import ANY, MagicMock, create_autospec, patch
 
 import pytest
 
-from aiocache.backends.memory import SimpleMemoryBackend, SimpleMemoryCache
+from aiocache.backends.memory import (
+    SimpleMemoryBackend as _SimpleMemoryBackend, SimpleMemoryCache
+)
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 from ...utils import Keys
+
+
+class SimpleMemoryBackend(_SimpleMemoryBackend):
+    """Define a concrete version of the abstract class, SimpleMemoryBackend"""
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return super().build_key(key, namespace)
 
 
 @pytest.fixture
