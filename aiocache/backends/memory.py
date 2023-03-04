@@ -110,6 +110,9 @@ class SimpleMemoryBackend(BaseCache[str]):
     async def _close(self, *args, **kwargs):
         pass
 
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return self._str_build_key(key, namespace)
+
 
 class SimpleMemoryCache(SimpleMemoryBackend):
     """
@@ -135,6 +138,3 @@ class SimpleMemoryCache(SimpleMemoryBackend):
     @classmethod
     def parse_uri_path(cls, path):
         return {}
-
-    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
-        return self._str_build_key(key, namespace)
