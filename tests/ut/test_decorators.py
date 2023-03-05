@@ -8,9 +8,10 @@ import pytest
 
 from aiocache import cached, cached_stampede, multi_cached
 from aiocache.backends.memory import SimpleMemoryCache
-from aiocache.base import BaseCache, SENTINEL
+from aiocache.base import SENTINEL
 from aiocache.decorators import _get_args_dict
 from aiocache.lock import RedLock
+from ..utils import AbstractBaseCache
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -208,7 +209,7 @@ class TestCached:
 
     async def test_reuses_cache_instance(self):
         with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
-            cache = create_autospec(BaseCache, instance=True)
+            cache = create_autospec(AbstractBaseCache, instance=True)
             get_c.side_effect = [cache, None]
 
             @cached()
@@ -561,7 +562,7 @@ class TestMultiCached:
 
     async def test_reuses_cache_instance(self):
         with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
-            cache = create_autospec(BaseCache, instance=True)
+            cache = create_autospec(AbstractBaseCache, instance=True)
             cache.multi_get.return_value = [None]
             get_c.side_effect = [cache, None]
 

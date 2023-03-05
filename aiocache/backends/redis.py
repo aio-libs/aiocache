@@ -178,6 +178,9 @@ class RedisBackend(BaseCache[str]):
     async def _close(self, *args, _conn=None, **kwargs):
         await self.client.close()
 
+    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
+        return self._str_build_key(key, namespace)
+
 
 class RedisCache(RedisBackend):
     """
@@ -235,6 +238,3 @@ class RedisCache(RedisBackend):
 
     def __repr__(self):  # pragma: no cover
         return "RedisCache ({}:{})".format(self.endpoint, self.port)
-
-    def build_key(self, key: str, namespace: Optional[str] = None) -> str:
-        return self._str_build_key(key, namespace)

@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 p = Path(__file__).with_name("aiocache") / "__init__.py"
 try:
@@ -29,7 +29,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Framework :: AsyncIO",
     ],
-    packages=find_packages(),
+    packages=("aiocache",),
     install_requires=None,
     extras_require={
         "redis": ["redis>=4.2.0"],
