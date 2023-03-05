@@ -119,6 +119,10 @@ class MemcachedBackend(BaseCache[bytes]):
     async def _close(self, *args, _conn=None, **kwargs):
         await self.client.close()
 
+    def build_key(self, key: str, namespace: Optional[str] = None) -> bytes:
+        ns_key = self._str_build_key(key, namespace).replace(" ", "_")
+        return str.encode(ns_key)
+
 
 class MemcachedCache(MemcachedBackend):
     """
@@ -147,10 +151,6 @@ class MemcachedCache(MemcachedBackend):
     @classmethod
     def parse_uri_path(cls, path):
         return {}
-
-    def build_key(self, key: str, namespace: Optional[str] = None) -> bytes:
-        ns_key = self._str_build_key(key, namespace).replace(" ", "_")
-        return str.encode(ns_key)
 
     def __repr__(self):  # pragma: no cover
         return "MemcachedCache ({}:{})".format(self.endpoint, self.port)

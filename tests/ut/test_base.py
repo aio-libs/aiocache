@@ -4,8 +4,8 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
-from aiocache.base import API, BaseCache, _Conn
-from ..utils import Keys, ensure_key
+from aiocache.base import API, _Conn
+from ..utils import AbstractBaseCache, ConcreteBaseCache, Keys, ensure_key
 
 
 class TestAPI:
@@ -137,11 +137,11 @@ class TestAPI:
 
 class TestBaseCache:
     def test_str_ttl(self):
-        cache = BaseCache[str](ttl="1.5")
+        cache = AbstractBaseCache(ttl="1.5")
         assert cache.ttl == 1.5
 
     def test_str_timeout(self):
-        cache = BaseCache[str](timeout="1.5")
+        cache = AbstractBaseCache(timeout="1.5")
         assert cache.timeout == 1.5
 
     async def test_add(self, base_cache):
@@ -213,7 +213,7 @@ class TestBaseCache:
     )
     def test_str_build_key(self, set_test_namespace, namespace, expected):
         # TODO: Runtime check for namespace=None: Raise ValueError or replace with ""?
-        cache = BaseCache[str](namespace=namespace)
+        cache = AbstractBaseCache(namespace=namespace)
         assert cache._str_build_key(Keys.KEY) == expected
 
     @pytest.mark.parametrize(
@@ -223,14 +223,8 @@ class TestBaseCache:
     def test_build_key(self, set_test_namespace, base_cache, namespace, expected):
         assert base_cache.build_key(Keys.KEY, namespace) == expected
 
-    def patch_str_build_key(self, cache: BaseCache[str]) -> None:
-        """Implement build_key() on BaseCache[str] as if it were subclassed"""
-        cache.build_key = cache._str_build_key  # type: ignore[assignment]
-        return
-
     def test_alt_build_key(self):
-        cache = BaseCache[str](key_builder=lambda key, namespace: "x")
-        self.patch_str_build_key(cache)
+        cache = ConcreteBaseCache(key_builder=lambda key, namespace: "x")
         assert cache.build_key(Keys.KEY, "namespace") == "x"
 
     def alt_build_key(self, key, namespace):
@@ -244,8 +238,7 @@ class TestBaseCache:
     )
     def test_alt_build_key_override_namespace(self, namespace, expected):
         """Custom key_builder overrides namespace of cache"""
-        cache = BaseCache[str](key_builder=self.alt_build_key, namespace="test")
-        self.patch_str_build_key(cache)
+        cache = ConcreteBaseCache(key_builder=self.alt_build_key, namespace="test")
         assert cache.build_key(Keys.KEY, namespace) == expected
 
     @pytest.mark.parametrize(
@@ -264,8 +257,7 @@ class TestBaseCache:
         even when that cache is supplied to a lock or to a decorator
         using the ``alias`` argument.
         """
-        cache = BaseCache[str](key_builder=self.alt_build_key, namespace=namespace)
-        self.patch_str_build_key(cache)
+        cache = ConcreteBaseCache(key_builder=self.alt_build_key, namespace=namespace)
 
         # Verify that private members are called with the correct ns_key
         await self._assert_add__alt_build_key_default_namespace(cache, expected)
