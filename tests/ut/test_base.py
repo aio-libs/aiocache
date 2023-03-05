@@ -260,64 +260,77 @@ class TestBaseCache:
         cache = ConcreteBaseCache(key_builder=self.alt_build_key, namespace=namespace)
 
         # Verify that private members are called with the correct ns_key
-        await self._assert_add__alt_build_key_default_namespace(cache, expected)
-        await self._assert_get__alt_build_key_default_namespace(cache, expected)
-        await self._assert_multi_get__alt_build_key_default_namespace(cache, expected)
-        await self._assert_set__alt_build_key_default_namespace(cache, expected)
-        await self._assert_multi_set__alt_build_key_default_namespace(cache, expected)
-        await self._assert_exists__alt_build_key_default_namespace(cache, expected)
-        await self._assert_increment__alt_build_key_default_namespace(cache, expected)
-        await self._assert_delete__alt_build_key_default_namespace(cache, expected)
-        await self._assert_expire__alt_build_key_default_namespace(cache, expected)
+        BaseCacheBuildKeyMethods = self.BaseCacheBuildKeyMethods
+        await BaseCacheBuildKeyMethods.assert_add(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_get(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_multi_get(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_set(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_multi_set(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_exists(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_increment(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_delete(cache, expected)
+        await BaseCacheBuildKeyMethods.assert_expire(cache, expected)
 
-    async def _assert_add__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_add", autospec=True) as _add:
-            await cache.add(Keys.KEY, "value")
-            _add.assert_called_once_with(expected, "value", _conn=None, ttl=None)
+    class BaseCacheBuildKeyMethods:
+        """BaseCache methods that call build_key()."""
 
-    async def _assert_get__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_get", autospec=True) as _get:
-            await cache.get(Keys.KEY)
-            _get.assert_called_once_with(
-                expected, _conn=None, encoding=cache.serializer.encoding)
+        @staticmethod
+        async def assert_add(cache, expected):
+            with patch.object(cache, "_add", autospec=True) as _add:
+                await cache.add(Keys.KEY, "value")
+                _add.assert_called_once_with(expected, "value", _conn=None, ttl=None)
 
-    async def _assert_multi_get__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_multi_get", autospec=True) as _multi_get:
-            await cache.multi_get([Keys.KEY])
-            _multi_get.assert_called_once_with(
-                [expected], _conn=None, encoding=cache.serializer.encoding)
+        @staticmethod
+        async def assert_get(cache, expected):
+            with patch.object(cache, "_get", autospec=True) as _get:
+                await cache.get(Keys.KEY)
+                _get.assert_called_once_with(
+                    expected, _conn=None, encoding=cache.serializer.encoding)
 
-    async def _assert_set__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_set", autospec=True) as _set:
-            await cache.set(Keys.KEY, "value")
-            _set.assert_called_once_with(
-                expected, "value", _conn=None, ttl=None, _cas_token=None)
+        @staticmethod
+        async def assert_multi_get(cache, expected):
+            with patch.object(cache, "_multi_get", autospec=True) as _multi_get:
+                await cache.multi_get([Keys.KEY])
+                _multi_get.assert_called_once_with(
+                    [expected], _conn=None, encoding=cache.serializer.encoding)
 
-    async def _assert_multi_set__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_multi_set", autospec=True) as _multi_set:
-            await cache.multi_set([(Keys.KEY, "value")])
-            _multi_set.assert_called_once_with(
-                [(expected, "value")], _conn=None, ttl=None)
+        @staticmethod
+        async def assert_set(cache, expected):
+            with patch.object(cache, "_set", autospec=True) as _set:
+                await cache.set(Keys.KEY, "value")
+                _set.assert_called_once_with(
+                    expected, "value", _conn=None, ttl=None, _cas_token=None)
 
-    async def _assert_exists__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_exists", autospec=True) as _exists:
-            await cache.exists(Keys.KEY)
-            _exists.assert_called_once_with(expected, _conn=None)
+        @staticmethod
+        async def assert_multi_set(cache, expected):
+            with patch.object(cache, "_multi_set", autospec=True) as _multi_set:
+                await cache.multi_set([(Keys.KEY, "value")])
+                _multi_set.assert_called_once_with(
+                    [(expected, "value")], _conn=None, ttl=None)
 
-    async def _assert_increment__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_increment", autospec=True) as _increment:
-            await cache.increment(Keys.KEY)
-            _increment.assert_called_once_with(expected, delta=1, _conn=None)
+        @staticmethod
+        async def assert_exists(cache, expected):
+            with patch.object(cache, "_exists", autospec=True) as _exists:
+                await cache.exists(Keys.KEY)
+                _exists.assert_called_once_with(expected, _conn=None)
 
-    async def _assert_delete__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_delete", autospec=True) as _delete:
-            await cache.delete(Keys.KEY)
-            _delete.assert_called_once_with(expected, _conn=None)
+        @staticmethod
+        async def assert_increment(cache, expected):
+            with patch.object(cache, "_increment", autospec=True) as _increment:
+                await cache.increment(Keys.KEY)
+                _increment.assert_called_once_with(expected, delta=1, _conn=None)
 
-    async def _assert_expire__alt_build_key_default_namespace(self, cache, expected):
-        with patch.object(cache, "_expire", autospec=True) as _expire:
-            await cache.expire(Keys.KEY, 0)
-            _expire.assert_called_once_with(expected, 0, _conn=None)
+        @staticmethod
+        async def assert_delete(cache, expected):
+            with patch.object(cache, "_delete", autospec=True) as _delete:
+                await cache.delete(Keys.KEY)
+                _delete.assert_called_once_with(expected, _conn=None)
+
+        @staticmethod
+        async def assert_expire(cache, expected):
+            with patch.object(cache, "_expire", autospec=True) as _expire:
+                await cache.expire(Keys.KEY, 0)
+                _expire.assert_called_once_with(expected, 0, _conn=None)
 
     async def test_add_ttl_cache_default(self, base_cache):
         with patch.object(base_cache, "_add", autospec=True) as m:
