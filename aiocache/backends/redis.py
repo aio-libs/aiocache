@@ -42,6 +42,7 @@ class RedisBackend(BaseCache):
         pool_max_size=None,
         create_connection_timeout=None,
         ssl=False,
+        connection_pool_class=redis.ConnectionPool,
         connection_pool_kwargs=None,
         **kwargs,
     ):
@@ -72,7 +73,7 @@ class RedisBackend(BaseCache):
         # (decode_responses=False), because some of the values are saved as
         # bytes directly, like pickle serialized values, which may raise an
         # exception when decoded with 'utf-8'.
-        connection_pool = redis.ConnectionPool(
+        connection_pool = connection_pool_class(
             host=self.endpoint, port=self.port, db=self.db,
             password=self.password, decode_responses=False,
             socket_connect_timeout=self.create_connection_timeout,
