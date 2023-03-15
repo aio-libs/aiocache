@@ -41,6 +41,8 @@ class RedisBackend(BaseCache):
         pool_min_size=_NOT_SET,
         pool_max_size=None,
         create_connection_timeout=None,
+        ssl=False,
+        connection_pool_kwargs=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -60,15 +62,24 @@ class RedisBackend(BaseCache):
             float(create_connection_timeout) if create_connection_timeout else None
         )
 
+        connection_pool_kwargs = connection_pool_kwargs or {}
+
+        if ssl:
+            connection_pool_kwargs["connection_class"] = redis.SSLConnection
+
         # NOTE: decoding can't be controlled on API level after switching to
         # redis, we need to disable decoding on global/connection level
         # (decode_responses=False), because some of the values are saved as
         # bytes directly, like pickle serialized values, which may raise an
         # exception when decoded with 'utf-8'.
-        self.client = redis.Redis(host=self.endpoint, port=self.port, db=self.db,
-                                  password=self.password, decode_responses=False,
-                                  socket_connect_timeout=self.create_connection_timeout,
-                                  max_connections=self.pool_max_size)
+        connection_pool = redis.ConnectionPool(
+            host=self.endpoint, port=self.port, db=self.db,
+            password=self.password, decode_responses=False,
+            socket_connect_timeout=self.create_connection_timeout,
+            max_connections=self.pool_max_size,
+            **connection_pool_kwargs
+        )
+        self.client = redis.Redis(connection_pool=connection_pool)
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
