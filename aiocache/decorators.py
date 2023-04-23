@@ -284,7 +284,7 @@ class multi_cached:
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
         that were passed to the decorated callable. This behavior is necessarily different than
         ``BaseCache.build_key()`` and the call signature differs from ``cached.key_builder``.
-    :param skip_cache_keys: Callable that receives both key and value and returns True
+    :param skip_cache_func: Callable that receives both key and value and returns True
         if that key-value pair should not be cached (or False to store in cache).
         The keys and values to be passed are taken from the wrapped function result.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
