@@ -4,6 +4,13 @@ CHANGES
 
 .. towncrier release notes start
 
+0.12.1 (2023-04-23)
+===================
+
+* Added ``skip_cache_func`` to dynamically skip caching certain results.
+* Removed typing support due to producing unresolvable errors (until v1.0).
+* Stopped installing ``tests`` as part of the package.
+
 0.12.0 (2023-01-13)
 ===================
 
