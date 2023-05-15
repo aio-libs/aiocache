@@ -42,6 +42,7 @@ class RedisBackend(BaseCache[str]):
         port=6379,
         db=0,
         password=None,
+        ssl=False,
         pool_min_size=_NOT_SET,
         pool_max_size=None,
         create_connection_timeout=None,
@@ -58,6 +59,8 @@ class RedisBackend(BaseCache[str]):
         self.port = int(port)
         self.db = int(db)
         self.password = password
+        self.ssl = str(ssl).lower() in ["true", "t", "yes", "y" "1"]
+
         # TODO: Remove int() call some time after adding type annotations.
         self.pool_max_size = None if pool_max_size is None else int(pool_max_size)
         self.create_connection_timeout = (
@@ -69,10 +72,16 @@ class RedisBackend(BaseCache[str]):
         # (decode_responses=False), because some of the values are saved as
         # bytes directly, like pickle serialized values, which may raise an
         # exception when decoded with 'utf-8'.
-        self.client = redis.Redis(host=self.endpoint, port=self.port, db=self.db,
-                                  password=self.password, decode_responses=False,
-                                  socket_connect_timeout=self.create_connection_timeout,
-                                  max_connections=self.pool_max_size)
+        self.client = redis.Redis(
+            host=self.endpoint,
+            port=self.port,
+            db=self.db,
+            password=self.password,
+            ssl=self.ssl,
+            decode_responses=False,
+            socket_connect_timeout=self.create_connection_timeout,
+            max_connections=self.pool_max_size,
+        )
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)

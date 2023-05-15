@@ -34,6 +34,7 @@ class TestRedisBackend:
         "port": 6379,
         "db": 0,
         "password": None,
+        "ssl": False,
         "socket_connect_timeout": None,
         "decode_responses": False,
         "max_connections": None,
@@ -48,11 +49,12 @@ class TestRedisBackend:
         assert redis_backend.port == 6379
         assert redis_backend.db == 0
         assert redis_backend.password is None
+        assert redis_backend.ssl is False
         assert redis_backend.pool_max_size is None
 
     @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup_override(self, mock_class):
-        override = {"db": 2, "password": "pass"}
+        override = {"db": 2, "password": "pass", "ssl": True}
         redis_backend = RedisBackend(**override)
 
         kwargs = self.default_redis_kwargs.copy()
@@ -63,6 +65,7 @@ class TestRedisBackend:
         assert redis_backend.port == 6379
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
+        assert redis_backend.ssl is True
 
     @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
     def test_setup_casts(self, mock_class):
@@ -71,6 +74,7 @@ class TestRedisBackend:
             "port": "6379",
             "pool_max_size": "10",
             "create_connection_timeout": "1.5",
+            "ssl": "True",
         }
         redis_backend = RedisBackend(**override)
 
@@ -80,6 +84,7 @@ class TestRedisBackend:
             "port": 6379,
             "max_connections": 10,
             "socket_connect_timeout": 1.5,
+            "ssl": True,
         })
         mock_class.assert_called_with(**kwargs)
 
@@ -87,6 +92,7 @@ class TestRedisBackend:
         assert redis_backend.port == 6379
         assert redis_backend.pool_max_size == 10
         assert redis_backend.create_connection_timeout == 1.5
+        assert redis_backend.ssl is True
 
     async def test_get(self, redis):
         redis.client.get.return_value = b"value"
