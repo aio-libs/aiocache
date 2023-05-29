@@ -59,7 +59,7 @@ In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ 
 - `Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
 - `Python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
 - `Custom serializer for compressing data <https://github.com/argaen/aiocache/blob/master/examples/serializer_class.py>`_
-- `TimingPlugin and HitMissRatioPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
+- `TimingPlugin, HitMissRatioPlugin, and LimitLengthPlugin demos <https://github.com/argaen/aiocache/blob/master/examples/plugins.py>`_
 - `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
 - `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
 - `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.

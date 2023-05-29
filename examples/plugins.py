@@ -3,7 +3,7 @@ import random
 import logging
 
 from aiocache import Cache
-from aiocache.plugins import HitMissRatioPlugin, TimingPlugin, BasePlugin
+from aiocache.plugins import HitMissRatioPlugin, TimingPlugin, BasePlugin, LimitLengthPlugin
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class MyCustomPlugin(BasePlugin):
 
 
 cache = Cache(
-    plugins=[HitMissRatioPlugin(), TimingPlugin(), MyCustomPlugin()],
+    plugins=[HitMissRatioPlugin(), TimingPlugin(), LimitLengthPlugin(max_length = 4), MyCustomPlugin()],
     namespace="main")
 
 
@@ -28,6 +28,9 @@ async def run():
     await cache.set("b", "2")
     await cache.set("c", "3")
     await cache.set("d", "4")
+    await cache.set("e", "5")
+    await cache.set("f", "6")
+    #entries "a" and "b" above will get dropped because max_length is 4
 
     possible_keys = ["a", "b", "c", "d", "e", "f"]
 

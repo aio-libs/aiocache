@@ -4,7 +4,7 @@ are coded in a collaborative so you can use multiple inheritance.
 """
 
 from aiocache.base import API
-
+from aiocache.backends.memory import SimpleMemoryCache
 
 class BasePlugin:
     @classmethod
@@ -96,3 +96,49 @@ class HitMissRatioPlugin(BasePlugin):
         client.hit_miss_ratio["hit_ratio"] = (
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
         )
+
+
+class LimitLengthPlugin(BasePlugin):
+    """
+    Limits the number of entries that the cache may contain.
+
+    Example usage:
+      c = Cache(cache_class=Cache.MEMORY, ttl=300, plugins=[LimitLength(max_length=2000)])
+
+    Caveats:
+    * Only works with the SimpleMemoryCache backend.
+    * Entries are trimmed AFTER the new entry is added, so the cache may temporarily contain more entries than the specified limit.
+    """
+
+    def __init__(self, max_length: int = 1000):
+        assert int(max_length) == max_length
+        assert max_length >= 0
+        self.max_length = int(max_length)
+
+    def _check_support(self, client: SimpleMemoryCache):
+        """
+        Checks if the client is of the correct type.
+        TODO: Ideally, this should be checked only once when the cache is created.
+        """
+        if not isinstance(client, SimpleMemoryCache):
+            raise NotImplementedError(
+                "LimitLength plugin only works with the SimpleMemoryCache backend."
+            )
+
+    async def post_set(self, client: SimpleMemoryCache, *args, **kwargs):
+        """
+        Drop extra records that exceed configured capacity.
+        """
+        self._check_support(client)
+        current_length = len(client._cache)
+        if current_length > self.max_length:
+            # Sort by time of expiry. Delete the entries nearest to expiration first.
+            a = list((client._handlers[k].when(), k)
+                     for k in client._handlers.keys())
+            a.sort()
+            for _, k in a[:current_length - self.max_length]:
+                await client.delete(k)
+
+    async def post_multi_set(self, client: SimpleMemoryCache, *args, **kwargs):
+        # post_set is enough. No special handling is needed for multi_set
+        await self.post_set(client, *args, **kwargs)

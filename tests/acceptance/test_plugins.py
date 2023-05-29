@@ -1,6 +1,6 @@
 import pytest
 
-from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
+from aiocache.plugins import HitMissRatioPlugin, TimingPlugin, LimitLengthPlugin
 
 
 class TestHitMissRatioPlugin:
@@ -84,3 +84,19 @@ class TestTimingPlugin:
         assert "get_min" in memory_cache.profiling
         assert "get_total" in memory_cache.profiling
         assert "get_avg" in memory_cache.profiling
+
+class TestLimitLengthPlugin:
+    async def test_limit_length(self, memory_cache):
+        #TODO: I have NO IDEA how to implement this.
+        memory_cache.plugins = [LimitLengthPlugin(max_length=3)]
+        await memory_cache.set('a', 1)
+        assert repr(memory_cache._cache) == "{'a': 1}"
+        await memory_cache.set('b', 2)
+        assert repr(memory_cache._cache) == "{'a': 1, 'b': 2}"
+        await memory_cache.set('c', 3)
+        assert repr(memory_cache._cache) == "{'a': 1, 'b': 2, 'c': 3}"
+        await memory_cache.set('d', 4)
+        assert repr(memory_cache._cache) == "{'b': 2, 'c': 3, 'd': 4}"
+        await memory_cache.clear()
+        await memory_cache.multi_set([('a', -1), ('b', -2), ('c', -3), ('d', -4)])
+        assert repr(memory_cache._cache) == "{'b': -2, 'c': -3, 'd': -4}"

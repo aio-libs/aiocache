@@ -3,7 +3,7 @@ from unittest.mock import create_autospec
 import pytest
 
 from aiocache.base import API, BaseCache
-from aiocache.plugins import BasePlugin, HitMissRatioPlugin, TimingPlugin
+from aiocache.plugins import BasePlugin, HitMissRatioPlugin, TimingPlugin, LimitLengthPlugin
 from ..utils import Keys
 
 
@@ -75,3 +75,8 @@ class TestHitMissRatioPlugin:
         assert client.hit_miss_ratio["hits"] == 2
         assert client.hit_miss_ratio["total"] == 4
         assert client.hit_miss_ratio["hit_ratio"] == 0.5
+
+class TestLimitLengthPlugin:
+    async def test_limit_length(self, plugin):
+        #TODO: I have NO IDEA how to implement this.
+        return

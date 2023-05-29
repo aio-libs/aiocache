@@ -48,3 +48,10 @@ HitMissRatioPlugin
 .. autoclass:: aiocache.plugins.HitMissRatioPlugin
   :members:
   :undoc-members:
+
+LimitLengthPlugin
+------------------
+
+.. autoclass:: aiocache.plugins.LimitLengthPlugin
+  :members:
+  :undoc-members:
