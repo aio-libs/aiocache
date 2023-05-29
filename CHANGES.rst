@@ -22,6 +22,14 @@ There are a number of backwards-incompatible changes. These points should help w
   * The ``build_key()`` method must now be defined (this should generally involve calling ``self._str_build_key()`` as a helper).
 
 
+
+
+0.12.1 (2023-06-??)
+===================
+
+* 498.feature - Added the plugin ``LimitLengthPlugin`` that implements limiting the number of records stored in a cache.
+
+
 0.12.0 (2023-01-13)
 ===================
 
