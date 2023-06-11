@@ -3,17 +3,30 @@ from unittest.mock import Mock, patch
 import pytest
 
 from aiocache import AIOCACHE_CACHES, Cache, caches
-from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.memory import SimpleMemoryCache
-from aiocache.backends.redis import RedisCache
 from aiocache.exceptions import InvalidCacheType
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 from aiocache.serializers import JsonSerializer, PickleSerializer
 
-assert Cache.REDIS is not None
-assert Cache.MEMCACHED is not None
-CACHE_NAMES = (Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME)
+
+CACHE_NAMES = [Cache.MEMORY.NAME]
+
+try:
+    from aiocache.backends.memcached import MemcachedCache
+except ImportError:
+    MemcachedCache = None
+else:
+    assert Cache.MEMCACHED is not None
+    CACHE_NAMES.append(Cache.MEMCACHED.NAME)
+
+try:
+    from aiocache.backends.redis import RedisCache
+except ImportError:
+    RedisCache = None
+else:
+    assert Cache.REDIS is not None
+    CACHE_NAMES.append(Cache.REDIS.NAME)
 
 
 def test_class_from_string():
