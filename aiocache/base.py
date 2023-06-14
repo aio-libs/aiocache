@@ -325,7 +325,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
         logger.debug(
             "MULTI_SET %s %d (%.4f)s",
             [key for key, value in tmp_pairs],
-            len(pairs),
+            len(tmp_pairs),
             time.monotonic() - start,
         )
         return True
