@@ -40,6 +40,11 @@ async def memcached_cache():
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
 
-@pytest.fixture(params=("redis_cache", "memory_cache", "memcached_cache"))
+@pytest.fixture(
+    params=(
+        pytest.param("redis_cache", marks=pytest.mark.redis),
+        "memory_cache",
+        pytest.param("memcached_cache", marks=pytest.mark.memcached),
+    ))
 def cache(request):
     return request.getfixturevalue(request.param)
