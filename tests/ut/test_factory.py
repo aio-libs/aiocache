@@ -3,23 +3,38 @@ from unittest.mock import Mock, patch
 import pytest
 
 from aiocache import AIOCACHE_CACHES, Cache, caches
-from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.memory import SimpleMemoryCache
-from aiocache.backends.redis import RedisCache
 from aiocache.exceptions import InvalidCacheType
 from aiocache.factory import _class_from_string, _create_cache
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 from aiocache.serializers import JsonSerializer, PickleSerializer
 
-assert Cache.REDIS is not None
-assert Cache.MEMCACHED is not None
-CACHE_NAMES = (Cache.MEMORY.NAME, Cache.REDIS.NAME, Cache.MEMCACHED.NAME)
+
+CACHE_NAMES = [Cache.MEMORY.NAME]
+
+try:
+    from aiocache.backends.memcached import MemcachedCache
+except ImportError:
+    MemcachedCache = None
+else:
+    assert Cache.MEMCACHED is not None
+    CACHE_NAMES.append(Cache.MEMCACHED.NAME)
+
+try:
+    from aiocache.backends.redis import RedisCache
+except ImportError:
+    RedisCache = None
+else:
+    assert Cache.REDIS is not None
+    CACHE_NAMES.append(Cache.REDIS.NAME)
 
 
+@pytest.mark.redis
 def test_class_from_string():
     assert _class_from_string("aiocache.RedisCache") == RedisCache
 
 
+@pytest.mark.redis
 def test_create_simple_cache():
     redis = _create_cache(RedisCache, endpoint="127.0.0.10", port=6378)
 
@@ -29,15 +44,15 @@ def test_create_simple_cache():
 
 
 def test_create_cache_with_everything():
-    redis = _create_cache(
-        RedisCache,
+    cache = _create_cache(
+        SimpleMemoryCache,
         serializer={"class": PickleSerializer, "encoding": "encoding"},
         plugins=[{"class": "aiocache.plugins.TimingPlugin"}],
     )
 
-    assert isinstance(redis.serializer, PickleSerializer)
-    assert redis.serializer.encoding == "encoding"
-    assert isinstance(redis.plugins[0], TimingPlugin)
+    assert isinstance(cache.serializer, PickleSerializer)
+    assert cache.serializer.encoding == "encoding"
+    assert isinstance(cache.plugins[0], TimingPlugin)
 
 
 class TestCache:
@@ -164,6 +179,7 @@ class TestCacheHandler:
     def test_create_not_reuse(self):
         assert caches.create("default") is not caches.create("default")
 
+    @pytest.mark.redis
     def test_create_extra_args(self):
         caches.set_config(
             {
@@ -180,6 +196,7 @@ class TestCacheHandler:
         assert cache.endpoint == "127.0.0.10"
         assert cache.db == 10
 
+    @pytest.mark.redis
     def test_retrieve_cache(self):
         caches.set_config(
             {
@@ -209,6 +226,7 @@ class TestCacheHandler:
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
 
+    @pytest.mark.redis
     def test_retrieve_cache_new_instance(self):
         caches.set_config(
             {
@@ -236,6 +254,7 @@ class TestCacheHandler:
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
 
+    @pytest.mark.redis
     def test_multiple_caches(self):
         caches.set_config(
             {
@@ -330,6 +349,7 @@ class TestCacheHandler:
                 }
             )
 
+    @pytest.mark.redis
     def test_ensure_plugins_order(self):
         caches.set_config(
             {
