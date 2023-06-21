@@ -2,9 +2,7 @@ import asyncio
 
 import pytest
 
-from aiocache.backends.memcached import MemcachedCache
 from aiocache.backends.memory import SimpleMemoryCache
-from aiocache.backends.redis import RedisCache
 from aiocache.base import _Conn
 from ..utils import Keys
 
@@ -171,8 +169,11 @@ class TestMemoryCache:
         assert await memory_cache.exists(Keys.KEY, namespace="test") is False
 
 
+@pytest.mark.memcached
 class TestMemcachedCache:
     async def test_accept_explicit_args(self):
+        from aiocache.backends.memcached import MemcachedCache
+
         with pytest.raises(TypeError):
             MemcachedCache(random_attr="wtf")
 
@@ -212,8 +213,11 @@ class TestMemcachedCache:
         assert memcached_cache.client._pool._pool.qsize() == 0
 
 
+@pytest.mark.redis
 class TestRedisCache:
     async def test_accept_explicit_args(self):
+        from aiocache.backends.redis import RedisCache
+
         with pytest.raises(TypeError):
             RedisCache(random_attr="wtf")
 

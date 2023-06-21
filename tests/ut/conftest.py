@@ -5,8 +5,6 @@ from unittest.mock import create_autospec, patch
 import pytest
 
 from aiocache import caches
-from aiocache.backends.memcached import MemcachedCache
-from aiocache.backends.redis import RedisCache
 from aiocache.base import BaseCache
 from aiocache.plugins import BasePlugin
 
@@ -54,11 +52,15 @@ def base_cache():
 
 @pytest.fixture
 async def redis_cache():
+    from aiocache.backends.redis import RedisCache
+
     async with RedisCache() as cache:
         yield cache
 
 
 @pytest.fixture
 async def memcached_cache():
+    from aiocache.backends.memcached import MemcachedCache
+
     async with MemcachedCache() as cache:
         yield cache

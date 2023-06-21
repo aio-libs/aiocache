@@ -127,6 +127,7 @@ class TestMemoryRedLock:
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
 
+@pytest.mark.redis
 class TestRedisRedLock:
     @pytest.fixture
     def lock(self, redis_cache):
@@ -160,6 +161,7 @@ class TestRedisRedLock:
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
 
+@pytest.mark.memcached
 class TestMemcachedRedLock:
     @pytest.fixture
     def lock(self, memcached_cache):
@@ -255,6 +257,7 @@ class TestMemoryOptimisticLock:
         assert await memory_cache.get(Keys.KEY) is None
 
 
+@pytest.mark.redis
 class TestRedisOptimisticLock:
     @pytest.fixture
     def lock(self, redis_cache):
