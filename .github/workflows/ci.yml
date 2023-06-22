@@ -103,7 +103,7 @@ jobs:
     - name: Run functional tests
       run: bash examples/run_all.sh
     - name: Uninstall optional backends
-      run: pip uninstall -y aiomcache redis
+      run: pip uninstall -y aiomcache msgpack redis
     - name: Run unittests with minimal backend set
       env:
         COLOR: 'yes'
