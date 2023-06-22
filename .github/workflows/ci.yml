@@ -99,11 +99,18 @@ jobs:
     - name: Run unittests
       env:
         COLOR: 'yes'
-      run: |
-        pytest tests --cov-report xml --cov-report html
-        python -m coverage xml
+      run: pytest tests --cov-report xml --cov-report html
     - name: Run functional tests
       run: bash examples/run_all.sh
+    - name: Uninstall optional backends
+      run: pip uninstall -y aiomcache redis
+    - name: Run unittests with minimal backend set
+      env:
+        COLOR: 'yes'
+      run: |
+        pytest --cov-report xml --cov-report html --cov-append tests/acceptance tests/ut -m "not memcached and not redis" --ignore "tests/ut/backends/test_memcached.py" --ignore "tests/ut/backends/test_redis.py"
+    - name: Produce coverage report
+      run: python -m coverage xml
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
