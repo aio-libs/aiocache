@@ -4,6 +4,11 @@ CHANGES
 
 .. towncrier release notes start
 
+0.12.2 (2023-08-06)
+===================
+
+* Fixed an error when the ``pairs`` argument to ``.multi_set()`` doesn't support ``len()``.
+
 0.12.1 (2023-04-23)
 ===================
 
