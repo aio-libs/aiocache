@@ -20,8 +20,8 @@ def reset_caches():
 
 
 @pytest.fixture
-async def redis_cache():
-    async with Cache(Cache.REDIS, namespace="test") as cache:
+async def redis_cache(redis_client):
+    async with Cache(Cache.REDIS, namespace="test", client=redis_client) as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 

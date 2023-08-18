@@ -3,6 +3,8 @@ import urllib
 from copy import deepcopy
 from typing import Dict
 
+import redis
+
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
 from aiocache.exceptions import InvalidCacheType
@@ -29,10 +31,17 @@ def _create_cache(cache, serializer=None, plugins=None, **kwargs):
             cls = plugin.pop("class")
             cls = _class_from_string(cls) if isinstance(cls, str) else cls
             plugins_instances.append(cls(**plugin))
-
     cache = _class_from_string(cache) if isinstance(cache, str) else cache
-    instance = cache(serializer=serializer, plugins=plugins_instances, **kwargs)
-    return instance
+    if cache == AIOCACHE_CACHES.get("redis"):
+        return cache(
+            serializer=serializer,
+            plugins=plugins_instances,
+            namespace=kwargs.pop('namespace', ''),
+            ttl=kwargs.pop('ttl', None),
+            client=redis.Redis(**kwargs)
+        )
+    else:
+        return cache(serializer=serializer, plugins=plugins_instances, **kwargs)
 
 
 class Cache:
@@ -112,7 +121,7 @@ class Cache:
             kwargs.update(cache_class.parse_uri_path(parsed_url.path))
 
         if parsed_url.hostname:
-            kwargs["endpoint"] = parsed_url.hostname
+            kwargs["host"] = parsed_url.hostname
 
         if parsed_url.port:
             kwargs["port"] = parsed_url.port
@@ -120,7 +129,13 @@ class Cache:
         if parsed_url.password:
             kwargs["password"] = parsed_url.password
 
-        return Cache(cache_class, **kwargs)
+        for arg in ['max_connections', 'socket_connect_timeout']:
+            if arg in kwargs:
+                kwargs[arg] = int(kwargs[arg])
+        if cache_class == cls.REDIS:
+            return Cache(cache_class, client=redis.Redis(**kwargs))
+        else:
+            return Cache(cache_class, **kwargs)
 
 
 class CacheHandler:

@@ -18,15 +18,15 @@ class TestCache:
         from aiocache.backends.redis import RedisCache
 
         url = ("redis://endpoint:1000/0/?password=pass"
-               + "&pool_max_size=50&create_connection_timeout=20")
+               + "&max_connections=50&socket_connect_timeout=20")
 
         async with Cache.from_url(url) as cache:
             assert isinstance(cache, RedisCache)
-            assert cache.endpoint == "endpoint"
-            assert cache.port == 1000
-            assert cache.password == "pass"
-            assert cache.pool_max_size == 50
-            assert cache.create_connection_timeout == 20
+            assert cache.client.connection_pool.connection_kwargs['host'] == "endpoint"
+            assert cache.client.connection_pool.connection_kwargs['port'] == 1000
+            assert cache.client.connection_pool.connection_kwargs['password'] == "pass"
+            assert cache.client.connection_pool.max_connections == 50
+            assert cache.client.connection_pool.connection_kwargs['socket_connect_timeout'] == 20
 
     @pytest.mark.memcached
     async def test_from_url_memcached(self):
@@ -36,7 +36,7 @@ class TestCache:
 
         async with Cache.from_url(url) as cache:
             assert isinstance(cache, MemcachedCache)
-            assert cache.endpoint == "endpoint"
+            assert cache.host == "endpoint"
             assert cache.port == 1000
             assert cache.pool_size == 10
 

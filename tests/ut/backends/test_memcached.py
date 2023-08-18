@@ -32,7 +32,7 @@ class TestMemcachedBackend:
 
             aiomcache_client.assert_called_with("127.0.0.1", 11211, pool_size=2)
 
-        assert memcached.endpoint == "127.0.0.1"
+        assert memcached.host == "127.0.0.1"
         assert memcached.port == 11211
         assert memcached.pool_size == 2
 
@@ -42,7 +42,7 @@ class TestMemcachedBackend:
 
             aiomcache_client.assert_called_with("127.0.0.2", 2, pool_size=10)
 
-        assert memcached.endpoint == "127.0.0.2"
+        assert memcached.host == "127.0.0.2"
         assert memcached.port == 2
         assert memcached.pool_size == 10
 
