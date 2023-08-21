@@ -41,6 +41,14 @@ class RedisBackend(BaseCache[str]):
         **kwargs,
     ):
         super().__init__(**kwargs)
+
+        # NOTE: decoding can't be controlled on API level after switching to
+        # redis, we need to disable decoding on global/connection level
+        # (decode_responses=False), because some of the values are saved as
+        # bytes directly, like pickle serialized values, which may raise an
+        # exception when decoded with 'utf-8'.
+        if client.connection_pool.connection_kwargs['decode_responses']:
+            raise ValueError("redis client must be constructed with decode_responses set to False")
         self.client = client
 
     async def _get(self, key, encoding="utf-8", _conn=None):

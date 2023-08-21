@@ -1,3 +1,4 @@
+import copy
 import logging
 import urllib
 from copy import deepcopy
@@ -20,6 +21,7 @@ def _class_from_string(class_path):
 
 
 def _create_cache(cache, serializer=None, plugins=None, **kwargs):
+    kwargs = copy.deepcopy(kwargs)
     if serializer is not None:
         cls = serializer.pop("class")
         cls = _class_from_string(cls) if isinstance(cls, str) else cls

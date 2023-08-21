@@ -38,7 +38,7 @@ class TestMemcachedBackend:
 
     def test_setup_override(self):
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
-            memcached = MemcachedBackend(endpoint="127.0.0.2", port=2, pool_size=10)
+            memcached = MemcachedBackend(host="127.0.0.2", port=2, pool_size=10)
 
             aiomcache_client.assert_called_with("127.0.0.2", 2, pool_size=10)
 

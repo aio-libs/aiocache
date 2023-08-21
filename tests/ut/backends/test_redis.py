@@ -30,6 +30,15 @@ def redis(redis_client):
 
 class TestRedisBackend:
 
+    @pytest.mark.parametrize('decode_responses', [True])
+    async def test_redis_backend_requires_client_decode_responses(self, redis_client):
+        with pytest.raises(ValueError) as ve:
+            RedisBackend(client=redis_client)
+
+        assert str(ve.value) == (
+            "redis client must be constructed with decode_responses set to False"
+        )
+
     async def test_get(self, redis):
         redis.client.get.return_value = b"value"
         assert await redis._get(Keys.KEY) == "value"
