@@ -1,13 +1,15 @@
 import logging
 import urllib
+from contextlib import suppress
 from copy import deepcopy
 from typing import Dict
-
-import redis.asyncio as redis
 
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
 from aiocache.exceptions import InvalidCacheType
+
+with suppress(ImportError):
+    import redis.asyncio as redis
 
 
 logger = logging.getLogger(__name__)
