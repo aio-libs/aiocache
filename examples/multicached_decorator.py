@@ -24,8 +24,6 @@ async def multi_cached_keys(keys=None):
     return {id_: DICT[id_] for id_ in keys}
 
 
-
-
 async def test_multi_cached():
     await multi_cached_ids(ids=("a", "b"))
     await multi_cached_ids(ids=("a", "c"))

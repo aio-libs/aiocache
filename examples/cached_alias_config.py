@@ -57,7 +57,7 @@ async def test_alias():
     await default_cache()
     await alt_cache()
 
-    cache = Cache(Cache.REDIS, client=redis.Redis() )
+    cache = Cache(Cache.REDIS, client=redis.Redis())
     await cache.delete("key")
     await cache.close()
 

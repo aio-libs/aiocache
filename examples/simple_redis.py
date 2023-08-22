@@ -4,7 +4,7 @@ from aiocache import Cache
 
 import redis.asyncio as redis
 
-cache = Cache(Cache.REDIS, namespace="main" , client=redis.Redis() )
+cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
 
 
 async def redis():
