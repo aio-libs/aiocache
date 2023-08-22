@@ -1,4 +1,3 @@
-import sys
 from contextlib import ExitStack
 from unittest.mock import create_autospec, patch
 
