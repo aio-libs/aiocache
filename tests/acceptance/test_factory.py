@@ -22,11 +22,12 @@ class TestCache:
 
         async with Cache.from_url(url) as cache:
             assert isinstance(cache, RedisCache)
-            assert cache.client.connection_pool.connection_kwargs["host"] == "endpoint"
-            assert cache.client.connection_pool.connection_kwargs["port"] == 1000
-            assert cache.client.connection_pool.connection_kwargs["password"] == "pass"
+            connection_args = cache.client.connection_pool.connection_kwargs
+            assert connection_args["host"] == "endpoint"
+            assert connection_args["port"] == 1000
+            assert connection_args["password"] == "pass"
             assert cache.client.connection_pool.max_connections == 50
-            assert cache.client.connection_pool.connection_kwargs["socket_connect_timeout"] == 20
+            assert connection_args["socket_connect_timeout"] == 20
 
     @pytest.mark.memcached
     async def test_from_url_memcached(self):
