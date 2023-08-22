@@ -18,7 +18,7 @@ class CacheManager:
             "memcached": Cache.MEMCACHED,
         }
         if backend == "redis":
-            cache_kwargs = {'client': redis.Redis(
+            cache_kwargs = {"client": redis.Redis(
                 host="127.0.0.1",
                 port=6379,
                 db=0,
