@@ -6,10 +6,9 @@ import redis.asyncio as redis
 
 from aiocache import Cache
 from aiocache.serializers import PickleSerializer
-from examples.conftest import redis_kwargs_for_test
 
 MyObject = namedtuple("MyObject", ["x", "y"])
-cache = Cache(Cache.REDIS, serializer=PickleSerializer(), namespace="main", client=redis.Redis(**redis_kwargs_for_test()))
+cache = Cache(Cache.REDIS, serializer=PickleSerializer(), namespace="main", client=redis.Redis())
 
 
 async def complex_object():

@@ -3,7 +3,6 @@ import asyncio
 import redis.asyncio as redis
 
 from aiocache import multi_cached, Cache
-from examples.conftest import redis_kwargs_for_test
 
 DICT = {
     'a': "Z",
@@ -12,7 +11,7 @@ DICT = {
     'd': "W"
 }
 
-cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis(**redis_kwargs_for_test()))
+cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
 
 
 @multi_cached("ids", cache=Cache.REDIS, namespace="main", client=cache.client)

@@ -4,9 +4,7 @@ from aiocache import Cache
 
 import redis.asyncio as redis
 
-from examples.conftest import redis_kwargs_for_test
-
-cache = Cache(Cache.REDIS, namespace="main" , client=redis.Redis(**redis_kwargs_for_test()) )
+cache = Cache(Cache.REDIS, namespace="main" , client=redis.Redis() )
 
 
 async def redis():

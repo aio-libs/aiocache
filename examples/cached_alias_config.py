@@ -4,7 +4,6 @@ import redis.asyncio as redis
 
 from aiocache import caches, Cache
 from aiocache.serializers import StringSerializer, PickleSerializer
-from examples.conftest import redis_kwargs_for_test
 
 caches.set_config({
     'default': {
@@ -58,7 +57,7 @@ async def test_alias():
     await default_cache()
     await alt_cache()
 
-    cache = Cache(Cache.REDIS, client=redis.Redis(**redis_kwargs_for_test()) )
+    cache = Cache(Cache.REDIS, client=redis.Redis() )
     await cache.delete("key")
     await cache.close()
 

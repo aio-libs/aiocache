@@ -5,7 +5,6 @@ import redis.asyncio as redis
 
 from marshmallow import Schema, fields, post_load
 from aiocache import Cache
-from examples.conftest import redis_kwargs_for_test
 
 
 class MyType:
@@ -31,7 +30,7 @@ def loads(value):
     return MyTypeSchema().loads(value)
 
 
-cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis(**redis_kwargs_for_test()))
+cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
 
 
 async def serializer_function():
