@@ -29,14 +29,12 @@ class BaseSerializer(ABC):
         self.encoding = self.DEFAULT_ENCODING if encoding is _NOT_SET else encoding
         super().__init__(*args, **kwargs)
 
-    # TODO(PY38): Positional-only
     @abstractmethod
-    def dumps(self, value: Any) -> Any:
+    def dumps(self, value: Any, /) -> Any:
         """Serialise the value to be stored in the backend."""
 
-    # TODO(PY38): Positional-only
     @abstractmethod
-    def loads(self, value: Any) -> Any:
+    def loads(self, value: Any, /) -> Any:
         """Decode the value retrieved from the backend."""
 
 

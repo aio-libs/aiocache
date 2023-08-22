@@ -11,7 +11,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import sys
-
-    if sys.version_info >= (3, 8):
-        asyncio.run(main())
+    asyncio.run(main())

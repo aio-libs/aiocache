@@ -8,10 +8,6 @@ from aiocache import caches
 from aiocache.plugins import BasePlugin
 from ..utils import AbstractBaseCache, ConcreteBaseCache
 
-if sys.version_info < (3, 8):
-    # Missing AsyncMock on 3.7
-    collect_ignore_glob = ["*"]
-
 
 @pytest.fixture(autouse=True)
 def reset_caches():

@@ -5,7 +5,7 @@ build:
   image: latest
 
 python:
-  version: 3.7
+  version: 3.11
   pip_install: true
   extra_requirements:
     - redis
