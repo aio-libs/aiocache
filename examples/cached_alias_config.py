@@ -47,9 +47,10 @@ async def alt_cache():
     assert isinstance(cache, Cache.REDIS)
     assert isinstance(cache.serializer, PickleSerializer)
     assert len(cache.plugins) == 2
-    assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.1"
-    assert cache.client.connection_pool.connection_kwargs["socket_connect_timeout"] == 1
-    assert cache.client.connection_pool.connection_kwargs["port"] == 6379
+    connection_args = cache.client.connection_pool.connection_kwargs
+    assert connection_args["host"] == "127.0.0.1"
+    assert connection_args["socket_connect_timeout"] == 1
+    assert connection_args["port"] == 6379
     await cache.close()
 
 
