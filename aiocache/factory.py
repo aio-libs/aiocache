@@ -3,7 +3,7 @@ import urllib
 from copy import deepcopy
 from typing import Dict
 
-import redis
+import redis.asyncio as redis
 
 from aiocache import AIOCACHE_CACHES
 from aiocache.base import BaseCache
@@ -230,7 +230,7 @@ class CacheHandler:
                 },
                 'redis_alt': {
                     'cache': "aiocache.RedisCache",
-                    'endpoint': "127.0.0.10",
+                    'host': "127.0.0.10",
                     'port': 6378,
                     'serializer': {
                         'class': "aiocache.serializers.PickleSerializer"

@@ -1,8 +1,11 @@
 import asyncio
 import zlib
 
+import redis.asyncio as redis
+
 from aiocache import Cache
 from aiocache.serializers import BaseSerializer
+from examples.conftest import redis_kwargs_for_test
 
 
 class CompressionSerializer(BaseSerializer):
@@ -25,7 +28,7 @@ class CompressionSerializer(BaseSerializer):
         return decompressed
 
 
-cache = Cache(Cache.REDIS, serializer=CompressionSerializer(), namespace="main")
+cache = Cache(Cache.REDIS, serializer=CompressionSerializer(), namespace="main", client=redis.Redis(**redis_kwargs_for_test()) )
 
 
 async def serializer():

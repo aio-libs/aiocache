@@ -2,8 +2,11 @@ import asyncio
 
 from aiocache import Cache
 
+import redis.asyncio as redis
 
-cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
+from examples.conftest import redis_kwargs_for_test
+
+cache = Cache(Cache.REDIS, namespace="main" , client=redis.Redis(**redis_kwargs_for_test()) )
 
 
 async def redis():

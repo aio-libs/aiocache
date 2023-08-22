@@ -1,12 +1,14 @@
 import asyncio
 import logging
 
+import redis.asyncio as redis
+
 from aiocache import Cache
 from aiocache.lock import RedLock
-
+from examples.conftest import redis_kwargs_for_test
 
 logger = logging.getLogger(__name__)
-cache = Cache(Cache.REDIS, endpoint='127.0.0.1', port=6379, namespace='main')
+cache = Cache(Cache.REDIS, namespace='main', client=redis.Redis(**redis_kwargs_for_test()))
 
 
 async def expensive_function():

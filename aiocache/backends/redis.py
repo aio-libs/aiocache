@@ -37,7 +37,7 @@ class RedisBackend(BaseCache[str]):
 
     def __init__(
         self,
-        client,
+        client: redis.Redis,
         **kwargs,
     ):
         super().__init__(**kwargs)

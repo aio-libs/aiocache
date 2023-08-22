@@ -11,7 +11,7 @@ class TestCache:
 
     def test_from_url_memory_no_endpoint(self):
         with pytest.raises(TypeError):
-            Cache.from_url("memory://endpoint:10")
+            Cache.from_url("memory://host:10")
 
     @pytest.mark.redis
     async def test_from_url_redis(self):
