@@ -7,7 +7,7 @@ from aiocache import Cache
 from aiocache.lock import RedLock
 
 logger = logging.getLogger(__name__)
-cache = Cache(Cache.REDIS, namespace='main', client=redis.Redis())
+cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
 
 
 async def expensive_function():
