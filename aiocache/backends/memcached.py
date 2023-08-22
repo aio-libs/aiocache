@@ -8,13 +8,13 @@ from aiocache.serializers import JsonSerializer
 
 
 class MemcachedBackend(BaseCache[bytes]):
-    def __init__(self, endpoint="127.0.0.1", port=11211, pool_size=2, **kwargs):
+    def __init__(self, host="127.0.0.1", port=11211, pool_size=2, **kwargs):
         super().__init__(**kwargs)
-        self.endpoint = endpoint
+        self.host = host
         self.port = port
         self.pool_size = int(pool_size)
         self.client = aiomcache.Client(
-            self.endpoint, self.port, pool_size=self.pool_size
+            self.host, self.port, pool_size=self.pool_size
         )
 
     async def _get(self, key, encoding="utf-8", _conn=None):
@@ -153,4 +153,4 @@ class MemcachedCache(MemcachedBackend):
         return {}
 
     def __repr__(self):  # pragma: no cover
-        return "MemcachedCache ({}:{})".format(self.endpoint, self.port)
+        return "MemcachedCache ({}:{})".format(self.host, self.port)

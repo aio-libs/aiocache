@@ -1,5 +1,7 @@
 import asyncio
 
+import redis.asyncio as redis
+
 from aiocache import caches, Cache
 from aiocache.serializers import StringSerializer, PickleSerializer
 
@@ -12,9 +14,9 @@ caches.set_config({
     },
     'redis_alt': {
         'cache': "aiocache.RedisCache",
-        'endpoint': "127.0.0.1",
+        "host": "127.0.0.1",
         'port': 6379,
-        'timeout': 1,
+        "socket_connect_timeout": 1,
         'serializer': {
             'class': "aiocache.serializers.PickleSerializer"
         },
@@ -45,9 +47,10 @@ async def alt_cache():
     assert isinstance(cache, Cache.REDIS)
     assert isinstance(cache.serializer, PickleSerializer)
     assert len(cache.plugins) == 2
-    assert cache.endpoint == "127.0.0.1"
-    assert cache.timeout == 1
-    assert cache.port == 6379
+    connection_args = cache.client.connection_pool.connection_kwargs
+    assert connection_args["host"] == "127.0.0.1"
+    assert connection_args["socket_connect_timeout"] == 1
+    assert connection_args["port"] == 6379
     await cache.close()
 
 
@@ -55,7 +58,7 @@ async def test_alias():
     await default_cache()
     await alt_cache()
 
-    cache = Cache(Cache.REDIS)
+    cache = Cache(Cache.REDIS, client=redis.Redis())
     await cache.delete("key")
     await cache.close()
 

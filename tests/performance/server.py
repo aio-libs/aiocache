@@ -2,6 +2,7 @@ import asyncio
 import logging
 import uuid
 
+import redis.asyncio as redis
 from aiohttp import web
 
 from aiocache import Cache
@@ -16,7 +17,17 @@ class CacheManager:
             "redis": Cache.REDIS,
             "memcached": Cache.MEMCACHED,
         }
-        self.cache = Cache(backends[backend])
+        if backend == "redis":
+            cache_kwargs = {"client": redis.Redis(
+                host="127.0.0.1",
+                port=6379,
+                db=0,
+                password=None,
+                decode_responses=False,
+            )}
+        else:
+            cache_kwargs = dict()
+        self.cache = Cache(backends[backend], **cache_kwargs)
 
     async def get(self, key):
         return await self.cache.get(key, timeout=0.1)

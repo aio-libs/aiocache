@@ -11,8 +11,8 @@ from ...utils import Keys, ensure_key
 
 
 @pytest.fixture
-def redis():
-    redis = RedisBackend()
+def redis(redis_client):
+    redis = RedisBackend(client=redis_client)
     with patch.object(redis, "client", autospec=True) as m:
         # These methods actually return an awaitable.
         for method in (
@@ -29,64 +29,15 @@ def redis():
 
 
 class TestRedisBackend:
-    default_redis_kwargs = {
-        "host": "127.0.0.1",
-        "port": 6379,
-        "db": 0,
-        "password": None,
-        "socket_connect_timeout": None,
-        "decode_responses": False,
-        "max_connections": None,
-    }
 
-    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
-    def test_setup(self, mock_class):
-        redis_backend = RedisBackend()
-        kwargs = self.default_redis_kwargs.copy()
-        mock_class.assert_called_with(**kwargs)
-        assert redis_backend.endpoint == "127.0.0.1"
-        assert redis_backend.port == 6379
-        assert redis_backend.db == 0
-        assert redis_backend.password is None
-        assert redis_backend.pool_max_size is None
+    @pytest.mark.parametrize("decode_responses", [True])
+    async def test_redis_backend_requires_client_decode_responses(self, redis_client):
+        with pytest.raises(ValueError) as ve:
+            RedisBackend(client=redis_client)
 
-    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
-    def test_setup_override(self, mock_class):
-        override = {"db": 2, "password": "pass"}
-        redis_backend = RedisBackend(**override)
-
-        kwargs = self.default_redis_kwargs.copy()
-        kwargs.update(override)
-        mock_class.assert_called_with(**kwargs)
-
-        assert redis_backend.endpoint == "127.0.0.1"
-        assert redis_backend.port == 6379
-        assert redis_backend.db == 2
-        assert redis_backend.password == "pass"
-
-    @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
-    def test_setup_casts(self, mock_class):
-        override = {
-            "db": "2",
-            "port": "6379",
-            "pool_max_size": "10",
-            "create_connection_timeout": "1.5",
-        }
-        redis_backend = RedisBackend(**override)
-
-        kwargs = self.default_redis_kwargs.copy()
-        kwargs.update({
-            "db": 2,
-            "port": 6379,
-            "max_connections": 10,
-            "socket_connect_timeout": 1.5,
-        })
-        mock_class.assert_called_with(**kwargs)
-
-        assert redis_backend.db == 2
-        assert redis_backend.port == 6379
-        assert redis_backend.pool_max_size == 10
-        assert redis_backend.create_connection_timeout == 1.5
+        assert str(ve.value) == (
+            "redis client must be constructed with decode_responses set to False"
+        )
 
     async def test_get(self, redis):
         redis.client.get.return_value = b"value"
@@ -224,10 +175,6 @@ class TestRedisBackend:
         await redis._redlock_release(Keys.KEY, "random")
         redis._raw.assert_called_with("eval", redis.RELEASE_SCRIPT, 1, Keys.KEY, "random")
 
-    async def test_close(self, redis):
-        await redis._close()
-        assert redis.client.close.call_count == 1
-
 
 class TestRedisCache:
     @pytest.fixture
@@ -239,17 +186,17 @@ class TestRedisCache:
     def test_name(self):
         assert RedisCache.NAME == "redis"
 
-    def test_inheritance(self):
-        assert isinstance(RedisCache(), BaseCache)
+    def test_inheritance(self, redis_client):
+        assert isinstance(RedisCache(client=redis_client), BaseCache)
 
-    def test_default_serializer(self):
-        assert isinstance(RedisCache().serializer, JsonSerializer)
+    def test_default_serializer(self, redis_client):
+        assert isinstance(RedisCache(client=redis_client).serializer, JsonSerializer)
 
     @pytest.mark.parametrize(
         "path,expected", [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})]
     )
-    def test_parse_uri_path(self, path, expected):
-        assert RedisCache().parse_uri_path(path) == expected
+    def test_parse_uri_path(self, path, expected, redis_client):
+        assert RedisCache(client=redis_client).parse_uri_path(path) == expected
 
     @pytest.mark.parametrize(
         "namespace, expected",

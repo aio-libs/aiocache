@@ -34,15 +34,6 @@ def test_class_from_string():
     assert _class_from_string("aiocache.RedisCache") == RedisCache
 
 
-@pytest.mark.redis
-def test_create_simple_cache():
-    redis = _create_cache(RedisCache, endpoint="127.0.0.10", port=6378)
-
-    assert isinstance(redis, RedisCache)
-    assert redis.endpoint == "127.0.0.10"
-    assert redis.port == 6378
-
-
 def test_create_cache_with_everything():
     cache = _create_cache(
         SimpleMemoryCache,
@@ -97,26 +88,26 @@ class TestCache:
         "url,expected_args",
         [
             ("redis://", {}),
-            ("redis://localhost", {"endpoint": "localhost"}),
-            ("redis://localhost/", {"endpoint": "localhost"}),
-            ("redis://localhost:6379", {"endpoint": "localhost", "port": 6379}),
+            ("redis://localhost", {"host": "localhost"}),
+            ("redis://localhost/", {"host": "localhost"}),
+            ("redis://localhost:6379", {"host": "localhost", "port": 6379}),
             (
                 "redis://localhost/?arg1=arg1&arg2=arg2",
-                {"endpoint": "localhost", "arg1": "arg1", "arg2": "arg2"},
+                {"host": "localhost", "arg1": "arg1", "arg2": "arg2"},
             ),
             (
                 "redis://localhost:6379/?arg1=arg1&arg2=arg2",
-                {"endpoint": "localhost", "port": 6379, "arg1": "arg1", "arg2": "arg2"},
+                {"host": "localhost", "port": 6379, "arg1": "arg1", "arg2": "arg2"},
             ),
             ("redis:///?arg1=arg1", {"arg1": "arg1"}),
             ("redis:///?arg2=arg2", {"arg2": "arg2"}),
             (
                 "redis://:password@localhost:6379",
-                {"endpoint": "localhost", "password": "password", "port": 6379},
+                {"host": "localhost", "password": "password", "port": 6379},
             ),
             (
                 "redis://:password@localhost:6379?password=pass",
-                {"endpoint": "localhost", "password": "password", "port": 6379},
+                {"host": "localhost", "password": "password", "port": 6379},
             ),
         ],
     )
@@ -185,16 +176,16 @@ class TestCacheHandler:
             {
                 "default": {
                     "cache": "aiocache.RedisCache",
-                    "endpoint": "127.0.0.9",
+                    "host": "127.0.0.9",
                     "db": 10,
                     "port": 6378,
                 }
             }
         )
-        cache = caches.create("default", namespace="whatever", endpoint="127.0.0.10", db=10)
+        cache = caches.create("default", namespace="whatever", host="127.0.0.10", db=10)
         assert cache.namespace == "whatever"
-        assert cache.endpoint == "127.0.0.10"
-        assert cache.db == 10
+        assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert cache.client.connection_pool.connection_kwargs["db"] == 10
 
     @pytest.mark.redis
     def test_retrieve_cache(self):
@@ -202,7 +193,7 @@ class TestCacheHandler:
             {
                 "default": {
                     "cache": "aiocache.RedisCache",
-                    "endpoint": "127.0.0.10",
+                    "host": "127.0.0.10",
                     "port": 6378,
                     "ttl": 10,
                     "serializer": {
@@ -219,8 +210,8 @@ class TestCacheHandler:
 
         cache = caches.get("default")
         assert isinstance(cache, RedisCache)
-        assert cache.endpoint == "127.0.0.10"
-        assert cache.port == 6378
+        assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert cache.client.connection_pool.connection_kwargs["port"] == 6378
         assert cache.ttl == 10
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
@@ -232,7 +223,7 @@ class TestCacheHandler:
             {
                 "default": {
                     "cache": "aiocache.RedisCache",
-                    "endpoint": "127.0.0.10",
+                    "host": "127.0.0.10",
                     "port": 6378,
                     "serializer": {
                         "class": "aiocache.serializers.PickleSerializer",
@@ -248,8 +239,8 @@ class TestCacheHandler:
 
         cache = caches.create("default")
         assert isinstance(cache, RedisCache)
-        assert cache.endpoint == "127.0.0.10"
-        assert cache.port == 6378
+        assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert cache.client.connection_pool.connection_kwargs["port"] == 6378
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
@@ -260,7 +251,7 @@ class TestCacheHandler:
             {
                 "default": {
                     "cache": "aiocache.RedisCache",
-                    "endpoint": "127.0.0.10",
+                    "host": "127.0.0.10",
                     "port": 6378,
                     "serializer": {"class": "aiocache.serializers.PickleSerializer"},
                     "plugins": [
@@ -276,8 +267,8 @@ class TestCacheHandler:
         alt = caches.get("alt")
 
         assert isinstance(default, RedisCache)
-        assert default.endpoint == "127.0.0.10"
-        assert default.port == 6378
+        assert default.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert default.client.connection_pool.connection_kwargs["port"] == 6378
         assert isinstance(default.serializer, PickleSerializer)
         assert len(default.plugins) == 2
 
@@ -338,7 +329,7 @@ class TestCacheHandler:
                 {
                     "no_default": {
                         "cache": "aiocache.RedisCache",
-                        "endpoint": "127.0.0.10",
+                        "host": "127.0.0.10",
                         "port": 6378,
                         "serializer": {"class": "aiocache.serializers.PickleSerializer"},
                         "plugins": [

@@ -2,8 +2,9 @@ import asyncio
 
 from aiocache import Cache
 
+import redis.asyncio as redis
 
-cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
+cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
 
 
 async def redis():

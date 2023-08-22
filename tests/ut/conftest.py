@@ -53,10 +53,10 @@ def base_cache():
 
 
 @pytest.fixture
-async def redis_cache():
+async def redis_cache(redis_client):
     from aiocache.backends.redis import RedisCache
 
-    async with RedisCache() as cache:
+    async with RedisCache(client=redis_client) as cache:
         yield cache
 
 

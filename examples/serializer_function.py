@@ -1,6 +1,8 @@
 import asyncio
 import json
 
+import redis.asyncio as redis
+
 from marshmallow import Schema, fields, post_load
 from aiocache import Cache
 
@@ -28,7 +30,7 @@ def loads(value):
     return MyTypeSchema().loads(value)
 
 
-cache = Cache(Cache.REDIS, namespace="main")
+cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
 
 
 async def serializer_function():

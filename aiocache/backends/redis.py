@@ -1,5 +1,4 @@
 import itertools
-import warnings
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import redis.asyncio as redis
@@ -38,41 +37,19 @@ class RedisBackend(BaseCache[str]):
 
     def __init__(
         self,
-        endpoint="127.0.0.1",
-        port=6379,
-        db=0,
-        password=None,
-        pool_min_size=_NOT_SET,
-        pool_max_size=None,
-        create_connection_timeout=None,
+        client: redis.Redis,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if pool_min_size is not _NOT_SET:
-            warnings.warn(
-                "Parameter 'pool_min_size' is deprecated since aiocache 0.12",
-                DeprecationWarning, stacklevel=2
-            )
-
-        self.endpoint = endpoint
-        self.port = int(port)
-        self.db = int(db)
-        self.password = password
-        # TODO: Remove int() call some time after adding type annotations.
-        self.pool_max_size = None if pool_max_size is None else int(pool_max_size)
-        self.create_connection_timeout = (
-            float(create_connection_timeout) if create_connection_timeout else None
-        )
 
         # NOTE: decoding can't be controlled on API level after switching to
         # redis, we need to disable decoding on global/connection level
         # (decode_responses=False), because some of the values are saved as
         # bytes directly, like pickle serialized values, which may raise an
         # exception when decoded with 'utf-8'.
-        self.client = redis.Redis(host=self.endpoint, port=self.port, db=self.db,
-                                  password=self.password, decode_responses=False,
-                                  socket_connect_timeout=self.create_connection_timeout,
-                                  max_connections=self.pool_max_size)
+        if client.connection_pool.connection_kwargs['decode_responses']:
+            raise ValueError("redis client must be constructed with decode_responses set to False")
+        self.client = client
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
@@ -175,9 +152,6 @@ class RedisBackend(BaseCache[str]):
     async def _redlock_release(self, key, value):
         return await self._raw("eval", self.RELEASE_SCRIPT, 1, key, value)
 
-    async def _close(self, *args, _conn=None, **kwargs):
-        await self.client.close()
-
     def build_key(self, key: str, namespace: Optional[str] = None) -> str:
         return self._str_build_key(key, namespace)
 
@@ -196,24 +170,21 @@ class RedisCache(RedisBackend):
         the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
-    :param endpoint: str with the endpoint to connect to. Default is "127.0.0.1".
-    :param port: int with the port to connect to. Default is 6379.
-    :param db: int indicating database to use. Default is 0.
-    :param password: str indicating password to use. Default is None.
-    :param pool_max_size: int maximum pool size for the redis connections pool. Default is None.
-    :param create_connection_timeout: int timeout for the creation of connection. Default is None
+    :param client: redis.Redis which is an active client for working with redis
     """
 
     NAME = "redis"
 
     def __init__(
         self,
+        client: redis.Redis,
         serializer: Optional["BaseSerializer"] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
         **kwargs: Any,
     ):
         super().__init__(
+            client=client,
             serializer=serializer or JsonSerializer(),
             namespace=namespace,
             key_builder=key_builder,
@@ -237,4 +208,5 @@ class RedisCache(RedisBackend):
         return options
 
     def __repr__(self):  # pragma: no cover
-        return "RedisCache ({}:{})".format(self.endpoint, self.port)
+        connection_kwargs = self.client.connection_pool.connection_kwargs
+        return "RedisCache ({}:{})".format(connection_kwargs['host'], connection_kwargs['port'])
