@@ -51,7 +51,7 @@ async def alt_cache():
     await cache.close()
 
 
-async def test_alias():
+async def main() -> None:
     await default_cache()
     await alt_cache()
 
@@ -63,4 +63,4 @@ async def test_alias():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_alias())
+    asyncio.run(main())

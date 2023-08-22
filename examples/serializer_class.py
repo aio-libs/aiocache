@@ -15,11 +15,11 @@ class CompressionSerializer(BaseSerializer):
     def dumps(self, value):
         print("I've received:\n{}".format(value))
         compressed = zlib.compress(value.encode())
-        print("But I'm storing:\n{}".format(compressed))
+        print("But I'm storing:\n{!r}".format(compressed))
         return compressed
 
     def loads(self, value):
-        print("I've retrieved:\n{}".format(value))
+        print("I've retrieved:\n{!r}".format(value))
         decompressed = zlib.decompress(value).decode()
         print("But I'm returning:\n{}".format(decompressed))
         return decompressed
@@ -43,11 +43,11 @@ async def serializer():
     assert len(compressed_value) < len(real_value.encode())
 
 
-async def test_serializer():
+async def main() -> None:
     await serializer()
     await cache.delete("key")
     await cache.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(test_serializer())
+    asyncio.run(main())

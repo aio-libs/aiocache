@@ -23,7 +23,7 @@ async def multi_cached_keys(keys=None):
 cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
 
 
-async def test_multi_cached():
+async def main() -> None:
     await multi_cached_ids(ids=("a", "b"))
     await multi_cached_ids(ids=("a", "c"))
     await multi_cached_keys(keys=("d",))
@@ -41,4 +41,4 @@ async def test_multi_cached():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_multi_cached())
+    asyncio.run(main())

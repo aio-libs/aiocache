@@ -36,11 +36,11 @@ async def concurrent():
     await asyncio.gather(my_view(), my_view(), my_view())
 
 
-async def test_redis():
+async def main() -> None:
     await concurrent()
     await cache.delete("key")
     await cache.close()
 
 
 if __name__ == '__main__':
-    asyncio.run(test_redis())
+    asyncio.run(main())
