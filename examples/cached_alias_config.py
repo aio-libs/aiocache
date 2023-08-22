@@ -14,9 +14,9 @@ caches.set_config({
     },
     'redis_alt': {
         'cache': "aiocache.RedisCache",
-        'host': "127.0.0.1",
+        "host": "127.0.0.1",
         'port': 6379,
-        'socket_connect_timeout': 1,
+        "socket_connect_timeout": 1,
         'serializer': {
             'class': "aiocache.serializers.PickleSerializer"
         },
@@ -47,9 +47,9 @@ async def alt_cache():
     assert isinstance(cache, Cache.REDIS)
     assert isinstance(cache.serializer, PickleSerializer)
     assert len(cache.plugins) == 2
-    assert cache.client.connection_pool.connection_kwargs['host'] == "127.0.0.1"
-    assert cache.client.connection_pool.connection_kwargs['socket_connect_timeout'] == 1
-    assert cache.client.connection_pool.connection_kwargs['port'] == 6379
+    assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.1"
+    assert cache.client.connection_pool.connection_kwargs["socket_connect_timeout"] == 1
+    assert cache.client.connection_pool.connection_kwargs["port"] == 6379
     await cache.close()
 
 
