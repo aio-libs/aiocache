@@ -184,8 +184,8 @@ class TestCacheHandler:
         )
         cache = caches.create("default", namespace="whatever", host="127.0.0.10", db=10)
         assert cache.namespace == "whatever"
-        assert cache.client.connection_pool.connection_kwargs['host'] == "127.0.0.10"
-        assert cache.client.connection_pool.connection_kwargs['db'] == 10
+        assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert cache.client.connection_pool.connection_kwargs["db"] == 10
 
     @pytest.mark.redis
     def test_retrieve_cache(self):
@@ -210,8 +210,8 @@ class TestCacheHandler:
 
         cache = caches.get("default")
         assert isinstance(cache, RedisCache)
-        assert cache.client.connection_pool.connection_kwargs['host'] == "127.0.0.10"
-        assert cache.client.connection_pool.connection_kwargs['port'] == 6378
+        assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert cache.client.connection_pool.connection_kwargs["port"] == 6378
         assert cache.ttl == 10
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
@@ -239,8 +239,8 @@ class TestCacheHandler:
 
         cache = caches.create("default")
         assert isinstance(cache, RedisCache)
-        assert cache.client.connection_pool.connection_kwargs['host'] == "127.0.0.10"
-        assert cache.client.connection_pool.connection_kwargs['port'] == 6378
+        assert cache.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert cache.client.connection_pool.connection_kwargs["port"] == 6378
         assert isinstance(cache.serializer, PickleSerializer)
         assert cache.serializer.encoding == "encoding"
         assert len(cache.plugins) == 2
@@ -267,8 +267,8 @@ class TestCacheHandler:
         alt = caches.get("alt")
 
         assert isinstance(default, RedisCache)
-        assert default.client.connection_pool.connection_kwargs['host'] == "127.0.0.10"
-        assert default.client.connection_pool.connection_kwargs['port'] == 6378
+        assert default.client.connection_pool.connection_kwargs["host"] == "127.0.0.10"
+        assert default.client.connection_pool.connection_kwargs["port"] == 6378
         assert isinstance(default.serializer, PickleSerializer)
         assert len(default.plugins) == 2
 
