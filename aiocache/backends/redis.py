@@ -83,6 +83,9 @@ class RedisBackend(BaseCache):
         )
         self.client = redis.Redis(connection_pool=connection_pool)
 
+        # needed for consistency with how Redis creation of connection_pool works
+        self.client.auto_close_connection_pool = True
+
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
         if encoding is None or value is None:
