@@ -39,33 +39,39 @@ class TestRedisBackend:
         "max_connections": None,
     }
 
+    @patch("redis.asyncio.ConnectionPool", name="connection_pool_class", autospec=True)
     @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
-    def test_setup(self, mock_class):
+    def test_setup(self, mock_class, connection_pool_class):
         redis_backend = RedisBackend()
         kwargs = self.default_redis_kwargs.copy()
-        mock_class.assert_called_with(**kwargs)
+        connection_pool_class.assert_called_with(**kwargs)
+        mock_class.assert_called_with(connection_pool=connection_pool_class.return_value)
+
         assert redis_backend.endpoint == "127.0.0.1"
         assert redis_backend.port == 6379
         assert redis_backend.db == 0
         assert redis_backend.password is None
         assert redis_backend.pool_max_size is None
 
+    @patch("redis.asyncio.ConnectionPool", name="connection_pool_class", autospec=True)
     @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
-    def test_setup_override(self, mock_class):
+    def test_setup_override(self, mock_class, connection_pool_class):
         override = {"db": 2, "password": "pass"}
         redis_backend = RedisBackend(**override)
 
         kwargs = self.default_redis_kwargs.copy()
         kwargs.update(override)
-        mock_class.assert_called_with(**kwargs)
+        connection_pool_class.assert_called_with(**kwargs)
+        mock_class.assert_called_with(connection_pool=connection_pool_class.return_value)
 
         assert redis_backend.endpoint == "127.0.0.1"
         assert redis_backend.port == 6379
         assert redis_backend.db == 2
         assert redis_backend.password == "pass"
 
+    @patch("redis.asyncio.ConnectionPool", name="connection_pool_class", autospec=True)
     @patch("redis.asyncio.Redis", name="mock_class", autospec=True)
-    def test_setup_casts(self, mock_class):
+    def test_setup_casts(self, mock_class, connection_pool_class):
         override = {
             "db": "2",
             "port": "6379",
@@ -81,7 +87,8 @@ class TestRedisBackend:
             "max_connections": 10,
             "socket_connect_timeout": 1.5,
         })
-        mock_class.assert_called_with(**kwargs)
+        connection_pool_class.assert_called_with(**kwargs)
+        mock_class.assert_called_with(connection_pool=connection_pool_class.return_value)
 
         assert redis_backend.db == 2
         assert redis_backend.port == 6379
