@@ -7,4 +7,4 @@ flake8-import-order==0.18.2
 flake8-requirements==2.0.1
 mypy==1.7.1; implementation_name=="cpython"
 types-redis==4.6.0.11
-types-ujson==5.8.0.1
+types-ujson==5.9.0.0
