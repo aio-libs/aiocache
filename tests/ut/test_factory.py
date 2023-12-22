@@ -74,9 +74,10 @@ class TestCache:
     def test_new_defaults_to_memory(self):
         assert isinstance(Cache(), Cache.MEMORY)
 
-    def test_new_invalid_cache_raises(self):
+    @pytest.mark.parametrize("cache_type", (None, object))
+    def test_new_invalid_cache_raises(self, cache_type):
         with pytest.raises(InvalidCacheType) as e:
-            Cache(object)
+            Cache(cache_type)
         assert str(e.value) == "Invalid cache type, you can only use {}".format(
             list(AIOCACHE_CACHES.keys())
         )
