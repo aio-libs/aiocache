@@ -72,7 +72,7 @@ class Cache:
     MEMCACHED = AIOCACHE_CACHES.get("memcached")
 
     def __new__(cls, cache_class=MEMORY, **kwargs):
-        if not issubclass(cache_class, BaseCache):
+        if not (cache_class and issubclass(cache_class, BaseCache)):
             raise InvalidCacheType(
                 "Invalid cache type, you can only use {}".format(list(AIOCACHE_CACHES.keys()))
             )
