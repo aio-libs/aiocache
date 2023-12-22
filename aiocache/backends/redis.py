@@ -11,9 +11,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from aiocache.serializers import BaseSerializer
 
 
-_NOT_SET = object()
-
-
 class RedisBackend(BaseCache[str]):
     RELEASE_SCRIPT = (
         "if redis.call('get',KEYS[1]) == ARGV[1] then"
