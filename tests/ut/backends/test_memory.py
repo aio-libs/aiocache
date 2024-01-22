@@ -173,9 +173,13 @@ class TestSimpleMemoryBackend:
 
     async def test_redlock_release(self, memory):
         memory._cache.get.return_value = "lock"
+        fake = create_autospec(asyncio.TimerHandle, instance=True)
+        memory._handlers[Keys.KEY] = fake
         assert await memory._redlock_release(Keys.KEY, "lock") == 1
         memory._cache.get.assert_called_with(Keys.KEY)
-        memory._cache.pop.assert_called_with(Keys.KEY)
+        memory._cache.pop.assert_called_with(Keys.KEY, None)
+        assert fake.cancel.call_count == 1
+        assert Keys.KEY not in memory._handlers
 
     async def test_redlock_release_nokey(self, memory):
         memory._cache.get.return_value = None
