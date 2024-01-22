@@ -93,8 +93,7 @@ class SimpleMemoryBackend(BaseCache):
 
     async def _redlock_release(self, key, value):
         if self._cache.get(key) == value:
-            self._cache.pop(key)
-            return 1
+            return self.__delete(key)
         return 0
 
     def __delete(self, key):
