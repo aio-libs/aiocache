@@ -2,6 +2,7 @@ import pickle
 import random
 from typing import Any
 
+import msgpack
 import pytest
 from marshmallow import Schema, fields, post_load
 
@@ -13,6 +14,7 @@ except ImportError:
 from aiocache.serializers import (
     BaseSerializer,
     JsonSerializer,
+    MsgPackSerializer,
     NullSerializer,
     PickleSerializer,
     StringSerializer,
@@ -139,6 +141,28 @@ class TestPickleSerializer:
         cache.serializer = PickleSerializer()
         assert await cache.multi_set([(Keys.KEY, obj)]) is True
         assert await cache.multi_get([Keys.KEY]) == [pickle.loads(pickle.dumps(obj))]
+
+
+class TestMsgPackSerializer:
+    TYPES = (1, 2.0, "hi", True, ["1", 1], {"key": "value"})
+
+    @pytest.mark.parametrize("obj", TYPES)
+    async def test_set_get_types(self, cache, obj):
+        cache.serializer = MsgPackSerializer()
+        assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == msgpack.loads(msgpack.dumps(obj))
+
+    @pytest.mark.parametrize("obj", TYPES)
+    async def test_add_get_types(self, cache, obj):
+        cache.serializer = MsgPackSerializer()
+        assert await cache.add(Keys.KEY, obj) is True
+        assert await cache.get(Keys.KEY) == msgpack.loads(msgpack.dumps(obj))
+
+    @pytest.mark.parametrize("obj", TYPES)
+    async def test_multi_set_multi_get_types(self, cache, obj):
+        cache.serializer = MsgPackSerializer()
+        assert await cache.multi_set([(Keys.KEY, obj)]) is True
+        assert await cache.multi_get([Keys.KEY]) == [msgpack.loads(msgpack.dumps(obj))]
 
 
 class TestAltSerializers:
