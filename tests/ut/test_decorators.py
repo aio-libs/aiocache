@@ -60,7 +60,7 @@ class TestCached:
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
 
-            @cached(wrong_param=1)
+            @cached(wrong_param=1)  # type: ignore[misc]
             async def fn() -> None:
                 """Dummy function."""
 
@@ -373,7 +373,7 @@ class TestMultiCached:
     def test_fails_at_instantiation(self):
         with pytest.raises(TypeError):
 
-            @multi_cached(wrong_param=1)
+            @multi_cached(wrong_param=1)  # type: ignore[misc]
             async def fn() -> None:
                 """Dummy function."""
 
@@ -476,8 +476,9 @@ class TestMultiCached:
         mocker.spy(decorator, "set_in_cache")
         with patch.object(decorator, "get_from_cache", autospec=True, return_value=[None, None]):
             with patch("aiocache.decorators.asyncio.ensure_future", autospec=True):
-                await decorator_call(1, keys=["a", "b"], value="value",
-                                     aiocache_wait_for_write=False)
+                await decorator_call(
+                    1, keys=["a", "b"], value="value", aiocache_wait_for_write=False
+                )
 
         decorator.set_in_cache.assert_not_awaited()
         decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, stub_dict, ANY, ANY)
