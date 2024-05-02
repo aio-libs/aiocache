@@ -2,7 +2,7 @@
 
 aiomcache==0.8.1
 aiohttp==3.9.5
-marshmallow==3.21.1
+marshmallow==3.21.2
 msgpack==1.0.8
 pytest==7.4.4
 pytest-asyncio==0.23.6
