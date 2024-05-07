@@ -1,6 +1,6 @@
 -e .
 
-aiomcache==0.8.1
+aiomcache==0.8.2
 aiohttp==3.9.5
 marshmallow==3.21.2
 msgpack==1.0.8
