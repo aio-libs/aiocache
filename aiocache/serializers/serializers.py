@@ -77,7 +77,7 @@ class StringSerializer(BaseSerializer):
     The transformation is done by just casting to str in the ``dumps`` method.
 
     If you want to keep python types, use ``PickleSerializer``. ``JsonSerializer``
-    may also be useful to keep type of symple python types.
+    may also be useful to keep type of simple python types.
     """
 
     def dumps(self, value):
