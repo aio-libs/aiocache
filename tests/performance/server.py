@@ -27,7 +27,9 @@ class CacheManager:
     async def close(self, *_):
         await self.cache.close()
 
+
 cache = web.AppKey("cache", CacheManager)
+
 
 async def handler_get(req):
     try:
