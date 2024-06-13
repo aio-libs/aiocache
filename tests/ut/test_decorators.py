@@ -168,9 +168,7 @@ class TestCached:
         mocker.spy(decorator, "set_in_cache")
         with patch.object(decorator, "get_from_cache", autospec=True, return_value=None):
             with patch("aiocache.decorators.asyncio.create_task", autospec=True):
-                # TODO: Should fix this warning in future by using aiojobs or similar
-                with pytest.warns(RuntimeWarning, match="never awaited"):
-                    await decorator_call(aiocache_wait_for_write=False, value="value")
+                await decorator_call(aiocache_wait_for_write=False, value="value")
 
         decorator.set_in_cache.assert_not_awaited()
         decorator.set_in_cache.assert_called_once_with("stub()[('value', 'value')]", "value")
