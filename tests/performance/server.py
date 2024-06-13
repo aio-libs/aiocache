@@ -27,23 +27,24 @@ class CacheManager:
     async def close(self, *_):
         await self.cache.close()
 
+cache = web.AppKey("cache", CacheManager)
 
 async def handler_get(req):
     try:
-        data = await req.app["cache"].get("testkey")
+        data = await req.app[cache].get("testkey")
         if data:
             return web.Response(text=data)
     except asyncio.TimeoutError:
         return web.Response(status=404)
 
     data = str(uuid.uuid4())
-    await req.app["cache"].set("testkey", data)
+    await req.app[cache].set("testkey", data)
     return web.Response(text=str(data))
 
 
 def run_server(backend: str) -> None:
     app = web.Application()
-    app["cache"] = CacheManager(backend)
-    app.on_shutdown.append(app["cache"].close)
+    app[cache] = CacheManager(backend)
+    app.on_shutdown.append(app[cache].close)
     app.router.add_route("GET", "/", handler_get)
     web.run_app(app)
