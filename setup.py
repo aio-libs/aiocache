@@ -32,7 +32,7 @@ setup(
     packages=("aiocache",),
     install_requires=None,
     extras_require={
-        "redis": ["redis>=4.2.0"],
+        "redis": ["redis>=5"],
         "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
     },
