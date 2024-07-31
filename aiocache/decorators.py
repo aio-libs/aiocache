@@ -2,12 +2,16 @@ import asyncio
 import functools
 import inspect
 import logging
+from typing import Any, Awaitable, Callable, ParamSpec, TypeVar
 
 from aiocache.base import SENTINEL
 from aiocache.factory import Cache, caches
 from aiocache.lock import RedLock
 
 logger = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+T = TypeVar("T", bound=Any)
 
 
 class cached:
@@ -83,7 +87,7 @@ class cached:
         self._plugins = plugins
         self._kwargs = kwargs
 
-    def __call__(self, f):
+    def __call__(self, f: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         if self.alias:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
@@ -99,7 +103,7 @@ class cached:
             )
 
         @functools.wraps(f)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             return await self.decorator(f, *args, **kwargs)
 
         wrapper.cache = self.cache
