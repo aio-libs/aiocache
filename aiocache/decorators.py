@@ -2,12 +2,15 @@ import asyncio
 import functools
 import inspect
 import logging
+from typing import TypeVar
 
 from aiocache.base import SENTINEL
 from aiocache.factory import Cache, caches
 from aiocache.lock import RedLock
 
 logger = logging.getLogger(__name__)
+
+Function = TypeVar("Function")
 
 
 class cached:
@@ -83,7 +86,7 @@ class cached:
         self._plugins = plugins
         self._kwargs = kwargs
 
-    def __call__(self, f):
+    def __call__(self, f: Function) -> Function:
         if self.alias:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
@@ -326,7 +329,7 @@ class multi_cached:
         self._plugins = plugins
         self._kwargs = kwargs
 
-    def __call__(self, f):
+    def __call__(self, f: Function) -> Function:
         if self.alias:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
