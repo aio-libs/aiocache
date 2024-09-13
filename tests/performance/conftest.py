@@ -4,7 +4,6 @@ from aiocache import Cache
 
 
 @pytest.fixture
-@pytest.mark.parametrize("max_conns", 1)
 async def redis_cache(redis_client):
     # redis connection pool raises ConnectionError but doesn't wait for conn reuse
     # when exceeding max pool size.
