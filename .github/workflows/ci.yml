@@ -55,7 +55,7 @@ jobs:
         ujson: ['']
         include:
           - os: ubuntu
-            pyver: pypy-3.8
+            pyver: pypy-3.9
             redis: 'latest'
           - os: ubuntu
             pyver: '3.9'
