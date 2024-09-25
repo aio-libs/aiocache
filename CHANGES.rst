@@ -4,6 +4,14 @@ CHANGES
 
 .. towncrier release notes start
 
+0.12.3 (2024-09-25)
+===================
+
+* Added SSL support for Redis backend.
+* Fixed memory leak in ``SimpleMemoryBackend._redlock_release()``.
+* Fixed exception for cache proxy creation when passing ``None``.
+
+
 0.12.2 (2023-08-06)
 ===================
 
