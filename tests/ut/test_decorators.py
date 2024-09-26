@@ -167,7 +167,7 @@ class TestCached:
     async def test_cache_write_doesnt_wait_for_future(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "set_in_cache")
         with patch.object(decorator, "get_from_cache", autospec=True, return_value=None):
-            with patch("aiocache.decorators.asyncio.ensure_future", autospec=True):
+            with patch("aiocache.decorators.asyncio.create_task", autospec=True):
                 await decorator_call(aiocache_wait_for_write=False, value="value")
 
         decorator.set_in_cache.assert_not_awaited()
