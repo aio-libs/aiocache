@@ -60,6 +60,7 @@ class cached:
     def __init__(
         self,
         ttl=SENTINEL,
+        *,
         namespace="",
         key_builder=None,
         skip_cache_func=lambda x: False,
@@ -303,6 +304,7 @@ class multi_cached:
     def __init__(
         self,
         keys_from_attr,
+        *,
         namespace="",
         key_builder=None,
         skip_cache_func=lambda k, v: False,
