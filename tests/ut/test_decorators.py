@@ -233,6 +233,54 @@ class TestCached:
 
         assert foo.cache != bar.cache
 
+    async def test_invalidate_cache_exists(self):
+        @cached()
+        async def foo():
+            """Dummy function."""
+
+        assert callable(foo.invalidate_cache)
+
+    async def test_invalidate_cache(self):
+        times_called = 0
+
+        @cached()
+        async def foo():
+            nonlocal times_called
+            times_called += 1
+
+        await foo()
+        assert times_called == 1
+
+        await foo.invalidate_cache()
+        await foo()
+        assert times_called == 2
+
+    async def test_invalidate_cache_multiple_functions(self):
+        foo_times_called = 0
+
+        @cached()
+        async def foo():
+            nonlocal foo_times_called
+            foo_times_called += 1
+
+        bar_times_called = 0
+
+        @cached()
+        async def bar():
+            nonlocal bar_times_called
+            bar_times_called += 1
+
+        await foo()
+        assert foo_times_called == 1
+
+        await bar()
+        assert bar_times_called == 1
+
+        await foo.invalidate_cache()
+        await foo()
+        assert foo_times_called == 2
+        assert bar_times_called == 1
+
 
 class TestCachedStampede:
     @pytest.fixture
