@@ -17,7 +17,7 @@ class cached:
 
     To invalidate the cache, you can use the ``invalidate_cache`` method of the function object by
     passing the args that were used to generate the cache key as
-    ``<function_name>.invalidate_cache(*args, **kwargs)``.
+    ``await <function_name>.invalidate_cache(*args, **kwargs)``. It is an async method.
 
     In some cases you will need to send more args to configure the cache object.
     An example would be endpoint and port for the Redis cache. You can send those args as
