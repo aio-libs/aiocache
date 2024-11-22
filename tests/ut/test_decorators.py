@@ -241,45 +241,26 @@ class TestCached:
         assert callable(foo.invalidate_cache)
 
     async def test_invalidate_cache(self):
-        times_called = 0
+        cache_misses = 0
 
-        @cached()
-        async def foo():
-            nonlocal times_called
-            times_called += 1
+        @cached(ttl=60 * 60)
+        async def foo(return_value: str):
+            nonlocal cache_misses
+            cache_misses += 1
+            return return_value
 
-        await foo()
-        assert times_called == 1
+        await foo("hello")  # increments cache_misses since it's not cached
+        assert cache_misses == 1
 
-        await foo.invalidate_cache()
-        await foo()
-        assert times_called == 2
+        await foo("hello")  # doesn't increment cache_misses since it's cached
+        assert cache_misses == 1
 
-    async def test_invalidate_cache_multiple_functions(self):
-        foo_times_called = 0
+        await foo.invalidate_cache("hello")
+        await foo("hello")  # increments cache_misses since the cache was invalidated
+        assert cache_misses == 2
 
-        @cached()
-        async def foo():
-            nonlocal foo_times_called
-            foo_times_called += 1
-
-        bar_times_called = 0
-
-        @cached()
-        async def bar():
-            nonlocal bar_times_called
-            bar_times_called += 1
-
-        await foo()
-        assert foo_times_called == 1
-
-        await bar()
-        assert bar_times_called == 1
-
-        await foo.invalidate_cache()
-        await foo()
-        assert foo_times_called == 2
-        assert bar_times_called == 1
+        await foo("hello")  # doesn't increment cache_misses since it's cached
+        assert cache_misses == 2
 
 
 class TestCachedStampede:
@@ -524,8 +505,9 @@ class TestMultiCached:
         mocker.spy(decorator, "set_in_cache")
         with patch.object(decorator, "get_from_cache", autospec=True, return_value=[None, None]):
             with patch("aiocache.decorators.asyncio.ensure_future", autospec=True):
-                await decorator_call(1, keys=["a", "b"], value="value",
-                                     aiocache_wait_for_write=False)
+                await decorator_call(
+                    1, keys=["a", "b"], value="value", aiocache_wait_for_write=False
+                )
 
         decorator.set_in_cache.assert_not_awaited()
         decorator.set_in_cache.assert_called_once_with({"a": ANY, "b": ANY}, stub_dict, ANY, ANY)
