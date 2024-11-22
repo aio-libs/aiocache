@@ -262,6 +262,35 @@ class TestCached:
         await foo("hello")  # doesn't increment cache_misses since it's cached
         assert cache_misses == 2
 
+    async def test_invalidate_cache_diff_args(self):
+        """
+        Tests that the invalidate_cache invalidates the cache for the correct arguments.
+        """
+
+        cache_misses = 0
+
+        @cached(ttl=60 * 60)
+        async def foo(return_value: str):
+            nonlocal cache_misses
+            cache_misses += 1
+            return return_value
+
+        await foo("hello")  # increments cache_misses since "hello" is not cached
+        assert cache_misses == 1
+
+        await foo("world")  # increments cache_misses since "world" is not cached
+        assert cache_misses == 2
+
+        await foo.invalidate_cache("world")
+        await foo("hello")  # doesn't increment cache_misses since "hello" is still cached
+        await foo("hello")
+        await foo("hello")
+        await foo("hello")
+        assert cache_misses == 2
+
+        await foo("world")
+        assert cache_misses == 3
+
 
 class TestCachedStampede:
     @pytest.fixture
