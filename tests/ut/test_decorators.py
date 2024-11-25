@@ -154,8 +154,8 @@ class TestCached:
 
     async def test_calls_fn_raises_exception(self, decorator, decorator_call):
         decorator.cache.get.return_value = None
-        stub.side_effect = Exception()
-        with pytest.raises(Exception):
+        stub.side_effect = RuntimeError()
+        with pytest.raises(RuntimeError):
             assert await decorator_call()
 
     async def test_cache_write_waits_for_future(self, decorator, decorator_call):
@@ -289,8 +289,8 @@ class TestCachedStampede:
 
     async def test_calls_fn_raises_exception(self, decorator, decorator_call):
         decorator.cache.get.return_value = None
-        stub.side_effect = Exception()
-        with pytest.raises(Exception):
+        stub.side_effect = RuntimeError()
+        with pytest.raises(RuntimeError):
             assert await decorator_call()
 
     async def test_calls_redlock(self, decorator, decorator_call):
@@ -496,8 +496,8 @@ class TestMultiCached:
 
     async def test_calls_fn_raises_exception(self, decorator, decorator_call):
         decorator.cache.multi_get.return_value = [None]
-        stub_dict.side_effect = Exception()
-        with pytest.raises(Exception):
+        stub_dict.side_effect = RuntimeError()
+        with pytest.raises(RuntimeError):
             assert await decorator_call(keys=[])
 
     async def test_cache_read_disabled(self, decorator, decorator_call):
