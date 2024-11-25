@@ -25,7 +25,7 @@ class CachedOverride(cached):
     async def get_from_cache(self, key):
         try:
             value = await self.cache.get(key)
-            if type(value) == web.Response:
+            if type(value) is web.Response:
                 return web.Response(
                     body=value.body,
                     status=value.status,
