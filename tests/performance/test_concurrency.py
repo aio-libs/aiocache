@@ -21,7 +21,8 @@ def server(request):
 
 
 @pytest.mark.xfail(reason="currently fails >85% of requests on GitHub runner, "
-                   "requires several re-runs to pass")
+                   "requires several re-runs to pass",
+                   strict=False)
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Not working currently.")
 def test_concurrency_error_rates(server):
     """Test with Apache benchmark tool."""
