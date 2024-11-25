@@ -233,7 +233,7 @@ class TestRedisBackend:
 
     async def test_close(self, redis):
         await redis._close()
-        assert redis.client.close.call_count == 1
+        assert redis.client.aclose.call_count == 1
 
 
 class TestRedisCache:

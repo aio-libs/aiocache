@@ -1,10 +1,11 @@
 -r requirements.txt
 
-flake8==6.0.0
+flake8==7.1.1
 flake8-bandit==4.1.1
-flake8-bugbear==22.12.6
+flake8-bugbear==24.10.31
 flake8-import-order==0.18.2
-flake8-requirements==1.7.6
+flake8-requirements==2.2.1
 mypy==0.991; implementation_name=="cpython"
 types-redis==4.4.0.0
 types-ujson==5.7.0.0
+sphinx==8.1.3

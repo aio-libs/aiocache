@@ -51,6 +51,7 @@ class RedisBackend(BaseCache):
             warnings.warn(
                 "Parameter 'pool_min_size' is deprecated since aiocache 0.12",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
         self.endpoint = endpoint
@@ -188,7 +189,7 @@ class RedisBackend(BaseCache):
         return await self._raw("eval", self.RELEASE_SCRIPT, 1, key, value)
 
     async def _close(self, *args, _conn=None, **kwargs):
-        await self.client.close()
+        await self.client.aclose()
 
 
 class RedisCache(RedisBackend):
