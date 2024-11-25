@@ -19,6 +19,6 @@ build:
 
   jobs:
     post_create_environment:
-    - pip install . -r requirements-dev.txt
+    - pip install -r requirements-dev.txt
 
 ...
