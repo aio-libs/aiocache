@@ -5,7 +5,7 @@ aiohttp==3.11.10
 marshmallow==3.23.1
 msgpack==1.1.0
 pytest==8.3.4
-pytest-asyncio==0.24.0
+pytest-asyncio==0.25.0
 pytest-cov==6.0.0
 pytest-mock==3.14.0
 redis==5.2.1
