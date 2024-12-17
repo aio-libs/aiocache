@@ -15,6 +15,10 @@ class cached:
     Caches the functions return value into a key generated with module_name, function_name
     and args. The cache is available in the function object as ``<function_name>.cache``.
 
+    To invalidate the cache, you can use the ``invalidate_cache`` method of the function object by
+    passing the args that were used to generate the cache key as
+    ``await <function_name>.invalidate_cache(*args, **kwargs)``. It is an async method.
+
     In some cases you will need to send more args to configure the cache object.
     An example would be endpoint and port for the Redis cache. You can send those args as
     kwargs and they will be propagated accordingly.
@@ -77,6 +81,7 @@ class cached:
         self.alias = alias
         self.cache = None
 
+        self._func = None
         self._cache = cache
         self._serializer = serializer
         self._namespace = namespace
@@ -84,10 +89,12 @@ class cached:
         self._kwargs = kwargs
 
     def __call__(self, f):
+        self._func = f
+
         if self.alias:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
-                if getattr(self, f'_{arg}', None) is not None:
+                if getattr(self, f"_{arg}", None) is not None:
                     logger.warning(f"Using cache alias; ignoring {arg!r} argument.")
         else:
             self.cache = _get_cache(
@@ -103,6 +110,7 @@ class cached:
             return await self.decorator(f, *args, **kwargs)
 
         wrapper.cache = self.cache
+        wrapper.invalidate_cache = self.invalidate_cache
         return wrapper
 
     async def decorator(
@@ -156,6 +164,10 @@ class cached:
             await self.cache.set(key, value, ttl=self.ttl)
         except Exception:
             logger.exception("Couldn't set %s in key %s, unexpected error", value, key)
+
+    async def invalidate_cache(self, *args, **kwargs):
+        key = self.get_cache_key(self._func, args, kwargs)
+        return await self.cache.delete(key)
 
 
 class cached_stampede(cached):
@@ -330,7 +342,7 @@ class multi_cached:
         if self.alias:
             self.cache = caches.get(self.alias)
             for arg in ("serializer", "namespace", "plugins"):
-                if getattr(self, f'_{arg}', None) is not None:
+                if getattr(self, f"_{arg}", None) is not None:
                     logger.warning(f"Using cache alias; ignoring {arg!r} argument.")
         else:
             self.cache = _get_cache(
