@@ -21,12 +21,8 @@ async def stub(arg: float, seconds: int = 0) -> str:
 
 
 class TestCached:
-    @pytest.fixture(autouse=True)
-    def default_cache(self, mocker, cache):
-        mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
-
     async def test_cached_ttl(self, cache):
-        @cached(ttl=2, key_builder=lambda *args, **kw: Keys.KEY)
+        @cached(cache=cache, ttl=2, key_builder=lambda *args, **kw: Keys.KEY)
         async def fn():
             return str(random.randint(1, 50))
 
@@ -41,7 +37,7 @@ class TestCached:
         def build_key(f, self, a, b):
             return "{}_{}_{}_{}".format(self, f.__name__, a, b)
 
-        @cached(key_builder=build_key)
+        @cached(cache=cache, key_builder=build_key)
         async def fn(self, a, b=2):
             return "1"
 
@@ -50,7 +46,7 @@ class TestCached:
 
     @pytest.mark.parametrize("decorator", (cached, cached_stampede))
     async def test_cached_skip_cache_func(self, cache, decorator):
-        @decorator(skip_cache_func=lambda r: r is None)
+        @decorator(cache=cache, skip_cache_func=lambda r: r is None)
         async def sk_func(x):
             return x if x > 0 else None
 
@@ -75,25 +71,27 @@ class TestCached:
 
     async def test_cached_without_namespace(self, cache):
         """Default cache key is created when no namespace is provided"""
-        @cached(namespace=None)
+        cache.namespace = None
+        @cached(cache=cache)
         async def fn():
             return "1"
 
         await fn()
-        decorator = cached(namespace=None)
+        decorator = cached(cache=cache)
         key = decorator.get_cache_key(fn, args=(), kwargs={})
         assert await cache.exists(key, namespace=None) is True
 
     async def test_cached_with_namespace(self, cache):
         """Cache key is prefixed with provided namespace"""
         key_prefix = "test"
+        cache.namespace = key_prefix
 
-        @cached(namespace=key_prefix)
+        @cached(cache=cache)
         async def ns_fn():
             return "1"
 
         await ns_fn()
-        decorator = cached(namespace=key_prefix)
+        decorator = cached(cache=cache)
         key = decorator.get_cache_key(ns_fn, args=(), kwargs={})
         assert await cache.exists(key, namespace=key_prefix) is True
 

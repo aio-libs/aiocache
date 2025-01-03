@@ -2,40 +2,30 @@ import asyncio
 
 import pytest
 
-from aiocache import Cache, caches
 from ..utils import KEY_LOCK, Keys
 
-
-@pytest.fixture(autouse=True)
-def reset_caches():
-    caches._caches = {}
-    caches.set_config(
-        {
-            "default": {
-                "cache": "aiocache.SimpleMemoryCache",
-                "serializer": {"class": "aiocache.serializers.NullSerializer"},
-            }
-        }
-    )
 
 
 @pytest.fixture
 async def redis_cache(redis_client):
-    async with Cache(Cache.REDIS, namespace="test", client=redis_client) as cache:
+    from aiocache.backends.redis import RedisCache
+    async with RedisCache(namespace="test", client=redis_client) as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
 
 @pytest.fixture
 async def memory_cache():
-    async with Cache(namespace="test") as cache:
+    from aiocache.backends.memory import SimpleMemoryCache
+    async with SimpleMemoryCache(namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
 
 @pytest.fixture
 async def memcached_cache():
-    async with Cache(Cache.MEMCACHED, namespace="test") as cache:
+    from aiocache.backends.memcached import MemcachedCache
+    async with MemcachedCache(namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
