@@ -24,15 +24,16 @@ Using a cache is as simple as
 .. code-block:: python
 
     >>> import asyncio
-    >>> from aiocache import Cache
-    >>> cache = Cache()
+    >>> from aiocache import SimpleMemoryCache
+    >>> cache = SimpleMemoryCache()
     >>> with asyncio.Runner() as runner:
     >>>     runner.run(cache.set("key", "value"))
     True
     >>>     runner.run(cache.get("key"))
     'value'
 
-Here we are using the :ref:`simplememorycache` but you can use any other listed in :ref:`caches`. All caches contain the same minimum interface which consists on the following functions:
+Here we are using the :ref:`simplememorycache` but you can use any other supported backends as listed in :ref:`caches`.
+All caches contain the same minimum interface which consists on the following functions:
 
 - ``add``: Only adds key/value if key does not exist. Otherwise raises ValueError.
 - ``get``: Retrieve value identified by key.
@@ -45,16 +46,7 @@ Here we are using the :ref:`simplememorycache` but you can use any other listed 
 - ``clear``: Clears the items stored.
 - ``raw``: Executes the specified command using the underlying client.
 
-
-You can also setup cache aliases like in Django settings:
-
-.. literalinclude:: ../examples/cached_alias_config.py
-  :language: python
-  :linenos:
-  :emphasize-lines: 6-26
-
-
-In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ you can check different use cases:
+See the `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ for different use cases:
 
 - `Sanic, Aiohttp and Tornado <https://github.com/argaen/aiocache/tree/master/examples/frameworks>`_
 - `Python object in Redis <https://github.com/argaen/aiocache/blob/master/examples/python_object.py>`_
@@ -73,7 +65,6 @@ Contents
   caches
   serializers
   plugins
-  configuration
   decorators
   locking
   testing

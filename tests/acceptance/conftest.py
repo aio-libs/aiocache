@@ -5,7 +5,6 @@ import pytest
 from ..utils import KEY_LOCK, Keys
 
 
-
 @pytest.fixture
 async def redis_cache(redis_client):
     from aiocache.backends.redis import RedisCache

@@ -47,7 +47,7 @@
 import asyncio
 from typing import List, Dict
 
-from aiocache import Cache, cached
+from aiocache import cached, SimpleMemoryCache
 
 
 async def demo_key_builders():
@@ -82,7 +82,7 @@ def fixed_key(key, namespace):
 async def demo_cache_key_builders(namespace=None):
     """Demonstrate usage and behavior of the custom key_builder functions"""
     cache_ns = "cache_namespace"
-    async with Cache(Cache.MEMORY, key_builder=ensure_no_spaces, namespace=cache_ns) as cache:
+    async with SimpleMemoryCache(key_builder=ensure_no_spaces, namespace=cache_ns) as cache:
         raw_key = "Key With Unwanted Spaces"
         return_value = 42
         await cache.add(raw_key, return_value, namespace=namespace)
@@ -102,7 +102,7 @@ async def demo_cache_key_builders(namespace=None):
         assert cached_value == return_value
         await cache.delete(raw_key, namespace=namespace)
 
-    async with Cache(Cache.MEMORY, key_builder=bytes_key) as cache:
+    async with SimpleMemoryCache(key_builder=bytes_key) as cache:
         raw_key = "string-key"
         return_value = 42
         await cache.add(raw_key, return_value, namespace=namespace)
@@ -114,7 +114,7 @@ async def demo_cache_key_builders(namespace=None):
         assert cached_value == return_value
         await cache.delete(raw_key, namespace=namespace)
 
-    async with Cache(Cache.MEMORY, key_builder=fixed_key) as cache:
+    async with SimpleMemoryCache(key_builder=fixed_key) as cache:
         unchanging_key = "universal key"
 
         for raw_key, return_value in zip(

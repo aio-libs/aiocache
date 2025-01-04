@@ -3,21 +3,22 @@ import asyncio
 from collections import namedtuple
 import redis.asyncio as redis
 
-from aiocache import cached, Cache
+from aiocache import cached
+from aiocache.backends.redis import RedisCache
 from aiocache.serializers import PickleSerializer
 
 Result = namedtuple('Result', "content, status")
 
+cache = RedisCache(namespace="main", client=redis.Redis(), serializer=PickleSerializer())
 
 @cached(
-    ttl=10, cache=Cache.REDIS, key_builder=lambda *args, **kw: "key",
-    serializer=PickleSerializer(), namespace="main", client=redis.Redis())
+    ttl=10, cache=cache, key_builder=lambda *args, **kw: "key")
 async def cached_call():
     return Result("content", 200)
 
 
 async def test_cached():
-    async with Cache(Cache.REDIS, namespace="main", client=redis.Redis()) as cache:
+    async with cache:
         await cached_call()
         exists = await cache.exists("key")
         assert exists is True

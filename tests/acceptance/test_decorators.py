@@ -72,6 +72,7 @@ class TestCached:
     async def test_cached_without_namespace(self, cache):
         """Default cache key is created when no namespace is provided"""
         cache.namespace = None
+
         @cached(cache=cache)
         async def fn():
             return "1"
@@ -97,14 +98,11 @@ class TestCached:
 
 
 class TestCachedStampede:
-    @pytest.fixture(autouse=True)
-    def default_cache(self, mocker, cache):
-        mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
 
     async def test_cached_stampede(self, mocker, cache):
         mocker.spy(cache, "get")
         mocker.spy(cache, "set")
-        decorator = cached_stampede(ttl=10, lease=3)
+        decorator = cached_stampede(cache=cache, ttl=10, lease=3)
 
         await asyncio.gather(decorator(stub)(0.5), decorator(stub)(0.5))
 
@@ -117,7 +115,7 @@ class TestCachedStampede:
     async def test_locking_dogpile_lease_expiration(self, mocker, cache):
         mocker.spy(cache, "get")
         mocker.spy(cache, "set")
-        decorator = cached_stampede(ttl=10, lease=3)
+        decorator = cached_stampede(cache=cache, ttl=10, lease=3)
 
         await asyncio.gather(
             decorator(stub)(1, seconds=1),
@@ -129,7 +127,7 @@ class TestCachedStampede:
         assert cache.set.call_count == 3
 
     async def test_locking_dogpile_task_cancellation(self, cache):
-        @cached_stampede()
+        @cached_stampede(cache=cache)
         async def cancel_task():
             raise asyncio.CancelledError()
 
@@ -138,12 +136,8 @@ class TestCachedStampede:
 
 
 class TestMultiCachedDecorator:
-    @pytest.fixture(autouse=True)
-    def default_cache(self, mocker, cache):
-        mocker.patch("aiocache.decorators._get_cache", autospec=True, return_value=cache)
-
     async def test_multi_cached(self, cache):
-        multi_cached_decorator = multi_cached("keys")
+        multi_cached_decorator = multi_cached("keys", cache=cache)
 
         default_keys = {Keys.KEY, Keys.KEY_1}
         await multi_cached_decorator(return_dict)(keys=default_keys)
@@ -152,7 +146,7 @@ class TestMultiCachedDecorator:
             assert await cache.get(key) is not None
 
     async def test_keys_without_kwarg(self, cache):
-        @multi_cached("keys")
+        @multi_cached("keys", cache=cache)
         async def fn(keys):
             return {Keys.KEY: 1}
 
@@ -163,7 +157,7 @@ class TestMultiCachedDecorator:
         def build_key(key, f, self, keys, market="ES"):
             return "{}_{}_{}".format(f.__name__, ensure_key(key), market)
 
-        @multi_cached(keys_from_attr="keys", key_builder=build_key)
+        @multi_cached(keys_from_attr="keys", key_builder=build_key, cache=cache)
         async def fn(self, keys, market="ES"):
             return {Keys.KEY: 1, Keys.KEY_1: 2}
 
@@ -172,7 +166,7 @@ class TestMultiCachedDecorator:
         assert await cache.exists("fn_" + ensure_key(Keys.KEY_1) + "_ES") is True
 
     async def test_multi_cached_skip_keys(self, cache):
-        @multi_cached(keys_from_attr="keys", skip_cache_func=lambda _, v: v is None)
+        @multi_cached(keys_from_attr="keys", cache=cache, skip_cache_func=lambda _, v: v is None)
         async def multi_sk_fn(keys, values):
             return {k: v for k, v in zip(keys, values)}
 
@@ -185,7 +179,7 @@ class TestMultiCachedDecorator:
         assert not await cache.exists(Keys.KEY_1)
 
     async def test_fn_with_args(self, cache):
-        @multi_cached("keys")
+        @multi_cached("keys", cache=cache)
         async def fn(keys, *args):
             assert len(args) == 1
             return {Keys.KEY: 1}
@@ -201,7 +195,7 @@ class TestMultiCachedDecorator:
             return wrapper
 
         @dummy_d
-        @multi_cached("keys")
+        @multi_cached("keys", cache=cache)
         async def fn(keys):
             return {Keys.KEY: 1}
 

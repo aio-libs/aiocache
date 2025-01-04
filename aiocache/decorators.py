@@ -110,13 +110,6 @@ class cached_stampede(cached):
     Caches the functions return value into a key generated with module_name, function_name and args
     while avoids for cache stampede effects.
 
-    In some cases you will need to send more args to configure the cache object.
-    An example would be endpoint and port for the Redis cache. You can send those args as
-    kwargs and they will be propagated accordingly.
-
-    Only one cache instance is created per decorated function. If you expect high concurrency
-    of calls to the same function, you should adapt the pool size as needed.
-
     :param lease: int seconds to lock function call to avoid cache stampede effects.
         If 0 or None, no locking happens (default is 2). redis and memory backends support
         float ttls
@@ -196,9 +189,6 @@ class multi_cached:
 
     The cache is available in the function object as ``<function_name>.cache``.
 
-    Only one cache instance is created per decorated function. If you expect high concurrency
-    of calls to the same function, you should adapt the pool size as needed.
-
     Extra args that are injected in the function that you can use to control the cache
     behavior are:
 
@@ -212,8 +202,6 @@ class multi_cached:
 
     :param keys_from_attr: name of the arg or kwarg in the decorated callable that contains
         an iterable that yields the keys returned by the decorated callable.
-    :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is an empty string, "".
     :param key_builder: Callable that enables mapping the decorated function's keys to the keys
         used by the cache. Receives a key from the iterable corresponding to
         ``keys_from_attr``, the decorated callable, and the positional and keyword arguments
@@ -225,14 +213,6 @@ class multi_cached:
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
     :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
-    :param serializer: serializer instance to use when calling the ``dumps``/``loads``.
-        If its None, default one from the cache backend is used.
-    :param plugins: plugins to use when calling the cmd hooks
-        Default is pulled from the cache class being used.
-    :param alias: str specifying the alias to load the config from. If alias is passed,
-        other config parameters are ignored. Same cache identified by alias is used on
-        every call. If you need a per function cache, specify the parameters explicitly
-        without using alias.
     """
 
     def __init__(

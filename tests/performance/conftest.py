@@ -1,17 +1,17 @@
 import pytest
 
-from aiocache import Cache
-
 
 @pytest.fixture
 async def redis_cache(redis_client):
     # redis connection pool raises ConnectionError but doesn't wait for conn reuse
     # when exceeding max pool size.
-    async with Cache(Cache.REDIS, namespace="test", client=redis_client) as cache:
+    from aiocache.backends.redis import RedisCache
+    async with RedisCache(namespace="test", client=redis_client) as cache:
         yield cache
 
 
 @pytest.fixture
 async def memcached_cache():
-    async with Cache(Cache.MEMCACHED, namespace="test", pool_size=1) as cache:
+    from aiocache.backends.memcached import MemcachedCache
+    async with MemcachedCache(namespace="test", pool_size=1) as cache:
         yield cache

@@ -5,7 +5,7 @@ from typing import Any
 
 from marshmallow import fields, Schema, post_load
 
-from aiocache import Cache
+from aiocache import SimpleMemoryCache
 from aiocache.serializers import BaseSerializer
 
 
@@ -48,7 +48,7 @@ class MarshmallowSerializer(BaseSerializer):
         return self.schema.loads(value)
 
 
-cache = Cache(serializer=MarshmallowSerializer(), namespace="main")
+cache = SimpleMemoryCache(serializer=MarshmallowSerializer(), namespace="main")
 
 
 async def serializer():
