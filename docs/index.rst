@@ -33,7 +33,7 @@ Using a cache is as simple as
     'value'
 
 Here we are using the :ref:`simplememorycache` but you can use any other supported backends as listed in :ref:`caches`.
-All caches contain the same minimum interface which consists on the following functions:
+All caches contain the same minimum interface which consists of the following functions:
 
 - ``add``: Only adds key/value if key does not exist. Otherwise raises ValueError.
 - ``get``: Retrieve value identified by key.
