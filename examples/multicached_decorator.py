@@ -3,7 +3,7 @@ import asyncio
 import redis.asyncio as redis
 
 from aiocache import multi_cached
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 
 DICT = {
     'a': "Z",

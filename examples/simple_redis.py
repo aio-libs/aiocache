@@ -3,7 +3,7 @@ import asyncio
 
 import redis.asyncio as redis
 
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 
 cache = RedisCache(namespace="main", client=redis.Redis())
 

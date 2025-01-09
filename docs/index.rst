@@ -68,6 +68,7 @@ Contents
   decorators
   locking
   testing
+  v1_migration
 
 Indices and tables
 ==================

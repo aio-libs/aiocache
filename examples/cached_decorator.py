@@ -4,7 +4,7 @@ from collections import namedtuple
 import redis.asyncio as redis
 
 from aiocache import cached
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 from aiocache.serializers import PickleSerializer
 
 Result = namedtuple('Result', "content, status")

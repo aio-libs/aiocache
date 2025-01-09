@@ -3,7 +3,7 @@ import zlib
 
 import redis.asyncio as redis
 
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 from aiocache.serializers import BaseSerializer
 
 

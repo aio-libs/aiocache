@@ -3,7 +3,7 @@ import logging
 
 import redis.asyncio as redis
 
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 from aiocache.lock import RedLock
 
 logger = logging.getLogger(__name__)

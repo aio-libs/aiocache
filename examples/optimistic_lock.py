@@ -3,7 +3,7 @@ import logging
 import random
 
 import redis.asyncio as redis
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 from aiocache.lock import OptimisticLock, OptimisticLockError
 
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ import redis.asyncio as redis
 
 from marshmallow import Schema, fields, post_load
 
-from aiocache.backends.redis import RedisCache
+from aiocache import RedisCache
 
 
 class MyType:
