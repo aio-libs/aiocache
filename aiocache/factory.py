@@ -169,6 +169,7 @@ class CacheHandler:
         :param config: Mapping containing the cache configuration
         """
         self._config[alias] = config
+        self._caches.pop(alias, None)
 
     def get(self, alias: str) -> object:
         """
