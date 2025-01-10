@@ -2,7 +2,7 @@ import asyncio
 import random
 import logging
 
-from aiocache import Cache
+from aiocache import SimpleMemoryCache
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin, BasePlugin
 
 
@@ -18,7 +18,7 @@ class MyCustomPlugin(BasePlugin):
         logger.info("I'm the post_set hook being called with %s %s" % (args, kwargs))
 
 
-cache = Cache(
+cache = SimpleMemoryCache(
     plugins=[HitMissRatioPlugin(), TimingPlugin(), MyCustomPlugin()],
     namespace="main")
 

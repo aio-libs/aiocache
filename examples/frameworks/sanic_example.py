@@ -10,13 +10,13 @@ import asyncio
 from sanic import Sanic
 from sanic.response import json
 from sanic.log import logger
-from aiocache import cached, Cache
+from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
 
 app = Sanic(__name__)
 
 
-@cached(key="my_custom_key", serializer=JsonSerializer())
+@cached(SimpleMemoryCache(), key_builder = lambda x :"my_custom_key")
 async def expensive_call():
     logger.info("Expensive has been called")
     await asyncio.sleep(3)
@@ -24,7 +24,7 @@ async def expensive_call():
 
 
 async def reuse_data():
-    cache = Cache(serializer=JsonSerializer())  # Not ideal to define here
+    cache = SimpleMemoryCache(serializer=JsonSerializer())  # Not ideal to define here
     data = await cache.get("my_custom_key")  # Note the key is defined in `cached` decorator
     return data
 

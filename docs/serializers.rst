@@ -7,9 +7,9 @@ Serializers can be attached to backends in order to serialize/deserialize data s
 
 To use a specific serializer::
 
-    >>> from aiocache import Cache
+    >>> from aiocache import SimpleMemoryCache
     >>> from aiocache.serializers import PickleSerializer
-    cache = Cache(Cache.MEMORY, serializer=PickleSerializer())
+    cache = SimpleMemoryCache(serializer=PickleSerializer())
 
 Currently the following are built in:
 
