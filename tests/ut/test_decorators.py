@@ -187,20 +187,6 @@ class TestCached:
 
         assert mock_cache.get.call_count == 2
 
-    async def test_cache_per_function_by_default(self):
-        """Tests that by default, each function has its own SimpleMemoryCache instance."""
-        @cached()
-        async def foo():
-            """First function."""
-
-        @cached()
-        async def bar():
-            """Second function."""
-
-        assert isinstance(foo.cache, SimpleMemoryCache)
-        assert isinstance(bar.cache, SimpleMemoryCache)
-        assert foo.cache != bar.cache
-
 
 class TestCachedStampede:
     @pytest.fixture
@@ -216,8 +202,8 @@ class TestCachedStampede:
         module = sys.modules[globals()["__name__"]]
         mocker.spy(module, "stub")
 
-    def test_inheritance(self):
-        assert isinstance(cached_stampede(), cached)
+    def test_inheritance(self, mock_cache):
+        assert isinstance(cached_stampede(mock_cache), cached)
 
     def test_init(self):
         cache = SimpleMemoryCache()
@@ -491,32 +477,8 @@ class TestMultiCached:
         assert str(inspect.signature(what)) == "(self, keys=None, what=1)"
         assert inspect.getfullargspec(what.__wrapped__).args == ["self", "keys", "what"]
 
-    async def test_reuses_cache_instance(self, mock_cache):
-        # TODO @review can probably just remove this test.
-        mock_cache.multi_get.return_value = [None]
-
-        @multi_cached("keys", cache=mock_cache)
-        async def what(keys=None):
-            return {}
-
-        await what(keys=["a"])
-        await what(keys=["a"])
-
-        assert mock_cache.multi_get.call_count == 2
-
-    async def test_cache_per_function(self):
-        @multi_cached("keys")
-        async def foo():
-            """First function."""
-
-        @multi_cached("keys")
-        async def bar():
-            """Second function."""
-
-        assert foo.cache != bar.cache
-
-    async def test_key_builder(self):
-        @multi_cached("keys", key_builder=lambda key, _, keys: key + 1)
+    async def test_key_builder(self, mock_cache):
+        @multi_cached(mock_cache, keys_from_attr="keys", key_builder=lambda key, _, keys: key + 1)
         async def f(keys=None):
             return {k: k * 3 for k in keys}
 

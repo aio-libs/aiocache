@@ -54,7 +54,7 @@ class TestCached:
         res = await sk_func(arg)
         assert res
 
-        key = decorator().get_cache_key(sk_func, args=(1,), kwargs={})
+        key = decorator(cache=cache).get_cache_key(sk_func, args=(1,), kwargs={})
 
         assert key
         assert await cache.exists(key)
@@ -64,7 +64,7 @@ class TestCached:
 
         await sk_func(arg)
 
-        key = decorator().get_cache_key(sk_func, args=(-1,), kwargs={})
+        key = decorator(cache=cache).get_cache_key(sk_func, args=(-1,), kwargs={})
 
         assert key
         assert not await cache.exists(key)
@@ -137,7 +137,7 @@ class TestCachedStampede:
 
 class TestMultiCachedDecorator:
     async def test_multi_cached(self, cache):
-        multi_cached_decorator = multi_cached("keys", cache=cache)
+        multi_cached_decorator = multi_cached(cache, keys_from_attr="keys")
 
         default_keys = {Keys.KEY, Keys.KEY_1}
         await multi_cached_decorator(return_dict)(keys=default_keys)
@@ -146,7 +146,7 @@ class TestMultiCachedDecorator:
             assert await cache.get(key) is not None
 
     async def test_keys_without_kwarg(self, cache):
-        @multi_cached("keys", cache=cache)
+        @multi_cached(cache, keys_from_attr="keys")
         async def fn(keys):
             return {Keys.KEY: 1}
 
@@ -166,7 +166,7 @@ class TestMultiCachedDecorator:
         assert await cache.exists("fn_" + ensure_key(Keys.KEY_1) + "_ES") is True
 
     async def test_multi_cached_skip_keys(self, cache):
-        @multi_cached(keys_from_attr="keys", cache=cache, skip_cache_func=lambda _, v: v is None)
+        @multi_cached(cache, keys_from_attr="keys", skip_cache_func=lambda _, v: v is None)
         async def multi_sk_fn(keys, values):
             return {k: v for k, v in zip(keys, values)}
 
@@ -179,7 +179,7 @@ class TestMultiCachedDecorator:
         assert not await cache.exists(Keys.KEY_1)
 
     async def test_fn_with_args(self, cache):
-        @multi_cached("keys", cache=cache)
+        @multi_cached(cache, keys_from_attr="keys")
         async def fn(keys, *args):
             assert len(args) == 1
             return {Keys.KEY: 1}
@@ -195,7 +195,7 @@ class TestMultiCachedDecorator:
             return wrapper
 
         @dummy_d
-        @multi_cached("keys", cache=cache)
+        @multi_cached(cache, keys_from_attr="keys")
         async def fn(keys):
             return {Keys.KEY: 1}
 

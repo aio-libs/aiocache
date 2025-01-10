@@ -3,7 +3,6 @@ import functools
 import inspect
 import logging
 
-from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import SENTINEL
 from aiocache.lock import RedLock
 
@@ -24,7 +23,6 @@ class cached:
         cache (or `False` to store in the cache).
         e.g. to avoid caching `None` results: `lambda r: r is None`
     :param cache: cache instance to use when calling the ``set``/``get`` operations.
-        Default is :class:`aiocache.SimpleMemoryCache`.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
@@ -32,17 +30,18 @@ class cached:
 
     def __init__(
         self,
+        cache,
+        *,
         ttl=SENTINEL,
         key_builder=None,
         skip_cache_func=lambda x: False,
-        cache=None,
         noself=False,
     ):
         self.ttl = ttl
         self.key_builder = key_builder
         self.skip_cache_func = skip_cache_func
         self.noself = noself
-        self.cache = cache or SimpleMemoryCache()
+        self.cache = cache
 
     def __call__(self, f):
         @functools.wraps(f)
@@ -200,6 +199,7 @@ class multi_cached:
                                        value in the cache to be written. If set to False, the write
                                        happens in the background. Enabled by default
 
+    :param cache: cache instance to use when calling the ``multi_set``/``multi_get`` operations.
     :param keys_from_attr: name of the arg or kwarg in the decorated callable that contains
         an iterable that yields the keys returned by the decorated callable.
     :param key_builder: Callable that enables mapping the decorated function's keys to the keys
@@ -211,23 +211,22 @@ class multi_cached:
         if that key-value pair should not be cached (or False to store in cache).
         The keys and values to be passed are taken from the wrapped function result.
     :param ttl: int seconds to store the keys. Default is 0 which means no expiration.
-    :param cache: cache class to use when calling the ``multi_set``/``multi_get`` operations.
-        Default is :class:`aiocache.SimpleMemoryCache`.
     """
 
     def __init__(
         self,
+        cache=None,
+        *,
         keys_from_attr,
         key_builder=None,
         skip_cache_func=lambda k, v: False,
         ttl=SENTINEL,
-        cache=None,
     ):
+        self.cache = cache
         self.keys_from_attr = keys_from_attr
         self.key_builder = key_builder or (lambda key, f, *args, **kwargs: key)
         self.skip_cache_func = skip_cache_func
         self.ttl = ttl
-        self.cache = cache or SimpleMemoryCache()
 
     def __call__(self, f):
         @functools.wraps(f)

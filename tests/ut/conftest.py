@@ -4,15 +4,7 @@ from unittest.mock import create_autospec, patch
 import pytest
 
 from aiocache.plugins import BasePlugin
-from aiocache.serializers import NullSerializer
 from ..utils import AbstractBaseCache, ConcreteBaseCache
-
-
-@pytest.fixture()
-def simple_memory_cache():
-    from aiocache.backends.memory import SimpleMemoryCache
-
-    return SimpleMemoryCache(serializer=NullSerializer())
 
 
 @pytest.fixture

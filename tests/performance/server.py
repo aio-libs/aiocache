@@ -25,8 +25,8 @@ class CacheManager:
             from aiocache.backends.memcached import MemcachedCache
             cache = MemcachedCache()
         elif backend == "memory":
-            from aiocache.backends.memory import MemoryCache
-            cache = MemoryCache()
+            from aiocache.backends.memory import SimpleMemoryCache
+            cache = SimpleMemoryCache()
         else:
             raise ValueError("Invalid backend")
         self.cache = cache

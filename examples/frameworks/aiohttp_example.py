@@ -2,11 +2,12 @@ import asyncio
 import logging
 from datetime import datetime
 from aiohttp import web
-from aiocache import cached
+from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
 
+cache = SimpleMemoryCache(serializer=JsonSerializer())
 
-@cached(key="function_key", serializer=JsonSerializer())
+@cached(cache=cache, key_builder=lambda x: "time")
 async def time():
     return {"time": datetime.now().isoformat()}
 
@@ -38,7 +39,7 @@ class CachedOverride(cached):
         return None
 
 
-@CachedOverride(key="route_key", serializer=JsonSerializer())
+@CachedOverride(cache=cache, key_builder="route")
 async def handle2(request):
     return web.json_response(await asyncio.sleep(3))
 

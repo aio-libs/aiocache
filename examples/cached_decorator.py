@@ -12,7 +12,7 @@ Result = namedtuple('Result', "content, status")
 cache = RedisCache(namespace="main", client=redis.Redis(), serializer=PickleSerializer())
 
 @cached(
-    ttl=10, cache=cache, key_builder=lambda *args, **kw: "key")
+     cache, ttl=10, key_builder=lambda *args, **kw: "key")
 async def cached_call():
     return Result("content", 200)
 
