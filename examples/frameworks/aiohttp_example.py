@@ -7,6 +7,7 @@ from aiocache.serializers import JsonSerializer
 
 cache = SimpleMemoryCache(serializer=JsonSerializer())
 
+
 @cached(cache=cache, key_builder=lambda x: "time")
 async def time():
     return {"time": datetime.now().isoformat()}

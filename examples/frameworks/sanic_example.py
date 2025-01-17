@@ -16,7 +16,7 @@ from aiocache.serializers import JsonSerializer
 app = Sanic(__name__)
 
 
-@cached(SimpleMemoryCache(), key_builder = lambda x :"my_custom_key")
+@cached(SimpleMemoryCache(), key_builder=lambda x: "my_custom_key")
 async def expensive_call():
     logger.info("Expensive has been called")
     await asyncio.sleep(3)

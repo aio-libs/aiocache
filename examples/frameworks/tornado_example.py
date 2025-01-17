@@ -9,7 +9,7 @@ class MainHandler(tornado.web.RequestHandler):
 
     # Due some incompatibilities between tornado and asyncio, caches can't use the "ttl" feature
     # in order to make it work, you will have to specify it always to 0
-    @cached(SimpleMemoryCache(serializer=JsonSerializer, timeout=0), key_builder= lambda x : "my_custom_key")
+    @cached(SimpleMemoryCache(serializer=JsonSerializer, timeout=0), key_builder=lambda x: "my_custom_key")
     async def time(self):
         return {"time": datetime.now().isoformat()}
 
