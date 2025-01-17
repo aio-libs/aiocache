@@ -14,6 +14,7 @@ class cached:
     Caches the functions return value into a key generated with module_name, function_name
     and args. The cache is available in the function object as ``<function_name>.cache``.
 
+    :param cache: cache instance to use when calling the ``set``/``get`` operations.
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key_builder: Callable that allows to build the function dynamically. It receives
         the function plus same args and kwargs passed to the function.
@@ -22,7 +23,6 @@ class cached:
         wrapped function and should return `True` if the value should skip the
         cache (or `False` to store in the cache).
         e.g. to avoid caching `None` results: `lambda r: r is None`
-    :param cache: cache instance to use when calling the ``set``/``get`` operations.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
@@ -109,6 +109,8 @@ class cached_stampede(cached):
     Caches the functions return value into a key generated with module_name, function_name and args
     while avoids for cache stampede effects.
 
+    :param cache: cache instance to use when calling the ``set``/``get`` operations.
+        Default is :class:`aiocache.SimpleMemoryCache`.
     :param lease: int seconds to lock function call to avoid cache stampede effects.
         If 0 or None, no locking happens (default is 2). redis and memory backends support
         float ttls
@@ -121,15 +123,13 @@ class cached_stampede(cached):
         wrapped function and should return `True` if the value should skip the
         cache (or `False` to store in the cache).
         e.g. to avoid caching `None` results: `lambda r: r is None`
-    :param cache: cache instance to use when calling the ``set``/``get`` operations.
-        Default is :class:`aiocache.SimpleMemoryCache`.
     :param noself: bool if you are decorating a class function, by default self is also used to
         generate the key. This will result in same function calls done by different class instances
         to use different cache keys. Use noself=True if you want to ignore it.
     """
 
-    def __init__(self, lease=2, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, cache, lease=2, **kwargs):
+        super().__init__(cache, **kwargs)
         self.lease = lease
 
     async def decorator(self, f, *args, **kwargs):

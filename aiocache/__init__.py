@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Type
+from typing import Any, Type
 
 from .backends.memory import SimpleMemoryCache
 from .base import BaseCache

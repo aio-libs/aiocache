@@ -477,8 +477,9 @@ class TestMultiCached:
         assert str(inspect.signature(what)) == "(self, keys=None, what=1)"
         assert inspect.getfullargspec(what.__wrapped__).args == ["self", "keys", "what"]
 
-    async def test_key_builder(self, mock_cache):
-        @multi_cached(mock_cache, keys_from_attr="keys", key_builder=lambda key, _, keys: key + 1)
+    async def test_key_builder(self):
+        @multi_cached(cache=SimpleMemoryCache(), keys_from_attr="keys",
+                      key_builder=lambda key, _, keys: key + 1)
         async def f(keys=None):
             return {k: k * 3 for k in keys}
 
