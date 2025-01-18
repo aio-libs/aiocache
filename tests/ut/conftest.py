@@ -3,21 +3,8 @@ from unittest.mock import create_autospec, patch
 
 import pytest
 
-from aiocache import caches
 from aiocache.plugins import BasePlugin
 from ..utils import AbstractBaseCache, ConcreteBaseCache
-
-
-@pytest.fixture(autouse=True)
-def reset_caches():
-    caches.set_config(
-        {
-            "default": {
-                "cache": "aiocache.SimpleMemoryCache",
-                "serializer": {"class": "aiocache.serializers.NullSerializer"},
-            }
-        }
-    )
 
 
 @pytest.fixture

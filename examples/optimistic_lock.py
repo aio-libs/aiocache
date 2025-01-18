@@ -3,12 +3,11 @@ import logging
 import random
 
 import redis.asyncio as redis
-
-from aiocache import Cache
+from aiocache import RedisCache
 from aiocache.lock import OptimisticLock, OptimisticLockError
 
 logger = logging.getLogger(__name__)
-cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
+cache = RedisCache(namespace="main", client=redis.Redis())
 
 
 async def expensive_function():

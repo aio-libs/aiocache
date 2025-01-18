@@ -47,7 +47,7 @@
 import asyncio
 from typing import List, Dict
 
-from aiocache import Cache, cached
+from aiocache import cached, SimpleMemoryCache
 
 
 async def demo_key_builders():
@@ -82,7 +82,7 @@ def fixed_key(key, namespace):
 async def demo_cache_key_builders(namespace=None):
     """Demonstrate usage and behavior of the custom key_builder functions"""
     cache_ns = "cache_namespace"
-    async with Cache(Cache.MEMORY, key_builder=ensure_no_spaces, namespace=cache_ns) as cache:
+    async with SimpleMemoryCache(key_builder=ensure_no_spaces, namespace=cache_ns) as cache:
         raw_key = "Key With Unwanted Spaces"
         return_value = 42
         await cache.add(raw_key, return_value, namespace=namespace)
@@ -102,7 +102,7 @@ async def demo_cache_key_builders(namespace=None):
         assert cached_value == return_value
         await cache.delete(raw_key, namespace=namespace)
 
-    async with Cache(Cache.MEMORY, key_builder=bytes_key) as cache:
+    async with SimpleMemoryCache(key_builder=bytes_key) as cache:
         raw_key = "string-key"
         return_value = 42
         await cache.add(raw_key, return_value, namespace=namespace)
@@ -114,7 +114,7 @@ async def demo_cache_key_builders(namespace=None):
         assert cached_value == return_value
         await cache.delete(raw_key, namespace=namespace)
 
-    async with Cache(Cache.MEMORY, key_builder=fixed_key) as cache:
+    async with SimpleMemoryCache(key_builder=fixed_key) as cache:
         unchanging_key = "universal key"
 
         for raw_key, return_value in zip(
@@ -202,7 +202,7 @@ async def demo_decorator_key_builders():
 
 async def demo_ignore_kwargs_decorator():
     """Cache key from positional arguments in call to decorated function"""
-    @cached(key_builder=ignore_kwargs)
+    @cached(SimpleMemoryCache(), key_builder=ignore_kwargs)
     async def fn(a, b=2, c=3):
         return (a, b)
 
@@ -221,7 +221,7 @@ async def demo_ignore_kwargs_decorator():
 
         await fn(*args, **kwargs)
         cache = fn.cache
-        decorator = cached(key_builder=ignore_kwargs)
+        decorator = cached(SimpleMemoryCache(), key_builder=ignore_kwargs)
         key = decorator.get_cache_key(fn, args=args, kwargs=kwargs)
         exists = await cache.exists(key)
         assert exists is True
@@ -241,7 +241,7 @@ async def demo_ignore_kwargs_decorator():
 
 async def demo_module_override_decorator():
     """Cache key uses custom module name for decorated function"""
-    @cached(key_builder=module_override)
+    @cached(SimpleMemoryCache(), key_builder=module_override)
     async def fn(a, b=2, c=3):
         return (a, b)
 
@@ -252,7 +252,7 @@ async def demo_module_override_decorator():
 
     await fn(*args, **kwargs)
     cache = fn.cache
-    decorator = cached(key_builder=module_override)
+    decorator = cached(SimpleMemoryCache, key_builder=module_override)
     key = decorator.get_cache_key(fn, args=args, kwargs=kwargs)
     exists = await cache.exists(key)
     assert exists is True
@@ -264,7 +264,7 @@ async def demo_module_override_decorator():
 
 async def demo_structured_key_decorator():
     """Cache key expresses structure of decorated function call"""
-    @cached(key_builder=structured_key)
+    @cached(SimpleMemoryCache(), key_builder=structured_key)
     async def fn(a, b=2, c=3):
         return (a, b)
 
@@ -278,7 +278,7 @@ async def demo_structured_key_decorator():
 
     await fn(*args, **kwargs)
     cache = fn.cache
-    decorator = cached(key_builder=structured_key)
+    decorator = cached(SimpleMemoryCache(), key_builder=structured_key)
     key = decorator.get_cache_key(fn, args=args, kwargs=kwargs)
     exists = await cache.exists(key)
     assert exists is True

@@ -85,7 +85,7 @@ Or as a decorator
 
 
     @cached(
-        ttl=10, cache=Cache.REDIS, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
+        cache=RedisCache(), key="key", serializer=PickleSerializer(), port=6379, namespace="main")
     async def cached_call():
         print("Sleeping for three seconds zzzz.....")
         await asyncio.sleep(3)

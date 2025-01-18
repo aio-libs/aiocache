@@ -49,21 +49,12 @@ BaseCache
   :members:
 
 
-..  _cache:
-
-Cache
------
-
-.. autoclass:: aiocache.Cache
-  :members:
-
-
 ..  _rediscache:
 
 RedisCache
 ----------
 
-.. autoclass:: aiocache.RedisCache
+.. autoclass:: aiocache.backends.redis.RedisCache
   :members:
 
 
@@ -81,5 +72,5 @@ SimpleMemoryCache
 MemcachedCache
 --------------
 
-.. autoclass:: aiocache.MemcachedCache
+.. autoclass:: aiocache.backends.memcached.MemcachedCache
   :members:

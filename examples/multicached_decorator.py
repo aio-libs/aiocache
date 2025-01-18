@@ -2,7 +2,8 @@ import asyncio
 
 import redis.asyncio as redis
 
-from aiocache import multi_cached, Cache
+from aiocache import multi_cached
+from aiocache import RedisCache
 
 DICT = {
     'a': "Z",
@@ -11,15 +12,15 @@ DICT = {
     'd': "W"
 }
 
-cache = Cache(Cache.REDIS, namespace="main", client=redis.Redis())
+cache = RedisCache(namespace="main", client=redis.Redis())
 
 
-@multi_cached("ids", cache=Cache.REDIS, namespace="main", client=cache.client)
+@multi_cached(cache, keys_from_attr="ids")
 async def multi_cached_ids(ids=None):
     return {id_: DICT[id_] for id_ in ids}
 
 
-@multi_cached("keys", cache=Cache.REDIS, namespace="main", client=cache.client)
+@multi_cached(cache, keys_from_attr="keys")
 async def multi_cached_keys(keys=None):
     return {id_: DICT[id_] for id_ in keys}
 

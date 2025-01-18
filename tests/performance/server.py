@@ -5,29 +5,31 @@ import uuid
 import redis.asyncio as redis
 from aiohttp import web
 
-from aiocache import Cache
-
 logging.getLogger("aiohttp.access").propagate = False
 
 
 class CacheManager:
     def __init__(self, backend: str):
-        backends = {
-            "memory": Cache.MEMORY,
-            "redis": Cache.REDIS,
-            "memcached": Cache.MEMCACHED,
-        }
         if backend == "redis":
-            cache_kwargs = {"client": redis.Redis(
-                host="127.0.0.1",
-                port=6379,
-                db=0,
-                password=None,
-                decode_responses=False,
-            )}
+            from aiocache.backends.redis import RedisCache
+            cache = RedisCache(
+                client=redis.Redis(
+                    host="127.0.0.1",
+                    port=6379,
+                    db=0,
+                    password=None,
+                    decode_responses=False,
+                )
+            )
+        elif backend == "memcached":
+            from aiocache.backends.memcached import MemcachedCache
+            cache = MemcachedCache()
+        elif backend == "memory":
+            from aiocache.backends.memory import SimpleMemoryCache
+            cache = SimpleMemoryCache()
         else:
-            cache_kwargs = dict()
-        self.cache = Cache(backends[backend], **cache_kwargs)
+            raise ValueError("Invalid backend")
+        self.cache = cache
 
     async def get(self, key):
         return await self.cache.get(key, timeout=0.1)

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Type
+from typing import Any, Type
 
 from .backends.memory import SimpleMemoryCache
 from .base import BaseCache
@@ -8,7 +8,7 @@ __version__ = "1.0.0a0"
 
 logger = logging.getLogger(__name__)
 
-AIOCACHE_CACHES: Dict[str, Type[BaseCache[Any]]] = {SimpleMemoryCache.NAME: SimpleMemoryCache}
+_AIOCACHE_CACHES: list[Type[BaseCache[Any]]] = [SimpleMemoryCache]
 
 try:
     import redis
@@ -17,7 +17,7 @@ except ImportError:
 else:
     from aiocache.backends.redis import RedisCache
 
-    AIOCACHE_CACHES[RedisCache.NAME] = RedisCache
+    _AIOCACHE_CACHES.append(RedisCache)
     del redis
 
 try:
@@ -27,18 +27,14 @@ except ImportError:
 else:
     from aiocache.backends.memcached import MemcachedCache
 
-    AIOCACHE_CACHES[MemcachedCache.NAME] = MemcachedCache
+    _AIOCACHE_CACHES.append(MemcachedCache)
     del aiomcache
 
 from .decorators import cached, cached_stampede, multi_cached  # noqa: E402,I202
-from .factory import Cache, caches  # noqa: E402
-
 
 __all__ = (
-    "caches",
-    "Cache",
     "cached",
     "cached_stampede",
     "multi_cached",
-    *(c.__name__ for c in AIOCACHE_CACHES.values()),
+    *sorted(c.__name__ for c in _AIOCACHE_CACHES),
 )

@@ -11,7 +11,6 @@ from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import SENTINEL
 from aiocache.decorators import _get_args_dict
 from aiocache.lock import RedLock
-from ..utils import AbstractBaseCache
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -24,8 +23,7 @@ async def stub(*args, value=None, seconds=0, **kwargs):
 class TestCached:
     @pytest.fixture
     def decorator(self, mock_cache):
-        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
-            yield cached()
+        yield cached(cache=mock_cache)
 
     @pytest.fixture
     def decorator_call(self, decorator):
@@ -38,41 +36,17 @@ class TestCached:
         mocker.spy(module, "stub")
 
     def test_init(self):
+        cache = SimpleMemoryCache()
         c = cached(
             ttl=1,
             key_builder=lambda *args, **kw: "key",
-            cache=SimpleMemoryCache,
-            plugins=None,
-            alias=None,
+            cache=cache,
             noself=False,
-            namespace="test",
-            unused_kwarg="unused",
         )
 
         assert c.ttl == 1
         assert c.key_builder() == "key"
-        assert c.cache is None
-        assert c._cache == SimpleMemoryCache
-        assert c._serializer is None
-        assert c._namespace == "test"
-        assert c._kwargs == {"unused_kwarg": "unused"}
-
-    def test_fails_at_instantiation(self):
-        with pytest.raises(TypeError):
-
-            @cached(wrong_param=1)
-            async def fn() -> None:
-                """Dummy function."""
-
-    def test_alias_takes_precedence(self, mock_cache):
-        with patch(
-            "aiocache.decorators.caches.get", autospec=True, return_value=mock_cache
-        ) as mock_get:
-            c = cached(alias="default", cache=SimpleMemoryCache, namespace="test")
-            c(stub)
-
-            mock_get.assert_called_with("default")
-            assert c.cache is mock_cache
+        assert c.cache is cache
 
     def test_get_cache_key_with_key(self, decorator):
         decorator.key_builder = lambda *args, **kw: "key"
@@ -185,59 +159,39 @@ class TestCached:
 
     async def test_decorate(self, mock_cache):
         mock_cache.get.return_value = None
-        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
 
-            @cached()
-            async def fn(n):
-                return n
+        @cached(cache=mock_cache)
+        async def fn(n):
+            return n
 
-            assert await fn(1) == 1
-            assert await fn(2) == 2
-            assert fn.cache == mock_cache
+        assert await fn(1) == 1
+        assert await fn(2) == 2
+        assert fn.cache is mock_cache
 
     async def test_keeps_signature(self, mock_cache):
-        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
+        @cached(cache=mock_cache)
+        async def what(self, a, b):
+            """Dummy function."""
 
-            @cached()
-            async def what(self, a, b):
-                """Dummy function."""
+        assert what.__name__ == "what"
+        assert str(inspect.signature(what)) == "(self, a, b)"
+        assert inspect.getfullargspec(what.__wrapped__).args == ["self", "a", "b"]
 
-            assert what.__name__ == "what"
-            assert str(inspect.signature(what)) == "(self, a, b)"
-            assert inspect.getfullargspec(what.__wrapped__).args == ["self", "a", "b"]
+    async def test_reuses_cache_instance(self, mock_cache):
+        @cached(cache=mock_cache)
+        async def what():
+            """Dummy function."""
 
-    async def test_reuses_cache_instance(self):
-        with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
-            cache = create_autospec(AbstractBaseCache, instance=True)
-            get_c.side_effect = [cache, None]
+        await what()
+        await what()
 
-            @cached()
-            async def what():
-                """Dummy function."""
-
-            await what()
-            await what()
-
-            assert get_c.call_count == 1
-            assert cache.get.call_count == 2
-
-    async def test_cache_per_function(self):
-        @cached()
-        async def foo():
-            """First function."""
-
-        @cached()
-        async def bar():
-            """Second function."""
-
-        assert foo.cache != bar.cache
+        assert mock_cache.get.call_count == 2
 
 
 class TestCachedStampede:
     @pytest.fixture
     def decorator(self, mock_cache):
-        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
-            yield cached_stampede()
+        yield cached_stampede(cache=mock_cache)
 
     @pytest.fixture
     def decorator_call(self, decorator):
@@ -248,30 +202,22 @@ class TestCachedStampede:
         module = sys.modules[globals()["__name__"]]
         mocker.spy(module, "stub")
 
-    def test_inheritance(self):
-        assert isinstance(cached_stampede(), cached)
+    def test_inheritance(self, mock_cache):
+        assert isinstance(cached_stampede(mock_cache), cached)
 
     def test_init(self):
+        cache = SimpleMemoryCache()
         c = cached_stampede(
             lease=3,
             ttl=1,
             key_builder=lambda *args, **kw: "key",
-            cache=SimpleMemoryCache,
-            plugins=None,
-            alias=None,
-            noself=False,
-            namespace="test",
-            unused_kwarg="unused",
+            cache=cache,
         )
 
         assert c.ttl == 1
         assert c.key_builder() == "key"
-        assert c.cache is None
-        assert c._cache == SimpleMemoryCache
-        assert c._serializer is None
+        assert c.cache is cache
         assert c.lease == 3
-        assert c._namespace == "test"
-        assert c._kwargs == {"unused_kwarg": "unused"}
 
     async def test_calls_get_and_returns(self, decorator, decorator_call):
         decorator.cache.get.return_value = 1
@@ -331,8 +277,7 @@ async def stub_dict(*args, keys=None, **kwargs):
 class TestMultiCached:
     @pytest.fixture
     def decorator(self, mock_cache):
-        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
-            yield multi_cached(keys_from_attr="keys")
+        yield multi_cached(cache=mock_cache, keys_from_attr="keys")
 
     @pytest.fixture
     def decorator_call(self, decorator):
@@ -346,15 +291,12 @@ class TestMultiCached:
         mocker.spy(module, "stub_dict")
 
     def test_init(self):
+        cache = SimpleMemoryCache()
         mc = multi_cached(
             keys_from_attr="keys",
             key_builder=None,
             ttl=1,
-            cache=SimpleMemoryCache,
-            plugins=None,
-            alias=None,
-            namespace="test",
-            unused_kwarg="unused",
+            cache=cache,
         )
 
         def f():
@@ -363,30 +305,7 @@ class TestMultiCached:
         assert mc.ttl == 1
         assert mc.key_builder("key", f) == "key"
         assert mc.keys_from_attr == "keys"
-        assert mc.cache is None
-        assert mc._cache == SimpleMemoryCache
-        assert mc._serializer is None
-        assert mc._namespace == "test"
-        assert mc._kwargs == {"unused_kwarg": "unused"}
-
-    def test_fails_at_instantiation(self):
-        with pytest.raises(TypeError):
-
-            @multi_cached(wrong_param=1)
-            async def fn() -> None:
-                """Dummy function."""
-
-    def test_alias_takes_precedence(self, mock_cache):
-        with patch(
-            "aiocache.decorators.caches.get", autospec=True, return_value=mock_cache
-        ) as mock_get:
-            mc = multi_cached(
-                keys_from_attr="keys", alias="default", cache=SimpleMemoryCache, namespace="test"
-            )
-            mc(stub_dict)
-
-            mock_get.assert_called_with("default")
-            assert mc.cache is mock_cache
+        assert mc.cache is cache
 
     def test_get_cache_keys(self, decorator):
         keys = decorator.get_cache_keys(stub_dict, (), {"keys": ["a", "b"]})
@@ -540,15 +459,14 @@ class TestMultiCached:
 
     async def test_decorate(self, mock_cache):
         mock_cache.multi_get.return_value = [None]
-        with patch("aiocache.decorators._get_cache", autospec=True, return_value=mock_cache):
 
-            @multi_cached(keys_from_attr="keys")
-            async def fn(keys=None):
-                return {"test": 1}
+        @multi_cached(cache=mock_cache, keys_from_attr="keys")
+        async def fn(keys=None):
+            return {"test": 1}
 
-            assert await fn(keys=["test"]) == {"test": 1}
-            assert await fn(["test"]) == {"test": 1}
-            assert fn.cache == mock_cache
+        assert await fn(keys=["test"]) == {"test": 1}
+        assert await fn(["test"]) == {"test": 1}
+        assert fn.cache == mock_cache
 
     async def test_keeps_signature(self):
         @multi_cached(keys_from_attr="keys")
@@ -559,35 +477,9 @@ class TestMultiCached:
         assert str(inspect.signature(what)) == "(self, keys=None, what=1)"
         assert inspect.getfullargspec(what.__wrapped__).args == ["self", "keys", "what"]
 
-    async def test_reuses_cache_instance(self):
-        with patch("aiocache.decorators._get_cache", autospec=True) as get_c:
-            cache = create_autospec(AbstractBaseCache, instance=True)
-            cache.multi_get.return_value = [None]
-            get_c.side_effect = [cache, None]
-
-            @multi_cached("keys")
-            async def what(keys=None):
-                return {}
-
-            await what(keys=["a"])
-            await what(keys=["a"])
-
-            assert get_c.call_count == 1
-            assert cache.multi_get.call_count == 2
-
-    async def test_cache_per_function(self):
-        @multi_cached("keys")
-        async def foo():
-            """First function."""
-
-        @multi_cached("keys")
-        async def bar():
-            """Second function."""
-
-        assert foo.cache != bar.cache
-
     async def test_key_builder(self):
-        @multi_cached("keys", key_builder=lambda key, _, keys: key + 1)
+        @multi_cached(cache=SimpleMemoryCache(), keys_from_attr="keys",
+                      key_builder=lambda key, _, keys: key + 1)
         async def f(keys=None):
             return {k: k * 3 for k in keys}
 
