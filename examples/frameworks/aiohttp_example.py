@@ -8,7 +8,7 @@ from aiocache.serializers import JsonSerializer
 cache = SimpleMemoryCache(serializer=JsonSerializer())
 
 
-@cached(cache=cache, key_builder=lambda x: "time")
+@cached(cache, key_builder=lambda x: "time")
 async def time():
     return {"time": datetime.now().isoformat()}
 
@@ -40,7 +40,7 @@ class CachedOverride(cached):
         return None
 
 
-@CachedOverride(cache=cache, key_builder="route")
+@CachedOverride(cache, key_builder="route")
 async def handle2(request):
     return web.json_response(await asyncio.sleep(3))
 

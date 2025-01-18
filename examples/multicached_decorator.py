@@ -15,12 +15,12 @@ DICT = {
 cache = RedisCache(namespace="main", client=redis.Redis())
 
 
-@multi_cached(cache=cache, keys_from_attr="ids")
+@multi_cached(cache, keys_from_attr="ids")
 async def multi_cached_ids(ids=None):
     return {id_: DICT[id_] for id_ in ids}
 
 
-@multi_cached(cache=cache, keys_from_attr="keys")
+@multi_cached(cache, keys_from_attr="keys")
 async def multi_cached_keys(keys=None):
     return {id_: DICT[id_] for id_ in keys}
 

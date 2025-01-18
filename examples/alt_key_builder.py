@@ -202,7 +202,7 @@ async def demo_decorator_key_builders():
 
 async def demo_ignore_kwargs_decorator():
     """Cache key from positional arguments in call to decorated function"""
-    @cached(cache=SimpleMemoryCache(), key_builder=ignore_kwargs)
+    @cached(SimpleMemoryCache(), key_builder=ignore_kwargs)
     async def fn(a, b=2, c=3):
         return (a, b)
 
@@ -221,7 +221,7 @@ async def demo_ignore_kwargs_decorator():
 
         await fn(*args, **kwargs)
         cache = fn.cache
-        decorator = cached(cache=SimpleMemoryCache(), key_builder=ignore_kwargs)
+        decorator = cached(SimpleMemoryCache(), key_builder=ignore_kwargs)
         key = decorator.get_cache_key(fn, args=args, kwargs=kwargs)
         exists = await cache.exists(key)
         assert exists is True
@@ -241,7 +241,7 @@ async def demo_ignore_kwargs_decorator():
 
 async def demo_module_override_decorator():
     """Cache key uses custom module name for decorated function"""
-    @cached(cache=SimpleMemoryCache(), key_builder=module_override)
+    @cached(SimpleMemoryCache(), key_builder=module_override)
     async def fn(a, b=2, c=3):
         return (a, b)
 
@@ -252,7 +252,7 @@ async def demo_module_override_decorator():
 
     await fn(*args, **kwargs)
     cache = fn.cache
-    decorator = cached(cache=SimpleMemoryCache, key_builder=module_override)
+    decorator = cached(SimpleMemoryCache, key_builder=module_override)
     key = decorator.get_cache_key(fn, args=args, kwargs=kwargs)
     exists = await cache.exists(key)
     assert exists is True
@@ -264,7 +264,7 @@ async def demo_module_override_decorator():
 
 async def demo_structured_key_decorator():
     """Cache key expresses structure of decorated function call"""
-    @cached(cache=SimpleMemoryCache(), key_builder=structured_key)
+    @cached(SimpleMemoryCache(), key_builder=structured_key)
     async def fn(a, b=2, c=3):
         return (a, b)
 
@@ -278,7 +278,7 @@ async def demo_structured_key_decorator():
 
     await fn(*args, **kwargs)
     cache = fn.cache
-    decorator = cached(cache=SimpleMemoryCache(), key_builder=structured_key)
+    decorator = cached(SimpleMemoryCache(), key_builder=structured_key)
     key = decorator.get_cache_key(fn, args=args, kwargs=kwargs)
     exists = await cache.exists(key)
     assert exists is True
