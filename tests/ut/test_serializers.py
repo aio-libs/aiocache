@@ -1,5 +1,4 @@
 import pickle
-import yaml
 from collections import namedtuple
 from unittest import mock
 
@@ -20,6 +19,7 @@ Dummy = namedtuple("Dummy", "a, b")
 
 TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)]
 JSON_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
+YAML_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
 
 
 class TestNullSerializer:
@@ -183,13 +183,14 @@ class TestYamlSerializer:
         assert isinstance(serializer, BaseSerializer)
         assert serializer.DEFAULT_ENCODING == "utf-8"
         assert serializer.encoding == "utf-8"
-        assert serializer.loader == yaml.SafeLoader
 
-    def test_init_with_custom_loader(self):
-        serializer = YamlSerializer(loader=yaml.FullLoader)
-        assert serializer.loader == yaml.FullLoader
+    def test_init_fails_if_yaml_not_installed(self):
+        with mock.patch("aiocache.serializers.serializers.yaml", None):
+            with pytest.raises(RuntimeError):
+                YamlSerializer()
+            assert JsonSerializer(), "Other serializers should still initialize"
 
-    @pytest.mark.parametrize("obj", TYPES)
+    @pytest.mark.parametrize("obj", YAML_TYPES)
     def test_set_types(self, obj):
         serializer = YamlSerializer()
         assert serializer.loads(serializer.dumps(obj)) == obj

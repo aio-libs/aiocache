@@ -1,6 +1,5 @@
 import logging
 import pickle  # noqa: S403
-import yaml
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
@@ -17,6 +16,12 @@ try:
 except ImportError:
     msgpack = None
     logger.debug("msgpack not installed, MsgPackSerializer unavailable")
+
+try:
+    import yaml  # noqa: I900
+except ImportError:
+    yaml = None
+    logger.debug("yaml not installed, YamlSerializer unavailable")
 
 
 _NOT_SET = object()
@@ -202,17 +207,14 @@ class MsgPackSerializer(BaseSerializer):
 
 class YamlSerializer(BaseSerializer):
     """
-    Transform data to YAML string with ``yaml.dump`` and ``yaml.load`` to retrieve it back.
+    Transform data to YAML string with ``yaml.dump`` and ``yaml.load`` to retrieve it back. You need
+    to have ``yaml`` installed in order to be able to use this serializer.
     """
 
-    def __init__(self, *args, loader=yaml.SafeLoader, **kwargs):
-        """
-        Initialize the YamlSerializer with the specified loader.
-
-        :param loader: The YAML loader to use for deserialization. Default is yaml.SafeLoader.
-        """
+    def __init__(self, *args, **kwargs):
+        if not yaml:
+            raise RuntimeError("yaml not installed, YamlSerializer unavailable")
         super().__init__(*args, **kwargs)
-        self.loader = loader
 
     def dumps(self, value):
         """
@@ -232,4 +234,4 @@ class YamlSerializer(BaseSerializer):
         """
         if value is None:
             return None
-        return yaml.load(value, Loader=self.loader)
+        return yaml.safe_load(value)
