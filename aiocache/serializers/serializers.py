@@ -1,5 +1,6 @@
 import logging
 import pickle  # noqa: S403
+import yaml
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
@@ -197,3 +198,38 @@ class MsgPackSerializer(BaseSerializer):
         if value is None:
             return None
         return msgpack.loads(value, raw=raw, use_list=self.use_list)
+
+
+class YamlSerializer(BaseSerializer):
+    """
+    Transform data to YAML string with ``yaml.dump`` and ``yaml.load`` to retrieve it back.
+    """
+
+    def __init__(self, *args, loader=yaml.SafeLoader, **kwargs):
+        """
+        Initialize the YamlSerializer with the specified loader.
+
+        :param loader: The YAML loader to use for deserialization. Default is yaml.SafeLoader.
+        """
+        super().__init__(*args, **kwargs)
+        self.loader = loader
+
+    def dumps(self, value):
+        """
+        Serialize the received value using ``yaml.dump``.
+
+        :param value: obj
+        :returns: str
+        """
+        return yaml.dump(value)
+
+    def loads(self, value):
+        """
+        Deserialize value using ``yaml.load``.
+
+        :param value: str
+        :returns: obj
+        """
+        if value is None:
+            return None
+        return yaml.load(value, Loader=self.loader)
