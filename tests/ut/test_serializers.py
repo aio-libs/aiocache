@@ -1,4 +1,5 @@
 import pickle
+import yaml
 from collections import namedtuple
 from unittest import mock
 
@@ -11,6 +12,7 @@ from aiocache.serializers import (
     NullSerializer,
     PickleSerializer,
     StringSerializer,
+    YamlSerializer,
 )
 
 
@@ -173,3 +175,42 @@ class TestMsgPackSerializer:
             "a": [1, 2, ["1", 2]],
             "b": {"b": 1, "c": [1, 2]},
         }
+
+
+class TestYamlSerializer:
+    def test_init(self):
+        serializer = YamlSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
+        assert serializer.loader == yaml.SafeLoader
+
+    def test_init_with_custom_loader(self):
+        serializer = YamlSerializer(loader=yaml.FullLoader)
+        assert serializer.loader == yaml.FullLoader
+
+    @pytest.mark.parametrize("obj", TYPES)
+    def test_set_types(self, obj):
+        serializer = YamlSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+    def test_dumps(self):
+        serializer = YamlSerializer()
+        assert serializer.dumps({"hi": 1}) == "hi: 1\n"
+
+    def test_dumps_with_none(self):
+        serializer = YamlSerializer()
+        assert serializer.dumps(None) == "null\n...\n"
+
+    def test_loads(self):
+        serializer = YamlSerializer()
+        assert serializer.loads("hi: 1\n") == {"hi": 1}
+
+    def test_loads_with_none(self):
+        serializer = YamlSerializer()
+        assert serializer.loads(None) is None
+
+    def test_dumps_and_loads(self):
+        obj = {"hi": 1}
+        serializer = YamlSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
