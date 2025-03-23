@@ -11,6 +11,7 @@ from aiocache.serializers import (
     NullSerializer,
     PickleSerializer,
     StringSerializer,
+    YamlSerializer,
 )
 
 
@@ -18,6 +19,7 @@ Dummy = namedtuple("Dummy", "a, b")
 
 TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)]
 JSON_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
+YAML_TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}]
 
 
 class TestNullSerializer:
@@ -173,3 +175,43 @@ class TestMsgPackSerializer:
             "a": [1, 2, ["1", 2]],
             "b": {"b": 1, "c": [1, 2]},
         }
+
+
+class TestYamlSerializer:
+    def test_init(self):
+        serializer = YamlSerializer()
+        assert isinstance(serializer, BaseSerializer)
+        assert serializer.DEFAULT_ENCODING == "utf-8"
+        assert serializer.encoding == "utf-8"
+
+    def test_init_fails_if_yaml_not_installed(self):
+        with mock.patch("aiocache.serializers.serializers.yaml", None):
+            with pytest.raises(RuntimeError):
+                YamlSerializer()
+            assert JsonSerializer(), "Other serializers should still initialize"
+
+    @pytest.mark.parametrize("obj", YAML_TYPES)
+    def test_set_types(self, obj):
+        serializer = YamlSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
+
+    def test_dumps(self):
+        serializer = YamlSerializer()
+        assert serializer.dumps({"hi": 1}) == "hi: 1\n"
+
+    def test_dumps_with_none(self):
+        serializer = YamlSerializer()
+        assert serializer.dumps(None) == "null\n...\n"
+
+    def test_loads(self):
+        serializer = YamlSerializer()
+        assert serializer.loads("hi: 1\n") == {"hi": 1}
+
+    def test_loads_with_none(self):
+        serializer = YamlSerializer()
+        assert serializer.loads(None) is None
+
+    def test_dumps_and_loads(self):
+        obj = {"hi": 1}
+        serializer = YamlSerializer()
+        assert serializer.loads(serializer.dumps(obj)) == obj
