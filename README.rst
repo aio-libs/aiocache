@@ -3,23 +3,14 @@ aiocache
 
 Asyncio cache supporting multiple backends (memory, redis and memcached).
 
-.. image:: https://travis-ci.org/argaen/aiocache.svg?branch=master
-  :target: https://travis-ci.org/argaen/aiocache
-
-.. image:: https://codecov.io/gh/argaen/aiocache/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/argaen/aiocache
+.. image:: https://codecov.io/gh/aio-libs/aiocache/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/aio-libs/aiocache
 
 .. image:: https://badge.fury.io/py/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
 
 .. image:: https://img.shields.io/pypi/pyversions/aiocache.svg
   :target: https://pypi.python.org/pypi/aiocache
-
-.. image:: https://api.codacy.com/project/badge/Grade/96f772e38e63489ca884dbaf6e9fb7fd
-  :target: https://www.codacy.com/app/argaen/aiocache
-
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
 
 This library aims for simplicity over specialization. All caches contain the same minimum interface which consists on the following functions:
 
@@ -61,8 +52,8 @@ Using a cache is as simple as
 .. code-block:: python
 
     >>> import asyncio
-    >>> from aiocache import Cache
-    >>> cache = Cache(Cache.MEMORY) # Here you can also use Cache.REDIS and Cache.MEMCACHED, default is Cache.MEMORY
+    >>> from aiocache import SimpleMemoryCache
+    >>> cache = SimpleMemoryCache()  # Or RedisCache, MemcachedCache...
     >>> with asyncio.Runner() as runner:
     >>>     runner.run(cache.set('key', 'value'))
     True
@@ -77,15 +68,16 @@ Or as a decorator
 
     from collections import namedtuple
 
-    from aiocache import cached, Cache
+    from aiocache import RedisCache, cached
     from aiocache.serializers import PickleSerializer
     # With this we can store python objects in backends like Redis!
 
     Result = namedtuple('Result', "content, status")
+    redis_client = redis.Redis(host="127.0.0.1", port=6379)
+    redis_cache = RedisCache(redis_client, namespace="main")
 
 
-    @cached(
-        cache=RedisCache(), key="key", serializer=PickleSerializer(), port=6379, namespace="main")
+    @cached(redis_cache, key="key", serializer=PickleSerializer(), port=6379, namespace="main")
     async def cached_call():
         print("Sleeping for three seconds zzzz.....")
         await asyncio.sleep(3)
@@ -93,71 +85,14 @@ Or as a decorator
 
 
     async def run():
-        await cached_call()
-        await cached_call()
-        await cached_call()
-        cache = Cache(Cache.REDIS, endpoint="127.0.0.1", port=6379, namespace="main")
-        await cache.delete("key")
+        async with redis_client, redis_cache:
+            await cached_call()
+            await cached_call()
+            await cached_call()
+            await redis_cache.delete("key")
 
     if __name__ == "__main__":
         asyncio.run(run())
-
-The recommended approach to instantiate a new cache is using the `Cache` constructor. However you can also instantiate directly using `aiocache.RedisCache`, `aiocache.SimpleMemoryCache` or `aiocache.MemcachedCache`.
-
-
-You can also setup cache aliases so its easy to reuse configurations
-
-.. code-block:: python
-
-  import asyncio
-
-  from aiocache import caches
-
-  # You can use either classes or strings for referencing classes
-  caches.set_config({
-      'default': {
-          'cache': "aiocache.SimpleMemoryCache",
-          'serializer': {
-              'class': "aiocache.serializers.StringSerializer"
-          }
-      },
-      'redis_alt': {
-          'cache': "aiocache.RedisCache",
-          'endpoint': "127.0.0.1",
-          'port': 6379,
-          'timeout': 1,
-          'serializer': {
-              'class': "aiocache.serializers.PickleSerializer"
-          },
-          'plugins': [
-              {'class': "aiocache.plugins.HitMissRatioPlugin"},
-              {'class': "aiocache.plugins.TimingPlugin"}
-          ]
-      }
-  })
-
-
-  async def default_cache():
-      cache = caches.get('default')   # This always returns the SAME instance
-      await cache.set("key", "value")
-      assert await cache.get("key") == "value"
-
-
-  async def alt_cache():
-      cache = caches.create('redis_alt')   # This creates a NEW instance on every call
-      await cache.set("key", "value")
-      assert await cache.get("key") == "value"
-
-
-  async def test_alias():
-      await default_cache()
-      await alt_cache()
-
-      await caches.get("redis_alt").delete("key")
-
-
-  if __name__ == "__main__":
-      asyncio.run(test_alias())
 
 
 How does it work
