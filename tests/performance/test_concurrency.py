@@ -10,7 +10,7 @@ from .server import run_server
 
 
 # TODO: Fix and readd "memcached" (currently fails >98% of requests)
-@pytest.fixture(params=("memory", "redis"))
+@pytest.fixture(params=("memory", "valkey"))
 def server(request):
     p = Process(target=run_server, args=(request.param,))
     p.start()

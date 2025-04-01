@@ -6,9 +6,10 @@ from ..utils import KEY_LOCK, Keys
 
 
 @pytest.fixture
-async def redis_cache(redis_client):
-    from aiocache.backends.redis import RedisCache
-    async with RedisCache(namespace="test", client=redis_client) as cache:
+async def valkey_cache(valkey_client):
+    from aiocache.backends.valkey import ValkeyCache
+
+    async with ValkeyCache(namespace="test", client=valkey_client) as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
@@ -31,9 +32,10 @@ async def memcached_cache():
 
 @pytest.fixture(
     params=(
-        pytest.param("redis_cache", marks=pytest.mark.redis),
+        pytest.param("valkey_cache", marks=pytest.mark.valkey),
         "memory_cache",
         pytest.param("memcached_cache", marks=pytest.mark.memcached),
-    ))
+    )
+)
 def cache(request):
     return request.getfixturevalue(request.param)

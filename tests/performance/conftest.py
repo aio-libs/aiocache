@@ -2,11 +2,11 @@ import pytest
 
 
 @pytest.fixture
-async def redis_cache(redis_client):
-    # redis connection pool raises ConnectionError but doesn't wait for conn reuse
+async def valkey_cache(valkey_client):
+    # valkey connection pool raises ConnectionError but doesn't wait for conn reuse
     # when exceeding max pool size.
-    from aiocache.backends.redis import RedisCache
-    async with RedisCache(namespace="test", client=redis_client) as cache:
+    from aiocache.backends.valkey import ValkeyCache
+    async with ValkeyCache(namespace="test", client=valkey_client) as cache:
         yield cache
 
 
