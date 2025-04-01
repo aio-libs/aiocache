@@ -1,31 +1,36 @@
-import itertools
-from typing import Any, Callable, Optional, TYPE_CHECKING
+import logging
+import time
+from typing import Any, Callable, Optional, TYPE_CHECKING, List, cast
 
-import redis.asyncio as redis
-from redis.exceptions import ResponseError as IncrbyException
+from glide import GlideClient, Script, Transaction, ExpirySet, ExpiryType, ConditionalChange
+from glide.exceptions import RequestError as IncrbyException
+from glide.protobuf.command_request_pb2 import RequestType
 
-from aiocache.base import BaseCache
+from aiocache.base import BaseCache, API
 from aiocache.serializers import JsonSerializer
 
 if TYPE_CHECKING:  # pragma: no cover
     from aiocache.serializers import BaseSerializer
 
 
-class RedisBackend(BaseCache[str]):
-    RELEASE_SCRIPT = (
-        "if redis.call('get',KEYS[1]) == ARGV[1] then"
-        " return redis.call('del',KEYS[1])"
+logger = logging.getLogger(__name__)
+
+
+class ValkeyBackend(BaseCache[str]):
+    RELEASE_SCRIPT = Script(
+        "if server.call('get',KEYS[1]) == ARGV[1] then"
+        " return server.call('del',KEYS[1])"
         " else"
         " return 0"
         " end"
     )
 
-    CAS_SCRIPT = (
-        "if redis.call('get',KEYS[1]) == ARGV[2] then"
+    CAS_SCRIPT = Script(
+        "if server.call('get',KEYS[1]) == ARGV[2] then"
         "  if #ARGV == 4 then"
-        "   return redis.call('set', KEYS[1], ARGV[1], ARGV[3], ARGV[4])"
+        "   return server.call('set', KEYS[1], ARGV[1], ARGV[3], ARGV[4])"
         "  else"
-        "   return redis.call('set', KEYS[1], ARGV[1])"
+        "   return server.call('set', KEYS[1], ARGV[1])"
         "  end"
         " else"
         " return 0"
@@ -34,18 +39,11 @@ class RedisBackend(BaseCache[str]):
 
     def __init__(
         self,
-        client: redis.Redis,
+        client: GlideClient,
         **kwargs,
     ):
         super().__init__(**kwargs)
 
-        # NOTE: decoding can't be controlled on API level after switching to
-        # redis, we need to disable decoding on global/connection level
-        # (decode_responses=False), because some of the values are saved as
-        # bytes directly, like pickle serialized values, which may raise an
-        # exception when decoded with 'utf-8'.
-        if client.connection_pool.connection_kwargs['decode_responses']:
-            raise ValueError("redis client must be constructed with decode_responses set to False")
         self.client = client
 
     async def _get(self, key, encoding="utf-8", _conn=None):
@@ -58,7 +56,7 @@ class RedisBackend(BaseCache[str]):
         return await self._get(key, encoding=encoding, _conn=_conn)
 
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
-        values = await self.client.mget(*keys)
+        values = await self.client.mget(keys)
         if encoding is None:
             return values
         return [v if v is None else v.decode(encoding) for v in values]
@@ -70,47 +68,55 @@ class RedisBackend(BaseCache[str]):
             return await self.client.set(key, value)
         if isinstance(ttl, float):
             ttl = int(ttl * 1000)
-            return await self.client.psetex(key, ttl, value)
-        return await self.client.setex(key, ttl, value)
+            return await self.client.set(key, value, expiry=ExpirySet(ExpiryType.MILLSEC, ttl))
+        return await self.client.set(key, value, expiry=ExpirySet(ExpiryType.SEC, ttl))
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         args = ()
         if ttl is not None:
-            args = ("PX", int(ttl * 1000)) if isinstance(ttl, float) else ("EX", ttl)
-        return await self._raw("eval", self.CAS_SCRIPT, 1, key, value, token, *args, _conn=_conn)
+            args = ("PX", str(int(ttl * 1000))) if isinstance(ttl, float) else ("EX", str(ttl))
+        if isinstance(key, str):
+            key = [key]
+        return await self._script(self.CAS_SCRIPT, key, value, token, *args)
 
     async def _multi_set(self, pairs, ttl=None, _conn=None):
         ttl = ttl or 0
 
-        flattened = list(itertools.chain.from_iterable((key, value) for key, value in pairs))
+        values = {key: value for key, value in pairs}
 
         if ttl:
-            await self.__multi_set_ttl(flattened, ttl)
+            await self.__multi_set_ttl(values, ttl)
         else:
-            await self.client.execute_command("MSET", *flattened)
+            await self.client.mset(values)
 
         return True
 
-    async def __multi_set_ttl(self, flattened, ttl):
-        async with self.client.pipeline(transaction=True) as p:
-            p.execute_command("MSET", *flattened)
-            ttl, exp = (int(ttl * 1000), p.pexpire) if isinstance(ttl, float) else (ttl, p.expire)
-            for key in flattened[::2]:
-                exp(key, time=ttl)
-            await p.execute()
+    async def __multi_set_ttl(self, values, ttl):
+        transaction = Transaction()
+        transaction.mset(values)
+        ttl, exp = (
+            (int(ttl * 1000), transaction.pexpire)
+            if isinstance(ttl, float)
+            else (ttl, transaction.expire)
+        )
+        for key in values:
+            exp(key, ttl)
+        await self.client.exec(transaction)
 
     async def _add(self, key, value, ttl=None, _conn=None):
-        kwargs = {"nx": True}
+        kwargs = {"conditional_set": ConditionalChange.ONLY_IF_DOES_NOT_EXIST}
         if isinstance(ttl, float):
-            kwargs["px"] = int(ttl * 1000)
-        else:
-            kwargs["ex"] = ttl
+            kwargs["expiry"] = ExpirySet(ExpiryType.MILLSEC, int(ttl * 1000))
+        elif ttl:
+            kwargs["expiry"] = ExpirySet(ExpiryType.SEC, ttl)
         was_set = await self.client.set(key, value, **kwargs)
-        if not was_set:
+        if was_set != "OK":
             raise ValueError("Key {} already exists, use .set to update the value".format(key))
         return was_set
 
     async def _exists(self, key, _conn=None):
+        if isinstance(key, str):
+            key = [key]
         number = await self.client.exists(key)
         return bool(number)
 
@@ -126,16 +132,43 @@ class RedisBackend(BaseCache[str]):
         return await self.client.expire(key, ttl)
 
     async def _delete(self, key, _conn=None):
+        if isinstance(key, str):
+            key = [key]
         return await self.client.delete(key)
 
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
-            keys = await self.client.keys("{}:*".format(namespace))
+            cursor, keys = await self.client.scan(b"0", "{}:*".format(namespace))
             if keys:
-                await self.client.delete(*keys)
+                return bool(await self.client.delete(keys))
         else:
-            await self.client.flushdb()
-        return True
+            return await self.client.flushdb()
+
+    @API.register
+    @API.aiocache_enabled()
+    @API.timeout
+    @API.plugins
+    async def script(self, script: Script, keys: List, *args):
+        """
+        Send the raw scripts to the underlying client. Note that by using this CMD you
+        will lose compatibility with other backends.
+
+        Due to limitations with aiomcache client, args have to be provided as bytes.
+        For rest of backends, str.
+
+        :param script: glide.Script object.
+        :param keys: list of keys of the script
+        :param args: arguments of the script
+        :returns: whatever the underlying client returns
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
+        """
+        start = time.monotonic()
+        ret = await self._script(script, keys, *args)
+        logger.debug("%s (%.4f)s", script, time.monotonic() - start)
+        return ret
+
+    async def _script(self, script, keys: List, *args):
+        return await self.client.invoke_script(script, keys=keys, args=args)
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         value = await getattr(self.client, command)(*args, **kwargs)
@@ -147,15 +180,17 @@ class RedisBackend(BaseCache[str]):
         return value
 
     async def _redlock_release(self, key, value):
-        return await self._raw("eval", self.RELEASE_SCRIPT, 1, key, value)
+        if await self.client.get(key):
+            return await self.client.delete([key])
+        return 0
 
     def build_key(self, key: str, namespace: Optional[str] = None) -> str:
         return self._str_build_key(key, namespace)
 
 
-class RedisCache(RedisBackend):
+class ValkeyCache(ValkeyBackend):
     """
-    Redis cache implementation with the following components as defaults:
+    Valkey cache implementation with the following components as defaults:
         - serializer: :class:`aiocache.serializers.JsonSerializer`
         - plugins: []
 
@@ -167,14 +202,14 @@ class RedisCache(RedisBackend):
         the backend. Default is an empty string, "".
     :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
         By default its 5.
-    :param client: redis.Redis which is an active client for working with redis
+    :param client: glide.GlideClient which is an active client for working with valkey
     """
 
-    NAME = "redis"
+    NAME = "valkey"
 
     def __init__(
         self,
-        client: redis.Redis,
+        client: GlideClient,
         serializer: Optional["BaseSerializer"] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
@@ -191,7 +226,7 @@ class RedisCache(RedisBackend):
     @classmethod
     def parse_uri_path(cls, path):
         """
-        Given a uri path, return the Redis specific configuration
+        Given a uri path, return the Valkey specific configuration
         options in that path string according to iana definition
         http://www.iana.org/assignments/uri-schemes/prov/redis
 
@@ -205,5 +240,4 @@ class RedisCache(RedisBackend):
         return options
 
     def __repr__(self):  # pragma: no cover
-        connection_kwargs = self.client.connection_pool.connection_kwargs
-        return "RedisCache ({}:{})".format(connection_kwargs['host'], connection_kwargs['port'])
+        return "ValkeyCache"
