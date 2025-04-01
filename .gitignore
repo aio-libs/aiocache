@@ -80,6 +80,7 @@ celerybeat-schedule
 .env
 
 # virtualenv
+.venv/
 venv/
 ENV/
 
@@ -95,3 +96,6 @@ _release_notes
 tags
 .mypy_cache/
 .pytest_cache/
+
+# IDEs
+.idea
