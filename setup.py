@@ -34,7 +34,7 @@ setup(
     packages=("aiocache",),
     install_requires=None,
     extras_require={
-        "redis": ["redis>=5"],
+        "valkey": ["valkey-glide>=1.3.0"],
         "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
     },
