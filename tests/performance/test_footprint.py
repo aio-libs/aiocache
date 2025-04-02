@@ -4,74 +4,77 @@ from typing import AsyncIterator, cast
 
 import aiomcache
 import pytest
-import redis.asyncio as redis
+
+from glide import GlideClient, GlideClientConfiguration, NodeAddress
 
 
 @pytest.fixture
-async def redis_client() -> AsyncIterator["redis.Redis[str]"]:
-    async with cast("redis.Redis[str]",
-                    redis.Redis(host="127.0.0.1", port=6379, max_connections=1)) as r:
-        yield r
+async def valkey_client() -> AsyncIterator["GlideClient"]:
+    addresses = [NodeAddress("localhost", 6379)]
+    conf = GlideClientConfiguration(addresses=addresses)
+    client = await GlideClient.create(conf)
+
+    yield client
 
 
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Too slow")
-class TestRedis:
-    async def test_redis_getsetdel(self, redis_client, redis_cache):
+class TestValkey:
+    async def test_valkey_getsetdel(self, valkey_client, valkey_cache):
         N = 10000
-        redis_total_time = 0
+        valkey_total_time = 0
         for _n in range(N):
             start = time.time()
-            await redis_client.set("hi", "value")
-            await redis_client.get("hi")
-            await redis_client.delete("hi")
-            redis_total_time += time.time() - start
+            await valkey_client.set("hi", "value")
+            await valkey_client.get("hi")
+            await valkey_client.delete(["hi"])
+            valkey_total_time += time.time() - start
 
         aiocache_total_time = 0
         for _n in range(N):
             start = time.time()
-            await redis_cache.set("hi", "value", timeout=0)
-            await redis_cache.get("hi", timeout=0)
-            await redis_cache.delete("hi", timeout=0)
+            await valkey_cache.set("hi", "value", timeout=0)
+            await valkey_cache.get("hi", timeout=0)
+            await valkey_cache.delete("hi", timeout=0)
             aiocache_total_time += time.time() - start
 
         print(
             "\n{:0.2f}/{:0.2f}: {:0.2f}".format(
-                aiocache_total_time, redis_total_time, aiocache_total_time / redis_total_time
+                aiocache_total_time, valkey_total_time, aiocache_total_time / valkey_total_time
             )
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
-        print("redis    avg call: {:0.5f}s".format(redis_total_time / N))
-        assert aiocache_total_time / redis_total_time < 1.35
+        print("valkey    avg call: {:0.5f}s".format(valkey_total_time / N))
+        assert aiocache_total_time / valkey_total_time < 1.35
 
-    async def test_redis_multigetsetdel(self, redis_client, redis_cache):
+    async def test_valkey_multigetsetdel(self, valkey_client, valkey_cache):
         N = 5000
-        redis_total_time = 0
+        valkey_total_time = 0
         values = ["a", "b", "c", "d", "e", "f"]
         for _n in range(N):
             start = time.time()
-            await redis_client.mset({x: x for x in values})
-            await redis_client.mget(values)
+            await valkey_client.mset({x: x for x in values})
+            await valkey_client.mget(values)
             for k in values:
-                await redis_client.delete(k)
-            redis_total_time += time.time() - start
+                await valkey_client.delete([k])
+            valkey_total_time += time.time() - start
 
         aiocache_total_time = 0
         for _n in range(N):
             start = time.time()
-            await redis_cache.multi_set([(x, x) for x in values], timeout=0)
-            await redis_cache.multi_get(values, timeout=0)
+            await valkey_cache.multi_set([(x, x) for x in values], timeout=0)
+            await valkey_cache.multi_get(values, timeout=0)
             for k in values:
-                await redis_cache.delete(k, timeout=0)
+                await valkey_cache.delete(k, timeout=0)
             aiocache_total_time += time.time() - start
 
         print(
             "\n{:0.2f}/{:0.2f}: {:0.2f}".format(
-                aiocache_total_time, redis_total_time, aiocache_total_time / redis_total_time
+                aiocache_total_time, valkey_total_time, aiocache_total_time / valkey_total_time
             )
         )
         print("aiocache avg call: {:0.5f}s".format(aiocache_total_time / N))
-        print("redis_client    avg call: {:0.5f}s".format(redis_total_time / N))
-        assert aiocache_total_time / redis_total_time < 1.35
+        print("valkey_client    avg call: {:0.5f}s".format(valkey_total_time / N))
+        assert aiocache_total_time / valkey_total_time < 1.35
 
 
 @pytest.fixture

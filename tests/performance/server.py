@@ -2,7 +2,8 @@ import asyncio
 import logging
 import uuid
 
-import redis.asyncio as redis
+from glide import GlideClient, GlideClientConfiguration, NodeAddress
+
 from aiohttp import web
 
 logging.getLogger("aiohttp.access").propagate = False
@@ -10,15 +11,12 @@ logging.getLogger("aiohttp.access").propagate = False
 
 class CacheManager:
     def __init__(self, backend: str):
-        if backend == "redis":
-            from aiocache.backends.redis import RedisCache
-            cache = RedisCache(
-                client=redis.Redis(
-                    host="127.0.0.1",
-                    port=6379,
-                    db=0,
-                    password=None,
-                    decode_responses=False,
+        if backend == "valkey":
+            from aiocache.backends.valkey import ValkeyCache
+
+            cache = ValkeyCache(
+                client=GlideClient.create(
+                    GlideClientConfiguration(addresses=[NodeAddress()], database_id=0),
                 )
             )
         elif backend == "memcached":
