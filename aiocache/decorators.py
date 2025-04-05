@@ -260,8 +260,9 @@ class multi_cached:
         else:
             kwargs[self.keys_from_attr] = missing_keys
 
-        result = await f(*new_args, **kwargs)
-        result.update(partial)
+        result = partial
+        new_items = await f(*new_args, **kwargs)
+        result.update(new_items)
 
         to_cache = {k: v for k, v in result.items() if not self.skip_cache_func(k, v)}
 
