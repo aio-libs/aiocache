@@ -62,6 +62,7 @@ class ValkeyBackend(BaseCache[str]):
         return [v if v is None else v.decode(encoding) for v in values]
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
+        success_message = "OK"
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
         if ttl is None:
@@ -70,6 +71,9 @@ class ValkeyBackend(BaseCache[str]):
             ttl = int(ttl * 1000)
             return await self.client.set(key, value, expiry=ExpirySet(ExpiryType.MILLSEC, ttl))
         return await self.client.set(key, value, expiry=ExpirySet(ExpiryType.SEC, ttl))
+            return await self.client.set(key, value) == success_message
+
+        return await self.client.set(key, value, expiry=ttl) == success_message
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         args = ()
