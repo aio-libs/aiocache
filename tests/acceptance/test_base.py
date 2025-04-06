@@ -3,7 +3,6 @@ import asyncio
 import pytest
 
 from aiocache.backends.memory import SimpleMemoryCache
-from aiocache.backends.valkey import ValkeyCache
 from aiocache.base import _Conn
 from ..utils import Keys
 
@@ -43,10 +42,7 @@ class TestCache:
         assert value is None
 
     async def test_set(self, cache):
-        if isinstance(cache, ValkeyCache):
-            assert await cache.set(Keys.KEY, "value") == "OK"
-        else:
-            assert await cache.set(Keys.KEY, "value") is True
+        assert await cache.set(Keys.KEY, "value") is True
 
     async def test_set_cancel_previous_ttl_handle(self, cache):
         await cache.set(Keys.KEY, "value", ttl=4)
@@ -83,7 +79,7 @@ class TestCache:
         assert await cache.add(Keys.KEY, "value", ttl=1) is True
 
     async def test_add_existing(self, cache):
-        assert await cache.set(Keys.KEY, "value") == "OK"
+        assert await cache.set(Keys.KEY, "value") is True
         with pytest.raises(ValueError):
             await cache.add(Keys.KEY, "value")
 
@@ -133,19 +129,13 @@ class TestCache:
     async def test_close_pool_only_clears_resources(self, cache):
         await cache.set(Keys.KEY, "value")
         await cache.close()
-        if isinstance(cache, ValkeyCache):
-            assert await cache.set(Keys.KEY, "value") == "OK"
-        else:
-            assert await cache.set(Keys.KEY, "value") is True
+        assert await cache.set(Keys.KEY, "value") is True
         assert await cache.get(Keys.KEY) == "value"
 
     async def test_single_connection(self, cache):
         async with cache.get_connection() as conn:
             assert isinstance(conn, _Conn)
-            if isinstance(cache, ValkeyCache):
-                assert await conn.set(Keys.KEY, "value") == "OK"
-            else:
-                assert await conn.set(Keys.KEY, "value") is True
+            assert await conn.set(Keys.KEY, "value") is True
             assert await conn.get(Keys.KEY) == "value"
 
 
@@ -247,12 +237,13 @@ class TestValkeyCache:
     async def test_raw(self, valkey_cache):
         await valkey_cache.raw("set", "key", "value")
         assert await valkey_cache.raw("get", "key") == "value"
-        assert await valkey_cache.raw("scan", b"0", "k*") == ["key"]
+        assert await valkey_cache.raw("scan", b"0", "k*") == [b"0", [b"key"]]
         # .raw() doesn't build key with namespace prefix, clear it manually
         await valkey_cache.raw("delete", "key")
 
     async def test_script(self, valkey_cache):
         from glide import Script
+
         set_script = Script("return server.call('set',KEYS[1], ARGV[1])")
         get_script = Script("return server.call('get',KEYS[1])")
         key_script = Script("return server.call('keys',KEYS[1])")
