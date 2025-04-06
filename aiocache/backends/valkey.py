@@ -121,11 +121,13 @@ class ValkeyBackend(BaseCache[str]):
 
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
-            cursor, keys = await self.client.scan(b"0", "{}:*".format(namespace))
+            _, keys = await self.client.scan(b"0", "{}:*".format(namespace))
             if keys:
                 return bool(await self.client.delete(keys))
         else:
             return await self.client.flushdb()
+
+        return True
 
     @API.register
     @API.aiocache_enabled()
