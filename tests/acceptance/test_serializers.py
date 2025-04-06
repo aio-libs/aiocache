@@ -60,10 +60,7 @@ class TestNullSerializer:
     @pytest.mark.parametrize("obj", TYPES)
     async def test_set_get_types(self, memory_cache, obj):
         memory_cache.serializer = NullSerializer()
-        if isinstance(memory_cache, ValkeyCache):
-            assert await memory_cache.set(Keys.KEY, obj) == "OK"
-        else:
-            assert await memory_cache.set(Keys.KEY, obj) is True
+        assert await memory_cache.set(Keys.KEY, obj) is True
         assert await memory_cache.get(Keys.KEY) is obj
 
     @pytest.mark.parametrize("obj", TYPES)
@@ -85,10 +82,7 @@ class TestStringSerializer:
     @pytest.mark.parametrize("obj", TYPES)
     async def test_set_get_types(self, cache, obj):
         cache.serializer = StringSerializer()
-        if isinstance(cache, ValkeyCache):
-            assert await cache.set(Keys.KEY, obj) == "OK"
-        else:
-            assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.set(Keys.KEY, obj) is True
         assert await cache.get(Keys.KEY) == str(obj)
 
     @pytest.mark.parametrize("obj", TYPES)
@@ -110,10 +104,7 @@ class TestJsonSerializer:
     @pytest.mark.parametrize("obj", TYPES)
     async def test_set_get_types(self, cache, obj):
         cache.serializer = JsonSerializer()
-        if isinstance(cache, ValkeyCache):
-            assert await cache.set(Keys.KEY, obj) == "OK"
-        else:
-            assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.set(Keys.KEY, obj) is True
         assert await cache.get(Keys.KEY) == json.loads(json.dumps(obj))
 
     @pytest.mark.parametrize("obj", TYPES)
@@ -135,10 +126,7 @@ class TestPickleSerializer:
     @pytest.mark.parametrize("obj", TYPES)
     async def test_set_get_types(self, cache, obj):
         cache.serializer = PickleSerializer()
-        if isinstance(cache, ValkeyCache):
-            assert await cache.set(Keys.KEY, obj) == "OK"
-        else:
-            assert await cache.set(Keys.KEY, obj) is True
+        assert await cache.set(Keys.KEY, obj) is True
         assert await cache.get(Keys.KEY) == pickle.loads(pickle.dumps(obj))
 
     @pytest.mark.parametrize("obj", TYPES)
