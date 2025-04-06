@@ -17,26 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class ValkeyBackend(BaseCache[str]):
-    RELEASE_SCRIPT = Script(
-        "if server.call('get',KEYS[1]) == ARGV[1] then"
-        " return server.call('del',KEYS[1])"
-        " else"
-        " return 0"
-        " end"
-    )
-
-    CAS_SCRIPT = Script(
-        "if server.call('get',KEYS[1]) == ARGV[2] then"
-        "  if #ARGV == 4 then"
-        "   return server.call('set', KEYS[1], ARGV[1], ARGV[3], ARGV[4])"
-        "  else"
-        "   return server.call('set', KEYS[1], ARGV[1])"
-        "  end"
-        " else"
-        " return 0"
-        " end"
-    )
-
     def __init__(
         self,
         client: GlideClient,
@@ -63,25 +43,24 @@ class ValkeyBackend(BaseCache[str]):
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
         success_message = "OK"
+
+        if isinstance(ttl, float):
+            ttl = ExpirySet(ExpiryType.MILLSEC, int(ttl * 1000))
+        elif ttl:
+            ttl = ExpirySet(ExpiryType.SEC, ttl)
+
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
+
         if ttl is None:
-            return await self.client.set(key, value)
-        if isinstance(ttl, float):
-            ttl = int(ttl * 1000)
-            return await self.client.set(key, value, expiry=ExpirySet(ExpiryType.MILLSEC, ttl))
-        return await self.client.set(key, value, expiry=ExpirySet(ExpiryType.SEC, ttl))
             return await self.client.set(key, value) == success_message
 
         return await self.client.set(key, value, expiry=ttl) == success_message
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
-        args = ()
-        if ttl is not None:
-            args = ("PX", str(int(ttl * 1000))) if isinstance(ttl, float) else ("EX", str(ttl))
-        if isinstance(key, str):
-            key = [key]
-        return await self._script(self.CAS_SCRIPT, key, value, token, *args)
+        if await self._get(key) == token:
+            return await self.client.set(key, value, expiry=ttl) == "OK"
+        return 0
 
     async def _multi_set(self, pairs, ttl=None, _conn=None):
         ttl = ttl or 0
@@ -184,7 +163,7 @@ class ValkeyBackend(BaseCache[str]):
         return value
 
     async def _redlock_release(self, key, value):
-        if await self.client.get(key):
+        if await self._get(key) == value:
             return await self.client.delete([key])
         return 0
 
