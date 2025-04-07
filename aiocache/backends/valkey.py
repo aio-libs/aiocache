@@ -1,10 +1,17 @@
 import logging
 import time
-from typing import Any, Callable, Optional, TYPE_CHECKING, List, cast
+from typing import Any, Callable, Optional, TYPE_CHECKING, List
 
-from glide import GlideClient, Script, Transaction, ExpirySet, ExpiryType, ConditionalChange
+from glide import (
+    ConditionalChange,
+    ExpirySet,
+    ExpiryType,
+    GlideClient,
+    GlideClientConfiguration,
+    Script,
+    Transaction,
+)
 from glide.exceptions import RequestError as IncrbyException
-from glide.protobuf.command_request_pb2 import RequestType
 
 from aiocache.base import BaseCache, API
 from aiocache.serializers import JsonSerializer
@@ -194,10 +201,12 @@ class ValkeyCache(ValkeyBackend):
 
     def __init__(
         self,
-        client: GlideClient,
+        client: Optional[GlideClient] = None,
         serializer: Optional["BaseSerializer"] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
+        backend: type[GlideClient] = GlideClient,
+        config: GlideClientConfiguration = None,
         **kwargs: Any,
     ):
         super().__init__(
@@ -207,6 +216,17 @@ class ValkeyCache(ValkeyBackend):
             key_builder=key_builder,
             **kwargs,
         )
+        self.backend = backend
+        self.config = config
+
+    async def __aenter__(self):
+        if not self.config:
+            raise AttributeError("Configuration must be provided for context manager")
+        self.client = await self.backend.create(config=self.config)
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        await self.client.close()
 
     @classmethod
     def parse_uri_path(cls, path):
