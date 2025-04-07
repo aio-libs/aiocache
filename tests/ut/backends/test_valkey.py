@@ -1,8 +1,8 @@
-from unittest.mock import ANY, AsyncMock, create_autospec, patch
+from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
 
-from glide import Transaction, Script
+from glide import ConditionalChange, ExpirySet, ExpiryType, Transaction, Script
 from glide.exceptions import RequestError
 
 from aiocache.backends.valkey import ValkeyBackend, ValkeyCache
@@ -30,20 +30,12 @@ def valkey(valkey_client):
         ):
             setattr(m, method, AsyncMock(return_value=None, spec_set=()))
         m.mget = AsyncMock(return_value=[None], spec_set=())
-        m.set = AsyncMock(return_value=True, spec_set=())
+        m.set = AsyncMock(return_value="OK", spec_set=())
 
         yield valkey
 
 
 class TestValkeyBackend:
-    # async def test_valkey_backend_requires_client_decode_responses(self, valkey_client):
-    #     with pytest.raises(ValueError) as ve:
-    #         ValkeyBackend(client=valkey_client)
-    #
-    #     assert str(ve.value) == (
-    #         "valkey client must be constructed with decode_responses set to False"
-    #     )
-
     async def test_get(self, valkey):
         valkey.client.get.return_value = b"value"
         assert await valkey._get(Keys.KEY) == "value"
@@ -62,54 +54,68 @@ class TestValkeyBackend:
         valkey.client.set.assert_called_once
 
     async def test_set_cas_token(self, mocker, valkey):
-        mocker.spy(valkey, "_cas")
-        await valkey._set(Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client)
+        mocker.patch.object(valkey, "_cas")
+        await valkey._set(
+            Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client
+        )
         valkey._cas.assert_called_with(
             Keys.KEY, "value", "old_value", ttl=None, _conn=valkey.client
         )
 
     async def test_cas(self, mocker, valkey):
-        mocker.spy(valkey, "_script")
+        mocker.spy(valkey, "_get")
+        mocker.spy(valkey, "_cas")
         await valkey._cas(Keys.KEY, "value", "old_value", ttl=10, _conn=valkey.client)
-        valkey._script.assert_called_with(
-            valkey.CAS_SCRIPT,
-            *[[Keys.KEY], "value", "old_value", "EX", "10"],
-        )
+        valkey._get.assert_called_with(Keys.KEY)
+        assert valkey._cas.spy_return == 0
 
     async def test_cas_float_ttl(self, mocker, valkey):
-        mocker.spy(valkey, "_script")
+        spy = mocker.spy(valkey, "_get")
         await valkey._cas(Keys.KEY, "value", "old_value", ttl=0.1, _conn=valkey.client)
-        valkey._script.assert_called_with(
-            valkey.CAS_SCRIPT,
-            *[[Keys.KEY], "value", "old_value", "PX", "100"],
-        )
+        spy.assert_called_with(Keys.KEY)
+        mocker.stop(spy)
+        mock = mocker.patch.object(valkey, "_get", return_value="old_value")
+        await valkey._cas(Keys.KEY, "value", "old_value", ttl=0.1, _conn=valkey.client)
+        mock.assert_called_once()
+        valkey.client.set.assert_called_with(Keys.KEY, "value", expiry=0.1)
 
     async def test_multi_get(self, valkey):
         await valkey._multi_get([Keys.KEY, Keys.KEY_1])
-        valkey.client.mget.assert_called_with(Keys.KEY, Keys.KEY_1)
+        valkey.client.mget.assert_called_with([Keys.KEY, Keys.KEY_1])
 
     async def test_multi_set(self, valkey):
         await valkey._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")])
         valkey.client.mset.assert_called_with({Keys.KEY: "value", Keys.KEY_1: "random"})
 
     async def test_multi_set_with_ttl(self, valkey, mocker):
-        spy_mset = mocker.spy(Transaction, "mset")
-        spy_expire = mocker.spy(Transaction, "expire")
+        mock_mset = mocker.patch.object(Transaction, "mset")
+        mock_expire = mocker.patch.object(Transaction, "expire")
         await valkey._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
 
         valkey.client.exec.assert_called()
 
-        assert spy_mset.call_count == 1
-        assert spy_expire.call_count == 2
-        spy_expire.assert_any_call(valkey.client.exec.call_args.args[0], Keys.KEY, 1)
-        spy_expire.assert_any_call(valkey.client.exec.call_args.args[0], Keys.KEY_1, 1)
+        assert mock_mset.call_count == 1
+        assert mock_expire.call_count == 2
+        mock_expire.assert_any_call(Keys.KEY, 1)
+        mock_expire.assert_any_call(Keys.KEY_1, 1)
 
     async def test_add(self, valkey):
         await valkey._add(Keys.KEY, "value")
-        valkey.client.set.assert_called_with(Keys.KEY, "value", nx=True, ex=None)
+        valkey.client.set.assert_called_with(
+            Keys.KEY, "value", conditional_set=ConditionalChange.ONLY_IF_DOES_NOT_EXIST
+        )
 
         await valkey._add(Keys.KEY, "value", 1)
-        valkey.client.set.assert_called_with(Keys.KEY, "value", nx=True, ex=1)
+        # TODO: change this to `assert_called_with` once ExpirySet support `__eq__`
+        assert valkey.client.set.call_args.args[0] == Keys.KEY
+        assert (
+            valkey.client.set.call_args.kwargs["conditional_set"]
+            == ConditionalChange.ONLY_IF_DOES_NOT_EXIST
+        )
+        assert (
+            valkey.client.set.call_args.kwargs["expiry"].get_cmd_args()
+            == ExpirySet(ExpiryType.SEC, 1).get_cmd_args()
+        )
 
     async def test_add_existing(self, valkey):
         valkey.client.set.return_value = False
@@ -118,7 +124,15 @@ class TestValkeyBackend:
 
     async def test_add_float_ttl(self, valkey):
         await valkey._add(Keys.KEY, "value", 0.1)
-        valkey.client.set.assert_called_with(Keys.KEY, "value", nx=True, px=100)
+        assert valkey.client.set.call_args.args[0] == Keys.KEY
+        assert (
+            valkey.client.set.call_args.kwargs["conditional_set"]
+            == ConditionalChange.ONLY_IF_DOES_NOT_EXIST
+        )
+        assert (
+            valkey.client.set.call_args.kwargs["expiry"].get_cmd_args()
+            == ExpirySet(ExpiryType.MILLSEC, 100).get_cmd_args()
+        )
 
     async def test_exists(self, valkey):
         valkey.client.exists.return_value = 1
@@ -151,7 +165,7 @@ class TestValkeyBackend:
     async def test_clear(self, valkey):
         valkey.client.scan.return_value = [b"0", ["nm:a", "nm:b"]]
         await valkey._clear("nm")
-        valkey.client.delete.assert_called_with("nm:a", "nm:b")
+        valkey.client.delete.assert_called_with(["nm:a", "nm:b"])
 
     async def test_clear_no_keys(self, valkey):
         valkey.client.scan.return_value = [b"0", []]
@@ -168,9 +182,10 @@ class TestValkeyBackend:
         valkey.client.invoke_script.assert_called_with(script, Keys.KEY, ())
 
     async def test_redlock_release(self, mocker, valkey):
-        mocker.spy(valkey, "_script")
+        mocker.patch.object(valkey, "_get", return_value="random")
         await valkey._redlock_release(Keys.KEY, "random")
-        valkey._script.assert_called_with(valkey.RELEASE_SCRIPT, Keys.KEY, "random")
+        valkey._get.assert_called_once_with(Keys.KEY)
+        valkey.client.delete.assert_called_once_with([Keys.KEY])
 
 
 class TestValkeyCache:
@@ -190,7 +205,8 @@ class TestValkeyCache:
         assert isinstance(ValkeyCache(client=valkey_client).serializer, JsonSerializer)
 
     @pytest.mark.parametrize(
-        "path,expected", [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})]
+        "path,expected",
+        [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})],
     )
     def test_parse_uri_path(self, path, expected, valkey_client):
         assert ValkeyCache(client=valkey_client).parse_uri_path(path) == expected
@@ -203,7 +219,9 @@ class TestValkeyCache:
             ["my_ns", "my_ns:" + ensure_key(Keys.KEY)],
         ),  # noqa: B950
     )
-    def test_build_key_double_dot(self, set_test_namespace, valkey_cache, namespace, expected):
+    def test_build_key_double_dot(
+        self, set_test_namespace, valkey_cache, namespace, expected
+    ):
         assert valkey_cache.build_key(Keys.KEY, namespace) == expected
 
     def test_build_key_no_namespace(self, valkey_cache):
