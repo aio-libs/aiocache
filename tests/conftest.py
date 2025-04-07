@@ -20,3 +20,5 @@ async def valkey_client(max_conns, decode_responses):
     client = await GlideClient.create(conf)
 
     yield client
+
+    await client.close()
