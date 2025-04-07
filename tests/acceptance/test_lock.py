@@ -21,9 +21,9 @@ def build_key_bytes(key, namespace=None):
 
 
 @pytest.fixture
-def custom_redis_cache(mocker, redis_cache, build_key=build_key):
-    mocker.patch.object(redis_cache, "build_key", new=build_key)
-    yield redis_cache
+def custom_valkey_cache(mocker, valkey_cache, build_key=build_key):
+    mocker.patch.object(valkey_cache, "build_key", new=build_key)
+    yield valkey_cache
 
 
 @pytest.fixture
@@ -127,35 +127,35 @@ class TestMemoryRedLock:
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
 
-@pytest.mark.redis
-class TestRedisRedLock:
+@pytest.mark.valkey
+class TestValkeyRedLock:
     @pytest.fixture
-    def lock(self, redis_cache):
-        return RedLock(redis_cache, Keys.KEY, 20)
+    def lock(self, valkey_cache):
+        return RedLock(valkey_cache, Keys.KEY, 20)
 
-    async def test_acquire_key_builder(self, custom_redis_cache, lock):
-        custom_redis_cache.serializer = StringSerializer()
+    async def test_acquire_key_builder(self, custom_valkey_cache, lock):
+        custom_valkey_cache.serializer = StringSerializer()
         async with lock:
-            assert await custom_redis_cache.get(KEY_LOCK) == lock._value
+            assert await custom_valkey_cache.get(KEY_LOCK) == lock._value
 
-    async def test_acquire_release_key_builder(self, custom_redis_cache, lock):
-        custom_redis_cache.serializer = StringSerializer()
+    async def test_acquire_release_key_builder(self, custom_valkey_cache, lock):
+        custom_valkey_cache.serializer = StringSerializer()
         async with lock:
-            assert await custom_redis_cache.get(KEY_LOCK) is not None
-        assert await custom_redis_cache.get(KEY_LOCK) is None
+            assert await custom_valkey_cache.get(KEY_LOCK) is not None
+        assert await custom_valkey_cache.get(KEY_LOCK) is None
 
     async def test_release_wrong_token_fails(self, lock):
         await lock.__aenter__()
         lock._value = "random"
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
-    async def test_release_wrong_client_fails(self, redis_cache, lock):
-        wrong_lock = RedLock(redis_cache, Keys.KEY, 20)
+    async def test_release_wrong_client_fails(self, valkey_cache, lock):
+        wrong_lock = RedLock(valkey_cache, Keys.KEY, 20)
         await lock.__aenter__()
         assert await wrong_lock.__aexit__("exc_type", "exc_value", "traceback") is None
 
-    async def test_float_lease(self, redis_cache):
-        lock = RedLock(redis_cache, Keys.KEY, 0.1)
+    async def test_float_lease(self, valkey_cache):
+        lock = RedLock(valkey_cache, Keys.KEY, 0.1)
         await lock.__aenter__()
         await asyncio.sleep(0.2)
         assert await lock.__aexit__("exc_type", "exc_value", "traceback") is None
@@ -257,23 +257,23 @@ class TestMemoryOptimisticLock:
         assert await memory_cache.get(Keys.KEY) is None
 
 
-@pytest.mark.redis
-class TestRedisOptimisticLock:
+@pytest.mark.valkey
+class TestValkeyOptimisticLock:
     @pytest.fixture
-    def lock(self, redis_cache):
-        return OptimisticLock(redis_cache, Keys.KEY)
+    def lock(self, valkey_cache):
+        return OptimisticLock(valkey_cache, Keys.KEY)
 
-    async def test_acquire_key_builder(self, custom_redis_cache, lock):
-        custom_redis_cache.serializer = StringSerializer()
-        await custom_redis_cache.set(Keys.KEY, "value")
+    async def test_acquire_key_builder(self, custom_valkey_cache, lock):
+        custom_valkey_cache.serializer = StringSerializer()
+        await custom_valkey_cache.set(Keys.KEY, "value")
         async with lock:
-            assert await custom_redis_cache.get(KEY_LOCK) == lock._token
-        await custom_redis_cache.delete(Keys.KEY, "value")
+            assert await custom_valkey_cache.get(KEY_LOCK) == lock._token
+        await custom_valkey_cache.delete(Keys.KEY, "value")
 
-    async def test_check_and_set_with_float_ttl(self, redis_cache, lock):
-        await redis_cache.set(Keys.KEY, "previous_value")
+    async def test_check_and_set_with_float_ttl(self, valkey_cache, lock):
+        await valkey_cache.set(Keys.KEY, "previous_value")
         async with lock as locked:
             await locked.cas("value", ttl=0.1)
 
         await asyncio.sleep(1)
-        assert await redis_cache.get(Keys.KEY) is None
+        assert await valkey_cache.get(Keys.KEY) is None
