@@ -6,10 +6,10 @@ from ..utils import KEY_LOCK, Keys
 
 
 @pytest.fixture
-async def valkey_cache(valkey_client):
+async def valkey_cache(valkey_config):
     from aiocache.backends.valkey import ValkeyCache
 
-    async with ValkeyCache(namespace="test", client=valkey_client) as cache:
+    async with ValkeyCache(namespace="test", config=valkey_config) as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
@@ -17,6 +17,7 @@ async def valkey_cache(valkey_client):
 @pytest.fixture
 async def memory_cache():
     from aiocache.backends.memory import SimpleMemoryCache
+
     async with SimpleMemoryCache(namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
@@ -25,6 +26,7 @@ async def memory_cache():
 @pytest.fixture
 async def memcached_cache():
     from aiocache.backends.memcached import MemcachedCache
+
     async with MemcachedCache(namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))

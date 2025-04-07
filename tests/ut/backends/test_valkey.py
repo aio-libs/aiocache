@@ -55,9 +55,7 @@ class TestValkeyBackend:
 
     async def test_set_cas_token(self, mocker, valkey):
         mocker.patch.object(valkey, "_cas")
-        await valkey._set(
-            Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client
-        )
+        await valkey._set(Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client)
         valkey._cas.assert_called_with(
             Keys.KEY, "value", "old_value", ttl=None, _conn=valkey.client
         )
@@ -219,9 +217,7 @@ class TestValkeyCache:
             ["my_ns", "my_ns:" + ensure_key(Keys.KEY)],
         ),  # noqa: B950
     )
-    def test_build_key_double_dot(
-        self, set_test_namespace, valkey_cache, namespace, expected
-    ):
+    def test_build_key_double_dot(self, set_test_namespace, valkey_cache, namespace, expected):
         assert valkey_cache.build_key(Keys.KEY, namespace) == expected
 
     def test_build_key_no_namespace(self, valkey_cache):
