@@ -55,10 +55,10 @@ def base_cache():
 
 
 @pytest.fixture
-async def valkey_cache(valkey_client):
+async def valkey_cache(valkey_config):
     from aiocache.backends.valkey import ValkeyCache
 
-    async with ValkeyCache(client=valkey_client) as cache:
+    async with ValkeyCache(config=valkey_config) as cache:
         yield cache
 
 

@@ -12,12 +12,20 @@ def decode_responses():
 
 
 @pytest.fixture
-async def valkey_client(max_conns, decode_responses):
-    from glide import GlideClient, GlideClientConfiguration, NodeAddress
+def valkey_config():
+    from glide import GlideClientConfiguration, NodeAddress
 
     addresses = [NodeAddress("localhost", 6379)]
     conf = GlideClientConfiguration(addresses=addresses, database_id=0)
-    client = await GlideClient.create(conf)
+
+    yield conf
+
+
+@pytest.fixture
+async def valkey_client(max_conns, decode_responses, valkey_config):
+    from glide import GlideClient
+
+    client = await GlideClient.create(valkey_config)
 
     yield client
 
