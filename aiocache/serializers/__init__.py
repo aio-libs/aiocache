@@ -6,6 +6,7 @@ from .serializers import (
     NullSerializer,
     PickleSerializer,
     StringSerializer,
+    YamlSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -28,4 +29,5 @@ __all__ = [
     "PickleSerializer",
     "JsonSerializer",
     "MsgPackSerializer",
+    "YamlSerializer",
 ]
