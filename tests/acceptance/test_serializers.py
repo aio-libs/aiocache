@@ -10,7 +10,6 @@ try:
 except ImportError:
     import json  # type: ignore[no-redef]
 
-from aiocache.backends.valkey import ValkeyCache
 from aiocache.serializers import (
     BaseSerializer,
     JsonSerializer,

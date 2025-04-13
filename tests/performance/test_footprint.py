@@ -1,6 +1,6 @@
 import platform
 import time
-from typing import AsyncIterator, cast
+from typing import AsyncIterator
 
 import aiomcache
 import pytest
