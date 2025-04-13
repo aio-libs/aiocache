@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Callable, List, Optional, Self, TYPE_CHECKING
+from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 from glide import (
     ConditionalChange,
@@ -18,6 +18,11 @@ from aiocache.serializers import JsonSerializer
 
 if TYPE_CHECKING:  # pragma: no cover
     from aiocache.serializers import BaseSerializer
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing import Any as Self
 
 
 logger = logging.getLogger(__name__)
