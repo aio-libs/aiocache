@@ -96,6 +96,3 @@ _release_notes
 tags
 .mypy_cache/
 .pytest_cache/
-
-# IDEs
-.idea
