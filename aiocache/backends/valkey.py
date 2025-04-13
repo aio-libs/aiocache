@@ -245,4 +245,4 @@ class ValkeyCache(ValkeyBackend):
         return options
 
     def __repr__(self):  # pragma: no cover
-        return "ValkeyCache"
+        return f"ValkeyCache ({self.client.config.addresses[0].host}:{self.client.config.addresses[0].port})"
