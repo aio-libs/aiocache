@@ -12,8 +12,8 @@ from ...utils import Keys, ensure_key
 
 
 @pytest.fixture
-def valkey(valkey_client):
-    valkey = ValkeyBackend(client=valkey_client)
+async def valkey(valkey_config):
+    valkey = await ValkeyBackend(config=valkey_config).__aenter__()
     with patch.object(valkey, "client", autospec=True) as m:
         # These methods actually return an awaitable.
         for method in (
@@ -33,6 +33,8 @@ def valkey(valkey_client):
         m.set = AsyncMock(return_value="OK", spec_set=())
 
         yield valkey
+
+    await valkey.__aexit__()
 
 
 class TestValkeyBackend:
@@ -55,7 +57,9 @@ class TestValkeyBackend:
 
     async def test_set_cas_token(self, mocker, valkey):
         mocker.patch.object(valkey, "_cas")
-        await valkey._set(Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client)
+        await valkey._set(
+            Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client
+        )
         valkey._cas.assert_called_with(
             Keys.KEY, "value", "old_value", ttl=None, _conn=valkey.client
         )
@@ -196,18 +200,18 @@ class TestValkeyCache:
     def test_name(self):
         assert ValkeyCache.NAME == "valkey"
 
-    def test_inheritance(self, valkey_client):
-        assert isinstance(ValkeyCache(client=valkey_client), BaseCache)
+    def test_inheritance(self, valkey_config):
+        assert isinstance(ValkeyCache(config=valkey_config), BaseCache)
 
-    def test_default_serializer(self, valkey_client):
-        assert isinstance(ValkeyCache(client=valkey_client).serializer, JsonSerializer)
+    def test_default_serializer(self, valkey_config):
+        assert isinstance(ValkeyCache(config=valkey_config).serializer, JsonSerializer)
 
     @pytest.mark.parametrize(
         "path,expected",
         [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})],
     )
-    def test_parse_uri_path(self, path, expected, valkey_client):
-        assert ValkeyCache(client=valkey_client).parse_uri_path(path) == expected
+    def test_parse_uri_path(self, path, expected, valkey_config):
+        assert ValkeyCache(config=valkey_config).parse_uri_path(path) == expected
 
     @pytest.mark.parametrize(
         "namespace, expected",
@@ -217,7 +221,9 @@ class TestValkeyCache:
             ["my_ns", "my_ns:" + ensure_key(Keys.KEY)],
         ),  # noqa: B950
     )
-    def test_build_key_double_dot(self, set_test_namespace, valkey_cache, namespace, expected):
+    def test_build_key_double_dot(
+        self, set_test_namespace, valkey_cache, namespace, expected
+    ):
         assert valkey_cache.build_key(Keys.KEY, namespace) == expected
 
     def test_build_key_no_namespace(self, valkey_cache):

@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Callable, Optional, TYPE_CHECKING, List
+from typing import Any, Callable, List, Optional, Self, TYPE_CHECKING
 
 from glide import (
     ConditionalChange,
@@ -24,14 +24,24 @@ logger = logging.getLogger(__name__)
 
 
 class ValkeyBackend(BaseCache[str]):
-    def __init__(
-        self,
-        client: GlideClient,
-        **kwargs,
-    ):
+    def __init__(self, config: GlideClientConfiguration = None, **kwargs):
+        self.config = config
         super().__init__(**kwargs)
 
-        self.client = client
+    async def __aenter__(self) -> Self:
+        if not self.config:
+            raise AttributeError("Configuration must be provided for context manager")
+        self.client = await self._connect(self.config)
+        return self
+
+    async def __aexit__(self, *args, **kwargs) -> None:
+        await self._disconnect()
+
+    async def _connect(self, config: GlideClientConfiguration) -> GlideClient:
+        return await GlideClient.create(config=config)
+
+    async def _disconnect(self) -> None:
+        await self.client.close()
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
@@ -203,32 +213,17 @@ class ValkeyCache(ValkeyBackend):
 
     def __init__(
         self,
-        client: Optional[GlideClient] = None,
         serializer: Optional["BaseSerializer"] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
-        backend: type[GlideClient] = GlideClient,
-        config: GlideClientConfiguration = None,
         **kwargs: Any,
     ):
         super().__init__(
-            client=client,
             serializer=serializer or JsonSerializer(),
             namespace=namespace,
             key_builder=key_builder,
             **kwargs,
         )
-        self.backend = backend
-        self.config = config
-
-    async def __aenter__(self):
-        if not self.config:
-            raise AttributeError("Configuration must be provided for context manager")
-        self.client = await self.backend.create(config=self.config)
-        return self
-
-    async def __aexit__(self, *args, **kwargs):
-        await self.client.close()
 
     @classmethod
     def parse_uri_path(cls, path):
