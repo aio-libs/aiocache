@@ -74,3 +74,14 @@ MemcachedCache
 
 .. autoclass:: aiocache.backends.memcached.MemcachedCache
   :members:
+
+
+..  _dynamodbcache:
+
+DynamoDBCache
+-------------
+
+`aiocache-dynamodb <https://github.com/vonsteer/aiocache-dynamodb>`_ is an external backend for `aiocache` that provides asynchronous caching support for DynamoDB.
+
+.. autoclass:: aiocache_dynamodb.DynamoDBCache
+  :members:

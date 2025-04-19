@@ -1,7 +1,7 @@
 aiocache
 ########
 
-Asyncio cache supporting multiple backends (memory, redis and memcached).
+Asyncio cache supporting multiple backends (memory, redis, memcached, dynamodb).
 
 .. image:: https://codecov.io/gh/aio-libs/aiocache/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/aio-libs/aiocache
@@ -100,7 +100,7 @@ How does it work
 
 Aiocache provides 3 main entities:
 
-- **backends**: Allow you specify which backend you want to use for your cache. Currently supporting: SimpleMemoryCache, RedisCache using redis_ and MemCache using aiomcache_.
+- **backends**: Allow you specify which backend you want to use for your cache. Currently supporting: SimpleMemoryCache, RedisCache using redis_, MemCache using aiomcache_ and DynamoDB using aiobotocore_ (available on aiocache-dynamodb_).
 - **serializers**: Serialize and deserialize the data between your code and the backends. This allows you to save any Python object into your cache. Currently supporting: StringSerializer, PickleSerializer, JsonSerializer, and MsgPackSerializer. But you can also build custom ones.
 - **plugins**: Implement a hooks system that allows to execute extra behavior before and after of each command.
 
@@ -145,3 +145,5 @@ Documentation
 
 .. _redis: https://github.com/redis/redis-py
 .. _aiomcache: https://github.com/aio-libs/aiomcache
+.. _aiobotocore: https://github.com/aio-libs/aiobotocore
+.. _aiocache-dynamodb: https://github.com/vonsteer/aiobotocore
