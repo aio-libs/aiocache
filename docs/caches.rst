@@ -78,10 +78,15 @@ MemcachedCache
 
 ..  _dynamodbcache:
 
+Third-party caches
+==================
+
+Additional cache backends are available through other libraries.
+
 DynamoDBCache
 -------------
 
-`aiocache-dynamodb <https://github.com/vonsteer/aiocache-dynamodb>`_ is an external backend for `aiocache` that provides asynchronous caching support for DynamoDB.
+`aiocache-dynamodb <https://github.com/vonsteer/aiocache-dynamodb>`_ provides support for DynamoDB.
 
 .. autoclass:: aiocache_dynamodb.DynamoDBCache
   :members:
