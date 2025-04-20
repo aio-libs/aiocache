@@ -141,7 +141,3 @@ Documentation
 - `Decorators <http://aiocache.readthedocs.io/en/latest/decorators.html>`_
 - `Testing <http://aiocache.readthedocs.io/en/latest/testing.html>`_
 - `Examples <https://github.com/argaen/aiocache/tree/master/examples>`_
-
-
-.. _redis: https://github.com/redis/redis-py
-.. _aiomcache: https://github.com/aio-libs/aiomcache
