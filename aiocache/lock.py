@@ -62,7 +62,7 @@ class RedLock(Generic[CacheKeyType]):
 
     _EVENTS: Dict[str, asyncio.Event] = {}
 
-    def __init__(self, client: BaseCache[CacheKeyType], key: str, lease: Union[int, float]):
+    def __init__(self, client: BaseCache[CacheKeyType, Any], key: str, lease: Union[int, float]):
         self.client = client
         self.key = self.client.build_key(key + "-lock")
         self.lease = lease
@@ -133,7 +133,7 @@ class OptimisticLock(Generic[CacheKeyType]):
     If the lock is created with an unexisting key, there will never be conflicts.
     """
 
-    def __init__(self, client: BaseCache[CacheKeyType], key: str):
+    def __init__(self, client: BaseCache[CacheKeyType, Any], key: str):
         self.client = client
         self.key = key
         self.ns_key = self.client.build_key(key)

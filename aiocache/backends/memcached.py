@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Any, Optional
 
 import aiomcache
 
@@ -7,7 +7,7 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-class MemcachedBackend(BaseCache[bytes]):
+class MemcachedBackend(BaseCache[bytes, Any]):
     def __init__(self, host="127.0.0.1", port=11211, pool_size=2, **kwargs):
         super().__init__(**kwargs)
         self.host = host
