@@ -1,11 +1,16 @@
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TypeVar
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
+CacheKeyType = TypeVar('CacheKeyType')
+CacheValueType = TypeVar('CacheValueType')
 
-class SimpleMemoryBackend(BaseCache[str]):
+
+class SimpleMemoryBackend(
+    BaseCache[CacheKeyType, CacheValueType],
+):
     """
     Wrapper around dict operations to use it as a cache backend
     """
@@ -110,7 +115,7 @@ class SimpleMemoryBackend(BaseCache[str]):
         return self._str_build_key(key, namespace)
 
 
-class SimpleMemoryCache(SimpleMemoryBackend):
+class SimpleMemoryCache(SimpleMemoryBackend[str, Any]):
     """
     Memory cache implementation with the following components as defaults:
         - serializer: :class:`aiocache.serializers.NullSerializer`
