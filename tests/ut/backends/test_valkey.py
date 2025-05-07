@@ -53,7 +53,9 @@ class TestValkeyBackend:
         valkey.client.set.assert_called_with(Keys.KEY, "value")
 
         await valkey._set(Keys.KEY, "value", ttl=1)
-        valkey.client.set.assert_called_once
+        valkey.client.set.assert_called_with(
+            Keys.KEY, "value", expiry=ExpirySet(ExpiryType.SEC, 1)
+        )
 
     async def test_set_cas_token(self, mocker, valkey):
         mocker.patch.object(valkey, "_cas")
@@ -108,15 +110,11 @@ class TestValkeyBackend:
         )
 
         await valkey._add(Keys.KEY, "value", 1)
-        # TODO: change this to `assert_called_with` once ExpirySet support `__eq__`
-        assert valkey.client.set.call_args.args[0] == Keys.KEY
-        assert (
-            valkey.client.set.call_args.kwargs["conditional_set"]
-            == ConditionalChange.ONLY_IF_DOES_NOT_EXIST
-        )
-        assert (
-            valkey.client.set.call_args.kwargs["expiry"].get_cmd_args()
-            == ExpirySet(ExpiryType.SEC, 1).get_cmd_args()
+        valkey.client.set.assert_called_with(
+            Keys.KEY,
+            "value",
+            conditional_set=ConditionalChange.ONLY_IF_DOES_NOT_EXIST,
+            expiry=ExpirySet(ExpiryType.SEC, 1),
         )
 
     async def test_add_existing(self, valkey):
