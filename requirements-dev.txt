@@ -6,6 +6,5 @@ flake8-bugbear==24.12.12
 flake8-import-order==0.18.2
 flake8-requirements==2.2.1
 mypy==1.15.0; implementation_name=="cpython"
-types-redis==4.6.0.20241004
 types-ujson==5.10.0.20250326
 aiocache-dynamodb==1.0.2 # used for documentation

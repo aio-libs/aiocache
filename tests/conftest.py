@@ -12,16 +12,10 @@ def decode_responses():
 
 
 @pytest.fixture
-async def redis_client(max_conns, decode_responses):
-    import redis.asyncio as redis
+def valkey_config():
+    from glide import GlideClientConfiguration, NodeAddress
 
-    async with redis.Redis(
-        host="127.0.0.1",
-        port=6379,
-        db=0,
-        password=None,
-        decode_responses=decode_responses,
-        socket_connect_timeout=None,
-        max_connections=max_conns
-    ) as r:
-        yield r
+    addresses = [NodeAddress("localhost", 6379)]
+    conf = GlideClientConfiguration(addresses=addresses, database_id=0)
+
+    yield conf
