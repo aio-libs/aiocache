@@ -27,7 +27,7 @@ async def test_multi_cached():
     await multi_cached_ids(ids=("a", "c"))
     await multi_cached_keys(keys=("d",))
 
-    async with ValkeyCache(config=config, namespace="main") as cache:
+    async with cache:
         assert await cache.exists("a")
         assert await cache.exists("b")
         assert await cache.exists("c")
