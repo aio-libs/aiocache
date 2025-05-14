@@ -1,15 +1,17 @@
 import asyncio
-
 from collections import namedtuple
-import redis.asyncio as redis
+
+from glide import GlideClientConfiguration, NodeAddress
 
 from aiocache import cached
-from aiocache import RedisCache
+from aiocache import ValkeyCache
 from aiocache.serializers import PickleSerializer
 
-Result = namedtuple('Result', "content, status")
+Result = namedtuple("Result", "content, status")
 
-cache = RedisCache(namespace="main", client=redis.Redis(), serializer=PickleSerializer())
+addresses = [NodeAddress("localhost", 6379)]
+config = GlideClientConfiguration(addresses=addresses, database_id=0)
+cache = ValkeyCache(config=config, namespace="main", serializer=PickleSerializer())
 
 
 @cached(cache, ttl=10, key_builder=lambda *args, **kw: "key")
