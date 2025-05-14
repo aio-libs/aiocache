@@ -1,6 +1,6 @@
 import logging
-import time
 import sys
+import time
 from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 from glide import (
@@ -14,7 +14,7 @@ from glide import (
 )
 from glide.exceptions import RequestError as IncrbyException
 
-from aiocache.base import BaseCache, API
+from aiocache.base import API, BaseCache
 from aiocache.serializers import JsonSerializer
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -246,4 +246,5 @@ class ValkeyCache(ValkeyBackend):
         return options
 
     def __repr__(self):  # pragma: no cover
-        return f"ValkeyCache ({self.client.config.addresses[0].host}:{self.client.config.addresses[0].port})"
+        return (f"ValkeyCache ({self.client.config.addresses[0].host}"
+                f":{self.client.config.addresses[0].port})")

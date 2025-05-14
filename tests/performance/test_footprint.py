@@ -4,7 +4,6 @@ from typing import AsyncIterator
 
 import aiomcache
 import pytest
-
 from glide import GlideClient, GlideClientConfiguration, NodeAddress
 
 

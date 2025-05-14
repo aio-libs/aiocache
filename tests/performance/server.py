@@ -2,9 +2,8 @@ import asyncio
 import logging
 import uuid
 
-from glide import GlideClient, GlideClientConfiguration, NodeAddress
-
 from aiohttp import web
+from glide import GlideClient, GlideClientConfiguration, NodeAddress
 
 logging.getLogger("aiohttp.access").propagate = False
 

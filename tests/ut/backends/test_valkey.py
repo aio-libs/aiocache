@@ -1,8 +1,7 @@
 from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
-
-from glide import ConditionalChange, ExpirySet, ExpiryType, Transaction, Script
+from glide import ConditionalChange, ExpirySet, ExpiryType, Script, Transaction
 from glide.exceptions import RequestError
 
 from aiocache.backends.valkey import ValkeyBackend, ValkeyCache
