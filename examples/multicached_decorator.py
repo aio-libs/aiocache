@@ -23,11 +23,11 @@ async def multi_cached_keys(keys=None):
 
 
 async def test_multi_cached():
-    await multi_cached_ids(ids=("a", "b"))
-    await multi_cached_ids(ids=("a", "c"))
-    await multi_cached_keys(keys=("d",))
-
     async with cache:
+        await multi_cached_ids(ids=("a", "b"))
+        await multi_cached_ids(ids=("a", "c"))
+        await multi_cached_keys(keys=("d",))
+
         assert await cache.exists("a")
         assert await cache.exists("b")
         assert await cache.exists("c")
