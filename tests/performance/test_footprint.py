@@ -15,6 +15,8 @@ async def valkey_client() -> AsyncIterator["GlideClient"]:
 
     yield client
 
+    await client.close()
+
 
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Too slow")
 class TestValkey:
