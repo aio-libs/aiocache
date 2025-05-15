@@ -1,16 +1,6 @@
 import pytest
 
 
-@pytest.fixture()
-def max_conns():
-    return None
-
-
-@pytest.fixture()
-def decode_responses():
-    return False
-
-
 @pytest.fixture
 def valkey_config():
     from glide import GlideClientConfiguration, NodeAddress
