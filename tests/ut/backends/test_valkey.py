@@ -37,6 +37,12 @@ async def valkey(valkey_config):
 
 
 class TestValkeyBackend:
+    async def test_context_manager_raise_if_no_config(self):
+        msg = "Configuration must be provided for context manager"
+        with pytest.raises(AttributeError, match=msg):
+            async with ValkeyBackend() as _:
+                pass
+
     async def test_get(self, valkey):
         valkey.client.get.return_value = b"value"
         assert await valkey._get(Keys.KEY) == "value"
