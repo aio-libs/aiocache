@@ -68,7 +68,7 @@ async def handler_get(req: web.Request) -> web.Response:
 
 def cache_manager_ctx(backend: str) -> Callable[[web.Application], AsyncIterator[None]]:
     async def ctx(app: web.Application) -> AsyncIterator[None]:
-        async with CacheManager(backend) as cm
+        async with CacheManager(backend) as cm:
             app[cache_key] = cm
             yield
 
