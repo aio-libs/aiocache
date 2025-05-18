@@ -2,7 +2,8 @@ import asyncio
 import logging
 import uuid
 import sys
-from typing import AsyncIterator
+from types import TracebackType
+from typing import AsyncIterator, Callable, Optional
 
 from aiohttp import web
 
@@ -43,7 +44,7 @@ class CacheManager:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc: Optional[BaseException],
         tb: Optional[TracebackType],
     ) -> None:
