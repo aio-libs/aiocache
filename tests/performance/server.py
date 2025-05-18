@@ -2,6 +2,7 @@ import asyncio
 import logging
 import uuid
 import sys
+from typing import AsyncIterator
 
 from aiohttp import web
 
@@ -65,8 +66,8 @@ async def handler_get(req: web.Request) -> web.Response:
     return web.Response(text=str(data))
 
 
-def cache_manager_ctx(backend: str) -> Callable[[web.Application], None]:
-    async def ctx(app: web.Application) -> None:
+def cache_manager_ctx(backend: str) -> Callable[[web.Application], AsyncIterator[None]]:
+    async def ctx(app: web.Application) -> AsyncIterator[None]:
         async with CacheManager(backend) as cm
             app[cache_key] = cm
             yield
