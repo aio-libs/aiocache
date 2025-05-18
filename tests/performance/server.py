@@ -1,8 +1,14 @@
 import asyncio
 import logging
 import uuid
+import sys
 
 from aiohttp import web
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing import Any as Self
 
 logging.getLogger("aiohttp.access").propagate = False
 
@@ -30,8 +36,17 @@ class CacheManager:
     async def set(self, key, value):
         return await self.cache.set(key, value, timeout=0.1)
 
-    async def close(self, *_):
-        await self.cache.close()
+    async def __aenter__(self) -> Self:
+        await self.cache.__aenter__()
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> None:
+        await self.cache.__aexit__(exc_type, exc, tb)
 
 
 cache_key = web.AppKey("cache_key", CacheManager)
@@ -50,9 +65,17 @@ async def handler_get(req: web.Request) -> web.Response:
     return web.Response(text=str(data))
 
 
+def cache_manager_ctx(backend: str) -> Callable[[web.Application], None]:
+    async def ctx(app: web.Application) -> None:
+        async with CacheManager(backend) as cm
+            app[cache_key] = cm
+            yield
+
+    return ctx
+
+
 def run_server(backend: str) -> None:
     app = web.Application()
-    app[cache_key] = CacheManager(backend)
-    app.on_shutdown.append(app[cache_key].close)
+    app.cleanup_ctx.append(cache_manager_ctx(backend))
     app.router.add_route("GET", "/", handler_get)
     web.run_app(app)
