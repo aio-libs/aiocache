@@ -21,7 +21,8 @@ class CacheManager:
             from aiocache.backends.valkey import ValkeyCache
             from glide import GlideClientConfiguration, NodeAddress
 
-            cache = ValkeyCache(GlideClientConfiguration(addresses=[NodeAddress()], database_id=0))
+            config = GlideClientConfiguration(addresses=[NodeAddress()], database_id=0)
+            cache = ValkeyCache(config=config)
         elif backend == "memcached":
             from aiocache.backends.memcached import MemcachedCache
             cache = MemcachedCache()
