@@ -1,7 +1,7 @@
 import asyncio
 import logging
-import uuid
 import sys
+import uuid
 from types import TracebackType
 from typing import AsyncIterator, Callable, Optional
 
