@@ -3,7 +3,6 @@ import logging
 import uuid
 
 from aiohttp import web
-from glide import GlideClient, GlideClientConfiguration, NodeAddress
 
 logging.getLogger("aiohttp.access").propagate = False
 
@@ -12,6 +11,7 @@ class CacheManager:
     def __init__(self, backend: str):
         if backend == "valkey":
             from aiocache.backends.valkey import ValkeyCache
+            from glide import GlideClientConfiguration, NodeAddress
 
             cache = ValkeyCache(GlideClientConfiguration(addresses=[NodeAddress()], database_id=0))
         elif backend == "memcached":
