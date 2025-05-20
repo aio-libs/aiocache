@@ -2,10 +2,9 @@ cov-report = true
 
 
 lint:
-	flake8 tests/ aiocache/
-
+	flake8 tests/ aiocache/ '--known-modules=valkey-glide:[glide]'
 install-dev:
-	pip install -e .[redis,memcached,msgpack,dev]
+	pip install -e .[valkey,memcached,msgpack,dev]
 
 pylint:
 	pylint --disable=C0111 aiocache
