@@ -6,7 +6,7 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from types import TracebackType
-from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
+from typing import Any, Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
 
 from aiocache.serializers import StringSerializer
 
@@ -14,11 +14,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from aiocache.plugins import BasePlugin
     from aiocache.serializers import BaseSerializer
 
+CacheKeyType = TypeVar("CacheKeyType")
+CacheValueType = TypeVar("CacheValueType")
+
 
 logger = logging.getLogger(__name__)
 
 SENTINEL = object()
-CacheKeyType = TypeVar("CacheKeyType")
 
 
 class API:
@@ -93,7 +95,7 @@ class API:
         return _plugins
 
 
-class BaseCache(Generic[CacheKeyType], ABC):
+class BaseCache(Generic[CacheKeyType, CacheValueType], ABC):
     """
     Base class that agregates the common logic for the different caches that may exist. Cache
     related available options are:
@@ -110,6 +112,8 @@ class BaseCache(Generic[CacheKeyType], ABC):
         By default its 5. Use 0 or None if you want to disable it.
     :param ttl: int the expiration time in seconds to use as a default in all operations of
         the backend. It can be overriden in the specific calls.
+    :typeparam CacheKeyType: The type of the cache key (e.g., str, bytes).
+    :typeparam CacheValueType: The type of the cache value (e.g., str, int, custom object).
     """
 
     NAME: str
@@ -152,16 +156,25 @@ class BaseCache(Generic[CacheKeyType], ABC):
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def add(self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None):
+    async def add(
+        self,
+        key: CacheKeyType,
+        value: CacheValueType,
+        ttl=SENTINEL,
+        dumps_fn: Optional[Callable[[CacheValueType], Any]] = None,
+        namespace: Optional[str] = None,
+        _conn=None,
+    ) -> bool:
         """
         Stores the value in the given key with ttl if specified. Raises an error if the
         key already exists.
 
-        :param key: str
-        :param value: obj
-        :param ttl: int the expiration time in seconds. Due to memcached
-            restrictions if you want compatibility use int. In case you
-            need miliseconds, redis and memory support float ttls
+        :param key: CacheKeyType
+        :param value: CacheValueType
+        :param ttl: int the expiration time in seconds. Due to memcached restrictions.
+            If you want compatibility use int.
+            In case you need milliseconds,
+            redis and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -188,17 +201,24 @@ class BaseCache(Generic[CacheKeyType], ABC):
     @API.aiocache_enabled()
     @API.timeout
     @API.plugins
-    async def get(self, key, default=None, loads_fn=None, namespace=None, _conn=None):
+    async def get(
+        self,
+        key: CacheKeyType,
+        default: Optional[CacheValueType] = None,
+        loads_fn: Optional[Callable[[Any], CacheValueType]] = None,
+        namespace: Optional[str] = None,
+        _conn=None,
+    ) -> Optional[CacheValueType]:
         """
         Get a value from the cache. Returns default if not found.
 
-        :param key: str
-        :param default: obj to return when key is not found
+        :param key: CacheKeyType
+        :param default: CacheValueType to return when key is not found
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
-        :returns: obj loaded
+        :returns: CacheValueType loaded
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
@@ -222,16 +242,22 @@ class BaseCache(Generic[CacheKeyType], ABC):
     @API.aiocache_enabled(fake_return=[])
     @API.timeout
     @API.plugins
-    async def multi_get(self, keys, loads_fn=None, namespace=None, _conn=None):
+    async def multi_get(
+        self,
+        keys: List[CacheKeyType],
+        loads_fn: Optional[Callable[[Any], CacheValueType]] = None,
+        namespace: Optional[str] = None,
+        _conn=None,
+    ) -> List[Optional[CacheValueType]]:
         """
         Get multiple values from the cache, values not found are Nones.
 
-        :param keys: list of str
+        :param keys: list of CacheKeyType
         :param loads_fn: callable alternative to use as loads function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
-        :returns: list of objs
+        :returns: list of CacheValueType
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
@@ -262,13 +288,20 @@ class BaseCache(Generic[CacheKeyType], ABC):
     @API.timeout
     @API.plugins
     async def set(
-        self, key, value, ttl=SENTINEL, dumps_fn=None, namespace=None, _cas_token=None, _conn=None
-    ):
+        self,
+        key: CacheKeyType,
+        value: CacheValueType,
+        ttl=SENTINEL,
+        dumps_fn: Optional[Callable[[CacheValueType], Any]] = None,
+        namespace: Optional[str] = None,
+        _cas_token=None,
+        _conn=None,
+    ) -> bool:
         """
         Stores the value in the given key with ttl if specified
 
-        :param key: str
-        :param value: obj
+        :param key: CacheKeyType
+        :param value: CacheValueType
         :param ttl: int the expiration time in seconds. Due to memcached
             restrictions if you want compatibility use int. In case you
             need miliseconds, redis and memory support float ttls
@@ -298,14 +331,22 @@ class BaseCache(Generic[CacheKeyType], ABC):
     @API.aiocache_enabled(fake_return=True)
     @API.timeout
     @API.plugins
-    async def multi_set(self, pairs, ttl=SENTINEL, dumps_fn=None, namespace=None, _conn=None):
+    async def multi_set(
+        self,
+        pairs: List[tuple[CacheKeyType, CacheValueType]],
+        ttl=SENTINEL,
+        dumps_fn: Optional[Callable[[CacheValueType], Any]] = None,
+        namespace: Optional[str] = None,
+        _conn=None,
+    ) -> bool:
         """
         Stores multiple values in the given keys.
 
-        :param pairs: list of two element iterables. First is key and second is value
-        :param ttl: int the expiration time in seconds. Due to memcached
-            restrictions if you want compatibility use int. In case you
-            need miliseconds, redis and memory support float ttls
+        :param pairs: list of two element iterables. First is CacheKeyType
+            and second is CacheValueType
+        :param ttl: int the expiration time in seconds. Due to memcached restrictions.
+            If you want compatibility use int. In case you need milliseconds,
+            redis and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -326,7 +367,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
             "MULTI_SET %s %d (%.4f)s",
             [key for key, value in tmp_pairs],
             len(tmp_pairs),
-            time.monotonic() - start,
+            time.monotonic() - start
         )
         return True
 
