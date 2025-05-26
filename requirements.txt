@@ -7,5 +7,5 @@ msgpack==1.1.0
 pytest==8.3.5
 pytest-asyncio==0.26.0
 pytest-cov==6.1.1
-pytest-mock==3.14.0
+pytest-mock==3.14.1
 redis==5.2.1
