@@ -139,8 +139,7 @@ class ValkeyBackend(BaseCache[str]):
         return await self.client.expire(key, ttl)
 
     async def _delete(self, key, _conn=None):
-        if isinstance(key, str):
-            key = [key]
+        key = [key]
         return await self.client.delete(key)
 
     async def _clear(self, namespace=None, _conn=None):
