@@ -16,7 +16,7 @@ set_start_method("spawn")
 def server(request):
     p = Process(target=run_server, args=(request.param,))
     p.start()
-    time.sleep(1)
+    time.sleep(2)
     yield
     p.terminate()
     p.join(timeout=15)
