@@ -184,8 +184,6 @@ class ValkeyBackend(BaseCache[str]):
         if encoding is not None:
             if command == "get" and value is not None:
                 value = value.decode(encoding)
-            elif command in {"keys", "mget"}:
-                value = [v if v is None else v.decode(encoding) for v in value]
         return value
 
     async def _redlock_release(self, key, value):
