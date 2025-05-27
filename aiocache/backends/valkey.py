@@ -117,12 +117,13 @@ class ValkeyBackend(BaseCache[str]):
             kwargs["expiry"] = ExpirySet(ExpiryType.SEC, ttl)
         was_set = await self.client.set(key, value, **kwargs)
         if was_set != "OK":
-            raise ValueError("Key {} already exists, use .set to update the value".format(key))
+            raise ValueError(
+                "Key {} already exists, use .set to update the value".format(key)
+            )
         return was_set
 
     async def _exists(self, key, _conn=None):
-        if isinstance(key, str):
-            key = [key]
+        key = [key]
         number = await self.client.exists(key)
         return bool(number)
 
@@ -246,5 +247,7 @@ class ValkeyCache(ValkeyBackend):
         return options
 
     def __repr__(self):  # pragma: no cover
-        return (f"ValkeyCache ({self.client.config.addresses[0].host}"
-                f":{self.client.config.addresses[0].port})")
+        return (
+            f"ValkeyCache ({self.client.config.addresses[0].host}"
+            f":{self.client.config.addresses[0].port})"
+        )
