@@ -1,20 +1,23 @@
 import asyncio
-
 from collections import namedtuple
-import redis.asyncio as redis
 
+from glide import GlideClientConfiguration, NodeAddress
 
-from aiocache import RedisCache
+from aiocache import ValkeyCache
 from aiocache.serializers import PickleSerializer
 
 MyObject = namedtuple("MyObject", ["x", "y"])
-cache = RedisCache(serializer=PickleSerializer(), namespace="main", client=redis.Redis())
+addresses = [NodeAddress("localhost", 6379)]
+config = GlideClientConfiguration(addresses=addresses, database_id=0)
 
 
 async def complex_object():
     obj = MyObject(x=1, y=2)
-    await cache.set("key", obj)
-    my_object = await cache.get("key")
+    async with ValkeyCache(
+        config=config, namespace="main", serializer=PickleSerializer()
+    ) as cache:
+        await cache.set("key", obj)
+        my_object = await cache.get("key")
 
     assert my_object.x == 1
     assert my_object.y == 2
@@ -22,8 +25,11 @@ async def complex_object():
 
 async def test_python_object():
     await complex_object()
-    await cache.delete("key")
-    await cache.close()
+    async with ValkeyCache(
+        config=config, namespace="main", serializer=PickleSerializer()
+    ) as cache:
+        await cache.delete("key")
+        await cache.close()
 
 
 if __name__ == "__main__":

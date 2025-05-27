@@ -112,7 +112,7 @@ class cached_stampede(cached):
     :param cache: cache instance to use when calling the ``set``/``get`` operations.
         Default is :class:`aiocache.SimpleMemoryCache`.
     :param lease: int seconds to lock function call to avoid cache stampede effects.
-        If 0 or None, no locking happens (default is 2). redis and memory backends support
+        If 0 or None, no locking happens (default is 2). valkey and memory backends support
         float ttls
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key_from_attr: str arg or kwarg name from the function to use as a key.
