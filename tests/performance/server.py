@@ -60,7 +60,8 @@ async def handler_get(req: web.Request) -> web.Response:
         data = await req.app[cache_key].get("testkey")
         if data:
             return web.Response(text=data)
-    except asyncio.TimeoutError:
+    except asyncio.TimeoutError:  # pragma: no cover
+        # This won't be reached if the concurrency tests achieve 100% success rates.
         return web.Response(status=404)
 
     data = str(uuid.uuid4())
