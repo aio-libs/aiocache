@@ -2,11 +2,13 @@ import platform
 import re
 import subprocess
 import time
-from multiprocessing import Process
+from multiprocessing import Process, set_start_method
 
 import pytest
 
 from .server import run_server
+
+set_start_method("spawn")
 
 
 # TODO: Fix and readd "memcached" (currently fails >98% of requests)
