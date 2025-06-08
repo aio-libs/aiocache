@@ -2,7 +2,7 @@ cov-report = true
 
 
 lint:
-	flake8 tests/ aiocache/ '--known-modules=valkey-glide:[glide]'
+	flake8 tests/ aiocache/
 install-dev:
 	pip install -e .[valkey,memcached,msgpack,dev]
 
