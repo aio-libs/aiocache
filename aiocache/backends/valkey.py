@@ -1,7 +1,6 @@
 import logging
 import sys
-import time
-from typing import Any, Callable, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, Optional
 
 from glide import (
     ConditionalChange,
@@ -9,16 +8,12 @@ from glide import (
     ExpiryType,
     GlideClient,
     GlideClientConfiguration,
-    Script,
     Transaction,
 )
 from glide.exceptions import RequestError as IncrbyException
 
-from aiocache.base import API, BaseCache
-from aiocache.serializers import JsonSerializer
-
-if TYPE_CHECKING:
-    from aiocache.serializers import BaseSerializer
+from aiocache.base import BaseCache
+from aiocache.serializers import BaseSerializer, JsonSerializer
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -53,9 +48,6 @@ class ValkeyBackend(BaseCache[str]):
             return value
         return value.decode(encoding)
 
-    async def _gets(self, key, encoding="utf-8", _conn=None):
-        return await self._get(key, encoding=encoding, _conn=_conn)
-
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         values = await self.client.mget(keys)
         if encoding is None:
@@ -63,8 +55,6 @@ class ValkeyBackend(BaseCache[str]):
         return [v if v is None else v.decode(encoding) for v in values]
 
     async def _set(self, key, value, ttl=None, _cas_token=None, _conn=None):
-        success_message = "OK"
-
         if isinstance(ttl, float):
             ttl = ExpirySet(ExpiryType.MILLSEC, int(ttl * 1000))
         elif ttl:
@@ -73,10 +63,7 @@ class ValkeyBackend(BaseCache[str]):
         if _cas_token is not None:
             return await self._cas(key, value, _cas_token, ttl=ttl, _conn=_conn)
 
-        if ttl is None:
-            return await self.client.set(key, value) == success_message
-
-        return await self.client.set(key, value, expiry=ttl) == success_message
+        return await self.client.set(key, value, expiry=ttl) == "OK"
 
     async def _cas(self, key, value, token, ttl=None, _conn=None):
         if await self._get(key) == token:
@@ -84,9 +71,7 @@ class ValkeyBackend(BaseCache[str]):
         return 0
 
     async def _multi_set(self, pairs, ttl=None, _conn=None):
-        ttl = ttl or 0
-
-        values = {key: value for key, value in pairs}
+        values = dict(pairs)
 
         if ttl:
             await self.__multi_set_ttl(values, ttl)
@@ -121,9 +106,7 @@ class ValkeyBackend(BaseCache[str]):
         return was_set
 
     async def _exists(self, key, _conn=None):
-        key = [key]
-        number = await self.client.exists(key)
-        return bool(number)
+        return bool(await self.client.exists([key]))
 
     async def _increment(self, key, delta, _conn=None):
         try:
@@ -137,8 +120,7 @@ class ValkeyBackend(BaseCache[str]):
         return await self.client.expire(key, ttl)
 
     async def _delete(self, key, _conn=None):
-        key = [key]
-        return await self.client.delete(key)
+        return await self.client.delete([key])
 
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
@@ -149,32 +131,6 @@ class ValkeyBackend(BaseCache[str]):
             return await self.client.flushdb()
 
         return True
-
-    @API.register
-    @API.aiocache_enabled()
-    @API.timeout
-    @API.plugins
-    async def script(self, script: Script, keys: List, *args):
-        """
-        Send the raw scripts to the underlying client. Note that by using this CMD you
-        will lose compatibility with other backends.
-
-        Due to limitations with aiomcache client, args have to be provided as bytes.
-        For rest of backends, str.
-
-        :param script: glide.Script object.
-        :param keys: list of keys of the script
-        :param args: arguments of the script
-        :returns: whatever the underlying client returns
-        :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
-        """
-        start = time.monotonic()
-        ret = await self._script(script, keys, *args)
-        logger.debug("%s (%.4f)s", script, time.monotonic() - start)
-        return ret
-
-    async def _script(self, script, keys: List, *args):
-        return await self.client.invoke_script(script, keys=keys, args=args)
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         value = await getattr(self.client, command)(*args, **kwargs)
@@ -213,7 +169,7 @@ class ValkeyCache(ValkeyBackend):
 
     def __init__(
         self,
-        serializer: Optional["BaseSerializer"] = None,
+        serializer: Optional[BaseSerializer] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
         **kwargs: Any,
