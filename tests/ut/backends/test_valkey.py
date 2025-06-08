@@ -58,7 +58,7 @@ class TestValkeyBackend:
 
     async def test_set(self, valkey):
         await valkey._set(Keys.KEY, "value")
-        valkey.client.set.assert_called_with(Keys.KEY, "value")
+        valkey.client.set.assert_called_with(Keys.KEY, "value", expiry=None)
 
         await valkey._set(Keys.KEY, "value", ttl=1)
         valkey.client.set.assert_called_with(
