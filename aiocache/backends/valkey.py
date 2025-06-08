@@ -30,13 +30,11 @@ logger = logging.getLogger(__name__)
 
 
 class ValkeyBackend(BaseCache[str]):
-    def __init__(self, config: GlideClientConfiguration = None, **kwargs):
+    def __init__(self, config: GlideClientConfiguration, **kwargs):
         self.config = config
         super().__init__(**kwargs)
 
     async def __aenter__(self) -> Self:
-        if not self.config:
-            raise AttributeError("Configuration must be provided for context manager")
         self.client = await self._connect(self.config)
         return self
 
