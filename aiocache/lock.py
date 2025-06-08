@@ -50,9 +50,8 @@ class RedLock(Generic[CacheKeyType]):
 
         addresses = [NodeAddress("localhost", 6379)]
         conf = GlideClientConfiguration(addresses=addresses, database_id=0)
-        client = await GlideClient.create(conf)
+        cache = ValkeyCache(config=config)
 
-        cache = ValkeyCache(client)
         async with RedLock(cache, 'key', lease=1):  # Calls will wait here
             result = await cache.get('key')
             if result is not None:
@@ -68,7 +67,9 @@ class RedLock(Generic[CacheKeyType]):
 
     _EVENTS: Dict[str, asyncio.Event] = {}
 
-    def __init__(self, client: BaseCache[CacheKeyType], key: str, lease: Union[int, float]):
+    def __init__(
+        self, client: BaseCache[CacheKeyType], key: str, lease: Union[int, float]
+    ):
         self.client = client
         self.key = self.client.build_key(key + "-lock")
         self.lease = lease
@@ -170,7 +171,9 @@ class OptimisticLock(Generic[CacheKeyType]):
 
         :raises: :class:`aiocache.lock.OptimisticLockError`
         """
-        success = await self.client.set(self.key, value, _cas_token=self._token, **kwargs)
+        success = await self.client.set(
+            self.key, value, _cas_token=self._token, **kwargs
+        )
         if not success:
             raise OptimisticLockError("Value has changed since the lock started")
         return True
