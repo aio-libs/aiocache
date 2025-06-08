@@ -38,9 +38,11 @@ async def valkey(valkey_config):
 
 
 class TestValkeyBackend:
-    async def test_context_manager_raise_if_no_config(self):
-        msg = "Configuration must be provided for context manager"
-        with pytest.raises(AttributeError, match=msg):
+    async def test_backend_raise_if_no_backend(self):
+        msg = re.escape(
+            "ValkeyBackend.__init__() missing 1 required positional argument: 'config'"
+        )
+        with pytest.raises(TypeError, match=msg):
             async with ValkeyBackend() as _:
                 pass
 
