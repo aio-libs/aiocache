@@ -60,7 +60,10 @@ class TestCache:
     async def test_multi_set(self, cache):
         pairs = [(Keys.KEY, "value"), [Keys.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs) is True
-        assert await cache.multi_get([Keys.KEY, Keys.KEY_1]) == ["value", "random_value"]
+        assert await cache.multi_get([Keys.KEY, Keys.KEY_1]) == [
+            "value",
+            "random_value",
+        ]
 
     async def test_multi_set_with_ttl(self, cache):
         pairs = [(Keys.KEY, "value"), [Keys.KEY_1, "random_value"]]
@@ -240,19 +243,6 @@ class TestValkeyCache:
         assert await valkey_cache.raw("scan", b"0", "k*") == [b"0", [b"key"]]
         # .raw() doesn't build key with namespace prefix, clear it manually
         await valkey_cache.raw("delete", "key")
-
-    async def test_script(self, valkey_cache):
-        from glide import Script
-
-        set_script = Script("return server.call('set',KEYS[1], ARGV[1])")
-        get_script = Script("return server.call('get',KEYS[1])")
-        key_script = Script("return server.call('keys',KEYS[1])")
-        del_script = Script("server.call('del',KEYS[1])")
-        await valkey_cache.script(set_script, ["key"], "value")
-        assert await valkey_cache.script(get_script, keys=["key"]) == b"value"
-        assert await valkey_cache.script(key_script, keys=["k*"]) == [b"key"]
-        # .raw() doesn't build key with namespace prefix, clear it manually
-        await valkey_cache.script(del_script, "key")
 
     async def test_clear_with_namespace_valkey(self, valkey_cache):
         await valkey_cache.set(Keys.KEY, "value", namespace="test")

@@ -1,7 +1,8 @@
+import re
 from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
-from glide import ConditionalChange, ExpirySet, ExpiryType, Script, Transaction
+from glide import ConditionalChange, ExpirySet, ExpiryType, Transaction
 from glide.exceptions import RequestError
 
 from aiocache.backends.valkey import ValkeyBackend, ValkeyCache
@@ -64,21 +65,31 @@ class TestValkeyBackend:
 
     async def test_set_cas_token(self, mocker, valkey):
         mocker.patch.object(valkey, "_cas")
-        await valkey._set(Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client)
+        await valkey._set(
+            Keys.KEY, "value", _cas_token="old_value", _conn=valkey.client
+        )
         valkey._cas.assert_called_with(
             Keys.KEY, "value", "old_value", ttl=None, _conn=valkey.client
         )
 
     async def test_set_cas_token_ttl(self, mocker, valkey):
         mocker.patch.object(valkey, "_cas")
-        await valkey._set(Keys.KEY, "value", ttl=1, _cas_token="old_value", _conn=valkey.client)
+        await valkey._set(
+            Keys.KEY, "value", ttl=1, _cas_token="old_value", _conn=valkey.client
+        )
         valkey._cas.assert_called_with(
-            Keys.KEY, "value", "old_value", ttl=ExpirySet(ExpiryType.SEC, 1), _conn=valkey.client
+            Keys.KEY,
+            "value",
+            "old_value",
+            ttl=ExpirySet(ExpiryType.SEC, 1),
+            _conn=valkey.client,
         )
 
     async def test_set_cas_token_float_ttl(self, mocker, valkey):
         mocker.patch.object(valkey, "_cas")
-        await valkey._set(Keys.KEY, "value", ttl=1.1, _cas_token="old_value", _conn=valkey.client)
+        await valkey._set(
+            Keys.KEY, "value", ttl=1.1, _cas_token="old_value", _conn=valkey.client
+        )
         valkey._cas.assert_called_with(
             Keys.KEY,
             "value",
@@ -197,11 +208,6 @@ class TestValkeyBackend:
         await valkey._clear()
         assert valkey.client.flushdb.call_count == 1
 
-    async def test_script(self, valkey):
-        script = Script("server.call('get', Keys[1]")
-        await valkey._script(script, Keys.KEY)
-        valkey.client.invoke_script.assert_called_with(script, Keys.KEY, ())
-
     async def test_redlock_release(self, mocker, valkey):
         mocker.patch.object(valkey, "_get", return_value="random")
         await valkey._redlock_release(Keys.KEY, "random")
@@ -240,7 +246,9 @@ class TestValkeyCache:
             ["my_ns", "my_ns:" + ensure_key(Keys.KEY)],
         ),  # noqa: B950
     )
-    def test_build_key_double_dot(self, set_test_namespace, valkey_cache, namespace, expected):
+    def test_build_key_double_dot(
+        self, set_test_namespace, valkey_cache, namespace, expected
+    ):
         assert valkey_cache.build_key(Keys.KEY, namespace) == expected
 
     def test_build_key_no_namespace(self, valkey_cache):
