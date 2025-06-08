@@ -52,9 +52,8 @@ class TestValkeyBackend:
         valkey.client.get.assert_called_with(Keys.KEY)
 
     async def test_gets(self, mocker, valkey):
-        mocker.spy(valkey, "_get")
         await valkey._gets(Keys.KEY)
-        valkey._get.assert_called_with(Keys.KEY, encoding="utf-8", _conn=ANY)
+        valkey.client.get.assert_called_with(Keys.KEY)
 
     async def test_set(self, valkey):
         await valkey._set(Keys.KEY, "value")

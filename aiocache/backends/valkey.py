@@ -48,6 +48,8 @@ class ValkeyBackend(BaseCache[str]):
             return value
         return value.decode(encoding)
 
+    _gets = _get
+
     async def _multi_get(self, keys, encoding="utf-8", _conn=None):
         values = await self.client.mget(keys)
         if encoding is None:
