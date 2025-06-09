@@ -165,12 +165,14 @@ class ValkeyCache(ValkeyBackend):
 
     def __init__(
         self,
+        config: GlideClientConfiguration,
         serializer: Optional[BaseSerializer] = None,
         namespace: str = "",
         key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
         **kwargs: Any,
     ):
         super().__init__(
+            config,
             serializer=serializer or JsonSerializer(),
             namespace=namespace,
             key_builder=key_builder,
