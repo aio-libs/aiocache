@@ -4,7 +4,7 @@ import sys
 import uuid
 from functools import partial
 from types import TracebackType
-from typing import AsyncIterator, Callable, Optional
+from typing import AsyncIterator, Optional
 
 from aiohttp import web
 
