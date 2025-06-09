@@ -8,6 +8,7 @@ import pytest
 
 from .server import run_server
 
+# Spawn is needed to avoid potential segfaults in forked processes.
 set_start_method("spawn")
 
 
