@@ -45,7 +45,6 @@ class RedLock(Generic[CacheKeyType]):
 
         from aiocache import ValkeyCache
         from aiocache.lock import RedLock
-
         from glide import GlideClientConfiguration, NodeAddress
 
         addresses = [NodeAddress("localhost", 6379)]
@@ -118,7 +117,6 @@ class OptimisticLock(Generic[CacheKeyType]):
 
     Example usage::
         from aiocache import ValkeyCache
-
         from glide import GlideClientConfiguration, NodeAddress
 
         addresses = [NodeAddress("localhost", 6379)]
