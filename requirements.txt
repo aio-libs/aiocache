@@ -1,7 +1,7 @@
 -e .
 
 aiomcache==0.8.2
-aiohttp==3.12.9
+aiohttp==3.12.11
 marshmallow==3.26.1
 msgpack==1.1.0
 pytest==8.4.0
