@@ -46,11 +46,11 @@ class RedLock(Generic[CacheKeyType]):
         from aiocache import ValkeyCache
         from aiocache.lock import RedLock
 
-        from glide import GlideClient, GlideClientConfiguration, NodeAddress
+        from glide import GlideClientConfiguration, NodeAddress
 
         addresses = [NodeAddress("localhost", 6379)]
         conf = GlideClientConfiguration(addresses=addresses, database_id=0)
-        cache = ValkeyCache(config=conf)
+        cache = ValkeyCache(conf)
 
         async with RedLock(cache, 'key', lease=1):  # Calls will wait here
             result = await cache.get('key')
@@ -119,7 +119,7 @@ class OptimisticLock(Generic[CacheKeyType]):
     Example usage::
         from aiocache import ValkeyCache
 
-        from glide import GlideClient, GlideClientConfiguration, NodeAddress
+        from glide import GlideClientConfiguration, NodeAddress
 
         addresses = [NodeAddress("localhost", 6379)]
         conf = GlideClientConfiguration(addresses=addresses, database_id=0)
