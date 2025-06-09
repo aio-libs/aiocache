@@ -1,5 +1,5 @@
 import re
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from glide import ConditionalChange, ExpirySet, ExpiryType, Transaction
