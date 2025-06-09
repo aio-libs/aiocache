@@ -8,19 +8,18 @@ addresses = [NodeAddress("localhost", 6379)]
 config = GlideClientConfiguration(addresses=addresses, database_id=0)
 
 
-async def valkey():
-    async with ValkeyCache(config=config, namespace="main") as cache:
-        await cache.set("key", "value")
-        await cache.set("expire_me", "value", ttl=10)
+async def valkey(cache):
+    await cache.set("key", "value")
+    await cache.set("expire_me", "value", ttl=10)
 
-        assert await cache.get("key") == "value"
-        assert await cache.get("expire_me") == "value"
-        assert await cache.raw("ttl", "main:expire_me") > 0
+    assert await cache.get("key") == "value"
+    assert await cache.get("expire_me") == "value"
+    assert await cache.raw("ttl", "main:expire_me") > 0
 
 
 async def test_valkey():
-    await valkey()
-    async with ValkeyCache(config=config, namespace="main") as cache:
+    async with ValkeyCache(config, namespace="main") as cache:
+        await valkey(cache)
         await cache.delete("key")
         await cache.delete("expire_me")
         await cache.close()
