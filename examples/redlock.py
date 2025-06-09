@@ -17,27 +17,25 @@ async def expensive_function():
     return "result"
 
 
-async def my_view():
-
-    async with ValkeyCache(config=config, namespace="main") as cache:
-        async with RedLock(cache, "key", lease=2):  # Wait at most 2 seconds
-            result = await cache.get("key")
-            if result is not None:
-                logger.info("Found the value in the cache hurray!")
-                return result
-
-            result = await expensive_function()
-            await cache.set("key", result)
+async def my_view(cache):
+    async with RedLock(cache, "key", lease=2):  # Wait at most 2 seconds
+        result = await cache.get("key")
+        if result is not None:
+            logger.info("Found the value in the cache hurray!")
             return result
 
+        result = await expensive_function()
+        await cache.set("key", result)
+        return result
 
-async def concurrent():
-    await asyncio.gather(my_view(), my_view(), my_view())
+
+async def concurrent(cache):
+    await asyncio.gather(my_view(cache), my_view(cache), my_view(cache))
 
 
 async def test_redis():
-    await concurrent()
-    async with ValkeyCache(config=config, namespace="main") as cache:
+    async with ValkeyCache(config, namespace="main") as cache:
+        await concurrent(cache)
         await cache.delete("key")
         await cache.close()
 
