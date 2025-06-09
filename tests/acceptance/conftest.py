@@ -9,7 +9,7 @@ from ..utils import KEY_LOCK, Keys
 async def valkey_cache(valkey_config):
     from aiocache.backends.valkey import ValkeyCache
 
-    async with ValkeyCache(namespace="test", config=valkey_config) as cache:
+    async with ValkeyCache(valkey_config, namespace="test") as cache:
         yield cache
         await asyncio.gather(*(cache.delete(k) for k in (*Keys, KEY_LOCK)))
 
