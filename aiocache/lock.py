@@ -50,7 +50,7 @@ class RedLock(Generic[CacheKeyType]):
 
         addresses = [NodeAddress("localhost", 6379)]
         conf = GlideClientConfiguration(addresses=addresses, database_id=0)
-        cache = ValkeyCache(config=config)
+        cache = ValkeyCache(config=conf)
 
         async with RedLock(cache, 'key', lease=1):  # Calls will wait here
             result = await cache.get('key')
