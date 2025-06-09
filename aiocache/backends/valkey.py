@@ -30,16 +30,10 @@ class ValkeyBackend(BaseCache[str]):
         super().__init__(**kwargs)
 
     async def __aenter__(self) -> Self:
-        self.client = await self._connect(self.config)
+        self.client = await GlideClient.create(self.config)
         return self
 
     async def __aexit__(self, *args, **kwargs) -> None:
-        await self._disconnect()
-
-    async def _connect(self, config: GlideClientConfiguration) -> GlideClient:
-        return await GlideClient.create(config=config)
-
-    async def _disconnect(self) -> None:
         await self.client.close()
 
     async def _get(self, key, encoding="utf-8", _conn=None):
