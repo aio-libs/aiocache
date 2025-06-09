@@ -119,12 +119,12 @@ class ValkeyBackend(BaseCache[str]):
         return await self.client.delete([key])
 
     async def _clear(self, namespace=None, _conn=None):
-        if namespace:
-            _, keys = await self.client.scan(b"0", "{}:*".format(namespace))
-            if keys:
-                return bool(await self.client.delete(keys))
-        else:
+        if not namespace:
             return await self.client.flushdb()
+
+        _, keys = await self.client.scan(b"0", "{}:*".format(namespace))
+        if keys:
+            return bool(await self.client.delete(keys))
 
         return True
 
