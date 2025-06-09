@@ -30,7 +30,7 @@ class CompressionSerializer(BaseSerializer):
         return decompressed
 
 
-async def serializer():
+async def serializer(cache):
     text = (
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
         "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation"
@@ -39,21 +39,18 @@ async def serializer():
         "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit"
         "anim id est laborum."
     )
-    async with ValkeyCache(
-        config=config, namespace="main", serializer=CompressionSerializer()
-    ) as cache:
-        await cache.set("key", text)
-        print("-----------------------------------")
-        real_value = await cache.get("key")
-        compressed_value = await cache.raw("get", "main:key")
+    await cache.set("key", text)
+    print("-----------------------------------")
+    real_value = await cache.get("key")
+    compressed_value = await cache.raw("get", "main:key")
     assert len(compressed_value) < len(real_value.encode())
 
 
 async def test_serializer():
-    await serializer()
     async with ValkeyCache(
-        config=config, namespace="main", serializer=CompressionSerializer()
+        config, namespace="main", serializer=CompressionSerializer()
     ) as cache:
+        await serializer(cache)
         await cache.delete("key")
         await cache.close()
 
