@@ -123,9 +123,7 @@ class OptimisticLock(Generic[CacheKeyType]):
 
         addresses = [NodeAddress("localhost", 6379)]
         conf = GlideClientConfiguration(addresses=addresses, database_id=0)
-        client = await GlideClient.create(conf)
-
-        cache = ValkeyCache(client)
+        cache = ValkeyCache(conf)
 
         # The value stored in 'key' will be checked here
         async with OptimisticLock(cache, 'key') as lock:
