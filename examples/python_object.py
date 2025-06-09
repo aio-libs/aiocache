@@ -22,7 +22,7 @@ async def complex_object(cache):
 
 async def test_python_object():
     async with ValkeyCache(
-        config=config, namespace="main", serializer=PickleSerializer()
+        config, namespace="main", serializer=PickleSerializer()
     ) as cache:
         await complex_object(cache)
         await cache.delete("key")
