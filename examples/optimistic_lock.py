@@ -10,7 +10,7 @@ from aiocache.lock import OptimisticLock, OptimisticLockError
 logger = logging.getLogger(__name__)
 addresses = [NodeAddress("localhost", 6379)]
 config = GlideClientConfiguration(addresses=addresses, database_id=0)
-cache = ValkeyCache(config=config, namespace="main")
+cache = ValkeyCache(config, namespace="main")
 
 
 async def expensive_function():
@@ -42,7 +42,7 @@ async def concurrent():
 
 async def test_redis():
     await concurrent()
-    async with ValkeyCache(config=config, namespace="main") as cache:
+    async with ValkeyCache(config, namespace="main") as cache:
         await cache.delete("key")
 
 
