@@ -10,7 +10,6 @@ from aiocache.lock import OptimisticLock, OptimisticLockError
 logger = logging.getLogger(__name__)
 addresses = [NodeAddress("localhost", 6379)]
 config = GlideClientConfiguration(addresses=addresses, database_id=0)
-cache = ValkeyCache(config, namespace="main")
 
 
 async def expensive_function():
@@ -31,7 +30,7 @@ async def my_view(cache):
         return result
 
 
-async def concurrent():
+async def concurrent(cache):
     async with cache:
         await cache.set("key", "initial_value")
         # All three calls will read 'initial_value' as the value to check and only
@@ -41,8 +40,8 @@ async def concurrent():
 
 
 async def test_redis():
-    await concurrent()
     async with ValkeyCache(config, namespace="main") as cache:
+        await concurrent(cache)
         await cache.delete("key")
 
 
