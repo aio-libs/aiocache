@@ -17,24 +17,9 @@ def mock_base_cache():
     """Return BaseCache instance with unimplemented methods mocked out."""
     plugin = create_autospec(BasePlugin, instance=True)
     cache = ConcreteBaseCache(timeout=0.002, plugins=(plugin,))
-    methods = (
-        "_add",
-        "_get",
-        "_gets",
-        "_set",
-        "_multi_get",
-        "_multi_set",
-        "_delete",
-        "_exists",
-        "_increment",
-        "_expire",
-        "_clear",
-        "_raw",
-        "_close",
-        "_redlock_release",
-        "acquire_conn",
-        "release_conn",
-    )
+    methods = ("_add", "_get", "_gets", "_set", "_multi_get", "_multi_set", "_delete",
+               "_exists", "_increment", "_expire", "_clear", "_raw", "_close",
+               "_redlock_release", "acquire_conn", "release_conn")
     with ExitStack() as stack:
         for f in methods:
             stack.enter_context(patch.object(cache, f, autospec=True))
