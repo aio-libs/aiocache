@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 import uuid
+from functools import partial
 from types import TracebackType
 from typing import AsyncIterator, Callable, Optional
 
@@ -22,7 +23,7 @@ class CacheManager:
             from glide import GlideClientConfiguration, NodeAddress
 
             config = GlideClientConfiguration(addresses=[NodeAddress()], database_id=0)
-            cache = ValkeyCache(config=config)
+            cache = ValkeyCache(config)
         elif backend == "memcached":
             from aiocache.backends.memcached import MemcachedCache
             cache = MemcachedCache()
@@ -69,17 +70,14 @@ async def handler_get(req: web.Request) -> web.Response:
     return web.Response(text=str(data))
 
 
-def cache_manager_ctx(backend: str) -> Callable[[web.Application], AsyncIterator[None]]:
-    async def ctx(app: web.Application) -> AsyncIterator[None]:
-        async with CacheManager(backend) as cm:
-            app[cache_key] = cm
-            yield
-
-    return ctx
+async def ctx(app: web.Application, backend: str) -> AsyncIterator[None]:
+    async with CacheManager(backend) as cm:
+        app[cache_key] = cm
+        yield
 
 
 def run_server(backend: str) -> None:
     app = web.Application()
-    app.cleanup_ctx.append(cache_manager_ctx(backend))
+    app.cleanup_ctx.append(partial(ctx, backend=backend))
     app.router.add_route("GET", "/", handler_get)
     web.run_app(app)
