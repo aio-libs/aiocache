@@ -35,21 +35,20 @@ def loads(value):
     return MyTypeSchema().loads(value)
 
 
-async def serializer_function():
-    async with ValkeyCache(config=config, namespace="main") as cache:
-        await cache.set("key", MyType(1, 2), dumps_fn=dumps)
+async def serializer_function(cache):
+    await cache.set("key", MyType(1, 2), dumps_fn=dumps)
 
-        obj = await cache.get("key", loads_fn=loads)
+    obj = await cache.get("key", loads_fn=loads)
 
-        assert obj.x == 1
-        assert obj.y == 2
-        assert await cache.get("key") == json.loads(('{"y": 2.0, "x": 1.0}'))
-        assert json.loads(await cache.raw("get", "main:key")) == {"y": 2.0, "x": 1.0}
+    assert obj.x == 1
+    assert obj.y == 2
+    assert await cache.get("key") == json.loads(('{"y": 2.0, "x": 1.0}'))
+    assert json.loads(await cache.raw("get", "main:key")) == {"y": 2.0, "x": 1.0}
 
 
 async def test_serializer_function():
-    await serializer_function()
-    async with ValkeyCache(config=config, namespace="main") as cache:
+    async with ValkeyCache(config, namespace="main") as cache:
+        await serializer_function(cache)
         await cache.delete("key")
 
 
