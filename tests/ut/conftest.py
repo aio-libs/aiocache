@@ -43,7 +43,7 @@ def base_cache():
 async def valkey_cache(valkey_config):
     from aiocache.backends.valkey import ValkeyCache
 
-    async with ValkeyCache(config=valkey_config) as cache:
+    async with ValkeyCache(valkey_config) as cache:
         yield cache
 
 
