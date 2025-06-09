@@ -8,7 +8,7 @@ from glide import GlideClient, GlideClientConfiguration, NodeAddress
 
 
 @pytest.fixture
-async def valkey_client() -> AsyncIterator["GlideClient"]:
+async def valkey_client() -> AsyncIterator[GlideClient]:
     addresses = [NodeAddress("localhost", 6379)]
     conf = GlideClientConfiguration(addresses=addresses)
     client = await GlideClient.create(conf)
