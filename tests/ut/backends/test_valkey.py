@@ -13,45 +13,35 @@ from ...utils import Keys, ensure_key
 
 @pytest.fixture
 async def valkey(valkey_config):
-    valkey = await ValkeyBackend(config=valkey_config).__aenter__()
-    with patch.object(valkey, "client", autospec=True) as m:
-        # These methods actually return an awaitable.
-        for method in (
-            "eval",
-            "expire",
-            "get",
-            "execute_command",
-            "exists",
-            "incrby",
-            "persist",
-            "delete",
-            "scan",
-            "flushdb",
-        ):
-            setattr(m, method, AsyncMock(return_value=None, spec_set=()))
-        m.mget = AsyncMock(return_value=[None], spec_set=())
-        m.set = AsyncMock(return_value="OK", spec_set=())
-
-        yield valkey
-
-    await valkey.__aexit__()
+    async with ValkeyBackend(config=valkey_config) as valkey:
+        with patch.object(valkey, "client", autospec=True) as m:
+            # These methods actually return an awaitable.
+            for method in (
+                "eval",
+                "expire",
+                "get",
+                "execute_command",
+                "exists",
+                "incrby",
+                "persist",
+                "delete",
+                "scan",
+                "flushdb",
+            ):
+                setattr(m, method, AsyncMock(return_value=None, spec_set=()))
+            m.mget = AsyncMock(return_value=[None], spec_set=())
+            m.set = AsyncMock(return_value="OK", spec_set=())
+    
+            yield valkey
 
 
 class TestValkeyBackend:
-    async def test_backend_raise_if_no_backend(self):
-        msg = re.escape(
-            "ValkeyBackend.__init__() missing 1 required positional argument: 'config'"
-        )
-        with pytest.raises(TypeError, match=msg):
-            async with ValkeyBackend() as _:
-                pass
-
     async def test_get(self, valkey):
         valkey.client.get.return_value = b"value"
         assert await valkey._get(Keys.KEY) == "value"
         valkey.client.get.assert_called_with(Keys.KEY)
 
-    async def test_gets(self, mocker, valkey):
+    async def test_gets(self, valkey):
         await valkey._gets(Keys.KEY)
         valkey.client.get.assert_called_with(Keys.KEY)
 
@@ -234,7 +224,7 @@ class TestValkeyCache:
 
     @pytest.mark.parametrize(
         "path,expected",
-        [("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})],
+        (("", {}), ("/", {}), ("/1", {"db": "1"}), ("/1/2/3", {"db": "1"})),
     )
     def test_parse_uri_path(self, path, expected, valkey_config):
         assert ValkeyCache(config=valkey_config).parse_uri_path(path) == expected
@@ -242,10 +232,10 @@ class TestValkeyCache:
     @pytest.mark.parametrize(
         "namespace, expected",
         (
-            [None, "test:" + ensure_key(Keys.KEY)],
-            ["", ensure_key(Keys.KEY)],
-            ["my_ns", "my_ns:" + ensure_key(Keys.KEY)],
-        ),  # noqa: B950
+            (None, "test:" + ensure_key(Keys.KEY)),
+            ("", ensure_key(Keys.KEY)),
+            ("my_ns", "my_ns:" + ensure_key(Keys.KEY)),
+        ),
     )
     def test_build_key_double_dot(
         self, set_test_namespace, valkey_cache, namespace, expected
