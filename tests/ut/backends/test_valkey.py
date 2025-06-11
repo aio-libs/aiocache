@@ -1,4 +1,3 @@
-import re
 from unittest.mock import AsyncMock, patch
 
 import pytest
