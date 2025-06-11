@@ -31,7 +31,6 @@ async def valkey(valkey_config):
                 setattr(m, method, AsyncMock(return_value=None, spec_set=()))
             m.mget = AsyncMock(return_value=[None], spec_set=())
             m.set = AsyncMock(return_value="OK", spec_set=())
-    
             yield valkey
 
 
