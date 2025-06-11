@@ -31,12 +31,11 @@ async def my_view(cache):
 
 
 async def concurrent(cache):
-    async with cache:
-        await cache.set("key", "initial_value")
-        # All three calls will read 'initial_value' as the value to check and only
-        # the first one finishing will succeed because the others, when trying to set
-        # the value, will see that the value is not the same as when the lock started
-        await asyncio.gather(my_view(cache), my_view(cache), my_view(cache))
+    await cache.set("key", "initial_value")
+    # All three calls will read 'initial_value' as the value to check and only
+    # the first one finishing will succeed because the others, when trying to set
+    # the value, will see that the value is not the same as when the lock started
+    await asyncio.gather(my_view(cache), my_view(cache), my_view(cache))
 
 
 async def test_redis():
