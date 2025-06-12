@@ -94,6 +94,39 @@ class TestCached:
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 1
 
+    @pytest.mark.asyncio
+    async def test_cached_refresh_forces_update(self, monkeypatch):
+        calls = []
+        cache = SimpleMemoryCache()
+
+        @cached(cache=cache)
+        async def foo(x):
+            calls.append(x)
+            return x * 2
+
+        assert await foo(3) == 6
+        assert await foo(3) == 6
+        assert await foo.refresh(3) == 6
+        assert calls == [3, 3]
+
+    @pytest.mark.asyncio
+    async def test_cached_invalidate_key_and_all(self):
+        calls = []
+        cache = SimpleMemoryCache()
+
+        @cached(cache=cache)
+        async def foo(x):
+            calls.append(x)
+            return x * 2
+
+        await foo(1)
+        await foo(2)
+        await foo.invalidate(1)
+        await foo(1)
+        await foo.invalidate()
+        await foo(2)
+        assert calls == [1, 2, 1, 2]
+
     async def test_disable_params_not_propagated(self, decorator, decorator_call):
         decorator.cache.get.return_value = None
 
@@ -430,6 +463,38 @@ class TestMultiCached:
         assert decorator.cache.multi_get.call_count == 1
         assert decorator.cache.multi_set.call_count == 0
         assert stub_dict.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_refresh_forces_update(self, monkeypatch):
+        calls = []
+        cache = SimpleMemoryCache()
+
+        @multi_cached(cache=cache, keys_from_attr="keys")
+        async def bar(keys=None):
+            calls.append(tuple(keys))
+            return {k: k * 10 for k in keys}
+
+        assert await bar(keys=[1, 2]) == {1: 10, 2: 20}
+        assert await bar(keys=[1, 2]) == {1: 10, 2: 20}
+        assert await bar.refresh(keys=[1, 2]) == {1: 10, 2: 20}
+        assert calls == [(1, 2), (1, 2)]
+
+    @pytest.mark.asyncio
+    async def test_multi_cached_invalidate_key_and_all(self):
+        calls = []
+        cache = SimpleMemoryCache()
+
+        @multi_cached(cache=cache, keys_from_attr="keys")
+        async def bar(keys=None):
+            calls.extend(keys)
+            return {k: k * 10 for k in keys}
+
+        await bar(keys=[1, 2])
+        await bar.invalidate(1)
+        await bar(keys=[1])
+        await bar.invalidate()
+        await bar(keys=[2])
+        assert calls == [1, 2, 1, 2]
 
     async def test_disable_params_not_propagated(self, decorator, decorator_call):
         decorator.cache.multi_get.return_value = [None, None]
