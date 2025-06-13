@@ -40,10 +40,10 @@ def base_cache():
 
 
 @pytest.fixture
-async def redis_cache(redis_client):
-    from aiocache.backends.redis import RedisCache
+async def valkey_cache(valkey_config):
+    from aiocache.backends.valkey import ValkeyCache
 
-    async with RedisCache(client=redis_client) as cache:
+    async with ValkeyCache(valkey_config) as cache:
         yield cache
 
 

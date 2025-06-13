@@ -2,27 +2,27 @@ import platform
 import re
 import subprocess
 import time
-from multiprocessing import Process
+from multiprocessing import Process, set_start_method
 
 import pytest
 
 from .server import run_server
 
+# Spawn is needed to avoid potential segfaults in forked processes.
+set_start_method("spawn")
+
 
 # TODO: Fix and readd "memcached" (currently fails >98% of requests)
-@pytest.fixture(params=("memory", "redis"))
+@pytest.fixture(params=("memory", "valkey"))
 def server(request):
     p = Process(target=run_server, args=(request.param,))
     p.start()
-    time.sleep(1)
+    time.sleep(2)
     yield
     p.terminate()
     p.join(timeout=15)
 
 
-@pytest.mark.xfail(reason="currently fails >85% of requests on GitHub runner, "
-                   "requires several re-runs to pass",
-                   strict=False)
 @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Not working currently.")
 def test_concurrency_error_rates(server):
     """Test with Apache benchmark tool."""

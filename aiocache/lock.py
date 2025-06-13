@@ -7,7 +7,7 @@ from aiocache.base import BaseCache, CacheKeyType
 
 class RedLock(Generic[CacheKeyType]):
     """
-    Implementation of `Redlock <https://redis.io/topics/distlock>`_
+    Implementation of `Redlock <https://valkey.io/topics/distlock>`_
     with a single instance because aiocache is focused on single
     instance cache.
 
@@ -27,7 +27,7 @@ class RedLock(Generic[CacheKeyType]):
 
     Backend specific implementation:
 
-        - Redis implements correctly the redlock algorithm. It sets
+        - Valkey implements correctly the redlock algorithm. It sets
           the key if it doesn't exist. To release, it checks the value
           is the same as the instance trying to release and if it is,
           it removes the lock. If not it will do nothing
@@ -43,10 +43,14 @@ class RedLock(Generic[CacheKeyType]):
 
     Example usage::
 
-        from aiocache import Cache
+        from aiocache import ValkeyCache
         from aiocache.lock import RedLock
+        from glide import GlideClientConfiguration, NodeAddress
 
-        cache = Cache(Cache.REDIS)
+        addresses = [NodeAddress("localhost", 6379)]
+        conf = GlideClientConfiguration(addresses=addresses, database_id=0)
+        cache = ValkeyCache(conf)
+
         async with RedLock(cache, 'key', lease=1):  # Calls will wait here
             result = await cache.get('key')
             if result is not None:
@@ -62,7 +66,9 @@ class RedLock(Generic[CacheKeyType]):
 
     _EVENTS: Dict[str, asyncio.Event] = {}
 
-    def __init__(self, client: BaseCache[CacheKeyType], key: str, lease: Union[int, float]):
+    def __init__(
+        self, client: BaseCache[CacheKeyType], key: str, lease: Union[int, float]
+    ):
         self.client = client
         self.key = self.client.build_key(key + "-lock")
         self.lease = lease
@@ -110,8 +116,12 @@ class OptimisticLock(Generic[CacheKeyType]):
     the one we retrieved when the lock started.
 
     Example usage::
+        from aiocache import ValkeyCache
+        from glide import GlideClientConfiguration, NodeAddress
 
-        cache = Cache(Cache.REDIS)
+        addresses = [NodeAddress("localhost", 6379)]
+        conf = GlideClientConfiguration(addresses=addresses, database_id=0)
+        cache = ValkeyCache(conf)
 
         # The value stored in 'key' will be checked here
         async with OptimisticLock(cache, 'key') as lock:
@@ -122,7 +132,7 @@ class OptimisticLock(Generic[CacheKeyType]):
     an :class:`aiocache.lock.OptimisticLockError` will be raised. A way to make
     the same call crash would be to change the value inside the lock like::
 
-        cache = Cache(Cache.REDIS)
+        cache = ValkeyCache(client)
 
         # The value stored in 'key' will be checked here
         async with OptimisticLock(cache, 'key') as lock:
@@ -157,7 +167,9 @@ class OptimisticLock(Generic[CacheKeyType]):
 
         :raises: :class:`aiocache.lock.OptimisticLockError`
         """
-        success = await self.client.set(self.key, value, _cas_token=self._token, **kwargs)
+        success = await self.client.set(
+            self.key, value, _cas_token=self._token, **kwargs
+        )
         if not success:
             raise OptimisticLockError("Value has changed since the lock started")
         return True

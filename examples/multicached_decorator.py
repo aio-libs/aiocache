@@ -1,18 +1,15 @@
 import asyncio
 
-import redis.asyncio as redis
+from glide import GlideClientConfiguration, NodeAddress
 
 from aiocache import multi_cached
-from aiocache import RedisCache
+from aiocache import ValkeyCache
 
-DICT = {
-    'a': "Z",
-    'b': "Y",
-    'c': "X",
-    'd': "W"
-}
+DICT = {"a": "Z", "b": "Y", "c": "X", "d": "W"}
 
-cache = RedisCache(namespace="main", client=redis.Redis())
+addresses = [NodeAddress("localhost", 6379)]
+config = GlideClientConfiguration(addresses=addresses, database_id=0)
+cache = ValkeyCache(config=config, namespace="main")
 
 
 @multi_cached(cache, keys_from_attr="ids")
@@ -26,20 +23,20 @@ async def multi_cached_keys(keys=None):
 
 
 async def test_multi_cached():
-    await multi_cached_ids(ids=("a", "b"))
-    await multi_cached_ids(ids=("a", "c"))
-    await multi_cached_keys(keys=("d",))
+    async with cache:
+        await multi_cached_ids(ids=("a", "b"))
+        await multi_cached_ids(ids=("a", "c"))
+        await multi_cached_keys(keys=("d",))
 
-    assert await cache.exists("a")
-    assert await cache.exists("b")
-    assert await cache.exists("c")
-    assert await cache.exists("d")
+        assert await cache.exists("a")
+        assert await cache.exists("b")
+        assert await cache.exists("c")
+        assert await cache.exists("d")
 
-    await cache.delete("a")
-    await cache.delete("b")
-    await cache.delete("c")
-    await cache.delete("d")
-    await cache.close()
+        await cache.delete("a")
+        await cache.delete("b")
+        await cache.delete("c")
+        await cache.delete("d")
 
 
 if __name__ == "__main__":

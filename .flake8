@@ -19,4 +19,5 @@ import-order-style = pycharm
 # flake8-quotes
 inline-quotes = "
 # flake8-requirements
+known-modules = valkey-glide:[glide]
 requirements-file = requirements-dev.txt

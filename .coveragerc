@@ -1,3 +1,10 @@
 [run]
 branch = True
-concurrency = multiprocessing
+source = aiocache, tests
+
+[report]
+exclude_also =
+    if TYPE_CHECKING
+    assert False
+    : \.\.\.(\s*#.*)?$
+    ^ +\.\.\.$

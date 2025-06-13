@@ -1,10 +1,13 @@
 import asyncio
 import zlib
 
-import redis.asyncio as redis
+from glide import GlideClientConfiguration, NodeAddress
 
-from aiocache import RedisCache
+from aiocache import ValkeyCache
 from aiocache.serializers import BaseSerializer
+
+addresses = [NodeAddress("localhost", 6379)]
+config = GlideClientConfiguration(addresses=addresses, database_id=0)
 
 
 class CompressionSerializer(BaseSerializer):
@@ -27,17 +30,15 @@ class CompressionSerializer(BaseSerializer):
         return decompressed
 
 
-cache = RedisCache(serializer=CompressionSerializer(), namespace="main", client=redis.Redis())
-
-
-async def serializer():
+async def serializer(cache):
     text = (
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
         "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation"
         "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in"
         "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur"
         "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit"
-        "anim id est laborum.")
+        "anim id est laborum."
+    )
     await cache.set("key", text)
     print("-----------------------------------")
     real_value = await cache.get("key")
@@ -46,9 +47,12 @@ async def serializer():
 
 
 async def test_serializer():
-    await serializer()
-    await cache.delete("key")
-    await cache.close()
+    async with ValkeyCache(
+        config, namespace="main", serializer=CompressionSerializer()
+    ) as cache:
+        await serializer(cache)
+        await cache.delete("key")
+        await cache.close()
 
 
 if __name__ == "__main__":
