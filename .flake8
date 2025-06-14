@@ -7,7 +7,7 @@ select = A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,B901,B902,B903,B950
 # E501,W505: Superseeded by B950 (from Bugbear)
 # E722: Superseeded by B001 (from Bugbear)
 # W503: Mutually exclusive with W504.
-ignore = E226,E501,E722,W503,W505
+ignore = E226,E501,E704,E722,W503,W505
 per-file-ignores =
     # S*: Bandit security checks not useful in tests.
     tests/*:S
