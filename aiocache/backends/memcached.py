@@ -165,8 +165,8 @@ class MemcachedCache(BaseCache[bytes]):
     async def _expire(self, key: bytes, ttl: int, _conn: _Conn | None = None) -> bool:
         return await self.client.touch(key, ttl)
 
-    async def _delete(self, key: bytes, _conn: _Conn | None = None) -> bool:
-        return True if await self.client.delete(key) else False
+    async def _delete(self, key: bytes, _conn: _Conn | None = None) -> int:
+        return 1 if await self.client.delete(key) else 0
 
     async def _clear(
         self, namespace: str | None = None, _conn: _Conn | None = None
@@ -191,7 +191,7 @@ class MemcachedCache(BaseCache[bytes]):
                 return value.decode(encoding)
         return value
 
-    async def _redlock_release(self, key: bytes, _: Any) -> bool:
+    async def _redlock_release(self, key: bytes, _: Any) -> int:
         # Not ideal, should check the value coincides first but this would introduce
         # race conditions
         return await self._delete(key)
