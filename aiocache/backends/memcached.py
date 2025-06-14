@@ -172,7 +172,7 @@ class MemcachedCache(BaseCache[bytes]):
         self, namespace: str | None = None, _conn: _Conn | None = None
     ) -> bool:
         if namespace:
-            raise ValueError("MemcachedBackend doesnt support flushing by namespace")
+            raise ValueError("MemcachedCache doesnt support flushing by namespace")
         else:
             await self.client.flush_all()
         return True
