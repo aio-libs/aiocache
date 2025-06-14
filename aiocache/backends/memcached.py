@@ -1,6 +1,6 @@
 import asyncio
-from collections.abc import Mapping
-from typing import Any, Iterable, MutableSequence, Unpack, overload
+from collections.abc import Mapping, Iterable, Sequence
+from typing import Any, Unpack, overload
 
 import aiomcache
 
@@ -36,8 +36,8 @@ class MemcachedCache(BaseCache[bytes]):
         pool_size: int = 2,
         **kwargs: Unpack[BaseCacheKwargs],
     ) -> None:
-        if 'serializer' not in kwargs:
-            kwargs['serializer'] = JsonSerializer()
+        if "serializer" not in kwargs:
+            kwargs["serializer"] = JsonSerializer()
         super().__init__(**kwargs)
         self.host = host
         self.port = port
@@ -61,17 +61,17 @@ class MemcachedCache(BaseCache[bytes]):
 
     @overload
     async def _multi_get(
-        self, keys: MutableSequence[bytes], encoding: str, _conn: _Conn | None = None
+        self, keys: Sequence[bytes], encoding: str, _conn: _Conn | None = None
     ) -> list[str]: ...
 
     @overload
     async def _multi_get(
-        self, keys: MutableSequence[bytes], encoding: None, _conn: _Conn | None = None
+        self, keys: Sequence[bytes], encoding: None, _conn: _Conn | None = None
     ) -> list[bytes | None]: ...
 
     async def _multi_get(
         self,
-        keys: MutableSequence[bytes],
+        keys: Sequence[bytes],
         encoding: str | None = "utf-8",
         _conn: _Conn | None = None,
     ) -> list[bytes | None] | list[str]:
