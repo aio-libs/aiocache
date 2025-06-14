@@ -6,7 +6,17 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from types import TracebackType
-from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
+from typing import (
+    Callable,
+    Generic,
+    List,
+    Optional,
+    Set,
+    TYPE_CHECKING,
+    Type,
+    TypeVar,
+    TypedDict,
+)
 
 from aiocache.serializers import StringSerializer
 
@@ -91,6 +101,15 @@ class API:
             return ret
 
         return _plugins
+
+
+class BaseCacheKwargs(TypedDict, total=False):
+    serializer: Optional["BaseSerializer"]
+    plugins: Optional[list["BasePlugin"]]
+    namespace: str
+    key_builder: Callable[[str, str], str]
+    timeout: Optional[float]
+    ttl: Optional[float]
 
 
 class BaseCache(Generic[CacheKeyType], ABC):
