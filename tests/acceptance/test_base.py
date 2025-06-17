@@ -241,12 +241,14 @@ class TestValkeyCache:
         # .raw() doesn't build key with namespace prefix, clear it manually
         await valkey_cache.raw("delete", "key")
 
-    async def test_raw_no_encoding(self, valkey_cache):
-        await valkey_cache.set(Keys.KEY, "value")
-        # you can't pass `encoding` to raw()
-        assert (
-            await valkey_cache._raw("get", Keys.KEY, encoding=None) == "value".encode()
-        )
+    async def test_raw_no_encoding(self, valkey_config):
+        serializer = NullSerializer(encoding=None)
+        async with ValkeyCache(valkey_config, namespace="test", serializer=serializer) as cache:
+            await valkey_cache.set(Keys.KEY, "value")
+
+            assert await valkey_cache.raw("get", Keys.KEY) == b"value"
+
+            await valkey_cache.delete(Key.KEY)
 
     async def test_clear_with_namespace_valkey(self, valkey_cache):
         await valkey_cache.set(Keys.KEY, "value", namespace="test")
