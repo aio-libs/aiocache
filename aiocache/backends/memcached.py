@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from typing import Any, Dict, Iterable, List, Literal, Tuple, Union, overload
+from typing import Any, Iterable, Literal, Union, overload
 
 import aiomcache
 
@@ -89,7 +89,7 @@ class MemcachedCache(BaseCache[bytes]):
         keys: Iterable[bytes],
         encoding: str = "utf-8",
         _conn: Union[_Conn, None] = None,
-    ) -> List[Union[str, None]]: ...
+    ) -> list[Union[str, None]]: ...
 
     @overload
     async def _multi_get(
@@ -97,7 +97,7 @@ class MemcachedCache(BaseCache[bytes]):
         keys: Iterable[bytes],
         encoding: None,
         _conn: Union[_Conn, None] = None,
-    ) -> List[Union[bytes, None]]: ...
+    ) -> list[Union[bytes, None]]: ...
 
     async def _multi_get(
         self,
@@ -105,8 +105,8 @@ class MemcachedCache(BaseCache[bytes]):
         encoding: Union[str, None] = "utf-8",
         _conn: Union[_Conn, None] = None,
     ) -> Union[
-        List[Union[str, None]],
-        List[Union[bytes, None]],
+        list[Union[str, None]],
+        list[Union[bytes, None]],
     ]:
         raw_values = await self.client.multi_get(*keys)
         if encoding is None:
@@ -145,7 +145,7 @@ class MemcachedCache(BaseCache[bytes]):
 
     async def _multi_set(
         self,
-        pairs: Iterable[Tuple[bytes, Union[str, bytes]]],
+        pairs: Iterable[tuple[bytes, Union[str, bytes]]],
         ttl: int = 0,
         _conn: Union[_Conn, None] = None,
     ) -> bool:
@@ -248,7 +248,7 @@ class MemcachedCache(BaseCache[bytes]):
         return str.encode(ns_key)
 
     @classmethod
-    def parse_uri_path(cls, path: str) -> Dict[Any, Any]:
+    def parse_uri_path(cls, path: str) -> dict[Any, Any]:
         return {}
 
     def __repr__(self) -> str:  # pragma: no cover
