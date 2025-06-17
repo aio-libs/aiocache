@@ -32,7 +32,9 @@ setup(
     ],
     python_requires=">=3.9",
     packages=("aiocache",),
-    install_requires=None,
+    install_requires=[
+        "typing-extensions>=4.14.0; python_version<'3.11'",
+    ],
     extras_require={
         "redis": ["redis>=5"],
         "memcached": ["aiomcache>=0.5.2"],
