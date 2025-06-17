@@ -2,7 +2,6 @@ import asyncio
 
 import pytest
 
-from aiocache import ValkeyCache
 from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import _Conn
 from aiocache.serializers import NullSerializer
@@ -244,6 +243,8 @@ class TestValkeyCache:
         await valkey_cache.raw("delete", "key")
 
     async def test_raw_no_encoding(self, valkey_config):
+        from aiocache.backends.valkey import ValkeyCache
+
         serializer = NullSerializer(encoding=None)
         async with ValkeyCache(valkey_config, namespace="test", serializer=serializer) as cache:
             await cache.set(Keys.KEY, "value")
