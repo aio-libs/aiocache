@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from aiocache.base import BaseCache
 
@@ -19,7 +19,7 @@ def ensure_key(key: Union[str, Enum]) -> str:
         return key
 
 
-class AbstractBaseCache(BaseCache[str]):
+class AbstractBaseCache(BaseCache[str, Any]):
     """BaseCache that can be mocked for NotImplementedError tests"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
