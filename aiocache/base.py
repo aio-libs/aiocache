@@ -170,7 +170,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
         :param value: obj
         :param ttl: int the expiration time in seconds. Due to memcached
             restrictions if you want compatibility use int. In case you
-            need miliseconds, redis and memory support float ttls
+            need miliseconds, valkey and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -280,7 +280,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
         :param value: obj
         :param ttl: int the expiration time in seconds. Due to memcached
             restrictions if you want compatibility use int. In case you
-            need miliseconds, redis and memory support float ttls
+            need miliseconds, valkey and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
@@ -314,7 +314,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
         :param pairs: list of two element iterables. First is key and second is value
         :param ttl: int the expiration time in seconds. Due to memcached
             restrictions if you want compatibility use int. In case you
-            need miliseconds, redis and memory support float ttls
+            need miliseconds, valkey and memory support float ttls
         :param dumps_fn: callable alternative to use as dumps function
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout

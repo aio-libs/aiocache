@@ -5,7 +5,7 @@ lint:
 	flake8 tests/ aiocache/
 
 install-dev:
-	pip install -e .[redis,memcached,msgpack,dev]
+	pip install -e .[valkey,memcached,msgpack,dev]
 
 pylint:
 	pylint --disable=C0111 aiocache

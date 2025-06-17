@@ -1,11 +1,15 @@
 import asyncio
 import json
 
-import redis.asyncio as redis
+from glide import GlideClientConfiguration, NodeAddress
 
 from marshmallow import Schema, fields, post_load
 
-from aiocache import RedisCache
+from aiocache import ValkeyCache
+
+
+addresses = [NodeAddress("localhost", 6379)]
+config = GlideClientConfiguration(addresses=addresses, database_id=0)
 
 
 class MyType:
@@ -20,7 +24,7 @@ class MyTypeSchema(Schema):
 
     @post_load
     def build_object(self, data, **kwargs):
-        return MyType(data['x'], data['y'])
+        return MyType(data["x"], data["y"])
 
 
 def dumps(value):
@@ -31,10 +35,7 @@ def loads(value):
     return MyTypeSchema().loads(value)
 
 
-cache = RedisCache(namespace="main", client=redis.Redis())
-
-
-async def serializer_function():
+async def serializer_function(cache):
     await cache.set("key", MyType(1, 2), dumps_fn=dumps)
 
     obj = await cache.get("key", loads_fn=loads)
@@ -46,9 +47,9 @@ async def serializer_function():
 
 
 async def test_serializer_function():
-    await serializer_function()
-    await cache.delete("key")
-    await cache.close()
+    async with ValkeyCache(config, namespace="main") as cache:
+        await serializer_function(cache)
+        await cache.delete("key")
 
 
 if __name__ == "__main__":
