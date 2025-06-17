@@ -4,6 +4,7 @@ import pytest
 
 from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import _Conn
+from aiocache.serializers import NullSerializer
 from ..utils import Keys
 
 
@@ -213,40 +214,51 @@ class TestMemcachedCache:
         assert memcached_cache.client._pool._pool.qsize() == 0
 
 
-@pytest.mark.redis
-class TestRedisCache:
+@pytest.mark.valkey
+class TestValkeyCache:
     async def test_accept_explicit_args(self):
-        from aiocache.backends.redis import RedisCache
+        from aiocache.backends.valkey import ValkeyCache
 
         with pytest.raises(TypeError):
-            RedisCache(random_attr="wtf")
+            ValkeyCache(random_attr="wtf")
 
-    async def test_float_ttl(self, redis_cache):
-        await redis_cache.set(Keys.KEY, "value", ttl=0.1)
+    async def test_float_ttl(self, valkey_cache):
+        await valkey_cache.set(Keys.KEY, "value", ttl=0.1)
         await asyncio.sleep(0.15)
 
-        assert await redis_cache.get(Keys.KEY) is None
+        assert await valkey_cache.get(Keys.KEY) is None
 
-    async def test_multi_set_float_ttl(self, redis_cache):
+    async def test_multi_set_float_ttl(self, valkey_cache):
         pairs = [(Keys.KEY, "value"), [Keys.KEY_1, "random_value"]]
-        assert await redis_cache.multi_set(pairs, ttl=0.1) is True
+        assert await valkey_cache.multi_set(pairs, ttl=0.1) is True
         await asyncio.sleep(0.15)
 
-        assert await redis_cache.multi_get([Keys.KEY, Keys.KEY_1]) == [None, None]
+        assert await valkey_cache.multi_get([Keys.KEY, Keys.KEY_1]) == [None, None]
 
-    async def test_raw(self, redis_cache):
-        await redis_cache.raw("set", "key", "value")
-        assert await redis_cache.raw("get", "key") == "value"
-        assert await redis_cache.raw("keys", "k*") == ["key"]
+    async def test_raw(self, valkey_cache):
+        await valkey_cache.raw("set", "key", "value")
+        assert await valkey_cache.raw("get", "key") == "value"
+        assert await valkey_cache.raw("scan", b"0", "k*") == [b"0", [b"key"]]
         # .raw() doesn't build key with namespace prefix, clear it manually
-        await redis_cache.raw("delete", "key")
+        await valkey_cache.raw("delete", "key")
 
-    async def test_clear_with_namespace_redis(self, redis_cache):
-        await redis_cache.set(Keys.KEY, "value", namespace="test")
-        await redis_cache.clear(namespace="test")
+    async def test_raw_no_encoding(self, valkey_config):
+        from aiocache.backends.valkey import ValkeyCache
 
-        assert await redis_cache.exists(Keys.KEY, namespace="test") is False
+        serializer = NullSerializer(encoding=None)
+        async with ValkeyCache(valkey_config, namespace="test", serializer=serializer) as cache:
+            await cache.set(Keys.KEY, "value")
 
-    async def test_close(self, redis_cache):
-        await redis_cache.set(Keys.KEY, "value")
-        await redis_cache._close()
+            assert await cache.raw("get", Keys.KEY) == b"value"
+
+            await cache.delete(Keys.KEY)
+
+    async def test_clear_with_namespace_valkey(self, valkey_cache):
+        await valkey_cache.set(Keys.KEY, "value", namespace="test")
+        await valkey_cache.clear(namespace="test")
+
+        assert await valkey_cache.exists(Keys.KEY, namespace="test") is False
+
+    async def test_close(self, valkey_cache):
+        await valkey_cache.set(Keys.KEY, "value")
+        await valkey_cache._close()

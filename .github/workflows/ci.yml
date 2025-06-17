@@ -51,26 +51,26 @@ jobs:
       matrix:
         os: [ubuntu]
         pyver: ['3.9', '3.10', '3.11', '3.12', '3.13']
-        redis: ['latest']
+        valkey: ['latest']
         ujson: ['']
         include:
           - os: ubuntu
             pyver: pypy-3.9
-            redis: 'latest'
+            valkey: 'latest'
           - os: ubuntu
             pyver: '3.9'
-            redis: '5.0.14'
+            valkey: '7.2.8'
           - os: ubuntu
             pyver: '3.9'
-            redis: 'latest'
+            valkey: 'latest'
             ujson: 'ujson'
     services:
-      redis:
-        image: redis:${{ matrix.redis }}
+      valkey:
+        image: valkey/valkey:${{ matrix.valkey }}
         ports:
         - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
+          --health-cmd "valkey-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -104,12 +104,12 @@ jobs:
     - name: Run functional tests
       run: bash examples/run_all.sh
     - name: Uninstall optional backends
-      run: pip uninstall -y aiomcache redis
+      run: pip uninstall -y aiomcache valkey-glide
     - name: Run unittests with minimal backend set
       env:
         COLOR: 'yes'
       run: |
-        pytest --cov-report xml --cov-report html --cov-append tests/acceptance tests/ut -m "not memcached and not redis" --ignore "tests/ut/backends/test_memcached.py" --ignore "tests/ut/backends/test_redis.py"
+        pytest --cov-report xml --cov-report html --cov-append tests/acceptance tests/ut -m "not memcached and not valkey" --ignore "tests/ut/backends/test_memcached.py" --ignore "tests/ut/backends/test_valkey.py"
     - name: Produce coverage report
       run: python -m coverage xml
     - name: Upload coverage

@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 _AIOCACHE_CACHES: list[Type[BaseCache[Any]]] = [SimpleMemoryCache]
 
 try:
-    import redis
+    import glide
 except ImportError:
-    logger.debug("redis not installed, RedisCache unavailable")
+    logger.debug("glide not installed, ValkeyCache unavailable")
 else:
-    from aiocache.backends.redis import RedisCache
+    from aiocache.backends.valkey import ValkeyCache
 
-    _AIOCACHE_CACHES.append(RedisCache)
-    del redis
+    _AIOCACHE_CACHES.append(ValkeyCache)
+    del glide
 
 try:
     import aiomcache

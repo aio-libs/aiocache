@@ -2,45 +2,47 @@ import asyncio
 import logging
 import random
 
-import redis.asyncio as redis
-from aiocache import RedisCache
+from glide import GlideClientConfiguration, NodeAddress
+
+from aiocache import ValkeyCache
 from aiocache.lock import OptimisticLock, OptimisticLockError
 
 logger = logging.getLogger(__name__)
-cache = RedisCache(namespace="main", client=redis.Redis())
+addresses = [NodeAddress("localhost", 6379)]
+config = GlideClientConfiguration(addresses=addresses, database_id=0)
 
 
 async def expensive_function():
-    logger.warning('Expensive is being executed...')
+    logger.warning("Expensive is being executed...")
     await asyncio.sleep(random.uniform(0, 2))
-    return 'result'
+    return "result"
 
 
-async def my_view():
-
-    async with OptimisticLock(cache, 'key') as lock:
+async def my_view(cache):
+    async with OptimisticLock(cache, "key") as lock:
         result = await expensive_function()
         try:
             await lock.cas(result)
         except OptimisticLockError:
             logger.warning(
-                'I failed setting the value because it is different since the lock started!')
+                "I failed setting the value because it is different since the lock started!"
+            )
         return result
 
 
-async def concurrent():
-    await cache.set('key', 'initial_value')
+async def concurrent(cache):
+    await cache.set("key", "initial_value")
     # All three calls will read 'initial_value' as the value to check and only
     # the first one finishing will succeed because the others, when trying to set
     # the value, will see that the value is not the same as when the lock started
-    await asyncio.gather(my_view(), my_view(), my_view())
+    await asyncio.gather(my_view(cache), my_view(cache), my_view(cache))
 
 
 async def test_redis():
-    await concurrent()
-    await cache.delete("key")
-    await cache.close()
+    async with ValkeyCache(config, namespace="main") as cache:
+        await concurrent(cache)
+        await cache.delete("key")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(test_redis())
