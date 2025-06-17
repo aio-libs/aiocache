@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from typing import Any, Dict, Iterable, Literal, Tuple, Union
+from typing import Any, Iterable, Literal, Union
 
 from aiocache.base import BaseCache, BaseCacheArgs, _Conn
 from aiocache.serializers import NullSerializer
@@ -35,8 +35,8 @@ class SimpleMemoryCache(BaseCache[str]):
             kwargs["serializer"] = NullSerializer()
         super().__init__(**kwargs)
 
-        self._cache: Dict[str, object] = {}
-        self._handlers: Dict[str, asyncio.TimerHandle] = {}
+        self._cache: dict[str, object] = {}
+        self._handlers: dict[str, asyncio.TimerHandle] = {}
 
     async def _get(
         self, key: str, encoding: str = "utf-8", _conn: Union[_Conn, None] = None
@@ -78,7 +78,7 @@ class SimpleMemoryCache(BaseCache[str]):
 
     async def _multi_set(
         self,
-        pairs: Iterable[Tuple[str, object]],
+        pairs: Iterable[tuple[str, object]],
         ttl: Union[int, None] = None,
         _conn: Union[_Conn, None] = None,
     ) -> bool:
@@ -175,5 +175,5 @@ class SimpleMemoryCache(BaseCache[str]):
         return self._str_build_key(key, namespace)
 
     @classmethod
-    def parse_uri_path(cls, path: str) -> Dict[Any, Any]:
+    def parse_uri_path(cls, path: str) -> dict[Any, Any]:
         return {}
