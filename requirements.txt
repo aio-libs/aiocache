@@ -4,7 +4,7 @@ aiomcache==0.8.2
 aiohttp==3.12.13
 marshmallow==3.26.1
 msgpack==1.1.1
-pytest==8.4.0
+pytest==8.4.1
 pytest-asyncio==1.0.0
 pytest-cov==6.2.1
 pytest-mock==3.14.1
