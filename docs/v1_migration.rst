@@ -13,3 +13,4 @@ The abstraction and factories around cache instantiation have been removed in fa
 * The `aiocache.Cache` class has been removed. Instead, use the specific cache class directly. For example, use `aiocache.RedisCache` instead of `aiocache.Cache.REDIS`.
 * Caches should be fully instantiated when passed to decorators, rather than being instantiated with a factory function.
 * Cache aliases have been removed. Create an instance of the cache class directly instead.
+* MemcachedBackend, MemoryBackend have been removed. Use MemcachedCache, MemoryCache respectively.
