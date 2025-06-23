@@ -12,8 +12,7 @@ from .server import run_server
 set_start_method("spawn")
 
 
-# TODO: Fix and readd "memcached" (currently fails >98% of requests)
-@pytest.fixture(params=("memory", "valkey"))
+@pytest.fixture(params=("memcached", "memory", "valkey"))
 def server(request):
     p = Process(target=run_server, args=(request.param,))
     p.start()
