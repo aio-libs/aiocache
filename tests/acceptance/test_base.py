@@ -63,6 +63,7 @@ class TestCache:
         assert await cache.multi_set(pairs) is True
         assert await cache.multi_get([Keys.KEY, Keys.KEY_1]) == ["value", "random_value"]
 
+    @pytest.mark.filterwarnings("ignore:Use Batch")
     async def test_multi_set_with_ttl(self, cache):
         pairs = [(Keys.KEY, "value"), [Keys.KEY_1, "random_value"]]
         assert await cache.multi_set(pairs, ttl=1) is True
@@ -228,6 +229,7 @@ class TestValkeyCache:
 
         assert await valkey_cache.get(Keys.KEY) is None
 
+    @pytest.mark.filterwarnings("ignore:Use Batch")
     async def test_multi_set_float_ttl(self, valkey_cache):
         pairs = [(Keys.KEY, "value"), [Keys.KEY_1, "random_value"]]
         assert await valkey_cache.multi_set(pairs, ttl=0.1) is True
