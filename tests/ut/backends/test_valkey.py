@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from glide import ConditionalChange, ExpirySet, ExpiryType, Transaction
+from glide import Batch, ConditionalChange, ExpirySet, ExpiryType
 from glide.exceptions import RequestError
 
 from aiocache.backends.valkey import ValkeyBackend, ValkeyCache
@@ -113,8 +113,8 @@ class TestValkeyBackend:
         valkey.client.mset.assert_called_with({Keys.KEY: "value", Keys.KEY_1: "random"})
 
     async def test_multi_set_with_ttl(self, valkey, mocker):
-        mock_mset = mocker.patch.object(Transaction, "mset")
-        mock_expire = mocker.patch.object(Transaction, "expire")
+        mock_mset = mocker.patch.object(Batch, "mset")
+        mock_expire = mocker.patch.object(Batch, "expire")
         await valkey._multi_set([(Keys.KEY, "value"), (Keys.KEY_1, "random")], ttl=1)
 
         valkey.client.exec.assert_called()

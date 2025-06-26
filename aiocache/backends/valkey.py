@@ -3,12 +3,12 @@ import sys
 from typing import Any, Callable, Optional
 
 from glide import (
+    Batch,
     ConditionalChange,
     ExpirySet,
     ExpiryType,
     GlideClient,
     GlideClientConfiguration,
-    Transaction,
 )
 from glide.exceptions import RequestError as IncrbyException
 
@@ -77,7 +77,7 @@ class ValkeyBackend(BaseCache[str]):
         return True
 
     async def __multi_set_ttl(self, values, ttl):
-        transaction = Transaction()
+        transaction = Batch(is_atomic=True)
         transaction.mset(values)
         ttl, exp = (
             (int(ttl * 1000), transaction.pexpire)
@@ -86,7 +86,7 @@ class ValkeyBackend(BaseCache[str]):
         )
         for key in values:
             exp(key, ttl)
-        await self.client.exec(transaction)
+        await self.client.exec(transaction, raise_on_error=True)
 
     async def _add(self, key, value, ttl=None, _conn=None):
         kwargs = {"conditional_set": ConditionalChange.ONLY_IF_DOES_NOT_EXIST}
