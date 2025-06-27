@@ -3,12 +3,12 @@ import sys
 from typing import Any, Iterable, Literal, Mapping, Optional, TypedDict, Union, overload
 
 from glide import (
+    Batch,
     ConditionalChange,
     ExpirySet,
     ExpiryType,
     GlideClient,
     GlideClientConfiguration,
-    Transaction,
 )
 from glide.exceptions import RequestError as IncrbyException
 
@@ -169,14 +169,14 @@ class ValkeyCache(BaseCache[str]):
         if ttl:
             await self.__multi_set_ttl(values, ttl)
         else:
-            await self.client.mset(values)  # type: ignore[arg-type]
+            await self.client.mset(values)
 
         return True
 
     async def __multi_set_ttl(
         self, values: Mapping[str, Union[str, bytes]], ttl: int
     ) -> None:
-        transaction = Transaction()
+        transaction = Batch(is_atomic=True)
         transaction.mset(values)  # type: ignore[arg-type]
         ttl, exp = (
             (int(ttl * 1000), transaction.pexpire)
@@ -185,7 +185,7 @@ class ValkeyCache(BaseCache[str]):
         )
         for key in values:
             exp(key, ttl)
-        await self.client.exec(transaction)
+        await self.client.exec(transaction, raise_on_error=True)
 
     async def _add(
         self,

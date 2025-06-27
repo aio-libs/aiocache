@@ -36,7 +36,7 @@ setup(
         "typing-extensions>=4.14.0; python_version<'3.11'",
     ],
     extras_require={
-        "valkey": ["valkey-glide>=1.3.3"],
+        "valkey": ["valkey-glide>=2.0.0"],
         "memcached": ["aiomcache>=0.5.2"],
         "msgpack": ["msgpack>=0.5.5"],
     },
