@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Any, Callable, Optional
+from typing import Optional
 
 from glide import (
     Batch,
@@ -13,7 +13,7 @@ from glide import (
 from glide.exceptions import RequestError as IncrbyException
 
 from aiocache.base import BaseCache
-from aiocache.serializers import BaseSerializer, JsonSerializer
+from aiocache.serializers import JsonSerializer
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -24,9 +24,35 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class ValkeyBackend(BaseCache[str]):
-    def __init__(self, config: GlideClientConfiguration, **kwargs):
+class ValkeyCache(BaseCache[str]):
+    """
+    Valkey cache implementation with the following components as defaults:
+        - serializer: :class:`aiocache.serializers.JsonSerializer`
+        - plugins: []
+
+    Config options are:
+
+    :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is an empty string, "".
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default its 5.
+    :param client: glide.GlideClient which is an active client for working with valkey
+    """
+
+    NAME = "valkey"
+
+    def __init__(
+        self, config: GlideClientConfiguration, **kwargs
+    ):
         self.config = config
+
+        if "serializer" not in kwargs:
+            kwargs["serializer"] = JsonSerializer()
+        if "key_builder" not in kwargs:
+            kwargs["key_builder"] = lambda k, ns: f"{ns}:{k}" if ns else k
+
         super().__init__(**kwargs)
 
     async def __aenter__(self) -> Self:
@@ -142,42 +168,6 @@ class ValkeyBackend(BaseCache[str]):
 
     def build_key(self, key: str, namespace: Optional[str] = None) -> str:
         return self._str_build_key(key, namespace)
-
-
-class ValkeyCache(ValkeyBackend):
-    """
-    Valkey cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.JsonSerializer`
-        - plugins: []
-
-    Config options are:
-
-    :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
-    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
-    :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is an empty string, "".
-    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
-        By default its 5.
-    :param client: glide.GlideClient which is an active client for working with valkey
-    """
-
-    NAME = "valkey"
-
-    def __init__(
-        self,
-        config: GlideClientConfiguration,
-        serializer: Optional[BaseSerializer] = None,
-        namespace: str = "",
-        key_builder: Callable[[str, str], str] = lambda k, ns: f"{ns}:{k}" if ns else k,
-        **kwargs: Any,
-    ):
-        super().__init__(
-            config,
-            serializer=serializer or JsonSerializer(),
-            namespace=namespace,
-            key_builder=key_builder,
-            **kwargs,
-        )
 
     @classmethod
     def parse_uri_path(cls, path):

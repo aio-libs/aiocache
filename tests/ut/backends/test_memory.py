@@ -3,7 +3,7 @@ from unittest.mock import ANY, MagicMock, create_autospec, patch
 
 import pytest
 
-from aiocache.backends.memory import SimpleMemoryBackend, SimpleMemoryCache
+from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 from ...utils import Keys
@@ -11,12 +11,12 @@ from ...utils import Keys
 
 @pytest.fixture
 def memory(mocker):
-    memory = SimpleMemoryBackend()
+    memory = SimpleMemoryCache()
     mocker.spy(memory, "_cache")
     return memory
 
 
-class TestSimpleMemoryBackend:
+class TestSimpleMemoryCache:
     async def test_get(self, memory):
         await memory._get(Keys.KEY)
         memory._cache.get.assert_called_with(Keys.KEY)
@@ -187,8 +187,6 @@ class TestSimpleMemoryBackend:
         memory._cache.get.assert_called_with(Keys.KEY)
         assert memory._cache.pop.call_count == 0
 
-
-class TestSimpleMemoryCache:
     def test_name(self):
         assert SimpleMemoryCache.NAME == "memory"
 

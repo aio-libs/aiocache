@@ -7,15 +7,36 @@ from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
 
-class MemcachedBackend(BaseCache[bytes]):
+class MemcachedCache(BaseCache[bytes]):
+    """
+    Memcached cache implementation with the following components as defaults:
+        - serializer: :class:`aiocache.serializers.JsonSerializer`
+        - plugins: []
+
+    Config options are:
+
+    :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is an empty string, "".
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default its 5.
+    :param endpoint: str with the endpoint to connect to. Default is 127.0.0.1.
+    :param port: int with the port to connect to. Default is 11211.
+    :param pool_size: int size for memcached connections pool. Default is 2.
+    """
+
+    NAME = "memcached"
+
     def __init__(self, host="127.0.0.1", port=11211, pool_size=2, **kwargs):
+        if "serializer" not in kwargs:
+            kwargs["serializer"] = JsonSerializer()
+
         super().__init__(**kwargs)
         self.host = host
         self.port = port
         self.pool_size = int(pool_size)
-        self.client = aiomcache.Client(
-            self.host, self.port, pool_size=self.pool_size
-        )
+        self.client = aiomcache.Client(self.host, self.port, pool_size=self.pool_size)
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
@@ -122,31 +143,6 @@ class MemcachedBackend(BaseCache[bytes]):
     def build_key(self, key: str, namespace: Optional[str] = None) -> bytes:
         ns_key = self._str_build_key(key, namespace).replace(" ", "_")
         return str.encode(ns_key)
-
-
-class MemcachedCache(MemcachedBackend):
-    """
-    Memcached cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.JsonSerializer`
-        - plugins: []
-
-    Config options are:
-
-    :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
-    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
-    :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is an empty string, "".
-    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
-        By default its 5.
-    :param endpoint: str with the endpoint to connect to. Default is 127.0.0.1.
-    :param port: int with the port to connect to. Default is 11211.
-    :param pool_size: int size for memcached connections pool. Default is 2.
-    """
-
-    NAME = "memcached"
-
-    def __init__(self, serializer=None, **kwargs):
-        super().__init__(serializer=serializer or JsonSerializer(), **kwargs)
 
     @classmethod
     def parse_uri_path(cls, path):

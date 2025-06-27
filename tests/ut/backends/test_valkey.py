@@ -4,7 +4,7 @@ import pytest
 from glide import Batch, ConditionalChange, ExpirySet, ExpiryType
 from glide.exceptions import RequestError
 
-from aiocache.backends.valkey import ValkeyBackend, ValkeyCache
+from aiocache.backends.valkey import ValkeyCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 from ...utils import Keys, ensure_key
@@ -12,7 +12,7 @@ from ...utils import Keys, ensure_key
 
 @pytest.fixture
 async def valkey(valkey_config):
-    async with ValkeyBackend(config=valkey_config) as valkey:
+    async with ValkeyCache(config=valkey_config) as valkey:
         with patch.object(valkey, "client", autospec=True) as m:
             # These methods actually return an awaitable.
             for method in (
@@ -33,7 +33,13 @@ async def valkey(valkey_config):
             yield valkey
 
 
-class TestValkeyBackend:
+class TestValkeyCache:
+    @pytest.fixture
+    def set_test_namespace(self, valkey_cache):
+        valkey_cache.namespace = "test"
+        yield
+        valkey_cache.namespace = None
+
     async def test_get(self, valkey):
         valkey.client.get.return_value = b"value"
         assert await valkey._get(Keys.KEY) == "value"
@@ -202,14 +208,6 @@ class TestValkeyBackend:
         await valkey._redlock_release(Keys.KEY, "random")
         valkey._get.assert_called_once_with(Keys.KEY)
         valkey.client.delete.assert_called_once_with([Keys.KEY])
-
-
-class TestValkeyCache:
-    @pytest.fixture
-    def set_test_namespace(self, valkey_cache):
-        valkey_cache.namespace = "test"
-        yield
-        valkey_cache.namespace = None
 
     def test_name(self):
         assert ValkeyCache.NAME == "valkey"
