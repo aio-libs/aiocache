@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 import aiomcache
 import pytest
 
-from aiocache.backends.memcached import MemcachedBackend, MemcachedCache
+from aiocache.backends.memcached import MemcachedCache
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 from ...utils import Keys, ensure_key
@@ -11,7 +11,7 @@ from ...utils import Keys, ensure_key
 
 @pytest.fixture
 def memcached():
-    memcached = MemcachedBackend()
+    memcached = MemcachedCache()
     with patch.object(memcached, "client", autospec=True) as m:
         # Autospec messes up the signature on the decorated methods.
         for method in (
@@ -25,10 +25,16 @@ def memcached():
         yield memcached
 
 
-class TestMemcachedBackend:
+class TestMemcachedCache:
+    @pytest.fixture
+    def set_test_namespace(self, memcached_cache):
+        memcached_cache.namespace = "test"
+        yield
+        memcached_cache.namespace = None
+
     def test_setup(self):
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
-            memcached = MemcachedBackend()
+            memcached = MemcachedCache()
 
             aiomcache_client.assert_called_with("127.0.0.1", 11211, pool_size=2)
 
@@ -38,7 +44,7 @@ class TestMemcachedBackend:
 
     def test_setup_override(self):
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
-            memcached = MemcachedBackend(host="127.0.0.2", port=2, pool_size=10)
+            memcached = MemcachedCache(host="127.0.0.2", port=2, pool_size=10)
 
             aiomcache_client.assert_called_with("127.0.0.2", 2, pool_size=10)
 
@@ -48,7 +54,7 @@ class TestMemcachedBackend:
 
     def test_setup_casts(self):
         with patch.object(aiomcache, "Client", autospec=True) as aiomcache_client:
-            memcached = MemcachedBackend(pool_size="10")
+            memcached = MemcachedCache(pool_size="10")
 
             aiomcache_client.assert_called_with("127.0.0.1", 11211, pool_size=10)
 
@@ -226,14 +232,6 @@ class TestMemcachedBackend:
     async def test_close(self, memcached):
         await memcached._close()
         assert memcached.client.close.call_count == 1
-
-
-class TestMemcachedCache:
-    @pytest.fixture
-    def set_test_namespace(self, memcached_cache):
-        memcached_cache.namespace = "test"
-        yield
-        memcached_cache.namespace = None
 
     def test_name(self):
         assert MemcachedCache.NAME == "memcached"

@@ -1,21 +1,37 @@
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from aiocache.base import BaseCache
 from aiocache.serializers import NullSerializer
 
 
-class SimpleMemoryBackend(BaseCache[str]):
+class SimpleMemoryCache(BaseCache[str]):
     """
-    Wrapper around dict operations to use it as a cache backend
+    Memory cache implementation with the following components as defaults:
+        - serializer: :class:`aiocache.serializers.NullSerializer`
+        - plugins: None
+        - backend: dict
+
+    Config options are:
+
+    :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
+    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
+    :param namespace: string to use as default prefix for the key used in all operations of
+        the backend. Default is an empty string, "".
+    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
+        By default, its 5.
     """
+
+    NAME = "memory"
 
     # TODO(PY312): https://peps.python.org/pep-0692/
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs):
+        if "serializer" not in kwargs:
+            kwargs["serializer"] = NullSerializer()
         super().__init__(**kwargs)
 
-        self._cache: Dict[str, object] = {}
-        self._handlers: Dict[str, asyncio.TimerHandle] = {}
+        self._cache: dict[str, object] = {}
+        self._handlers: dict[str, asyncio.TimerHandle] = {}
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         return self._cache.get(key)
@@ -108,28 +124,6 @@ class SimpleMemoryBackend(BaseCache[str]):
 
     def build_key(self, key: str, namespace: Optional[str] = None) -> str:
         return self._str_build_key(key, namespace)
-
-
-class SimpleMemoryCache(SimpleMemoryBackend):
-    """
-    Memory cache implementation with the following components as defaults:
-        - serializer: :class:`aiocache.serializers.NullSerializer`
-        - plugins: None
-
-    Config options are:
-
-    :param serializer: obj derived from :class:`aiocache.serializers.BaseSerializer`.
-    :param plugins: list of :class:`aiocache.plugins.BasePlugin` derived classes.
-    :param namespace: string to use as default prefix for the key used in all operations of
-        the backend. Default is an empty string, "".
-    :param timeout: int or float in seconds specifying maximum timeout for the operations to last.
-        By default its 5.
-    """
-
-    NAME = "memory"
-
-    def __init__(self, serializer=None, **kwargs):
-        super().__init__(serializer=serializer or NullSerializer(), **kwargs)
 
     @classmethod
     def parse_uri_path(cls, path):
