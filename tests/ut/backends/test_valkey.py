@@ -255,3 +255,26 @@ class TestValkeyCache:
             and real_code.co_consts == expected_code.co_consts
             and real_code.co_names == expected_code.co_names
         )
+
+    def test_custom_key_builder(self, valkey_config):
+        def key_builder(k, ns):
+            return f"dict(k={k}, ns={ns})"
+
+        real_code = ValkeyCache(config=valkey_config, key_builder=key_builder)._build_key.__code__
+        expected_code = key_builder.__code__
+        assert (
+            real_code.co_code == expected_code.co_code
+            and real_code.co_consts == expected_code.co_consts
+            and real_code.co_names == expected_code.co_names
+        )
+
+    async def test_raw(self, valkey_config):
+        async with ValkeyCache(config=valkey_config) as cache:
+            set_v = await cache.raw(
+                "set", Keys.KEY, "Any"
+            )
+            get_v = await cache.raw(
+                "get", Keys.KEY
+            )
+        assert set_v == "OK"
+        assert get_v == "Any"
