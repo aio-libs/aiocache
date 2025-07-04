@@ -15,7 +15,7 @@ from glide.exceptions import RequestError as IncrbyException
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
 
-if sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):  # pragma: no cover
     from typing import Self
 else:
     from typing import Any as Self

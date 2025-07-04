@@ -6,7 +6,7 @@ from glide.exceptions import RequestError
 
 from aiocache.backends.valkey import ValkeyCache
 from aiocache.base import BaseCache
-from aiocache.serializers import JsonSerializer
+from aiocache.serializers import JsonSerializer, PickleSerializer
 from ...utils import Keys, ensure_key
 
 
@@ -240,3 +240,18 @@ class TestValkeyCache:
 
     def test_build_key_no_namespace(self, valkey_cache):
         assert valkey_cache.build_key(Keys.KEY, namespace=None) == Keys.KEY
+
+    def test_custom_serializer(self, valkey_config):
+        assert isinstance(
+            ValkeyCache(config=valkey_config, serializer=PickleSerializer()).serializer,
+            PickleSerializer,
+        )
+
+    def test_default_key_builder(self, valkey_config):
+        real_code = ValkeyCache(config=valkey_config)._build_key.__code__
+        expected_code = (lambda k, ns: f"{ns}:{k}" if ns else k).__code__
+        assert (
+            real_code.co_code == expected_code.co_code
+            and real_code.co_consts == expected_code.co_consts
+            and real_code.co_names == expected_code.co_names
+        )

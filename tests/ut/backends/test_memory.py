@@ -5,7 +5,7 @@ import pytest
 
 from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import BaseCache
-from aiocache.serializers import NullSerializer
+from aiocache.serializers import NullSerializer, PickleSerializer
 from ...utils import Keys
 
 
@@ -198,3 +198,9 @@ class TestSimpleMemoryCache:
 
     def test_parse_uri_path(self):
         assert SimpleMemoryCache().parse_uri_path("/1/2/3") == {}
+
+    def test_custom_serializer(self, valkey_config):
+        assert isinstance(
+            SimpleMemoryCache(serializer=PickleSerializer()).serializer,
+            PickleSerializer,
+        )
