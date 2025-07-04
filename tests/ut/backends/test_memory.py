@@ -199,7 +199,7 @@ class TestSimpleMemoryCache:
     def test_parse_uri_path(self):
         assert SimpleMemoryCache().parse_uri_path("/1/2/3") == {}
 
-    def test_custom_serializer(self, valkey_config):
+    def test_custom_serializer(self):
         assert isinstance(
             SimpleMemoryCache(serializer=PickleSerializer()).serializer,
             PickleSerializer,
