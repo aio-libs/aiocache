@@ -258,7 +258,7 @@ class TestMemcachedCache:
     def test_build_key_no_spaces(self, memcached_cache):
         assert memcached_cache.build_key("hello world") == b"hello_world"
 
-    def test_custom_serializer(self, valkey_config):
+    def test_custom_serializer(self):
         assert isinstance(
             MemcachedCache(serializer=PickleSerializer()).serializer,
             PickleSerializer,
