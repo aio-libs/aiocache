@@ -360,6 +360,31 @@ class BaseCache(Generic[CacheKeyType], ABC):
         raise NotImplementedError()
 
     @API.register
+    @API.aiocache_enabled(fake_return=0)
+    @API.timeout
+    @API.plugins
+    async def multi_delete(self, keys, namespace=None, _conn=None):
+        """
+        Deletes multiple keys from the cache.
+
+        :param keys: list of str keys to be deleted
+        :param namespace: str alternative namespace to use
+        :param timeout: int or float in seconds specifying maximum timeout
+            for the operations to last
+        :returns: int number of deleted keys
+        :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
+        """
+        start = time.monotonic()
+        ns_keys = [self.build_key(key, namespace) for key in keys]
+        ret = await self._multi_delete(ns_keys, _conn=_conn)
+        logger.debug("MULTI_DELETE %s %d (%.4f)s", ns_keys, ret, time.monotonic() - start)
+        return ret
+
+    @abstractmethod
+    async def _multi_delete(self, keys, _conn=None):
+        raise NotImplementedError()
+
+    @API.register
     @API.aiocache_enabled(fake_return=False)
     @API.timeout
     @API.plugins

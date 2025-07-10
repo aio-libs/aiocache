@@ -48,6 +48,9 @@ class AbstractBaseCache(BaseCache[str]):
     async def _delete(self, key, _conn=None):
         return await super()._delete(key, _conn)
 
+    async def _multi_delete(self, keys, _conn=None):
+        return await super()._multi_delete(keys, _conn)
+
     async def _exists(self, key, _conn=None):
         return await super()._exists(key, _conn)
 

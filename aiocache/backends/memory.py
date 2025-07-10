@@ -95,6 +95,12 @@ class SimpleMemoryCache(BaseCache[str]):
     async def _delete(self, key, _conn=None):
         return self.__delete(key)
 
+    async def _multi_delete(self, keys, _conn=None):
+        deleted_count = 0
+        for key in keys:
+            deleted_count += self.__delete(key)
+        return deleted_count
+
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
             for key in list(self._cache):

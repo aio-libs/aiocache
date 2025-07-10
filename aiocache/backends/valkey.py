@@ -144,6 +144,9 @@ class ValkeyCache(BaseCache[str]):
     async def _delete(self, key, _conn=None):
         return await self.client.delete([key])
 
+    async def _multi_delete(self, keys, _conn=None):
+        return await self.client.delete(keys)
+
     async def _clear(self, namespace=None, _conn=None):
         if not namespace:
             return await self.client.flushdb()
