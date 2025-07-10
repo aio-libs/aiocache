@@ -1,3 +1,5 @@
+from typing import OrderedDict
+
 import pytest
 
 from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
@@ -16,7 +18,7 @@ class TestHitMissRatioPlugin:
     async def test_get_hit_miss_ratio(self, memory_cache, data, ratio):
         keys = ["a", "b", "c", "d", "e", "f"]
         memory_cache.plugins = [HitMissRatioPlugin()]
-        memory_cache._cache = data
+        memory_cache._cache = OrderedDict(data)
 
         for key in keys:
             await memory_cache.get(key)
@@ -24,8 +26,8 @@ class TestHitMissRatioPlugin:
         hits = [x for x in keys if "test" + x in data]
         assert memory_cache.hit_miss_ratio["hits"] == len(hits)
         assert (
-            memory_cache.hit_miss_ratio["hit_ratio"]
-            == len(hits) / memory_cache.hit_miss_ratio["total"]
+                memory_cache.hit_miss_ratio["hit_ratio"]
+                == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
 
     @pytest.mark.parametrize(
@@ -40,7 +42,7 @@ class TestHitMissRatioPlugin:
     async def test_multi_get_hit_miss_ratio(self, memory_cache, data, ratio):
         keys = ["a", "b", "c", "d", "e", "f"]
         memory_cache.plugins = [HitMissRatioPlugin()]
-        memory_cache._cache = data
+        memory_cache._cache = OrderedDict(data)
 
         for key in keys:
             await memory_cache.multi_get([key])
@@ -48,8 +50,8 @@ class TestHitMissRatioPlugin:
         hits = [x for x in keys if "test" + x in data]
         assert memory_cache.hit_miss_ratio["hits"] == len(hits)
         assert (
-            memory_cache.hit_miss_ratio["hit_ratio"]
-            == len(hits) / memory_cache.hit_miss_ratio["total"]
+                memory_cache.hit_miss_ratio["hit_ratio"]
+                == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
 
     async def test_set_and_get_using_namespace(self, memory_cache):
@@ -75,7 +77,7 @@ class TestTimingPlugin:
     async def test_get_avg_min_max(self, memory_cache, data, ratio):
         keys = ["a", "b", "c", "d", "e", "f"]
         memory_cache.plugins = [TimingPlugin()]
-        memory_cache._cache = data
+        memory_cache._cache = OrderedDict(data)
 
         for key in keys:
             await memory_cache.get(key)
