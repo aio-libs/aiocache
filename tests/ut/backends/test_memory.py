@@ -352,3 +352,22 @@ class TestSimpleMemoryCache:
         assert not await cache.exists("key2")
         assert await cache.exists("key3")
         assert await cache.get("key1") == 2
+
+    async def test_lru_eviction_with_handlers(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        # Add two items with TTL
+        await cache.set("key1", "value1", ttl=10)
+        await cache.set("key2", "value2", ttl=10)
+
+        key2_handler = cache._handlers["key2"]
+
+        # Add a third item to trigger eviction
+        await cache.set("key3", "value3")
+
+        assert "key1" not in cache._cache
+        assert "key1" not in cache._handlers
+        assert "key2" in cache._cache
+        assert cache._handlers.get("key2") is key2_handler  # Same handler instance
+        assert "key3" in cache._cache
+        assert "key3" not in cache._handlers # No TTL
