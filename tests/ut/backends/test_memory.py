@@ -370,4 +370,4 @@ class TestSimpleMemoryCache:
         assert "key2" in cache._cache
         assert cache._handlers.get("key2") is key2_handler  # Same handler instance
         assert "key3" in cache._cache
-        assert "key3" not in cache._handlers # No TTL
+        assert "key3" not in cache._handlers  # No TTL
