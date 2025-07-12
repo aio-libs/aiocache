@@ -25,6 +25,7 @@ class SimpleMemoryCache(BaseCache[str]):
 
     NAME = "memory"
 
+    # TODO(PY312): https://peps.python.org/pep-0692/
     def __init__(self, **kwargs):
         # Extract maxsize before passing kwargs to base class
         self.maxsize = kwargs.pop('maxsize', None)

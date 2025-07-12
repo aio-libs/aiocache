@@ -26,8 +26,8 @@ class TestHitMissRatioPlugin:
         hits = [x for x in keys if "test" + x in data]
         assert memory_cache.hit_miss_ratio["hits"] == len(hits)
         assert (
-                memory_cache.hit_miss_ratio["hit_ratio"]
-                == len(hits) / memory_cache.hit_miss_ratio["total"]
+            memory_cache.hit_miss_ratio["hit_ratio"]
+            == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
 
     @pytest.mark.parametrize(
@@ -50,8 +50,8 @@ class TestHitMissRatioPlugin:
         hits = [x for x in keys if "test" + x in data]
         assert memory_cache.hit_miss_ratio["hits"] == len(hits)
         assert (
-                memory_cache.hit_miss_ratio["hit_ratio"]
-                == len(hits) / memory_cache.hit_miss_ratio["total"]
+            memory_cache.hit_miss_ratio["hit_ratio"]
+            == len(hits) / memory_cache.hit_miss_ratio["total"]
         )
 
     async def test_set_and_get_using_namespace(self, memory_cache):
