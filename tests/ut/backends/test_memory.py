@@ -199,6 +199,179 @@ class TestSimpleMemoryCache:
     def test_parse_uri_path(self):
         assert SimpleMemoryCache().parse_uri_path("/1/2/3") == {}
 
+    async def test_maxsize_enforcement(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        # Fill cache to maxsize
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+        assert await cache.exists("key1")
+        assert await cache.exists("key2")
+        assert len(cache._cache) == 2
+
+        # Add third item - should evict key1 (LRU)
+        await cache.set("key3", "value3")
+        assert not await cache.exists("key1")
+        assert await cache.exists("key2")
+        assert await cache.exists("key3")
+        assert len(cache._cache) == 2
+
+    async def test_eviction_order(self):
+        cache = SimpleMemoryCache(maxsize=3)
+
+        # Add initial items
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+        await cache.set("key3", "value3")
+
+        # Access key1 to make it recently used
+        await cache.get("key1")
+
+        # Add fourth item - should evict key2 (least recently used)
+        await cache.set("key4", "value4")
+        assert await cache.exists("key1")
+        assert not await cache.exists("key2")
+        assert await cache.exists("key3")
+        assert await cache.exists("key4")
+
+    async def test_get_updates_recency(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+
+        # Access key1 to make it recently used
+        await cache.get("key1")
+
+        # Add third item - should evict key2
+        await cache.set("key3", "value3")
+        assert await cache.exists("key1")
+        assert not await cache.exists("key2")
+        assert await cache.exists("key3")
+
+    async def test_add_eviction(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        await cache.add("key1", "value1")
+        await cache.add("key2", "value2")
+
+        # Add third item - should evict key1
+        await cache.add("key3", "value3")
+        assert not await cache.exists("key1")
+        assert await cache.exists("key2")
+        assert await cache.exists("key3")
+
+    async def test_multi_set_eviction(self):
+        cache = SimpleMemoryCache(maxsize=3)
+
+        # Initial items
+        await cache.set("key1", "value1")
+
+        # Add two more items via multi_set
+        await cache.multi_set([("key2", "value2"), ("key3", "value3")])
+
+        # Add two more - should evict two oldest items
+        await cache.multi_set([("key4", "value4"), ("key5", "value5")])
+
+        assert not await cache.exists("key1")
+        assert not await cache.exists("key2")
+        assert await cache.exists("key3")  # key3 was most recent before multi_set
+        assert await cache.exists("key4")
+        assert await cache.exists("key5")
+
+    async def test_no_eviction_when_below_maxsize(self):
+        cache = SimpleMemoryCache(maxsize=5)
+
+        for i in range(4):
+            await cache.set(f"key{i}", f"value{i}")
+
+        assert len(cache._cache) == 4
+        for i in range(4):
+            assert await cache.exists(f"key{i}")
+
+    async def test_ttl_doesnt_affect_eviction_order(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        await cache.set("key1", "value1", ttl=10)
+        await cache.set("key2", "value2")
+
+        # Access key1 to make it recently used
+        await cache.get("key1")
+
+        # Add third item - should evict key2 despite key1 having TTL
+        await cache.set("key3", "value3")
+        assert await cache.exists("key1")
+        assert not await cache.exists("key2")
+        assert await cache.exists("key3")
+
+    async def test_clear_resets_size(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+        assert len(cache._cache) == 2
+
+        await cache.clear()
+        assert len(cache._cache) == 0
+
+        # Should be able to add new items without immediate eviction
+        await cache.set("key3", "value3")
+        await cache.set("key4", "value4")
+        assert await cache.exists("key3")
+        assert await cache.exists("key4")
+        assert len(cache._cache) == 2
+
+    async def test_delete_updates_size(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        await cache.set("key1", "value1")
+        await cache.set("key2", "value2")
+        assert len(cache._cache) == 2
+
+        await cache.delete("key1")
+        assert len(cache._cache) == 1
+
+        # Should be able to add new item without eviction
+        await cache.set("key3", "value3")
+        assert await cache.exists("key2")
+        assert await cache.exists("key3")
+        assert len(cache._cache) == 2
+
+    async def test_increment_updates_recency(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        await cache.set("key1", 1)
+        await cache.set("key2", 2)
+
+        # Increment key1 to make it recently used
+        await cache.increment("key1", 1)
+
+        # Add third item - should evict key2
+        await cache.set("key3", 3)
+        assert await cache.exists("key1")
+        assert not await cache.exists("key2")
+        assert await cache.exists("key3")
+        assert await cache.get("key1") == 2
+
+    async def test_lru_eviction_with_handlers(self):
+        cache = SimpleMemoryCache(maxsize=2)
+
+        # Add two items with TTL
+        await cache.set("key1", "value1", ttl=10)
+        await cache.set("key2", "value2", ttl=10)
+
+        key2_handler = cache._handlers["key2"]
+
+        # Add a third item to trigger eviction
+        await cache.set("key3", "value3")
+
+        assert "key1" not in cache._cache
+        assert "key1" not in cache._handlers
+        assert "key2" in cache._cache
+        assert cache._handlers.get("key2") is key2_handler  # Same handler instance
+        assert "key3" in cache._cache
+        assert "key3" not in cache._handlers  # No TTL
+
     def test_custom_serializer(self):
         assert isinstance(
             SimpleMemoryCache(serializer=PickleSerializer()).serializer,
