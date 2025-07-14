@@ -244,29 +244,18 @@ class TestValkeyCache:
 
     async def test_custom_serializer(self, valkey_config):
         value = {"one": {"nested": "1"}, "two": 2}
-        serialized = pickle.dumps(
-            value,
-        )
+        serialized = pickle.dumps(value)
 
-        async with ValkeyCache(
-            config=valkey_config, serializer=PickleSerializer()
-        ) as vc:
-            assert isinstance(
-                vc.serializer,
-                PickleSerializer,
-            )
+        async with ValkeyCache(config=valkey_config, serializer=PickleSerializer()) as vc:
+            assert isinstance(vc.serializer, PickleSerializer)
             await vc.set(Keys.KEY, value)
             assert await vc.get(Keys.KEY) == pickle.loads(serialized)
 
     async def test_default_key_builder(self, valkey_config):
         # use .value in this test. see: https://github.com/python/cpython/issues/100458
-        namespace = "namespace"
-        built_key = f"{namespace}:{Keys.KEY.value}"
-        async with ValkeyCache(
-            config=valkey_config,
-        ) as default:
-            await default.set(Keys.KEY.value, "value", namespace=namespace)
-            assert await default.client.exists([built_key])
+        async with ValkeyCache(config=valkey_config) as default:
+            await default.set(Keys.KEY.value, "value", namespace="namespace")
+            assert await default.client.exists(["namespace:key"])
 
     async def test_custom_key_builder(self, valkey_config):
         async with ValkeyCache(
