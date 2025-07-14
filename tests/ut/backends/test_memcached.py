@@ -261,14 +261,9 @@ class TestMemcachedCache:
 
     async def test_custom_serializer(self):
         value = {"one": {"nested": "1"}, "two": 2}
-        serialized = pickle.dumps(
-            value,
-        )
+        serialized = pickle.dumps(value)
 
         async with MemcachedCache(serializer=PickleSerializer()) as mc:
-            assert isinstance(
-                mc.serializer,
-                PickleSerializer,
-            )
+            assert isinstance(mc.serializer, PickleSerializer)
             await mc.set(Keys.KEY, value)
             assert await mc.get(Keys.KEY) == pickle.loads(serialized)

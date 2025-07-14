@@ -375,15 +375,10 @@ class TestSimpleMemoryCache:
 
     async def test_custom_serializer(self):
         value = {"one": {"nested": "1"}, "two": 2}
-        serialized = pickle.dumps(
-            value,
-        )
+        serialized = pickle.dumps(value)
 
         # use the main constructor instead of fixture for coverage
         async with SimpleMemoryCache(serializer=PickleSerializer()) as smc:
-            assert isinstance(
-                smc.serializer,
-                PickleSerializer,
-            )
+            assert isinstance(smc.serializer, PickleSerializer)
             await smc.set(Keys.KEY, value)
             assert await smc.get(Keys.KEY) == pickle.loads(serialized)
