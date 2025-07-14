@@ -266,19 +266,15 @@ class TestValkeyCache:
             config=valkey_config,
         ) as default:
             await default.set(Keys.KEY.value, "value", namespace=namespace)
-
-        async with ValkeyCache(
-            config=valkey_config, key_builder=lambda k, ns: f"{ns}:{k}" if ns else k
-        ) as explicit:
-            assert await explicit.exists(Keys.KEY.value, namespace=namespace)
-            assert await explicit._exists(built_key)
+            assert await default.client.exists([built_key])
 
     async def test_custom_key_builder(self, valkey_config):
         async with ValkeyCache(
             config=valkey_config, key_builder=lambda k, ns: f"{ns}__{k}" if ns else k
         ) as vc:
-            await vc.set(Keys.KEY, "value", namespace="namespace")
-            assert await vc.get(Keys.KEY, namespace="namespace") == "value"
+            await vc.set(Keys.KEY.value, "value", namespace="namespace")
+            assert await vc.get(Keys.KEY.value, namespace="namespace") == "value"
+            assert await vc.client.exists(["namespace__key"])
 
     async def test_raw(self, valkey_config):
         async with ValkeyCache(config=valkey_config) as cache:
