@@ -248,6 +248,7 @@ class TestValkeyCache:
         )
 
     async def test_default_key_builder(self, valkey_config):
+        # use .value in this test. see: https://github.com/python/cpython/issues/100458
         namespace = "namespace"
         built_key = f"{namespace}:{Keys.KEY.value}"
         async with ValkeyCache(
