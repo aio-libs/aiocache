@@ -247,26 +247,25 @@ class TestValkeyCache:
             PickleSerializer,
         )
 
-    def test_default_key_builder(self, valkey_config):
-        real_code = ValkeyCache(config=valkey_config)._build_key.__code__
-        expected_code = (lambda k, ns: f"{ns}:{k}" if ns else k).__code__
-        assert (
-            real_code.co_code == expected_code.co_code
-            and real_code.co_consts == expected_code.co_consts
-            and real_code.co_names == expected_code.co_names
-        )
+    async def test_default_key_builder(self, valkey_config):
+        built_key = f"namespace:{Keys.KEY}"
+        async with ValkeyCache(
+            config=valkey_config,
+        ) as default:
+            await default.set(Keys.KEY, "value", namespace="namespace")
 
-    def test_custom_key_builder(self, valkey_config):
-        def key_builder(k, ns):
-            return f"dict(k={k}, ns={ns})"
+        async with ValkeyCache(
+            config=valkey_config, key_builder=lambda k, ns: f"{ns}:{k}" if ns else k
+        ) as explicit:
+            assert await explicit.exists(Keys.KEY, namespace="namespace")
+            assert await explicit._exists(built_key)
 
-        real_code = ValkeyCache(config=valkey_config, key_builder=key_builder)._build_key.__code__
-        expected_code = key_builder.__code__
-        assert (
-            real_code.co_code == expected_code.co_code
-            and real_code.co_consts == expected_code.co_consts
-            and real_code.co_names == expected_code.co_names
-        )
+    async def test_custom_key_builder(self, valkey_config):
+        async with ValkeyCache(
+            config=valkey_config, key_builder=lambda k, ns: f"{ns}__{k}" if ns else k
+        ) as vc:
+            await vc.set(Keys.KEY, "value", namespace="namespace")
+            assert await vc.get(Keys.KEY, namespace="namespace") == "value"
 
     async def test_raw(self, valkey_config):
         async with ValkeyCache(config=valkey_config) as cache:
