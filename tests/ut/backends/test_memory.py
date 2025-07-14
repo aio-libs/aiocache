@@ -1,4 +1,5 @@
 import asyncio
+import pickle
 from unittest.mock import ANY, MagicMock, create_autospec, patch
 
 import pytest
@@ -372,8 +373,17 @@ class TestSimpleMemoryCache:
         assert "key3" in cache._cache
         assert "key3" not in cache._handlers  # No TTL
 
-    def test_custom_serializer(self):
-        assert isinstance(
-            SimpleMemoryCache(serializer=PickleSerializer()).serializer,
-            PickleSerializer,
+    async def test_custom_serializer(self):
+        value = {"one": {"nested": "1"}, "two": 2}
+        serialized = pickle.dumps(
+            value,
         )
+
+        # use the main constructor instead of fixture for coverage
+        async with SimpleMemoryCache(serializer=PickleSerializer()) as smc:
+            assert isinstance(
+                smc.serializer,
+                PickleSerializer,
+            )
+            await smc.set(Keys.KEY, value)
+            assert await smc.get(Keys.KEY) == pickle.loads(serialized)

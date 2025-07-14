@@ -1,3 +1,4 @@
+import pickle
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -241,11 +242,21 @@ class TestValkeyCache:
     def test_build_key_no_namespace(self, valkey_cache):
         assert valkey_cache.build_key(Keys.KEY, namespace=None) == Keys.KEY
 
-    def test_custom_serializer(self, valkey_config):
-        assert isinstance(
-            ValkeyCache(config=valkey_config, serializer=PickleSerializer()).serializer,
-            PickleSerializer,
+    async def test_custom_serializer(self, valkey_config):
+        value = {"one": {"nested": "1"}, "two": 2}
+        serialized = pickle.dumps(
+            value,
         )
+
+        async with ValkeyCache(
+            config=valkey_config, serializer=PickleSerializer()
+        ) as vc:
+            assert isinstance(
+                vc.serializer,
+                PickleSerializer,
+            )
+            await vc.set(Keys.KEY, value)
+            assert await vc.get(Keys.KEY) == pickle.loads(serialized)
 
     async def test_default_key_builder(self, valkey_config):
         # use .value in this test. see: https://github.com/python/cpython/issues/100458

@@ -1,3 +1,4 @@
+import pickle
 from unittest.mock import AsyncMock, patch
 
 import aiomcache
@@ -258,8 +259,16 @@ class TestMemcachedCache:
     def test_build_key_no_spaces(self, memcached_cache):
         assert memcached_cache.build_key("hello world") == b"hello_world"
 
-    def test_custom_serializer(self):
-        assert isinstance(
-            MemcachedCache(serializer=PickleSerializer()).serializer,
-            PickleSerializer,
+    async def test_custom_serializer(self):
+        value = {"one": {"nested": "1"}, "two": 2}
+        serialized = pickle.dumps(
+            value,
         )
+
+        async with MemcachedCache(serializer=PickleSerializer()) as mc:
+            assert isinstance(
+                mc.serializer,
+                PickleSerializer,
+            )
+            await mc.set(Keys.KEY, value)
+            assert await mc.get(Keys.KEY) == pickle.loads(serialized)
