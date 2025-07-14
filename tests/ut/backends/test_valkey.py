@@ -1,3 +1,4 @@
+import pickle
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -6,7 +7,7 @@ from glide.exceptions import RequestError
 
 from aiocache.backends.valkey import ValkeyCache
 from aiocache.base import BaseCache
-from aiocache.serializers import JsonSerializer
+from aiocache.serializers import JsonSerializer, PickleSerializer
 from ...utils import Keys, ensure_key
 
 
@@ -240,3 +241,33 @@ class TestValkeyCache:
 
     def test_build_key_no_namespace(self, valkey_cache):
         assert valkey_cache.build_key(Keys.KEY, namespace=None) == Keys.KEY
+
+    async def test_custom_serializer(self, valkey_config):
+        value = {"one": {"nested": "1"}, "two": 2}
+        serialized = pickle.dumps(value)
+
+        async with ValkeyCache(config=valkey_config, serializer=PickleSerializer()) as vc:
+            assert isinstance(vc.serializer, PickleSerializer)
+            await vc.set(Keys.KEY, value)
+            assert await vc.get(Keys.KEY) == pickle.loads(serialized)
+
+    async def test_default_key_builder(self, valkey_config):
+        # use .value in this test. see: https://github.com/python/cpython/issues/100458
+        async with ValkeyCache(config=valkey_config) as default:
+            await default.set(Keys.KEY.value, "value", namespace="namespace")
+            assert await default.client.exists(["namespace:key"])
+
+    async def test_custom_key_builder(self, valkey_config):
+        async with ValkeyCache(
+            config=valkey_config, key_builder=lambda k, ns: f"{ns}__{k}" if ns else k
+        ) as vc:
+            await vc.set(Keys.KEY.value, "value", namespace="namespace")
+            assert await vc.get(Keys.KEY.value, namespace="namespace") == "value"
+            assert await vc.client.exists(["namespace__key"])
+
+    async def test_raw(self, valkey_config):
+        async with ValkeyCache(config=valkey_config) as cache:
+            set_v = await cache.raw("set", Keys.KEY, "Any")
+            get_v = await cache.raw("get", Keys.KEY)
+        assert set_v == "OK"
+        assert get_v == "Any"
