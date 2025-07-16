@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from marshmallow import Schema, fields, post_load
-
+from msgspec import Struct
 try:
     import ujson as json  # noqa: I900
 except ImportError:
@@ -16,6 +16,7 @@ from aiocache.serializers import (
     NullSerializer,
     PickleSerializer,
     StringSerializer,
+    MsgspecSerializer
 )
 from ..utils import Keys
 
@@ -151,6 +152,19 @@ class TestAltSerializers:
     async def test_get_set_alt_serializer_class(self, cache):
         my_serializer = MyTypeSchema()
         my_obj = MyType()
+        cache.serializer = my_serializer
+        await cache.set(Keys.KEY, my_obj)
+        assert await cache.get(Keys.KEY) == my_serializer.loads(my_serializer.dumps(my_obj))
+
+
+class MsgspecTest(Struct):
+    a: int 
+    b: str
+
+class TestMsgspecSerializer:
+    async def test_serlize_struct(self, cache):
+        my_serializer = MsgspecSerializer(type=MsgspecTest)
+        my_obj = MsgspecTest(1, "testing")
         cache.serializer = my_serializer
         await cache.set(Keys.KEY, my_obj)
         assert await cache.get(Keys.KEY) == my_serializer.loads(my_serializer.dumps(my_obj))

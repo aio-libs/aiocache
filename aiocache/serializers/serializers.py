@@ -1,9 +1,10 @@
 import logging
 import pickle  # noqa: S403
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, overload, TypeVar, Literal, Callable, Generic, Type, Union
 
 logger = logging.getLogger(__name__)
+_T = TypeVar("_T")
 
 try:
     import ujson as json  # noqa: I900
@@ -17,6 +18,15 @@ except ImportError:
     msgpack = None
     logger.debug("msgpack not installed, MsgPackSerializer unavailable")
 
+try:
+    from msgspec.msgpack import Decoder as MsgspecDecoder, Encoder as MsgspecEncoder
+except ImportError:
+    MsgspecEncoder = None
+    # Only here as extended typehinting
+    class MsgspecDecoder(Generic[_T]):
+        def decode(self, buf: Union[bytes, bytearray, memoryview[int]]) -> _T:...
+
+    logger.debug("msgspec not installed, MsgspecSerlizer unavailable")
 
 _NOT_SET = object()
 
@@ -197,3 +207,75 @@ class MsgPackSerializer(BaseSerializer):
         if value is None:
             return None
         return msgpack.loads(value, raw=raw, use_list=self.use_list)
+
+
+
+class MsgspecSerializer(BaseSerializer, Generic[_T]):
+    @overload
+    def __init__(
+        self:"MsgspecSerializer[Any]",
+        enc_hook: Optional[Callable[[Any], Any]] = None,
+        decimal_format: Literal['string', 'number'] = "string",
+        uuid_format: Literal['canonical', 'hex', 'bytes'] = "canonical",
+        order: Literal['deterministic', 'sorted'] | None = None,
+        struct_type: None = None,
+        strict:bool = True,
+        dec_hook: Optional[Callable[[Type, Any], Any]] = None,
+        ext_hook: Optional[Callable[[int, memoryview[int]], Any]] = None,
+    ) -> None:...
+    
+    @overload
+    def __init__(
+        self:"MsgspecSerializer[_T]",
+        enc_hook: Optional[Callable[[Any], Any]] = None,
+        decimal_format: Literal['string', 'number'] = "string",
+        uuid_format: Literal['canonical', 'hex', 'bytes'] = "canonical",
+        order: Literal['deterministic', 'sorted'] | None = None,
+        struct_type: Type[_T] = None,
+        strict:bool = True,
+        dec_hook: Optional[Callable[[type, Any], Any]] = None,
+        ext_hook: Optional[Callable[[int, memoryview[int]], Any]] = None,
+    ) -> None:...
+    
+    def __init__(
+        self, 
+        enc_hook: Optional[Callable[[Any], Any]] = None,
+        decimal_format: Literal['string', 'number'] = "string",
+        uuid_format: Literal['canonical', 'hex', 'bytes'] = "canonical",
+        order: Literal['deterministic', 'sorted'] | None = None,
+        struct_type: Type[_T] | None = None,
+        strict:bool = True,
+        dec_hook: Optional[Callable[[type, Any], Any]] = None,
+        ext_hook: Optional[Callable[[int, memoryview[int]], Any]] = None,
+        ):
+        if MsgspecEncoder is None:
+            raise RuntimeError("msgspec not installed, MsgspecSerializer unavailable")
+
+        self.encoder = MsgspecEncoder(enc_hook=enc_hook, decimal_format=decimal_format, uuid_format=uuid_format, order=order)
+        
+        if struct_type is not None:
+            self.decoder: "MsgspecDecoder[_T]" = MsgspecDecoder(
+                type=struct_type,
+                dec_hook=dec_hook,
+                ext_hook=ext_hook,
+                strict=strict
+            )
+        else:
+            self.decoder: "MsgspecDecoder[Any]" = MsgspecDecoder(
+                dec_hook=dec_hook,
+                ext_hook=ext_hook,
+                strict=strict
+            )
+
+    @overload
+    def dumps(self, value:_T) -> bytes:...
+
+    @overload
+    def dumps(self, value: Any) -> bytes:...
+
+    def dumps(self, value:_T | Any) -> bytes:
+        return self.encoder.encode(value)
+
+    def loads(self, value:bytes) -> _T:
+        return self.decoder.decode(value)
+    
