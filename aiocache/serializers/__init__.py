@@ -26,6 +26,7 @@ except ImportError:
     logger.debug("msgspec not installed, MsgspecSerializer unavailable")
 else:
     from .serializers import MsgspecSerializer
+
     del msgspec
 
 __all__ = [
@@ -35,5 +36,5 @@ __all__ = [
     "PickleSerializer",
     "JsonSerializer",
     "MsgPackSerializer",
-    "MsgspecSerializer"
+    "MsgspecSerializer",
 ]

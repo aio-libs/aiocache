@@ -52,7 +52,13 @@ class cached:
         return wrapper
 
     async def decorator(
-        self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
+        self,
+        f,
+        *args,
+        cache_read=True,
+        cache_write=True,
+        aiocache_wait_for_write=True,
+        **kwargs,
     ):
         key = self.get_cache_key(f, args, kwargs)
 
@@ -237,11 +243,19 @@ class multi_cached:
         return wrapper
 
     async def decorator(
-        self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
+        self,
+        f,
+        *args,
+        cache_read=True,
+        cache_write=True,
+        aiocache_wait_for_write=True,
+        **kwargs,
     ):
         missing_keys = []
         partial = {}
-        orig_keys, cache_keys, new_args, args_index = self.get_cache_keys(f, args, kwargs)
+        orig_keys, cache_keys, new_args, args_index = self.get_cache_keys(
+            f, args, kwargs
+        )
 
         if cache_read:
             values = await self.get_from_cache(*cache_keys)
@@ -303,7 +317,10 @@ class multi_cached:
     async def set_in_cache(self, result, fn, fn_args, fn_kwargs):
         try:
             await self.cache.multi_set(
-                [(self.key_builder(k, fn, *fn_args, **fn_kwargs), v) for k, v in result.items()],
+                [
+                    (self.key_builder(k, fn, *fn_args, **fn_kwargs), v)
+                    for k, v in result.items()
+                ],
                 ttl=self.ttl,
             )
         except Exception:
