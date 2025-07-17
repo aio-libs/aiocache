@@ -20,6 +20,14 @@ else:
 
     del msgpack
 
+try:
+    import msgspec
+except ImportError:
+    logger.debug("msgspec not installed, MsgspecSerializer unavailable")
+else:
+    from .serializers import MsgspecSerializer
+
+    del msgspec
 
 __all__ = [
     "BaseSerializer",
@@ -28,4 +36,5 @@ __all__ = [
     "PickleSerializer",
     "JsonSerializer",
     "MsgPackSerializer",
+    "MsgspecSerializer",
 ]

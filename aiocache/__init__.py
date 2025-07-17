@@ -30,7 +30,11 @@ else:
     _AIOCACHE_CACHES.append(MemcachedCache)
     del aiomcache
 
-from .decorators import cached, cached_stampede, multi_cached  # noqa: E402,I202
+from .decorators import (
+    cached,
+    cached_stampede,  # noqa: E402,I202
+    multi_cached,
+)
 
 __all__ = (
     "cached",
