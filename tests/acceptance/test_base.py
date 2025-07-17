@@ -42,6 +42,29 @@ class TestCache:
         value = await cache.get(Keys.KEY)
         assert value is None
 
+    async def test_multi_delete_missing(self, cache):
+        result = await cache.multi_delete([Keys.KEY, Keys.KEY_1])
+        assert result == 0
+
+    async def test_multi_delete_existing(self, cache):
+        await cache.set(Keys.KEY, "value")
+        await cache.set(Keys.KEY_1, "value1")
+        result = await cache.multi_delete([Keys.KEY, Keys.KEY_1])
+        assert result == 2
+
+        value = await cache.get(Keys.KEY)
+        assert value is None
+        value1 = await cache.get(Keys.KEY_1)
+        assert value1 is None
+
+    async def test_multi_delete_partial(self, cache):
+        await cache.set(Keys.KEY, "value")
+        result = await cache.multi_delete([Keys.KEY, Keys.KEY_1])
+        assert result == 1
+
+        value = await cache.get(Keys.KEY)
+        assert value is None
+
     async def test_set(self, cache):
         assert await cache.set(Keys.KEY, "value") is True
 

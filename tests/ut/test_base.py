@@ -168,6 +168,10 @@ class TestBaseCache:
         with pytest.raises(NotImplementedError):
             await base_cache._delete(Keys.KEY)
 
+    async def test_multi_delete(self, base_cache):
+        with pytest.raises(NotImplementedError):
+            await base_cache._multi_delete([Keys.KEY])
+
     async def test_exists(self, base_cache):
         with pytest.raises(NotImplementedError):
             await base_cache._exists(Keys.KEY)
@@ -557,6 +561,21 @@ class TestCache:
 
         with pytest.raises(asyncio.TimeoutError):
             await mock_base_cache.delete(Keys.KEY)
+
+    async def test_multi_delete(self, mock_base_cache):
+        await mock_base_cache.multi_delete([Keys.KEY, Keys.KEY_1])
+
+        mock_base_cache._multi_delete.assert_called_with(
+            [mock_base_cache.build_key(Keys.KEY), mock_base_cache.build_key(Keys.KEY_1)], _conn=ANY
+        )
+        assert mock_base_cache.plugins[0].pre_multi_delete.call_count == 1
+        assert mock_base_cache.plugins[0].post_multi_delete.call_count == 1
+
+    async def test_multi_delete_timeouts(self, mock_base_cache):
+        mock_base_cache._multi_delete = self.asleep
+
+        with pytest.raises(asyncio.TimeoutError):
+            await mock_base_cache.multi_delete([Keys.KEY, Keys.KEY_1])
 
     async def test_expire(self, mock_base_cache):
         await mock_base_cache.expire(Keys.KEY, 1)

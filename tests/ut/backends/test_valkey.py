@@ -190,6 +190,14 @@ class TestValkeyCache:
         await valkey._delete(Keys.KEY)
         valkey.client.delete.assert_called_with([Keys.KEY])
 
+    async def test_multi_delete(self, valkey):
+        await valkey._multi_delete([Keys.KEY, Keys.KEY_1])
+        valkey.client.delete.assert_called_with([Keys.KEY, Keys.KEY_1])
+
+    async def test_multi_delete_empty_list(self, valkey):
+        await valkey._multi_delete([])
+        valkey.client.delete.assert_called_with([])
+
     async def test_clear(self, valkey):
         valkey.client.scan.return_value = [b"0", ["nm:a", "nm:b"]]
         await valkey._clear("nm")
