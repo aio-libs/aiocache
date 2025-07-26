@@ -3,12 +3,13 @@ from typing import Any, Type
 
 from .backends.memory import SimpleMemoryCache
 from .base import BaseCache
+from .layered import LayeredCache, create_cache_from_dict, create_layered_cache
 
 __version__ = "1.0.0a0"
 
 logger = logging.getLogger(__name__)
 
-_AIOCACHE_CACHES: list[Type[BaseCache[Any]]] = [SimpleMemoryCache]
+_AIOCACHE_CACHES: list[Type[BaseCache[Any]]] = [SimpleMemoryCache, LayeredCache]
 
 try:
     import glide
@@ -36,5 +37,7 @@ __all__ = (
     "cached",
     "cached_stampede",
     "multi_cached",
+    "create_cache_from_dict",
+    "create_layered_cache",
     *sorted(c.__name__ for c in _AIOCACHE_CACHES),
 )

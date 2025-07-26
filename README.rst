@@ -19,11 +19,14 @@ This library aims for simplicity over specialization. All caches contain the sam
 - ``set``: Sets key/value.
 - ``multi_get``: Retrieves multiple key/values.
 - ``multi_set``: Sets multiple key/values.
+- ``multi_delete``: Deletes multiple keys and returns number of deleted items.
 - ``exists``: Returns True if key exists False otherwise.
 - ``increment``: Increment the value stored in the given key.
 - ``delete``: Deletes key and returns number of deleted items.
 - ``clear``: Clears the items stored.
 - ``raw``: Executes the specified command using the underlying client.
+
+All caches also support layered caching, allowing you to combine multiple cache backends in a hierarchy for optimal performance and persistence.
 
 
 .. role:: python(code)
@@ -94,6 +97,62 @@ Or as a decorator
     if __name__ == "__main__":
         asyncio.run(run())
 
+Multi-delete example
+
+.. code-block:: python
+
+    >>> import asyncio
+    >>> from aiocache import SimpleMemoryCache
+    >>> cache = SimpleMemoryCache()
+    >>> with asyncio.Runner() as runner:
+    >>>     runner.run(cache.set('key1', 'value1'))
+    True
+    >>>     runner.run(cache.set('key2', 'value2'))
+    True
+    >>>     runner.run(cache.set('key3', 'value3'))
+    True
+    >>>     runner.run(cache.multi_delete(['key1', 'key2', 'key4']))
+    2
+    >>>     runner.run(cache.get('key1'))
+    None
+    >>>     runner.run(cache.get('key2'))
+    None
+    >>>     runner.run(cache.get('key3'))
+    'value3'
+
+Layered cache example
+
+.. code-block:: python
+
+    >>> import asyncio
+    >>> from aiocache import create_cache_from_dict
+    >>> 
+    >>> config = {
+    >>>     'layers': [
+    >>>         {
+    >>>             'cache': "aiocache.SimpleMemoryCache",
+    >>>             'serializer': {
+    >>>                 'class': "aiocache.serializers.StringSerializer"
+    >>>             }
+    >>>         },
+    >>>         {
+    >>>             'cache': "aiocache.RedisCache",
+    >>>             'endpoint': "127.0.0.1",
+    >>>             'port': 6379,
+    >>>             'serializer': {
+    >>>                 'class': "aiocache.serializers.PickleSerializer"
+    >>>             }
+    >>>         }
+    >>>     ]
+    >>> }
+    >>> 
+    >>> cache = create_cache_from_dict(config)
+    >>> with asyncio.Runner() as runner:
+    >>>     runner.run(cache.set('key', 'value'))
+    True
+    >>>     runner.run(cache.get('key'))
+    'value'
+
 
 How does it work
 ================
@@ -127,6 +186,8 @@ In `examples folder <https://github.com/argaen/aiocache/tree/master/examples>`_ 
 - `Using marshmallow as a serializer <https://github.com/argaen/aiocache/blob/master/examples/marshmallow_serializer_class.py>`_
 - `Using cached decorator <https://github.com/argaen/aiocache/blob/master/examples/cached_decorator.py>`_.
 - `Using multi_cached decorator <https://github.com/argaen/aiocache/blob/master/examples/multicached_decorator.py>`_.
+- `Using multi_delete operation <https://github.com/argaen/aiocache/blob/master/examples/multi_delete_example.py>`_.
+- `Using layered cache <https://github.com/argaen/aiocache/blob/master/examples/layered_cache_example.py>`_.
 
 
 
