@@ -118,6 +118,13 @@ class MemcachedCache(BaseCache[bytes]):
     async def _delete(self, key, _conn=None):
         return 1 if await self.client.delete(key) else 0
 
+    async def _multi_delete(self, keys, _conn=None):
+        deleted_count = 0
+        for key in keys:
+            if await self.client.delete(key):
+                deleted_count += 1
+        return deleted_count
+
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
             raise ValueError("MemcachedBackend doesnt support flushing by namespace")
