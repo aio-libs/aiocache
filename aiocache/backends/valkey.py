@@ -43,9 +43,7 @@ class ValkeyCache(BaseCache[str]):
 
     NAME = "valkey"
 
-    def __init__(
-        self, config: GlideClientConfiguration, **kwargs
-    ):
+    def __init__(self, config: GlideClientConfiguration, **kwargs):
         self.config = config
 
         if "serializer" not in kwargs:
