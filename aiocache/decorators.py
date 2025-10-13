@@ -2,6 +2,10 @@ import asyncio
 import functools
 import inspect
 import logging
+from typing import Callable, TypeVar, ParamSpec, Coroutine, Any
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 from aiocache.base import SENTINEL
 from aiocache.lock import RedLock
@@ -43,12 +47,13 @@ class cached:
         self.noself = noself
         self.cache = cache
 
-    def __call__(self, f):
+    # Use ParamSpec and TypeVar to preserve the decorated function's type signature for static type checkers.
+    def __call__(self, f: Callable[P, R]) -> Callable[P, Coroutine[Any, Any, R]]:
         @functools.wraps(f)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             return await self.decorator(f, *args, **kwargs)
 
-        wrapper.cache = self.cache
+        wrapper.cache = self.cache # type: ignore[attr-defined]
         return wrapper
 
     async def decorator(
@@ -228,12 +233,13 @@ class multi_cached:
         self.skip_cache_func = skip_cache_func
         self.ttl = ttl
 
-    def __call__(self, f):
+    # Use ParamSpec and TypeVar to preserve the decorated function's type signature for static type checkers.
+    def __call__(self, f: Callable[P, R]) -> Callable[P, Coroutine[Any, Any, R]]:
         @functools.wraps(f)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             return await self.decorator(f, *args, **kwargs)
 
-        wrapper.cache = self.cache
+        wrapper.cache = self.cache # type: ignore[attr-defined]
         return wrapper
 
     async def decorator(
