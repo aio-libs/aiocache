@@ -67,6 +67,15 @@ SimpleMemoryCache
   :members:
 
 
+..  _limitedsizememorycache:
+
+LimitedSizeMemoryCache
+----------------------
+
+.. autoclass:: aiocache.LimitedSizeMemoryCache
+  :members:
+
+
 ..  _memcachedcache:
 
 MemcachedCache
