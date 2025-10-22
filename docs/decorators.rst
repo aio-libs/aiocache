@@ -17,6 +17,22 @@ cached
   :language: python
   :linenos:
 
+The ``@cached`` decorator returns a wrapper object that exposes cache control methods, such as ``.refresh()`` and ``.invalidate()``. Use ``.refresh()`` to force a cache refresh for the given arguments, bypassing the cache.
+
+**Example:**
+
+.. code-block:: python
+
+   @cached()
+   async def compute(x):
+       return x * 2
+
+   await compute(1)         # Uses cache if available
+   await compute.refresh(1) # Forces refresh, updates cache
+
+   await compute.invalidate()    # Invalidate all cache keys
+   await compute.invalidate(key) # Invalidate a specific cache key
+
 ..  _multi_cached:
 
 multi_cached
