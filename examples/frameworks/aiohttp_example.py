@@ -1,11 +1,17 @@
 import asyncio
 import logging
+from collections.abc import AsyncIterator
 from datetime import datetime
 from aiohttp import web
 from aiocache import cached, SimpleMemoryCache
 from aiocache.serializers import JsonSerializer
 
 cache = SimpleMemoryCache(serializer=JsonSerializer())
+
+
+async def cache_context(app: web.Application) -> AsyncIterator[None]:
+    async with cache:
+        yield
 
 
 @cached(cache, key_builder=lambda x: "time")
@@ -49,5 +55,7 @@ if __name__ == "__main__":
     app = web.Application()
     app.router.add_get('/handle', handle)
     app.router.add_get('/handle2', handle2)
+
+    app.cleanup_ctx.append(cache_context)
 
     web.run_app(app)
