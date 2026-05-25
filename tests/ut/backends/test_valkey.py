@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from glide import Batch, ConditionalChange, ExpirySet, ExpiryType
-from glide.exceptions import RequestError
+from glide import RequestError
 
 from aiocache.backends.valkey import ValkeyCache
 from aiocache.base import BaseCache

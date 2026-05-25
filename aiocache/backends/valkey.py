@@ -10,7 +10,7 @@ from glide import (
     GlideClient,
     GlideClientConfiguration,
 )
-from glide.exceptions import RequestError as IncrbyException
+from glide import RequestError as IncrbyException
 
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
