@@ -2,13 +2,17 @@ import logging
 from typing import Any, Type
 
 from .backends.memory import SimpleMemoryCache
+from .backends.limited_memory import LimitedSizeMemoryCache
 from .base import BaseCache
 
 __version__ = "1.0.0a0"
 
 logger = logging.getLogger(__name__)
 
-_AIOCACHE_CACHES: list[Type[BaseCache[Any]]] = [SimpleMemoryCache]
+_AIOCACHE_CACHES: list[Type[BaseCache[Any]]] = [
+    SimpleMemoryCache,
+    LimitedSizeMemoryCache,
+]
 
 try:
     import glide
