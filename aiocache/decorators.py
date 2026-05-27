@@ -44,12 +44,38 @@ class cached:
         self.cache = cache
 
     def __call__(self, f):
-        @functools.wraps(f)
-        async def wrapper(*args, **kwargs):
-            return await self.decorator(f, *args, **kwargs)
+        class CachedFunctionWrapper:
+            def __init__(self, decorator, func):
+                functools.update_wrapper(self, func)
+                self._decorator = decorator
+                self._func = func
+                self.cache = decorator.cache
 
-        wrapper.cache = self.cache
-        return wrapper
+            async def __call__(self, *args, **kwargs):
+                return await self._decorator.decorator(self._func, *args, **kwargs)
+
+            async def refresh(self, *args, **kwargs):
+                """
+                Force a refresh of the cache.
+
+                This method recomputes the result by calling the original function,
+                then updates the cache with the new value for the given arguments.
+                """
+                return await self._decorator.decorator(
+                    self._func, *args, cache_read=False, cache_write=True, **kwargs
+                )
+
+            async def invalidate(self, *args, **kwargs):
+                """
+                Invalidate the cache for the given key, or clear all cache if no key is provided.
+                """
+                if not args and not kwargs:
+                    await self.cache.clear()
+                else:
+                    key = self._decorator.get_cache_key(self._func, args, kwargs)
+                    await self.cache.delete(key)
+
+        return CachedFunctionWrapper(self, f)
 
     async def decorator(
         self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
@@ -229,12 +255,38 @@ class multi_cached:
         self.ttl = ttl
 
     def __call__(self, f):
-        @functools.wraps(f)
-        async def wrapper(*args, **kwargs):
-            return await self.decorator(f, *args, **kwargs)
+        class CachedFunctionWrapper:
+            def __init__(self, decorator, func):
+                functools.update_wrapper(self, func)
+                self._decorator = decorator
+                self._func = func
+                self.cache = decorator.cache
 
-        wrapper.cache = self.cache
-        return wrapper
+            async def __call__(self, *args, **kwargs):
+                return await self._decorator.decorator(self._func, *args, **kwargs)
+
+            async def refresh(self, *args, **kwargs):
+                """
+                Force a cache refresh for the given key.
+
+                This method recomputes the result by calling the original function,
+                then updates the cache with the new value for the given key.
+                """
+                return await self._decorator.decorator(
+                    self._func, *args, cache_read=False, cache_write=True, **kwargs
+                )
+
+            async def invalidate(self, *args, **kwargs):
+                """Invalidate the cache for the provided key, or clear all if no key is provided."""
+                if not args and not kwargs:
+                    await self.cache.clear()
+                else:
+                    # Invalidate each key in args
+                    for key in args:
+                        cache_key = self._decorator.key_builder(key, self._func, *args, **kwargs)
+                        await self.cache.delete(cache_key)
+
+        return CachedFunctionWrapper(self, f)
 
     async def decorator(
         self, f, *args, cache_read=True, cache_write=True, aiocache_wait_for_write=True, **kwargs
