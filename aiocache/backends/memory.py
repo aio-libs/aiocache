@@ -28,7 +28,7 @@ class SimpleMemoryCache(BaseCache[str]):
     # TODO(PY312): https://peps.python.org/pep-0692/
     def __init__(self, **kwargs):
         # Extract maxsize before passing kwargs to base class
-        self.maxsize = kwargs.pop('maxsize', None)
+        self.maxsize = kwargs.pop("maxsize", None)
         if "serializer" not in kwargs:
             kwargs["serializer"] = NullSerializer()
         super().__init__(**kwargs)
