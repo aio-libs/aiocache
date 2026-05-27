@@ -11,6 +11,7 @@ from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import SENTINEL
 from aiocache.decorators import _get_args_dict
 from aiocache.lock import RedLock
+from typing import Any, Dict, List
 
 
 async def stub(*args, value=None, seconds=0, **kwargs):
@@ -176,6 +177,16 @@ class TestCached:
         assert what.__name__ == "what"
         assert str(inspect.signature(what)) == "(self, a, b)"
         assert inspect.getfullargspec(what.__wrapped__).args == ["self", "a", "b"]
+
+    async def test_cached_preserves_type_hints(self, mock_cache: Any) -> None:
+        mock_cache.get.return_value = None
+
+        @cached(cache=mock_cache)
+        async def add(x: int, y: int) -> int:
+            return x + y
+
+        # mypy limitation: async decorators with ParamSpec (pyright works).
+        assert (await add(1, 1)) == 2  # type: ignore[comparison-overlap]
 
     async def test_reuses_cache_instance(self, mock_cache):
         @cached(cache=mock_cache)
@@ -476,6 +487,18 @@ class TestMultiCached:
         assert what.__name__ == "what"
         assert str(inspect.signature(what)) == "(self, keys=None, what=1)"
         assert inspect.getfullargspec(what.__wrapped__).args == ["self", "keys", "what"]
+
+    async def test_preserves_type_hints(self, mock_cache: Any) -> None:
+        mock_cache.multi_get.return_value = [None]
+
+        @multi_cached(cache=mock_cache, keys_from_attr="keys")
+        async def add(x: int, y: int, keys: List[str]) -> Dict[str, int]:
+            return {k: x + y for k in keys}
+
+        result = await add(1, 1, keys=["a"])
+
+        # mypy limitation: comparison-overlap with async decorators with ParamSpec.
+        assert result == {"a": 2}  # type: ignore[comparison-overlap]
 
     async def test_key_builder(self):
         @multi_cached(cache=SimpleMemoryCache(), keys_from_attr="keys",
