@@ -13,7 +13,6 @@ from aiocache.serializers import (
     StringSerializer,
 )
 
-
 Dummy = namedtuple("Dummy", "a, b")
 
 TYPES = [1, 2.0, "hi", True, ["1", 1], {"key": "value"}, Dummy(1, 2)]
@@ -129,8 +128,8 @@ class TestMsgPackSerializer:
     def test_init(self):
         serializer = MsgPackSerializer()
         assert isinstance(serializer, BaseSerializer)
-        assert serializer.DEFAULT_ENCODING == "utf-8"
-        assert serializer.encoding == "utf-8"
+        assert serializer.DEFAULT_ENCODING is None
+        assert serializer.encoding is None
 
     def test_init_fails_if_msgpack_not_installed(self):
         with mock.patch("aiocache.serializers.serializers.msgpack", None):
@@ -157,7 +156,8 @@ class TestMsgPackSerializer:
         assert MsgPackSerializer().loads(b"\xa2hi") == "hi"
 
     def test_loads_no_encoding(self):
-        assert MsgPackSerializer(encoding=None).loads(b"\xa2hi") == b"hi"
+        # encoding=None means the backend passes raw bytes; msgpack still decodes strings as str
+        assert MsgPackSerializer(encoding=None).loads(b"\xa2hi") == "hi"
 
     def test_loads_with_none(self):
         assert MsgPackSerializer().loads(None) is None

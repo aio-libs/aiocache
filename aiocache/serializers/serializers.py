@@ -166,10 +166,12 @@ class MsgPackSerializer(BaseSerializer):
     to have ``msgpack`` installed in order to be able to use this serializer.
 
     :param encoding: str. Can be used to change encoding param for ``msg.loads`` method.
-        Default is utf-8.
+        Default is None (backends pass raw bytes directly to loads without decoding).
     :param use_list: bool. Can be used to change use_list param for ``msgpack.loads`` method.
         Default is True.
     """
+
+    DEFAULT_ENCODING = None
 
     def __init__(self, *args, use_list=True, **kwargs):
         if not msgpack:
@@ -193,7 +195,7 @@ class MsgPackSerializer(BaseSerializer):
         :param value: bytes
         :returns: obj
         """
-        raw = False if self.encoding == "utf-8" else True
+        raw = self.encoding not in (None, "utf-8")
         if value is None:
             return None
         return msgpack.loads(value, raw=raw, use_list=self.use_list)
