@@ -90,7 +90,9 @@ class MemcachedCache(BaseCache[bytes]):
         except aiomcache.exceptions.ValidationException as e:
             raise TypeError("aiomcache error: {}".format(str(e)))
         if not ret:
-            raise ValueError("Key {} already exists, use .set to update the value".format(key))
+            raise ValueError(
+                "Key {} already exists, use .set to update the value".format(key)
+            )
 
         return True
 

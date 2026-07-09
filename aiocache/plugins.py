@@ -43,9 +43,9 @@ class TimingPlugin(BasePlugin):
             previous_min = client.profiling.get("{}_min".format(method))
 
             client.profiling["{}_total".format(method)] = previous_total + 1
-            client.profiling["{}_avg".format(method)] = previous_avg + (took - previous_avg) / (
-                previous_total + 1
-            )
+            client.profiling["{}_avg".format(method)] = previous_avg + (
+                took - previous_avg
+            ) / (previous_total + 1)
             client.profiling["{}_max".format(method)] = max(took, previous_max)
             client.profiling["{}_min".format(method)] = (
                 min(took, previous_min) if previous_min else took
