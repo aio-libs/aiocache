@@ -271,3 +271,34 @@ class TestValkeyCache:
             get_v = await cache.raw("get", Keys.KEY)
         assert set_v == "OK"
         assert get_v == "Any"
+
+    async def test_aenter_reentrant_raises(self, valkey_config):
+        client = AsyncMock()
+        client.close = AsyncMock()
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            AsyncMock(return_value=client),
+        ):
+            cache = ValkeyCache(config=valkey_config)
+            async with cache:
+                with pytest.raises(RuntimeError):
+                    async with cache:
+                        pass
+            client.close.assert_awaited_once()
+
+    async def test_aenter_after_aexit_reconnects(self, valkey_config):
+        clients = [AsyncMock(), AsyncMock()]
+        for c in clients:
+            c.close = AsyncMock()
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            AsyncMock(side_effect=clients),
+        ):
+            cache = ValkeyCache(config=valkey_config)
+            async with cache:
+                assert cache.client is clients[0]
+            assert cache.client is None
+
+            async with cache:
+                assert cache.client is clients[1]
+            assert cache.client is None
