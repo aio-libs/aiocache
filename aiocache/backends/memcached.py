@@ -110,7 +110,7 @@ class MemcachedCache(BaseCache[bytes]):
             else:
                 raise TypeError("aiomcache error: {}".format(str(e)))
 
-        return incremented or delta
+        return incremented if incremented is not None else delta
 
     async def _expire(self, key, ttl, _conn=None):
         return await self.client.touch(key, ttl)

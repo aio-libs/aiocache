@@ -186,6 +186,11 @@ class TestMemcachedCache:
         memcached.client.decr.assert_called_with(Keys.KEY, 2)
         memcached.client.set.assert_called_with(Keys.KEY, b"-2", exptime=0)
 
+    async def test_increment_result_zero(self, memcached):
+        # A counter decremented to exactly 0 must report 0, not the delta.
+        memcached.client.decr.return_value = 0
+        assert await memcached._increment(Keys.KEY, -5) == 0
+
     async def test_increment_typerror(self, memcached):
         memcached.client.incr.side_effect = aiomcache.exceptions.ClientException("msg")
         with pytest.raises(TypeError) as exc_info:
