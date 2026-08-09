@@ -125,8 +125,13 @@ class SimpleMemoryCache(BaseCache[str]):
 
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
+            # Match the prefix this cache's key_builder produces. With the
+            # default builder that is the bare namespace, which cannot be told
+            # apart from a longer namespace sharing it; a builder that appends
+            # a separator does not have that ambiguity.
+            prefix = self.build_key("", namespace)
             for key in list(self._cache):
-                if key.startswith(namespace):
+                if key.startswith(prefix):
                     self.__delete(key)
         else:
             self._cache = OrderedDict()

@@ -148,11 +148,16 @@ class ValkeyCache(BaseCache[str]):
         if not namespace:
             return await self.client.flushdb()
 
-        # SCAN returns a batch at a time, so keep going until the cursor comes
-        # back to 0 or only the keys in the first batch would be deleted.
+        # Match whatever prefix this cache's key_builder produces rather than
+        # assuming the default "<namespace>:<key>" layout, otherwise a custom
+        # key_builder makes this delete nothing at all.
+        pattern = self.build_key("", namespace) + "*"
+
+        # SCAN returns one batch per call, so keep going until the cursor comes
+        # back to 0. Stopping at the first batch leaves the rest behind.
         cursor = b"0"
         while True:
-            cursor, keys = await self.client.scan(cursor, "{}:*".format(namespace))
+            cursor, keys = await self.client.scan(cursor, pattern)
             if keys:
                 await self.client.delete(keys)
             if cursor == b"0":

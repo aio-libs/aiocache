@@ -591,6 +591,14 @@ class TestCache:
 
         mock_base_cache._clear.assert_called_with("other", _conn=ANY)
 
+    async def test_clear_empty_namespace_clears_everything(self, mock_base_cache):
+        """An empty namespace is a request to clear the backend, not a missing value."""
+        mock_base_cache.namespace = "ns"
+
+        await mock_base_cache.clear("")
+
+        mock_base_cache._clear.assert_called_with("", _conn=ANY)
+
     async def test_clear_timeouts(self, mock_base_cache):
         mock_base_cache._clear = self.asleep
 

@@ -219,6 +219,13 @@ class TestMemcachedCache:
 
         assert await memcached_cache.exists(Keys.KEY) is True
 
+    async def test_clear_empty_namespace_flushes_memcached(self, memcached_cache):
+        await memcached_cache.set(Keys.KEY, "value")
+
+        await memcached_cache.clear(namespace="")
+
+        assert await memcached_cache.exists(Keys.KEY) is False
+
     async def test_close(self, memcached_cache):
         await memcached_cache.set(Keys.KEY, "value")
         await memcached_cache._close()
@@ -274,11 +281,13 @@ class TestValkeyCache:
         await valkey_cache.set(Keys.KEY, "value")
         await valkey_cache.set(Keys.KEY, "other", namespace="other")
 
-        await valkey_cache.clear()
+        try:
+            await valkey_cache.clear()
 
-        assert await valkey_cache.exists(Keys.KEY) is False
-        assert await valkey_cache.exists(Keys.KEY, namespace="other") is True
-        await valkey_cache.delete(Keys.KEY, namespace="other")
+            assert await valkey_cache.exists(Keys.KEY) is False
+            assert await valkey_cache.exists(Keys.KEY, namespace="other") is True
+        finally:
+            await valkey_cache.delete(Keys.KEY, namespace="other")
 
     async def test_clear_removes_keys_beyond_one_scan_batch(self, valkey_cache):
         keys = [f"{Keys.KEY.value}-{i}" for i in range(2000)]
@@ -286,10 +295,13 @@ class TestValkeyCache:
             batch = keys[start:start + 200]
             await asyncio.gather(*(valkey_cache.set(k, "value") for k in batch))
 
-        await valkey_cache.clear()
+        try:
+            await valkey_cache.clear()
 
-        assert await valkey_cache.exists(keys[0]) is False
-        assert await valkey_cache.exists(keys[-1]) is False
+            assert await valkey_cache.exists(keys[0]) is False
+            assert await valkey_cache.exists(keys[-1]) is False
+        finally:
+            await valkey_cache.clear()
 
     async def test_close(self, valkey_cache):
         await valkey_cache.set(Keys.KEY, "value")

@@ -448,13 +448,20 @@ class BaseCache(Generic[CacheKeyType], ABC):
         clear those ones instead.
 
         Caches configured without a namespace clear the whole backend, which for a shared
-        server means every key, including those written by other caches.
+        server means every key, including those written by other caches. Passing an empty
+        namespace asks for that explicitly.
+
+        A namespace is matched by the key prefix the ``key_builder`` produces, so with a
+        builder that does not separate the namespace from the key, a namespace also matches
+        the longer namespaces starting with it.
 
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
+        :raises: :class:`ValueError` if the backend cannot clear a single namespace, as
+            :class:`~aiocache.MemcachedCache` cannot
         """
         start = time.monotonic()
         namespace = namespace if namespace is not None else self.namespace
