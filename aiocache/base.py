@@ -447,6 +447,9 @@ class BaseCache(Generic[CacheKeyType], ABC):
         Clears the cache in the cache namespace. If an alternative namespace is given, it will
         clear those ones instead.
 
+        Caches configured without a namespace clear the whole backend, which for a shared
+        server means every key, including those written by other caches.
+
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
@@ -454,6 +457,7 @@ class BaseCache(Generic[CacheKeyType], ABC):
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
         """
         start = time.monotonic()
+        namespace = namespace if namespace is not None else self.namespace
         ret = await self._clear(namespace, _conn=_conn)
         logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.monotonic() - start)
         return ret

@@ -148,11 +148,15 @@ class ValkeyCache(BaseCache[str]):
         if not namespace:
             return await self.client.flushdb()
 
-        _, keys = await self.client.scan(b"0", "{}:*".format(namespace))
-        if keys:
-            return bool(await self.client.delete(keys))
-
-        return True
+        # SCAN returns a batch at a time, so keep going until the cursor comes
+        # back to 0 or only the keys in the first batch would be deleted.
+        cursor = b"0"
+        while True:
+            cursor, keys = await self.client.scan(cursor, "{}:*".format(namespace))
+            if keys:
+                await self.client.delete(keys)
+            if cursor == b"0":
+                return True
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         value = await getattr(self.client, command)(*args, **kwargs)
