@@ -1,4 +1,5 @@
 import logging
+import re
 import sys
 from typing import Optional
 
@@ -14,6 +15,9 @@ from glide import RequestError as IncrbyException
 
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
+
+#: Characters SCAN treats as glob syntax, escaped before matching a prefix.
+_GLOB_METACHARACTERS = re.compile(r"([\\*?\[\]])")
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -148,11 +152,25 @@ class ValkeyCache(BaseCache[str]):
         if not namespace:
             return await self.client.flushdb()
 
-        _, keys = await self.client.scan(b"0", "{}:*".format(namespace))
-        if keys:
-            return bool(await self.client.delete(keys))
+        # Match whatever prefix this cache's key_builder produces rather than
+        # assuming the default "<namespace>:<key>" layout, which a custom
+        # key_builder need not follow. Refuses builders that have no such
+        # prefix, whose pattern would match the wrong keys or all of them.
+        prefix = self._namespace_prefix(namespace)
 
-        return True
+        # Escape the prefix: a namespace holding a glob character would
+        # otherwise match some other namespace's keys and leave its own behind.
+        pattern = _GLOB_METACHARACTERS.sub(r"\\\1", prefix) + "*"
+
+        # SCAN returns one batch per call, so keep going until the cursor comes
+        # back to 0. Stopping at the first batch leaves the rest behind.
+        cursor = b"0"
+        while True:
+            cursor, keys = await self.client.scan(cursor, pattern)
+            if keys:
+                await self.client.delete(keys)
+            if cursor == b"0":
+                return True
 
     async def _raw(self, command, *args, encoding="utf-8", _conn=None, **kwargs):
         value = await getattr(self.client, command)(*args, **kwargs)

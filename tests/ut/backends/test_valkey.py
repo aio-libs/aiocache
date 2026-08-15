@@ -200,6 +200,20 @@ class TestValkeyCache:
         await valkey._clear("nm")
         valkey.client.delete.assert_not_called()
 
+    async def test_clear_scans_until_cursor_is_exhausted(self, valkey):
+        valkey.client.scan.side_effect = [
+            [b"17", ["nm:a"]],
+            [b"0", ["nm:b"]],
+        ]
+
+        await valkey._clear("nm")
+
+        assert [c.args[0] for c in valkey.client.scan.call_args_list] == [b"0", b"17"]
+        assert [c.args[0] for c in valkey.client.delete.call_args_list] == [
+            ["nm:a"],
+            ["nm:b"],
+        ]
+
     async def test_clear_no_namespace(self, valkey):
         await valkey._clear()
         assert valkey.client.flushdb.call_count == 1

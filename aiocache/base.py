@@ -18,6 +18,9 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 SENTINEL = object()
+
+#: Key fed to a key_builder to check the namespace lands at the start of it.
+_PREFIX_PROBE = "\x00aiocache-prefix-probe\x00"
 CacheKeyType = TypeVar("CacheKeyType")
 
 
@@ -447,13 +450,29 @@ class BaseCache(Generic[CacheKeyType], ABC):
         Clears the cache in the cache namespace. If an alternative namespace is given, it will
         clear those ones instead.
 
+        Caches configured without a namespace clear the whole backend, which for a shared
+        server means every key, including those written by other caches. Passing an empty
+        namespace asks for that explicitly.
+
+        A namespace is matched by the key prefix the ``key_builder`` produces, so with a
+        builder that does not separate the namespace from the key, a namespace also matches
+        the longer namespaces starting with it.
+
+        This only works if the namespace reaches the start of the key. A ``key_builder``
+        that appends it, hashes it, or drops it has no such prefix, and matching on one
+        anyway would delete unrelated keys while leaving the namespace's own behind, so
+        those are rejected with a :class:`ValueError`.
+
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last
         :returns: True
         :raises: :class:`asyncio.TimeoutError` if it lasts more than self.timeout
+        :raises: :class:`ValueError` if the backend cannot clear a single namespace, as
+            :class:`~aiocache.MemcachedCache` cannot
         """
         start = time.monotonic()
+        namespace = namespace if namespace is not None else self.namespace
         ret = await self._clear(namespace, _conn=_conn)
         logger.debug("CLEAR %s %d (%.4f)s", namespace, ret, time.monotonic() - start)
         return ret
@@ -521,6 +540,27 @@ class BaseCache(Generic[CacheKeyType], ABC):
         key_name = key.value if isinstance(key, Enum) else key
         ns = self.namespace if namespace is None else namespace
         return self._build_key(key_name, ns)
+
+    def _namespace_prefix(self, namespace):
+        """Key prefix that scopes a scan to ``namespace``.
+
+        Backends that clear a namespace by matching a key prefix need the
+        ``key_builder`` to put the namespace at the start of the key. That
+        cannot be assumed, so check it: build a key nothing else can collide
+        with and confirm the derived prefix really leads it.
+
+        :raises ValueError: if the ``key_builder`` has no such prefix, since
+            any pattern would then match the wrong keys, or all of them.
+        """
+        prefix = self.build_key("", namespace)
+        if not prefix or not self.build_key(_PREFIX_PROBE, namespace).startswith(prefix):
+            raise ValueError(
+                f"key_builder does not place namespace {namespace!r} at the start "
+                f"of the key, so clear() cannot scope to it without matching "
+                f"unrelated keys. Use a key_builder that prefixes keys with the "
+                f"namespace, or call clear() without a namespace."
+            )
+        return prefix
 
     def _get_ttl(self, ttl):
         return ttl if ttl is not SENTINEL else self.ttl

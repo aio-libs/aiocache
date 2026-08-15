@@ -1,4 +1,5 @@
 import asyncio
+from hashlib import md5
 
 import pytest
 
@@ -6,6 +7,16 @@ from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import _Conn
 from aiocache.serializers import NullSerializer
 from ..utils import Keys
+
+#: key_builders that do not leave the namespace at the start of the key, so
+#: there is no prefix a namespaced clear() could scan for.
+NON_PREFIX_KEY_BUILDERS = [
+    pytest.param(lambda k, ns: k, id="drops-namespace"),
+    pytest.param(lambda k, ns: f"{k}{ns}" if ns else k, id="appends-namespace"),
+    pytest.param(
+        lambda k, ns: md5(f"{ns}:{k}".encode()).hexdigest(), id="hashes-whole-key"
+    ),
+]
 
 
 class TestCache:
@@ -121,12 +132,6 @@ class TestCache:
     async def test_expire_missing(self, cache):
         assert await cache.expire(Keys.KEY, 1) is False
 
-    async def test_clear(self, cache):
-        await cache.set(Keys.KEY, "value")
-        await cache.clear()
-
-        assert await cache.exists(Keys.KEY) is False
-
     async def test_close_pool_only_clears_resources(self, cache):
         await cache.set(Keys.KEY, "value")
         await cache.close()
@@ -169,6 +174,48 @@ class TestMemoryCache:
 
         assert await memory_cache.exists(Keys.KEY, namespace="test") is False
 
+    async def test_clear_matches_custom_key_builder_prefix_memory(self):
+        """clear() must match the prefix the key_builder makes, not the bare
+        namespace, so a builder with its own separator still scopes correctly.
+        """
+        cache = SimpleMemoryCache(
+            namespace="ns", key_builder=lambda k, ns: f"{ns}__{k}" if ns else k
+        )
+        await cache.set(Keys.KEY, "value")
+        await cache.set(Keys.KEY, "other", namespace="nsother")
+
+        await cache.clear()
+
+        assert await cache.exists(Keys.KEY) is False
+        assert await cache.exists(Keys.KEY, namespace="nsother") is True
+
+    @pytest.mark.parametrize("key_builder", NON_PREFIX_KEY_BUILDERS)
+    async def test_clear_rejects_non_prefix_key_builder_memory(self, key_builder):
+        """Without the namespace leading the key there is nothing to match on.
+
+        Matching on the derived prefix anyway deletes unrelated keys and keeps
+        the namespace's own, so clear() has to refuse.
+        """
+        cache = SimpleMemoryCache(namespace="ns", key_builder=key_builder)
+        await cache.set(Keys.KEY, "value")
+        # Not in the namespace, but shares its leading characters.
+        cache._cache["ns-foreign"] = "untouched"
+
+        with pytest.raises(ValueError, match="at the start of the key"):
+            await cache.clear()
+
+        assert await cache.get(Keys.KEY) == "value"
+        assert cache._cache["ns-foreign"] == "untouched"
+
+    async def test_clear_only_removes_own_namespace_memory(self, memory_cache):
+        await memory_cache.set(Keys.KEY, "value")
+        await memory_cache.set(Keys.KEY, "other", namespace="other")
+
+        await memory_cache.clear()
+
+        assert await memory_cache.exists(Keys.KEY) is False
+        assert await memory_cache.exists(Keys.KEY, namespace="other") is True
+
 
 @pytest.mark.memcached
 class TestMemcachedCache:
@@ -207,6 +254,21 @@ class TestMemcachedCache:
             await memcached_cache.clear(namespace="test")
 
         assert await memcached_cache.exists(Keys.KEY, namespace="test") is True
+
+    async def test_clear_namespaced_cache_memcached(self, memcached_cache):
+        await memcached_cache.set(Keys.KEY, "value")
+
+        with pytest.raises(ValueError):
+            await memcached_cache.clear()
+
+        assert await memcached_cache.exists(Keys.KEY) is True
+
+    async def test_clear_empty_namespace_flushes_memcached(self, memcached_cache):
+        await memcached_cache.set(Keys.KEY, "value")
+
+        await memcached_cache.clear(namespace="")
+
+        assert await memcached_cache.exists(Keys.KEY) is False
 
     async def test_close(self, memcached_cache):
         await memcached_cache.set(Keys.KEY, "value")
@@ -258,6 +320,104 @@ class TestValkeyCache:
         await valkey_cache.clear(namespace="test")
 
         assert await valkey_cache.exists(Keys.KEY, namespace="test") is False
+
+    async def test_clear_only_removes_own_namespace_valkey(self, valkey_cache):
+        await valkey_cache.set(Keys.KEY, "value")
+        await valkey_cache.set(Keys.KEY, "other", namespace="other")
+
+        try:
+            await valkey_cache.clear()
+
+            assert await valkey_cache.exists(Keys.KEY) is False
+            assert await valkey_cache.exists(Keys.KEY, namespace="other") is True
+        finally:
+            await valkey_cache.delete(Keys.KEY, namespace="other")
+
+    @pytest.mark.parametrize("namespace", ["ten[a]nt", "ten?nt", "ten*"])
+    async def test_clear_escapes_glob_in_namespace_valkey(
+        self, valkey_config, namespace
+    ):
+        """A namespace holding glob syntax must not match another namespace.
+
+        Unescaped, "ten[a]nt:*" is a character class matching "tenant:*", so
+        clear() deleted the neighbour's keys and left its own in place.
+        """
+        from aiocache.backends.valkey import ValkeyCache
+
+        async with ValkeyCache(valkey_config, namespace=namespace) as odd:
+            async with ValkeyCache(valkey_config, namespace="tenant") as neighbour:
+                await odd.set(Keys.KEY, "mine")
+                await neighbour.set(Keys.KEY, "theirs")
+                try:
+                    await odd.clear()
+
+                    assert await odd.exists(Keys.KEY) is False
+                    assert await neighbour.get(Keys.KEY) == "theirs"
+                finally:
+                    await odd.delete(Keys.KEY)
+                    await neighbour.delete(Keys.KEY)
+
+    async def test_clear_matches_custom_key_builder_prefix_valkey(
+        self, valkey_config
+    ):
+        """clear() must match the prefix the key_builder makes, not "<ns>:".
+
+        A builder using its own separator writes "ns__key". Assuming the
+        default layout looks for "ns:*", matches nothing, deletes nothing and
+        still returns True.
+        """
+        from aiocache.backends.valkey import ValkeyCache
+
+        def key_builder(key, namespace):
+            return f"{namespace}__{key}" if namespace else key
+
+        async with ValkeyCache(
+            valkey_config, namespace="ns", key_builder=key_builder
+        ) as cache:
+            await cache.set(Keys.KEY, "value")
+            try:
+                assert await cache.clear() is True
+
+                assert await cache.exists(Keys.KEY) is False
+            finally:
+                await cache.delete(Keys.KEY)
+
+    @pytest.mark.parametrize("key_builder", NON_PREFIX_KEY_BUILDERS)
+    async def test_clear_rejects_non_prefix_key_builder_valkey(
+        self, valkey_config, key_builder
+    ):
+        """Without the namespace leading the key there is nothing to scan for.
+
+        Matching on the derived prefix anyway deletes unrelated keys and keeps
+        the namespace's own, so clear() has to refuse.
+        """
+        from aiocache.backends.valkey import ValkeyCache
+
+        async with ValkeyCache(
+            valkey_config, namespace="ns", key_builder=key_builder
+        ) as cache:
+            await cache.set(Keys.KEY, "value")
+            try:
+                with pytest.raises(ValueError, match="at the start of the key"):
+                    await cache.clear()
+
+                assert await cache.get(Keys.KEY) == "value"
+            finally:
+                await cache.delete(Keys.KEY)
+
+    async def test_clear_removes_keys_beyond_one_scan_batch(self, valkey_cache):
+        keys = [f"{Keys.KEY.value}-{i}" for i in range(2000)]
+        for start in range(0, len(keys), 200):
+            batch = keys[start:start + 200]
+            await asyncio.gather(*(valkey_cache.set(k, "value") for k in batch))
+
+        try:
+            await valkey_cache.clear()
+
+            assert await valkey_cache.exists(keys[0]) is False
+            assert await valkey_cache.exists(keys[-1]) is False
+        finally:
+            await valkey_cache.clear()
 
     async def test_close(self, valkey_cache):
         await valkey_cache.set(Keys.KEY, "value")
