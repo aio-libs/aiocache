@@ -455,6 +455,11 @@ class BaseCache(Generic[CacheKeyType], ABC):
         builder that does not separate the namespace from the key, a namespace also matches
         the longer namespaces starting with it.
 
+        This means the namespace has to reach the start of the key. A ``key_builder`` that
+        places it elsewhere, or hashes it, leaves nothing to match on: clearing that
+        namespace deletes nothing and still reports success. One that drops the namespace
+        entirely is rejected with a :class:`ValueError` rather than matching every key.
+
         :param namespace: str alternative namespace to use
         :param timeout: int or float in seconds specifying maximum timeout
             for the operations to last

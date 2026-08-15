@@ -1,4 +1,5 @@
 import logging
+import re
 import sys
 from typing import Optional
 
@@ -14,6 +15,9 @@ from glide import RequestError as IncrbyException
 
 from aiocache.base import BaseCache
 from aiocache.serializers import JsonSerializer
+
+#: Characters SCAN treats as glob syntax, escaped before matching a prefix.
+_GLOB_METACHARACTERS = re.compile(r"([\\*?\[\]])")
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -149,9 +153,24 @@ class ValkeyCache(BaseCache[str]):
             return await self.client.flushdb()
 
         # Match whatever prefix this cache's key_builder produces rather than
-        # assuming the default "<namespace>:<key>" layout, otherwise a custom
-        # key_builder makes this delete nothing at all.
-        pattern = self.build_key("", namespace) + "*"
+        # assuming the default "<namespace>:<key>" layout, which a custom
+        # key_builder need not follow.
+        prefix = self.build_key("", namespace)
+        if not prefix:
+            # The builder ignored the namespace, so the pattern would be a bare
+            # "*" and this would delete every key in the database, including
+            # other namespaces'. Refuse rather than silently flush.
+            raise ValueError(
+                f"key_builder produced an empty prefix for namespace "
+                f"{namespace!r}, so clearing it would match every key. Use a "
+                f"key_builder that places the namespace at the start of the "
+                f"key, or call clear() without a namespace to flush the "
+                f"database deliberately."
+            )
+
+        # Escape the prefix: a namespace holding a glob character would
+        # otherwise match some other namespace's keys and leave its own behind.
+        pattern = _GLOB_METACHARACTERS.sub(r"\\\1", prefix) + "*"
 
         # SCAN returns one batch per call, so keep going until the cursor comes
         # back to 0. Stopping at the first batch leaves the rest behind.
