@@ -129,18 +129,7 @@ class SimpleMemoryCache(BaseCache[str]):
             # default builder that is the bare namespace, which cannot be told
             # apart from a longer namespace sharing it; a builder that appends
             # a separator does not have that ambiguity.
-            prefix = self.build_key("", namespace)
-            if not prefix:
-                # The builder ignored the namespace, so every key would match
-                # this prefix and the whole cache would go. Refuse rather than
-                # silently clear it.
-                raise ValueError(
-                    f"key_builder produced an empty prefix for namespace "
-                    f"{namespace!r}, so clearing it would match every key. Use "
-                    f"a key_builder that places the namespace at the start of "
-                    f"the key, or call clear() without a namespace to clear "
-                    f"the cache deliberately."
-                )
+            prefix = self._namespace_prefix(namespace)
             for key in list(self._cache):
                 if key.startswith(prefix):
                     self.__delete(key)

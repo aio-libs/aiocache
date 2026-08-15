@@ -1,4 +1,5 @@
 import asyncio
+from hashlib import md5
 
 import pytest
 
@@ -6,6 +7,16 @@ from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import _Conn
 from aiocache.serializers import NullSerializer
 from ..utils import Keys
+
+#: key_builders that do not leave the namespace at the start of the key, so
+#: there is no prefix a namespaced clear() could scan for.
+NON_PREFIX_KEY_BUILDERS = [
+    pytest.param(lambda k, ns: k, id="drops-namespace"),
+    pytest.param(lambda k, ns: f"{k}{ns}" if ns else k, id="appends-namespace"),
+    pytest.param(
+        lambda k, ns: md5(f"{ns}:{k}".encode()).hexdigest(), id="hashes-whole-key"
+    ),
+]
 
 
 class TestCache:
@@ -178,17 +189,23 @@ class TestMemoryCache:
         assert await cache.exists(Keys.KEY) is False
         assert await cache.exists(Keys.KEY, namespace="nsother") is True
 
-    async def test_clear_rejects_key_builder_without_namespace_memory(self):
-        """A builder dropping the namespace makes every key match the prefix,
-        so clearing one namespace would empty the whole cache. Refuse instead.
-        """
-        cache = SimpleMemoryCache(namespace="ns", key_builder=lambda k, ns: k)
-        await cache.set(Keys.KEY, "value")
+    @pytest.mark.parametrize("key_builder", NON_PREFIX_KEY_BUILDERS)
+    async def test_clear_rejects_non_prefix_key_builder_memory(self, key_builder):
+        """Without the namespace leading the key there is nothing to match on.
 
-        with pytest.raises(ValueError, match="empty prefix"):
+        Matching on the derived prefix anyway deletes unrelated keys and keeps
+        the namespace's own, so clear() has to refuse.
+        """
+        cache = SimpleMemoryCache(namespace="ns", key_builder=key_builder)
+        await cache.set(Keys.KEY, "value")
+        # Not in the namespace, but shares its leading characters.
+        cache._cache["ns-foreign"] = "untouched"
+
+        with pytest.raises(ValueError, match="at the start of the key"):
             await cache.clear()
 
         assert await cache.get(Keys.KEY) == "value"
+        assert cache._cache["ns-foreign"] == "untouched"
 
     async def test_clear_only_removes_own_namespace_memory(self, memory_cache):
         await memory_cache.set(Keys.KEY, "value")
@@ -365,22 +382,23 @@ class TestValkeyCache:
             finally:
                 await cache.delete(Keys.KEY)
 
-    async def test_clear_rejects_key_builder_without_namespace_valkey(
-        self, valkey_config
+    @pytest.mark.parametrize("key_builder", NON_PREFIX_KEY_BUILDERS)
+    async def test_clear_rejects_non_prefix_key_builder_valkey(
+        self, valkey_config, key_builder
     ):
-        """A builder dropping the namespace leaves nothing to scope the scan.
+        """Without the namespace leading the key there is nothing to scan for.
 
-        The pattern would be a bare "*", so clear() would delete every key in
-        the database. It has to refuse instead.
+        Matching on the derived prefix anyway deletes unrelated keys and keeps
+        the namespace's own, so clear() has to refuse.
         """
         from aiocache.backends.valkey import ValkeyCache
 
         async with ValkeyCache(
-            valkey_config, namespace="ns", key_builder=lambda k, ns: k
+            valkey_config, namespace="ns", key_builder=key_builder
         ) as cache:
             await cache.set(Keys.KEY, "value")
             try:
-                with pytest.raises(ValueError, match="empty prefix"):
+                with pytest.raises(ValueError, match="at the start of the key"):
                     await cache.clear()
 
                 assert await cache.get(Keys.KEY) == "value"

@@ -154,19 +154,9 @@ class ValkeyCache(BaseCache[str]):
 
         # Match whatever prefix this cache's key_builder produces rather than
         # assuming the default "<namespace>:<key>" layout, which a custom
-        # key_builder need not follow.
-        prefix = self.build_key("", namespace)
-        if not prefix:
-            # The builder ignored the namespace, so the pattern would be a bare
-            # "*" and this would delete every key in the database, including
-            # other namespaces'. Refuse rather than silently flush.
-            raise ValueError(
-                f"key_builder produced an empty prefix for namespace "
-                f"{namespace!r}, so clearing it would match every key. Use a "
-                f"key_builder that places the namespace at the start of the "
-                f"key, or call clear() without a namespace to flush the "
-                f"database deliberately."
-            )
+        # key_builder need not follow. Refuses builders that have no such
+        # prefix, whose pattern would match the wrong keys or all of them.
+        prefix = self._namespace_prefix(namespace)
 
         # Escape the prefix: a namespace holding a glob character would
         # otherwise match some other namespace's keys and leave its own behind.
