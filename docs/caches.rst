@@ -31,6 +31,7 @@ The supported commands are:
   - multi_get
   - multi_set
   - delete
+  - multi_delete
   - exists
   - increment
   - expire
