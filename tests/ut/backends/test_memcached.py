@@ -205,6 +205,15 @@ class TestMemcachedCache:
         assert await memcached._delete(Keys.KEY) == 0
         memcached.client.delete.assert_called_with(Keys.KEY)
 
+    async def test_multi_delete(self, memcached):
+        assert await memcached._multi_delete([Keys.KEY, Keys.KEY_1]) == 2
+        memcached.client.delete.assert_any_call(Keys.KEY)
+        memcached.client.delete.assert_any_call(Keys.KEY_1)
+
+    async def test_multi_delete_missing(self, memcached):
+        memcached.client.delete.return_value = False
+        assert await memcached._multi_delete([Keys.KEY, Keys.KEY_1]) == 0
+
     async def test_clear(self, memcached):
         await memcached._clear()
         memcached.client.flush_all.assert_called_with()

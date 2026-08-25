@@ -7,6 +7,8 @@ CHANGES
 1.0.0 (2023-xx-xx)
 ==================
 
+* Added ``multi_delete()`` to delete multiple keys in a single call [#517](https://github.com/aio-libs/aiocache/issues/517)
+
 Migration instructions
 ++++++++++++++++++++++
 

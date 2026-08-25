@@ -151,6 +151,11 @@ class TestSimpleMemoryCache:
         assert non_truthy.__bool__.call_count == 1
         memory._cache.pop.assert_called_with(Keys.KEY, None)
 
+    async def test_multi_delete(self, memory):
+        await memory._multi_delete([Keys.KEY, Keys.KEY_1])
+        memory._cache.pop.assert_any_call(Keys.KEY, None)
+        memory._cache.pop.assert_any_call(Keys.KEY_1, None)
+
     async def test_clear_namespace(self, memory):
         memory._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
         await memory._clear("nm")

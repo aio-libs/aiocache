@@ -43,6 +43,7 @@ All caches contain the same minimum interface which consists of the following fu
 - ``exists``: Returns True if key exists False otherwise.
 - ``increment``: Increment the value stored in the given key.
 - ``delete``: Deletes key and returns number of deleted items.
+- ``multi_delete``: Deletes multiple keys and returns number of deleted items.
 - ``clear``: Clears the items stored.
 - ``raw``: Executes the specified command using the underlying client.
 
