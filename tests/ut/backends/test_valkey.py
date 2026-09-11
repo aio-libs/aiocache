@@ -1,8 +1,8 @@
 import pickle
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, create_autospec, patch
 
 import pytest
-from glide import Batch, ConditionalChange, ExpirySet, ExpiryType
+from glide import Batch, ConditionalChange, ExpirySet, ExpiryType, GlideClient
 from glide import RequestError
 
 from aiocache.backends.valkey import ValkeyCache
@@ -273,11 +273,12 @@ class TestValkeyCache:
         assert get_v == "Any"
 
     async def test_aenter_reentrant_raises(self, valkey_config):
-        client = AsyncMock()
-        client.close = AsyncMock()
+        client = create_autospec(GlideClient, spec_set=True, instance=True)
         with patch(
             "aiocache.backends.valkey.GlideClient.create",
-            AsyncMock(return_value=client),
+            autospec=True,
+            spec_set=True,
+            return_value=client,
         ):
             cache = ValkeyCache(config=valkey_config)
             async with cache:
@@ -287,18 +288,19 @@ class TestValkeyCache:
             client.close.assert_awaited_once()
 
     async def test_aenter_after_aexit_reconnects(self, valkey_config):
-        clients = [AsyncMock(), AsyncMock()]
-        for c in clients:
-            c.close = AsyncMock()
+        first = create_autospec(GlideClient, spec_set=True, instance=True)
+        second = create_autospec(GlideClient, spec_set=True, instance=True)
         with patch(
             "aiocache.backends.valkey.GlideClient.create",
-            AsyncMock(side_effect=clients),
+            autospec=True,
+            spec_set=True,
+            side_effect=[first, second],
         ):
             cache = ValkeyCache(config=valkey_config)
             async with cache:
-                assert cache.client is clients[0]
+                assert cache.client is first
             assert cache.client is None
 
             async with cache:
-                assert cache.client is clients[1]
+                assert cache.client is second
             assert cache.client is None
