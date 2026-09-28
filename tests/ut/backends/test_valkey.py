@@ -1,3 +1,4 @@
+import asyncio
 import pickle
 from unittest.mock import AsyncMock, create_autospec, patch
 
@@ -303,4 +304,42 @@ class TestValkeyCache:
 
             async with cache:
                 assert cache.client is second
+            assert cache.client is None
+
+    async def test_aenter_concurrent_raises(self, valkey_config):
+        client = create_autospec(GlideClient, spec_set=True, instance=True)
+        creating = asyncio.Event()
+        release = asyncio.Event()
+
+        async def slow_create(_config):
+            if not creating.is_set():
+                creating.set()
+                await release.wait()
+            return client
+
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            autospec=True,
+            spec_set=True,
+            side_effect=slow_create,
+        ) as mock_create:
+            cache = ValkeyCache(config=valkey_config)
+
+            async def enter_first():
+                async with cache:
+                    assert cache.client is client
+
+            first_task = asyncio.create_task(enter_first())
+            await creating.wait()
+
+            try:
+                with pytest.raises(RuntimeError):
+                    async with cache:
+                        pass
+            finally:
+                release.set()
+                await first_task
+
+            mock_create.assert_awaited_once_with(valkey_config)
+            client.close.assert_awaited_once()
             assert cache.client is None
