@@ -488,6 +488,33 @@ class TestMultiCached:
         assert cached_value == 3
         assert not await f.cache.exists(1)
 
+    @pytest.mark.parametrize("as_keyword", [True, False])
+    async def test_key_builder_keeps_original_arguments_on_partial_hit(self, as_keyword):
+        cache = SimpleMemoryCache()
+        calls = []
+
+        def build_key(key, fn, keys):
+            return f"{key}:{','.join(keys)}"
+
+        @multi_cached(cache=cache, keys_from_attr="keys", key_builder=build_key)
+        async def f(keys):
+            calls.append(list(keys))
+            return {key: key.upper() for key in keys}
+
+        keys = ["a", "b"]
+        await cache.set("a:a,b", "cached-a")
+
+        async def call():
+            return await f(keys=keys) if as_keyword else await f(keys)
+
+        assert await call() == {"a": "cached-a", "b": "B"}
+        assert calls == [["b"]]
+        assert keys == ["a", "b"]
+        assert await cache.get("b:a,b") == "B"
+        assert await cache.get("a:a,b") == "cached-a"
+        assert await call() == {"a": "cached-a", "b": "B"}
+        assert calls == [["b"]]
+
 
 def test_get_args_dict():
     def fn(a, b, *args, keys=None, **kwargs):
