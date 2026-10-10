@@ -14,6 +14,9 @@ class cached:
     Caches the functions return value into a key generated with module_name, function_name
     and args. The cache is available in the function object as ``<function_name>.cache``.
 
+    None results are cached if the serializer preserves None. Use ``skip_cache_func``
+    to opt out of caching them.
+
     :param cache: cache instance to use when calling the ``set``/``get`` operations.
     :param ttl: int seconds to store the function call. Default is None which means no expiration.
     :param key_builder: Callable that allows to build the function dynamically. It receives
@@ -58,7 +61,7 @@ class cached:
 
         if cache_read:
             value = await self.get_from_cache(key)
-            if value is not None:
+            if value is not SENTINEL:
                 return value
 
         result = await f(*args, **kwargs)
@@ -92,10 +95,10 @@ class cached:
 
     async def get_from_cache(self, key):
         try:
-            return await self.cache.get(key)
+            return await self.cache.get(key, default=SENTINEL)
         except Exception:
             logger.exception("Couldn't retrieve %s, unexpected error", key)
-        return None
+        return SENTINEL
 
     async def set_in_cache(self, key, value):
         try:
@@ -136,12 +139,12 @@ class cached_stampede(cached):
         key = self.get_cache_key(f, args, kwargs)
 
         value = await self.get_from_cache(key)
-        if value is not None:
+        if value is not SENTINEL:
             return value
 
         async with RedLock(self.cache, key, self.lease):
             value = await self.get_from_cache(key)
-            if value is not None:
+            if value is not SENTINEL:
                 return value
 
             result = await f(*args, **kwargs)

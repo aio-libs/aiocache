@@ -56,16 +56,19 @@ class API:
         return _timeout
 
     @classmethod
-    def aiocache_enabled(cls, fake_return=None):
+    def aiocache_enabled(cls, fake_return=None, fake_return_fn=None):
         """
         Use this decorator to be able to fake the return of the function by setting the
-        ``AIOCACHE_DISABLE`` environment variable
+        ``AIOCACHE_DISABLE`` environment variable. ``fake_return_fn``, when provided,
+        computes the disabled return value from the call arguments.
         """
 
         def enabled(func):
             @functools.wraps(func)
             async def _enabled(*args, **kwargs):
                 if os.getenv("AIOCACHE_DISABLE") == "1":
+                    if fake_return_fn is not None:
+                        return fake_return_fn(*args, **kwargs)
                     return fake_return
                 return await func(*args, **kwargs)
 
@@ -185,12 +188,13 @@ class BaseCache(Generic[CacheKeyType], ABC):
         raise NotImplementedError()
 
     @API.register
-    @API.aiocache_enabled()
+    @API.aiocache_enabled(fake_return_fn=lambda self, key, default=None, *args, **kw: default)
     @API.timeout
     @API.plugins
     async def get(self, key, default=None, loads_fn=None, namespace=None, _conn=None):
         """
-        Get a value from the cache. Returns default if not found.
+        Get a value from the cache. Returns default if not found, including when caching
+        is disabled. A stored value of None is returned as None, rather than default.
 
         :param key: str
         :param default: obj to return when key is not found
@@ -205,10 +209,20 @@ class BaseCache(Generic[CacheKeyType], ABC):
         loads = loads_fn or self.serializer.loads
         ns_key = self.build_key(key, namespace)
 
-        value = loads(await self._get(ns_key, encoding=self.serializer.encoding, _conn=_conn))
+        value = await self._get_with_default(
+            ns_key, default=SENTINEL, encoding=self.serializer.encoding, _conn=_conn
+        )
 
-        logger.debug("GET %s %s (%.4f)s", ns_key, value is not None, time.monotonic() - start)
-        return value if value is not None else default
+        logger.debug("GET %s %s (%.4f)s", ns_key, value is not SENTINEL, time.monotonic() - start)
+        return default if value is SENTINEL else loads(value)
+
+    async def _get_with_default(self, key, default, encoding, _conn=None):
+        """Read raw data, distinguishing missing keys from deserialized None values.
+
+        Backends that can store raw None must override this to distinguish it from a miss.
+        """
+        value = await self._get(key, encoding=encoding, _conn=_conn)
+        return default if value is None else value
 
     @abstractmethod
     async def _get(self, key, encoding, _conn=None):

@@ -75,7 +75,7 @@ class HitMissRatioPlugin(BasePlugin):
             client.hit_miss_ratio["hits"] = 0
 
         client.hit_miss_ratio["total"] += 1
-        if ret is not None:
+        if ret is not kwargs.get("default"):
             client.hit_miss_ratio["hits"] += 1
 
         client.hit_miss_ratio["hit_ratio"] = (

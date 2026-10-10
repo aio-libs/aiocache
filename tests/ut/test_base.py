@@ -446,9 +446,25 @@ class TestCache:
             await mock_base_cache.get(Keys.KEY)
 
     async def test_get_default(self, mock_base_cache):
-        mock_base_cache._serializer.loads.return_value = None
+        mock_base_cache._get.return_value = None
 
         assert await mock_base_cache.get(Keys.KEY, default=1) == 1
+        mock_base_cache._serializer.loads.assert_not_called()
+
+    async def test_get_deserialized_none(self, mock_base_cache):
+        mock_base_cache._get.return_value = "null"
+        mock_base_cache._serializer.loads.return_value = None
+
+        assert await mock_base_cache.get(Keys.KEY, default=1) is None
+        mock_base_cache._serializer.loads.assert_called_once_with("null")
+
+    async def test_get_disabled_default(self, mock_base_cache, monkeypatch):
+        monkeypatch.setenv("AIOCACHE_DISABLE", "1")
+
+        assert await mock_base_cache.get(Keys.KEY) is None
+        assert await mock_base_cache.get(Keys.KEY, default=1) == 1
+        assert await mock_base_cache.get(Keys.KEY, 2) == 2
+        mock_base_cache._get.assert_not_called()
 
     async def test_get_negative_default(self, mock_base_cache):
         mock_base_cache._serializer.loads.return_value = False

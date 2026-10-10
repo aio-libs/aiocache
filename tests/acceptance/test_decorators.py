@@ -5,6 +5,9 @@ from unittest import mock
 import pytest
 
 from aiocache import cached, cached_stampede, multi_cached
+from aiocache.base import SENTINEL
+from aiocache.plugins import HitMissRatioPlugin
+from aiocache.serializers import JsonSerializer, MsgPackSerializer, PickleSerializer
 from ..utils import Keys, ensure_key
 
 
@@ -21,6 +24,78 @@ async def stub(arg: float, seconds: int = 0) -> str:
 
 
 class TestCached:
+    @pytest.mark.parametrize("decorator", (cached, cached_stampede))
+    @pytest.mark.parametrize("serializer", (JsonSerializer, PickleSerializer, MsgPackSerializer))
+    async def test_cached_none(self, cache, decorator, serializer):
+        cache.serializer = serializer()
+        cache.plugins = [HitMissRatioPlugin()]
+        calls = 0
+
+        @decorator(cache=cache, key_builder=lambda *args, **kwargs: Keys.KEY)
+        async def fn():
+            nonlocal calls
+            calls += 1
+            return None
+
+        assert await fn() is None
+        assert await fn() is None
+        assert calls == 1
+        assert cache.hit_miss_ratio["hits"] == 1
+        assert cache.hit_miss_ratio["total"] == (3 if decorator is cached_stampede else 2)
+        assert await cache.get(Keys.KEY, default="missing") is None
+
+        await cache.delete(Keys.KEY)
+        assert await cache.get(Keys.KEY, default="missing") == "missing"
+        assert await fn() is None
+        assert calls == 2
+
+    @pytest.mark.parametrize("decorator", (cached, cached_stampede))
+    async def test_cached_none_memory(self, memory_cache, decorator):
+        calls = 0
+
+        @decorator(cache=memory_cache, key_builder=lambda *args, **kwargs: Keys.KEY)
+        async def fn():
+            nonlocal calls
+            calls += 1
+            return None
+
+        assert await fn() is None
+        assert await fn() is None
+        assert calls == 1
+        assert await memory_cache.get(Keys.KEY, default="missing") is None
+
+        await memory_cache.delete(Keys.KEY)
+        assert await memory_cache.get(Keys.KEY, default="missing") == "missing"
+        assert await fn() is None
+        assert calls == 2
+
+    @pytest.mark.parametrize("decorator", (cached, cached_stampede))
+    async def test_cached_disabled(self, memory_cache, decorator, monkeypatch):
+        monkeypatch.setenv("AIOCACHE_DISABLE", "1")
+        calls = 0
+
+        @decorator(cache=memory_cache)
+        async def fn():
+            nonlocal calls
+            calls += 1
+            return calls
+
+        assert await fn() == 1
+        assert await fn() == 2
+
+    async def test_cached_stampede_none(self, memory_cache):
+        calls = 0
+
+        @cached_stampede(cache=memory_cache)
+        async def fn():
+            nonlocal calls
+            calls += 1
+            await asyncio.sleep(0)
+            return None
+
+        assert await asyncio.gather(fn(), fn()) == [None, None]
+        assert calls == 1
+
     async def test_cached_ttl(self, cache):
         @cached(cache=cache, ttl=2, key_builder=lambda *args, **kw: Keys.KEY)
         async def fn():
@@ -106,7 +181,9 @@ class TestCachedStampede:
 
         await asyncio.gather(decorator(stub)(0.5), decorator(stub)(0.5))
 
-        cache.get.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]")
+        cache.get.assert_called_with(
+            "tests.acceptance.test_decoratorsstub(0.5,)[]", default=SENTINEL
+        )
         assert cache.get.call_count == 4
         cache.set.assert_called_with("tests.acceptance.test_decoratorsstub(0.5,)[]",
                                      mock.ANY, ttl=10)
