@@ -4,6 +4,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
 from enum import Enum
 from types import TracebackType
 from typing import Callable, Generic, List, Optional, Set, TYPE_CHECKING, Type, TypeVar
@@ -18,6 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 SENTINEL = object()
+_GET_HIT: ContextVar[Optional[bool]] = ContextVar("aiocache_get_hit", default=None)
 CacheKeyType = TypeVar("CacheKeyType")
 
 
@@ -80,18 +82,23 @@ class API:
     def plugins(cls, func):
         @functools.wraps(func)
         async def _plugins(self, *args, **kwargs):
-            start = time.monotonic()
-            for plugin in self.plugins:
-                await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
+            # Keep read metadata local to this call, including nested plugin operations.
+            token = _GET_HIT.set(None)
+            try:
+                start = time.monotonic()
+                for plugin in self.plugins:
+                    await getattr(plugin, "pre_{}".format(func.__name__))(self, *args, **kwargs)
 
-            ret = await func(self, *args, **kwargs)
+                ret = await func(self, *args, **kwargs)
 
-            end = time.monotonic()
-            for plugin in self.plugins:
-                await getattr(plugin, "post_{}".format(func.__name__))(
-                    self, *args, took=end - start, ret=ret, **kwargs
-                )
-            return ret
+                end = time.monotonic()
+                for plugin in self.plugins:
+                    await getattr(plugin, "post_{}".format(func.__name__))(
+                        self, *args, took=end - start, ret=ret, **kwargs
+                    )
+                return ret
+            finally:
+                _GET_HIT.reset(token)
 
         return _plugins
 
@@ -214,7 +221,9 @@ class BaseCache(Generic[CacheKeyType], ABC):
         )
 
         logger.debug("GET %s %s (%.4f)s", ns_key, value is not SENTINEL, time.monotonic() - start)
-        return default if value is SENTINEL else loads(value)
+        result = default if value is SENTINEL else loads(value)
+        _GET_HIT.set(value is not SENTINEL)
+        return result
 
     async def _get_with_default(self, key, default, encoding, _conn=None):
         """Read raw data, distinguishing missing keys from deserialized None values.

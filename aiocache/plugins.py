@@ -3,7 +3,7 @@ This module implements different plugins you can attach to your cache instance. 
 are coded in a collaborative so you can use multiple inheritance.
 """
 
-from aiocache.base import API
+from aiocache.base import API, _GET_HIT
 
 
 class BasePlugin:
@@ -68,14 +68,18 @@ class HitMissRatioPlugin(BasePlugin):
     keys.
     """
 
-    async def post_get(self, client, key, took=0, ret=None, **kwargs):
+    async def post_get(self, client, key, *args, took=0, ret=None, **kwargs):
         if not hasattr(client, "hit_miss_ratio"):
             client.hit_miss_ratio = {}
             client.hit_miss_ratio["total"] = 0
             client.hit_miss_ratio["hits"] = 0
 
         client.hit_miss_ratio["total"] += 1
-        if ret is not kwargs.get("default"):
+        hit = _GET_HIT.get()
+        if hit is None:
+            # Preserve the legacy behavior for hooks called outside BaseCache.get.
+            hit = ret is not None
+        if hit:
             client.hit_miss_ratio["hits"] += 1
 
         client.hit_miss_ratio["hit_ratio"] = (
