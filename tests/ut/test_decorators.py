@@ -74,7 +74,7 @@ class TestCached:
 
         await decorator_call()
 
-        decorator.cache.get.assert_called_with("stub()[]")
+        decorator.cache.get.assert_called_with("stub()[]", default=SENTINEL)
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
@@ -86,7 +86,7 @@ class TestCached:
         assert stub.call_count == 1
 
     async def test_cache_write_disabled(self, decorator, decorator_call):
-        decorator.cache.get.return_value = None
+        decorator.cache.get.return_value = SENTINEL
 
         await decorator_call(cache_write=False)
 
@@ -95,7 +95,7 @@ class TestCached:
         assert stub.call_count == 1
 
     async def test_disable_params_not_propagated(self, decorator, decorator_call):
-        decorator.cache.get.return_value = None
+        decorator.cache.get.return_value = SENTINEL
 
         await decorator_call(cache_read=False, cache_write=False)
 
@@ -107,16 +107,16 @@ class TestCached:
 
     async def test_get_from_cache_exception(self, decorator, decorator_call):
         decorator.cache.get.side_effect = Exception
-        assert await decorator.get_from_cache("key") is None
+        assert await decorator.get_from_cache("key") is SENTINEL
 
-    async def test_get_from_cache_none(self, decorator, decorator_call):
-        decorator.cache.get.return_value = None
-        assert await decorator.get_from_cache("key") is None
+    async def test_get_from_cache_miss(self, decorator, decorator_call):
+        decorator.cache.get.return_value = SENTINEL
+        assert await decorator.get_from_cache("key") is SENTINEL
 
-    async def test_calls_fn_set_when_get_none(self, mocker, decorator, decorator_call):
+    async def test_calls_fn_set_when_cache_misses(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "get_from_cache")
         mocker.spy(decorator, "set_in_cache")
-        decorator.cache.get.return_value = None
+        decorator.cache.get.return_value = SENTINEL
 
         await decorator_call(value="value")
 
@@ -125,20 +125,20 @@ class TestCached:
         stub.assert_called_once_with(value="value")
 
     async def test_calls_fn_raises_exception(self, decorator, decorator_call):
-        decorator.cache.get.return_value = None
+        decorator.cache.get.return_value = SENTINEL
         stub.side_effect = RuntimeError("foo")
         with pytest.raises(RuntimeError, match="foo"):
             assert await decorator_call()
 
     async def test_cache_write_waits_for_future(self, decorator, decorator_call):
-        with patch.object(decorator, "get_from_cache", autospec=True, return_value=None) as m:
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=SENTINEL) as m:
             await decorator_call()
 
             m.assert_awaited()
 
     async def test_cache_write_doesnt_wait_for_future(self, mocker, decorator, decorator_call):
         mocker.spy(decorator, "set_in_cache")
-        with patch.object(decorator, "get_from_cache", autospec=True, return_value=None):
+        with patch.object(decorator, "get_from_cache", autospec=True, return_value=SENTINEL):
             await decorator_call(aiocache_wait_for_write=False, value="value")
 
         decorator.set_in_cache.assert_not_awaited()
@@ -158,7 +158,7 @@ class TestCached:
         assert await decorator.set_in_cache("key", "value") is None
 
     async def test_decorate(self, mock_cache):
-        mock_cache.get.return_value = None
+        mock_cache.get.return_value = SENTINEL
 
         @cached(cache=mock_cache)
         async def fn(n):
@@ -224,18 +224,18 @@ class TestCachedStampede:
 
         await decorator_call()
 
-        decorator.cache.get.assert_called_with("stub()[]")
+        decorator.cache.get.assert_called_with("stub()[]", default=SENTINEL)
         assert decorator.cache.set.call_count == 0
         assert stub.call_count == 0
 
     async def test_calls_fn_raises_exception(self, decorator, decorator_call):
-        decorator.cache.get.return_value = None
+        decorator.cache.get.return_value = SENTINEL
         stub.side_effect = RuntimeError("foo")
         with pytest.raises(RuntimeError, match="foo"):
             assert await decorator_call()
 
     async def test_calls_redlock(self, decorator, decorator_call):
-        decorator.cache.get.return_value = None
+        decorator.cache.get.return_value = SENTINEL
         lock = create_autospec(RedLock, instance=True)
 
         with patch("aiocache.decorators.RedLock", autospec=True, return_value=lock):
@@ -250,7 +250,7 @@ class TestCachedStampede:
             stub.assert_called_once_with(value="value")
 
     async def test_calls_locked_client(self, decorator, decorator_call):
-        decorator.cache.get.side_effect = [None, None, None, "value"]
+        decorator.cache.get.side_effect = [SENTINEL, SENTINEL, SENTINEL, "value"]
         decorator.cache._add.side_effect = [True, ValueError]
         lock1 = create_autospec(RedLock, instance=True)
         lock2 = create_autospec(RedLock, instance=True)

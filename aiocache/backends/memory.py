@@ -56,6 +56,11 @@ class SimpleMemoryCache(BaseCache[str]):
         self._mark_accessed(key)
         return self._cache.get(key)
 
+    async def _get_with_default(self, key, default, encoding="utf-8", _conn=None):
+        # Memory reads do not suspend, so the presence check observes the same state.
+        value = await self._get(key, encoding=encoding, _conn=_conn)
+        return default if value is None and key not in self._cache else value
+
     async def _gets(self, key, encoding="utf-8", _conn=None):
         return await self._get(key, encoding=encoding, _conn=_conn)
 
