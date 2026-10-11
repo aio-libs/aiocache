@@ -382,3 +382,19 @@ class TestSimpleMemoryCache:
             assert isinstance(smc.serializer, PickleSerializer)
             await smc.set(Keys.KEY, value)
             assert await smc.get(Keys.KEY) == pickle.loads(serialized)
+
+
+@pytest.mark.parametrize("maxsize", [0, 1])
+async def test_increment_enforces_maxsize(maxsize):
+    cache = SimpleMemoryCache(maxsize=maxsize)
+    await cache.set("old", "value", ttl=100)
+
+    try:
+        assert await cache.increment("counter", 2) == 2
+        assert len(cache._cache) <= maxsize
+        assert not await cache.exists("old")
+        assert "old" not in cache._handlers
+        assert await cache.exists("counter") is bool(maxsize)
+    finally:
+        for handle in cache._handlers.values():
+            handle.cancel()

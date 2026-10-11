@@ -7,6 +7,8 @@ CHANGES
 1.0.0 (2023-xx-xx)
 ==================
 
+* Enforce ``SimpleMemoryCache.maxsize`` when incrementing a missing counter.
+
 Migration instructions
 ++++++++++++++++++++++
 
