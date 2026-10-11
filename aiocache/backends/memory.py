@@ -102,7 +102,9 @@ class SimpleMemoryCache(BaseCache[str]):
             except ValueError:
                 raise TypeError("Value is not an integer") from None
         self._mark_accessed(key)
-        return self._cache[key]
+        value = self._cache[key]
+        self._evict_if_needed()
+        return value
 
     async def _expire(self, key, ttl, _conn=None):
         if key not in self._cache:
