@@ -75,10 +75,8 @@ class ValkeyCache(BaseCache[str]):
 
     async def __aexit__(self, *args, **kwargs) -> None:
         assert self.client is not None  # noqa: S101
-        try:
-            await self.client.close()
-        finally:
-            self.client = None
+        await self.client.close()
+        self.client = None
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
