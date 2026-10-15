@@ -1,8 +1,9 @@
+import asyncio
 import pickle
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, create_autospec, patch
 
 import pytest
-from glide import Batch, ConditionalChange, ExpirySet, ExpiryType
+from glide import Batch, ConditionalChange, ExpirySet, ExpiryType, GlideClient
 from glide import RequestError
 
 from aiocache.backends.valkey import ValkeyCache
@@ -271,3 +272,88 @@ class TestValkeyCache:
             get_v = await cache.raw("get", Keys.KEY)
         assert set_v == "OK"
         assert get_v == "Any"
+
+    async def test_aenter_reentrant_raises(self, valkey_config):
+        client = create_autospec(GlideClient, spec_set=True, instance=True)
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            autospec=True,
+            spec_set=True,
+            return_value=client,
+        ):
+            cache = ValkeyCache(config=valkey_config)
+            async with cache:
+                with pytest.raises(RuntimeError):
+                    async with cache:
+                        pass  # pragma: no cover
+            client.close.assert_awaited_once()
+
+    async def test_aenter_after_aexit_reconnects(self, valkey_config):
+        first = create_autospec(GlideClient, spec_set=True, instance=True)
+        second = create_autospec(GlideClient, spec_set=True, instance=True)
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            autospec=True,
+            spec_set=True,
+            side_effect=[first, second],
+        ):
+            cache = ValkeyCache(config=valkey_config)
+            async with cache:
+                assert cache.client is first
+            assert cache.client is None
+
+            async with cache:
+                assert cache.client is second
+            assert cache.client is None
+
+    async def test_aexit_close_failure_keeps_client(self, valkey_config):
+        client = create_autospec(GlideClient, spec_set=True, instance=True)
+        client.close.side_effect = RuntimeError("close failed")
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            autospec=True,
+            spec_set=True,
+            return_value=client,
+        ):
+            cache = ValkeyCache(config=valkey_config)
+            with pytest.raises(RuntimeError, match="close failed"):
+                async with cache:
+                    assert cache.client is client
+            assert cache.client is client
+
+    async def test_aenter_concurrent_raises(self, valkey_config):
+        client = create_autospec(GlideClient, spec_set=True, instance=True)
+        creating = asyncio.Event()
+        release = asyncio.Event()
+
+        async def slow_create(_config):
+            creating.set()
+            await release.wait()
+            return client
+
+        with patch(
+            "aiocache.backends.valkey.GlideClient.create",
+            autospec=True,
+            spec_set=True,
+            side_effect=slow_create,
+        ) as mock_create:
+            cache = ValkeyCache(config=valkey_config)
+
+            async def enter_first():
+                async with cache:
+                    assert cache.client is client
+
+            first_task = asyncio.create_task(enter_first())
+            await creating.wait()
+
+            try:
+                with pytest.raises(RuntimeError):
+                    async with cache:
+                        pass  # pragma: no cover
+            finally:
+                release.set()
+                await first_task
+
+            mock_create.assert_awaited_once_with(valkey_config)
+            client.close.assert_awaited_once()
+            assert cache.client is None

@@ -43,10 +43,14 @@ class ValkeyCache(BaseCache[str]):
 
     NAME = "valkey"
 
+    client: Optional[GlideClient]
+
     def __init__(
         self, config: GlideClientConfiguration, **kwargs
     ):
         self.config = config
+        self.client = None
+        self._entering = False
 
         if "serializer" not in kwargs:
             kwargs["serializer"] = JsonSerializer()
@@ -56,11 +60,23 @@ class ValkeyCache(BaseCache[str]):
         super().__init__(**kwargs)
 
     async def __aenter__(self) -> Self:
-        self.client = await GlideClient.create(self.config)
+        if self.client is not None or self._entering:
+            raise RuntimeError(
+                "ValkeyCache context is not reentrant. "
+                "Nesting the same instance in multiple 'async with' blocks "
+                "is not supported."
+            )
+        self._entering = True
+        try:
+            self.client = await GlideClient.create(self.config)
+        finally:
+            self._entering = False
         return self
 
     async def __aexit__(self, *args, **kwargs) -> None:
+        assert self.client is not None  # noqa: S101
         await self.client.close()
+        self.client = None
 
     async def _get(self, key, encoding="utf-8", _conn=None):
         value = await self.client.get(key)
