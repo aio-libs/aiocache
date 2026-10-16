@@ -31,6 +31,10 @@ class SimpleMemoryCache(BaseCache[str]):
         self.maxsize = kwargs.pop('maxsize', None)
         if "serializer" not in kwargs:
             kwargs["serializer"] = NullSerializer()
+        # Match ValkeyCache: isolate namespaces with a delimiter so clear(namespace=)
+        # cannot wipe sibling namespaces that share a prefix (aio-libs/aiocache#1081).
+        if "key_builder" not in kwargs:
+            kwargs["key_builder"] = lambda k, ns: f"{ns}:{k}" if ns else k
         super().__init__(**kwargs)
 
         self._cache: OrderedDict[str, object] = OrderedDict()
@@ -125,8 +129,11 @@ class SimpleMemoryCache(BaseCache[str]):
 
     async def _clear(self, namespace=None, _conn=None):
         if namespace:
+            # Keys are "{namespace}:{key}"; require the delimiter so "foo" does not
+            # also clear "foobar..." (consistent with ValkeyCache's "{ns}:*" scan).
+            prefix = f"{namespace}:"
             for key in list(self._cache):
-                if key.startswith(namespace):
+                if key.startswith(prefix):
                     self.__delete(key)
         else:
             self._cache = OrderedDict()

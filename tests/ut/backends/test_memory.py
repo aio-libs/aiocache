@@ -152,11 +152,12 @@ class TestSimpleMemoryCache:
         memory._cache.pop.assert_called_with(Keys.KEY, None)
 
     async def test_clear_namespace(self, memory):
-        memory._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
+        # Keys use "{namespace}:{key}"; prefix-only matching would also hit "nmb:..."
+        memory._cache.__iter__.return_value = iter(["nm:a", "nm:b", "nmb:x", "no"])
         await memory._clear("nm")
         assert memory._cache.pop.call_count == 2
-        memory._cache.pop.assert_any_call("nma", None)
-        memory._cache.pop.assert_any_call("nmb", None)
+        memory._cache.pop.assert_any_call("nm:a", None)
+        memory._cache.pop.assert_any_call("nm:b", None)
 
     async def test_clear_no_namespace(self, memory):
         memory._handlers = "asdad"
@@ -304,6 +305,15 @@ class TestSimpleMemoryCache:
         assert await cache.exists("key1")
         assert not await cache.exists("key2")
         assert await cache.exists("key3")
+
+    async def test_clear_namespace_does_not_clear_sibling_prefix(self):
+        # Regression for #1081: clear("foo") must not wipe "foobar" keys.
+        cache = SimpleMemoryCache()
+        await cache.set("k", 1, namespace="foo")
+        await cache.set("k", 2, namespace="foobar")
+        await cache.clear(namespace="foo")
+        assert await cache.get("k", namespace="foo") is None
+        assert await cache.get("k", namespace="foobar") == 2
 
     async def test_clear_resets_size(self):
         cache = SimpleMemoryCache(maxsize=2)
