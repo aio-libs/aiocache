@@ -185,8 +185,8 @@ class ValkeyCache(BaseCache[str]):
             options["db"] = db
         return options
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self):
         return (
-            f"ValkeyCache ({self.client.config.addresses[0].host}"
-            f":{self.client.config.addresses[0].port})"
+            f"ValkeyCache ({self.config.addresses[0].host}"
+            f":{self.config.addresses[0].port})"
         )

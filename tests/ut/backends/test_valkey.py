@@ -2,7 +2,15 @@ import pickle
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from glide import Batch, ConditionalChange, ExpirySet, ExpiryType
+from glide import (
+    Batch,
+    ConditionalChange,
+    ExpirySet,
+    ExpiryType,
+    GlideClient,
+    GlideClientConfiguration,
+    NodeAddress,
+)
 from glide import RequestError
 
 from aiocache.backends.valkey import ValkeyCache
@@ -35,6 +43,23 @@ async def valkey(valkey_config):
 
 
 class TestValkeyCache:
+    @pytest.mark.parametrize("host, port", [("localhost", 6379), ("cache.example.com", 6380)])
+    async def test_repr(self, mocker, host, port):
+        config = GlideClientConfiguration(addresses=[NodeAddress(host, port)])
+        cache = ValkeyCache(config)
+        expected = f"ValkeyCache ({host}:{port})"
+
+        assert repr(cache) == expected
+
+        client = mocker.Mock(config=config, close=AsyncMock())
+        create = mocker.patch.object(GlideClient, "create", return_value=client)
+        async with cache:
+            assert repr(cache) == expected
+
+        create.assert_awaited_once_with(config)
+        client.close.assert_awaited_once_with()
+        assert repr(cache) == expected
+
     @pytest.fixture
     def set_test_namespace(self, valkey_cache):
         valkey_cache.namespace = "test"
