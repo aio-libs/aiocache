@@ -159,11 +159,60 @@ class TestSimpleMemoryCache:
         memory._cache.pop.assert_any_call("nmb", None)
 
     async def test_clear_no_namespace(self, memory):
-        memory._handlers = "asdad"
+        memory._handlers = {}
         memory._cache = "asdad"
         await memory._clear()
         memory._handlers = {}
         memory._cache = {}
+
+    async def test_clear_cancels_ttl_handles(self):
+        cache = SimpleMemoryCache()
+        await cache.set("first", "value", ttl=3600)
+        await cache.set("second", "value", ttl=3600)
+        handles = list(cache._handlers.values())
+        try:
+            await cache.clear()
+            assert all(handle.cancelled() for handle in handles)
+            assert not cache._handlers
+            assert not cache._cache
+        finally:
+            for handle in handles:
+                handle.cancel()
+
+    async def test_clear_old_ttl_does_not_delete_new_value(self):
+        cache = SimpleMemoryCache(timeout=0)
+        loop = asyncio.get_running_loop()
+        await cache.set("key", "old", ttl=3600)
+        old_handle = cache._handlers["key"]
+        await cache.clear()
+        await cache.set("key", "new")
+
+        try:
+            with patch.object(loop, "time", return_value=loop.time() + 3601):
+                # Let the event loop enqueue and run any expired callbacks.
+                await asyncio.sleep(0)
+                await asyncio.sleep(0)
+
+            assert await cache.get("key") == "new"
+        finally:
+            old_handle.cancel()
+
+    async def test_clear_namespace_keeps_other_ttl_handles(self):
+        cache = SimpleMemoryCache()
+        await cache.set("key", "first", ttl=3600, namespace="first:")
+        await cache.set("key", "second", ttl=3600, namespace="second:")
+        cleared_handle = cache._handlers["first:key"]
+        remaining_handle = cache._handlers["second:key"]
+        try:
+            await cache.clear(namespace="first:")
+
+            assert cleared_handle.cancelled()
+            assert not remaining_handle.cancelled()
+            assert await cache.get("key", namespace="first:") is None
+            assert await cache.get("key", namespace="second:") == "second"
+        finally:
+            cleared_handle.cancel()
+            remaining_handle.cancel()
 
     async def test_raw(self, memory):
         await memory._raw("get", Keys.KEY)

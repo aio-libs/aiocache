@@ -129,6 +129,8 @@ class SimpleMemoryCache(BaseCache[str]):
                 if key.startswith(namespace):
                     self.__delete(key)
         else:
+            for handle in self._handlers.values():
+                handle.cancel()
             self._cache = OrderedDict()
             self._handlers = {}
         return True
