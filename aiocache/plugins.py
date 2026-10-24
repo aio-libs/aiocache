@@ -95,4 +95,6 @@ class HitMissRatioPlugin(BasePlugin):
 
         client.hit_miss_ratio["hit_ratio"] = (
             client.hit_miss_ratio["hits"] / client.hit_miss_ratio["total"]
+            if client.hit_miss_ratio["total"]
+            else 0
         )

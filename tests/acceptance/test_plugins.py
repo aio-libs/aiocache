@@ -6,6 +6,18 @@ from aiocache.plugins import HitMissRatioPlugin, TimingPlugin
 
 
 class TestHitMissRatioPlugin:
+    async def test_empty_multi_get(self, memory_cache):
+        memory_cache.plugins = [HitMissRatioPlugin()]
+        for _ in range(2):
+            assert await memory_cache.multi_get([]) == []
+            assert memory_cache.hit_miss_ratio == {"hits": 0, "total": 0, "hit_ratio": 0}
+
+        await memory_cache.set("hit", "value")
+        assert await memory_cache.multi_get(["hit", "miss"]) == ["value", None]
+        assert memory_cache.hit_miss_ratio == {"hits": 1, "total": 2, "hit_ratio": 0.5}
+        assert await memory_cache.multi_get([]) == []
+        assert memory_cache.hit_miss_ratio == {"hits": 1, "total": 2, "hit_ratio": 0.5}
+
     @pytest.mark.parametrize(
         "data, ratio",
         [

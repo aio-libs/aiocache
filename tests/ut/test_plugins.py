@@ -46,6 +46,11 @@ class TestTimingPlugin:
 
 
 class TestHitMissRatioPlugin:
+    async def test_post_multi_get_empty(self):
+        client = create_autospec(BaseCache, instance=True)
+        await HitMissRatioPlugin().post_multi_get(client, [], ret=[])
+        assert client.hit_miss_ratio == {"hits": 0, "total": 0, "hit_ratio": 0}
+
     @pytest.fixture
     def plugin(self):
         return HitMissRatioPlugin()
