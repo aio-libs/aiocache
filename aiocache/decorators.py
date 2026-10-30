@@ -139,6 +139,15 @@ class cached_stampede(cached):
         if value is not None:
             return value
 
+        if self.lease is None or self.lease == 0:
+            result = await f(*args, **kwargs)
+
+            if self.skip_cache_func(result):
+                return result
+
+            await self.set_in_cache(key, result)
+            return result
+
         async with RedLock(self.cache, key, self.lease):
             value = await self.get_from_cache(key)
             if value is not None:
