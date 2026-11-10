@@ -131,12 +131,40 @@ class TestSimpleMemoryCache:
         await memory._delete(Keys.KEY)
         assert fake.cancel.call_count == 1
         assert Keys.KEY not in memory._handlers
-        memory._cache.pop.assert_called_with(Keys.KEY, None)
+        memory._cache.pop.assert_called_with(Keys.KEY, ANY)
 
     async def test_delete_missing(self, memory):
-        memory._cache.pop.return_value = None
-        await memory._delete(Keys.KEY)
-        memory._cache.pop.assert_called_with(Keys.KEY, None)
+        memory._cache.pop.side_effect = lambda key, default: default
+        assert await memory._delete(Keys.KEY) == 0
+        memory._cache.pop.assert_called_with(Keys.KEY, ANY)
+
+    @pytest.mark.parametrize("value", [None, False, 0, ""])
+    async def test_delete_falsy_value_cleans_up_ttl(self, value):
+        cache = SimpleMemoryCache()
+        await cache.set("key", value, ttl=60)
+        handle = cache._handlers["key"]
+
+        try:
+            assert await cache.delete("key") == 1
+            assert not await cache.exists("key")
+            assert "key" not in cache._handlers
+            assert handle.cancelled()
+            assert await cache.delete("key") == 0
+        finally:
+            handle.cancel()
+
+    async def test_expiring_none_cleans_up_handler(self):
+        cache = SimpleMemoryCache()
+        with patch("asyncio.get_running_loop") as get_loop:
+            await cache._set("key", None, ttl=60)
+        callback, key = get_loop.return_value.call_later.call_args.args[1:]
+        handle = cache._handlers["key"]
+
+        callback(key)
+
+        assert not await cache._exists("key")
+        assert "key" not in cache._handlers
+        handle.cancel.assert_called_once_with()
 
     async def test_delete_non_truthy(self, memory):
         non_truthy = MagicMock(spec_set=("__bool__",))
@@ -149,14 +177,14 @@ class TestSimpleMemoryCache:
         await memory._delete(Keys.KEY)
 
         assert non_truthy.__bool__.call_count == 1
-        memory._cache.pop.assert_called_with(Keys.KEY, None)
+        memory._cache.pop.assert_called_with(Keys.KEY, ANY)
 
     async def test_clear_namespace(self, memory):
         memory._cache.__iter__.return_value = iter(["nma", "nmb", "no"])
         await memory._clear("nm")
         assert memory._cache.pop.call_count == 2
-        memory._cache.pop.assert_any_call("nma", None)
-        memory._cache.pop.assert_any_call("nmb", None)
+        memory._cache.pop.assert_any_call("nma", ANY)
+        memory._cache.pop.assert_any_call("nmb", ANY)
 
     async def test_clear_no_namespace(self, memory):
         memory._handlers = "asdad"
@@ -178,7 +206,7 @@ class TestSimpleMemoryCache:
         memory._handlers[Keys.KEY] = fake
         assert await memory._redlock_release(Keys.KEY, "lock") == 1
         memory._cache.get.assert_called_with(Keys.KEY)
-        memory._cache.pop.assert_called_with(Keys.KEY, None)
+        memory._cache.pop.assert_called_with(Keys.KEY, ANY)
         assert fake.cancel.call_count == 1
         assert Keys.KEY not in memory._handlers
 
