@@ -142,7 +142,8 @@ class SimpleMemoryCache(BaseCache[str]):
         return 0
 
     def __delete(self, key):
-        if self._cache.pop(key, None) is not None:
+        missing = object()
+        if self._cache.pop(key, missing) is not missing:
             handle = self._handlers.pop(key, None)
             if handle:
                 handle.cancel()
