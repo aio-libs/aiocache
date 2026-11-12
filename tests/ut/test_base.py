@@ -136,6 +136,12 @@ class TestAPI:
 
 
 class TestBaseCache:
+    @pytest.mark.parametrize("ttl", [0, 3, 0.5, 3.0, None])
+    def test_ttl(self, ttl):
+        cache = BaseCache(ttl=ttl)
+        assert cache.ttl == ttl
+        assert type(cache.ttl) is type(ttl)
+
     def test_str_ttl(self):
         cache = BaseCache(ttl="1.5")
         assert cache.ttl == 1.5

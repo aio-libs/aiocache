@@ -2,6 +2,7 @@ import asyncio
 
 import pytest
 
+from aiocache import caches
 from aiocache.backends.memory import SimpleMemoryCache
 from aiocache.base import _Conn
 from ..utils import Keys
@@ -140,6 +141,13 @@ class TestCache:
 
 
 class TestMemoryCache:
+    async def test_default_float_ttl(self):
+        async with SimpleMemoryCache(ttl=0.1) as cache:
+            await cache.set(Keys.KEY, "value")
+            assert await cache.get(Keys.KEY) == "value"
+            await asyncio.sleep(0.15)
+            assert await cache.get(Keys.KEY) is None
+
     async def test_accept_explicit_args(self):
         with pytest.raises(TypeError):
             SimpleMemoryCache(random_attr="wtf")
@@ -171,6 +179,80 @@ class TestMemoryCache:
 
 @pytest.mark.memcached
 class TestMemcachedCache:
+    async def test_configured_default_ttl(self, memcached_cache):
+        caches.set_config({
+            "default": {"cache": "aiocache.SimpleMemoryCache"},
+            "memcached": {
+                "cache": "aiocache.MemcachedCache",
+                "endpoint": memcached_cache.endpoint,
+                "port": memcached_cache.port,
+                "namespace": memcached_cache.namespace,
+                "ttl": 3,
+            },
+        })
+        async with caches.create("memcached") as cache:
+            await cache.set(Keys.KEY, "value")
+            assert await cache.get(Keys.KEY) == "value"
+
+    @pytest.mark.parametrize("command", ["add", "set", "multi_set"])
+    @pytest.mark.parametrize("ttl", [3, 0, None])
+    async def test_default_ttl(self, memcached_cache, command, ttl):
+        from aiocache.backends.memcached import MemcachedCache
+
+        async with MemcachedCache(
+            endpoint=memcached_cache.endpoint, port=memcached_cache.port,
+            namespace=memcached_cache.namespace, ttl=ttl,
+        ) as cache:
+            args = (
+                ([(Keys.KEY, "value")],) if command == "multi_set"
+                else (Keys.KEY, "value")
+            )
+            assert await getattr(cache, command)(*args) is True
+            assert await cache.get(Keys.KEY) == "value"
+
+    @pytest.mark.parametrize("command", ["add", "set", "multi_set"])
+    @pytest.mark.parametrize("ttl", [3, 0, None])
+    async def test_override_default_ttl(self, memcached_cache, command, ttl):
+        from aiocache.backends.memcached import MemcachedCache
+
+        async with MemcachedCache(
+            endpoint=memcached_cache.endpoint, port=memcached_cache.port,
+            namespace=memcached_cache.namespace, ttl=0.5,
+        ) as cache:
+            args = (
+                ([(Keys.KEY, "value")],) if command == "multi_set"
+                else (Keys.KEY, "value")
+            )
+            assert await getattr(cache, command)(*args, ttl=ttl) is True
+            assert await cache.get(Keys.KEY) == "value"
+
+    @pytest.mark.parametrize("command", ["add", "set", "multi_set"])
+    async def test_default_float_ttl_fails(self, memcached_cache, command):
+        from aiocache.backends.memcached import MemcachedCache
+
+        async with MemcachedCache(
+            endpoint=memcached_cache.endpoint, port=memcached_cache.port,
+            namespace=memcached_cache.namespace, ttl=0.5,
+        ) as cache:
+            args = (
+                ([(Keys.KEY, "value")],) if command == "multi_set"
+                else (Keys.KEY, "value")
+            )
+            with pytest.raises(TypeError, match="exptime not int: 0.5"):
+                await getattr(cache, command)(*args)
+            assert await cache.get(Keys.KEY) is None
+
+    async def test_default_ttl_expires(self, memcached_cache):
+        from aiocache.backends.memcached import MemcachedCache
+
+        async with MemcachedCache(
+            endpoint=memcached_cache.endpoint, port=memcached_cache.port,
+            namespace=memcached_cache.namespace, ttl=1,
+        ) as cache:
+            await cache.set(Keys.KEY, "value")
+            await asyncio.sleep(1.1)
+            assert await cache.get(Keys.KEY) is None
+
     async def test_accept_explicit_args(self):
         from aiocache.backends.memcached import MemcachedCache
 
