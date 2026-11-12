@@ -113,7 +113,7 @@ class BaseCache:
     ):
         self.timeout = float(timeout) if timeout is not None else timeout
         self.namespace = namespace
-        self.ttl = float(ttl) if ttl is not None else ttl
+        self.ttl = ttl if ttl is None or isinstance(ttl, int) else float(ttl)
         self.build_key = key_builder or self._build_key
 
         self._serializer = None

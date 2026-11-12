@@ -4,6 +4,11 @@ CHANGES
 
 .. towncrier release notes start
 
+Unreleased
+==========
+
+* Fixed Memcached writes failing when an integer default TTL is configured.
+
 0.12.3 (2024-09-25)
 ===================
 
